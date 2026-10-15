@@ -931,11 +931,12 @@ function genWorld(){
     }
     lakes.push({cx,cy,r:mainR,blobs,islands,pads});
   }
-  for(const r of roads){
-    if(Math.random()<.45&&r.w>100){
-      vehicles.push({x:r.x+r.w/2,y:r.y+7,w:36,h:20,col:pick(['#7a3030','#30507a','#505050','#6a6a30','#8a7030','#4a6a8a']),looted:false,spd:0,face:0});
-    }
+  let vId = 0;
+for (const r of roads) {
+  if (Math.random() < .45 && r.w > 100) {
+    vehicles.push({ id: vId++, x: r.x + r.w / 2, y: r.y + 7, w: 36, h: 20, col: pick(['#7a3030', '#30507a', '#505050', '#6a6a30', '#8a7030', '#4a6a8a']), looted: false, spd: 0, face: 0 });
   }
+}
   let planeX=rnd(500,WW-500),planeY=rnd(500,WH-500),validPlane=false,pTries=0;
   while(!validPlane&&pTries<500){
     pTries++;
@@ -1220,8 +1221,9 @@ function pickup(){
   let nv=null,nd=36;
   for(const v of vehicles){const d=Math.hypot(v.x-P.x,v.y-P.y);if(d<nd){nd=d;nv=v;}}
   if(nv){
-    if(!nv.looted){
-      nv.looted=true;
+    if (!nv.looted) {
+  nv.looted = true;
+  if (MP.active) sendEvt('vehicleLooted', { id: nv.id });
       const found=wpick(LOOT.car);
       if(found==='ammo'){const n=rint(5,12);P.ammo+=n;toast('+'+n+' munição');}
       else if(found==='pistol'){
@@ -1262,9 +1264,10 @@ function pickup(){
     if(!addItem(t)){toast('Mochila cheia');return;}
     toast('Pegou: '+ITEMS[t].n);
   }
-  items.splice(items.indexOf(it),1);
-  beep(660,.07,'square',.04);
-}
+    items.splice(items.indexOf(it), 1);
+  if (MP.active) sendEvt('itemRemoved', { x: it.x, y: it.y });
+  beep(660, .07, 'square', .04);
+  }
 function makeNoise(x,y,r){
   for(const z of zombies){
     if(z.dead)continue;
@@ -1295,6 +1298,7 @@ function damageZ(z,dmg,kx,ky){
   z.hp-=dmg;z.hit=.15;z.vx+=kx;z.vy+=ky;z.lock=5;z.alert=0;
   for(let i=0;i<5;i++)parts.push({x:z.x,y:z.y-7,vx:rnd(-40,40),vy:rnd(-50,10),t:rnd(.25,.5),c:'#a01818'});
   hitFlesh();
+  if(MP.active) sendEvt('zombieDmg', {x:z.x, y:z.y, dmg:dmg});
   if(z.hp<=0){
     z.dead=true;kills++;
     decals.push({x:z.x,y:z.y});
@@ -1326,17 +1330,18 @@ function attack(){
       shake=3;
       chopWood();
       for(let i=0;i<5;i++)parts.push({x:hitTree.x,y:hitTree.y-10,vx:rnd(-35,35),vy:rnd(-45,0),t:.4,c:'#8a5a2a'});
-      if(hitTree.hp<=0){
-        trees.splice(trees.indexOf(hitTree),1);
-        const n=(P.weapon==='stoneaxe')?2:1;
-        for(let i=0;i<n;i++){
-          if(!addItem('wood')) items.push({t:'wood',x:hitTree.x,y:hitTree.y});
-        }
-        toast('Árvore derrubada! +'+n+' Madeira');
-        beep(260,.18,'triangle',.09,120);
-      }
-      makeNoise(P.x,P.y,60);
-      return;
+      if (MP.active) sendEvt('treeDmg', { x: hitTree.x, y: hitTree.y, dmg: w.chopRate || 0.5 });
+if (hitTree.hp <= 0) {
+  trees.splice(trees.indexOf(hitTree), 1);
+  const n = (P.weapon === 'stoneaxe') ? 2 : 1;
+  for (let i = 0; i < n; i++) {
+    if (!addItem('wood')) items.push({ t: 'wood', x: hitTree.x, y: hitTree.y });
+  }
+  toast('Árvore derrubada! +' + n + ' Madeira');
+  beep(260, .18, 'triangle', .09, 120);
+}
+makeNoise(P.x, P.y, 60);
+return;
     }
   }
 
@@ -1347,15 +1352,16 @@ function attack(){
     if(hitRock){
       P.cd=w.cd;P.swing=.18;hitRock.hp-=1;shake=3;chopStone();
       for(let i=0;i<6;i++)parts.push({x:hitRock.x,y:hitRock.y-4,vx:rnd(-50,50),vy:rnd(-55,-5),t:.4,c:'#9a9a9a'});
-      if(hitRock.hp<=0){
-        rocks.splice(rocks.indexOf(hitRock),1);
-        const n=rint(1,3);
-        for(let i=0;i<n;i++){
-          if(!addItem('stone')) items.push({t:'stone',x:hitRock.x+rnd(-6,6),y:hitRock.y+rnd(-6,6)});
-        }
-        toast('Pedra quebrada! +'+n+' Pedra');beep(320,.18,'triangle',.09,80);
-      }
-      makeNoise(P.x,P.y,70);return;
+      if(MP.active) sendEvt('rockDmg', {x:hitRock.x, y:hitRock.y, dmg:1});
+if(hitRock.hp<=0){
+  rocks.splice(rocks.indexOf(hitRock),1);
+  const n=rint(1,3);
+  for(let i=0;i<n;i++){
+    if(!addItem('stone')) items.push({t:'stone',x:hitRock.x+rnd(-6,6),y:hitRock.y+rnd(-6,6)});
+  }
+  toast('Pedra quebrada! +'+n+' Pedra');beep(320,.18,'triangle',.09,80);
+}
+makeNoise(P.x,P.y,70);return;
     }
   }
 
@@ -1727,6 +1733,80 @@ function refreshCraft(){
   }
 }
 
+/* ============ SINCRONIZAÇÃO DE MUNDO ============ */
+function packWorld(){
+  return {
+    trees: trees.map(t=>({x:t.x,y:t.y,k:t.k,hp:t.hp})),
+    rocks: rocks.map(r=>({x:r.x,y:r.y,k:r.k,hp:r.hp})),
+    blds: blds.map(b=>({x:b.x,y:b.y,w:b.w,h:b.h,type:b.type,roof:b.roof,doorX:b.doorX,door:b.door})),
+    walls: walls.map(w=>({x:w.x,y:w.y,w:w.w,h:w.h})),
+    roads: roads.slice(),
+    vehicles: vehicles.map(v=>({id:v.id,x:v.x,y:v.y,w:v.w,h:v.h,col:v.col,looted:v.looted,spd:v.spd||0,face:v.face||0})),
+    campfires: campfires.map(c=>({x:c.x,y:c.y,t:c.t,flicker:c.flicker||0})),
+    plane: plane ? {x:plane.x,y:plane.y,w:plane.w,h:plane.h} : null,
+    decorations: decorations.map(d=>({x:d.x,y:d.y,type:d.type,solid:d.solid,seed:d.seed})),
+    lakes: lakes.slice(),
+    items: items.slice(0, 200).map(it=>({t:it.t,x:it.x,y:it.y}))
+  };
+}
+function applyWorld(w){
+  if(!w) return;
+  trees = w.trees || [];
+  rocks = w.rocks || [];
+  blds = w.blds || [];
+  walls = w.walls || [];
+  roads = w.roads || [];
+  vehicles = w.vehicles || [];
+  campfires = w.campfires || [];
+  plane = w.plane || null;
+  decorations = w.decorations || [];
+  lakes = w.lakes || [];
+  items = w.items || [];
+  zombies = [];
+  spits = [];
+  // Reconstrói minimapa
+  buildMinimap();
+}
+
+/* ============ EVENTOS REPLICADOS ============ */
+function sendEvt(kind, data){
+  if(!MP.active || !MP.conn || !MP.conn.open) return;
+  try{ MP.conn.send({type:'evt', kind:kind, data:data}); }catch(e){}
+}
+function handleEvt(kind, data){
+  if(kind==='treeDmg'){
+    const t = trees.find(t => t.x===data.x && t.y===data.y);
+    if(t){ t.hp -= data.dmg; if(t.hp<=0){ const i=trees.indexOf(t); if(i>=0) trees.splice(i,1); } }
+  } else if(kind==='rockDmg'){
+    const r = rocks.find(r => r.x===data.x && r.y===data.y);
+    if(r){ r.hp -= data.dmg; if(r.hp<=0){ const i=rocks.indexOf(r); if(i>=0) rocks.splice(i,1); } }
+  } else if(kind==='itemRemoved'){
+    // Remove item próximo à posição
+    for(let i=items.length-1;i>=0;i--){
+      if(Math.abs(items[i].x-data.x)<3 && Math.abs(items[i].y-data.y)<3){ items.splice(i,1); break; }
+    }
+  } else if(kind==='itemAdded'){
+    items.push({t:data.t, x:data.x, y:data.y});
+  } else if(kind==='vehicleLooted'){
+    const v = vehicles.find(v => v.id===data.id);
+    if(v) v.looted = true;
+  } else if(kind==='zombieDmg'){
+    // Encontra zumbi mais próximo e aplica dano
+    let best=null, bd=25;
+    for(const z of zombies){
+      if(z.dead) continue;
+      const d = Math.hypot(z.x-data.x, z.y-data.y);
+      if(d<bd){bd=d; best=z;}
+    }
+    if(best){
+      best.hp -= data.dmg;
+      if(best.hp<=0){ best.dead = true; kills++; }
+    }
+  } else if(kind==='spawnZ'){
+    // Host recebe pedido de spawn do guest? Não aplicável — só ignora
+  }
+}
+
 /* ============ MULTIPLAYER ============ */
 function loadPeerJS(cb){
   if(MP.scriptLoaded||typeof Peer!=='undefined'){MP.scriptLoaded=true;cb&&cb();return;}
@@ -1740,7 +1820,6 @@ function makeRoomCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(
 function setStatus(id,msg,isErr){const e=$(id);if(!e)return;e.textContent=msg;e.classList.toggle('err',!!isErr);}
 
 function mpHostStart(){
-  requestFullscreenLandscape();
   const nameEl=$('hostName');
   MP.playerName=((nameEl&&nameEl.value.trim())||'Host').slice(0,12);
   try{localStorage.setItem('minisurv_name',MP.playerName);}catch(e){}
@@ -1763,7 +1842,6 @@ function mpHostStart(){
   });
 }
 function mpJoinStart(code){
-  requestFullscreenLandscape();
   const nameEl=$('joinName');
   MP.playerName=((nameEl&&nameEl.value.trim())||'Convidado').slice(0,12);
   try{localStorage.setItem('minisurv_name',MP.playerName);}catch(e){}
@@ -1792,9 +1870,17 @@ function setupConn(conn,isHostSide){
     MP.connected=true;MP.lastRecv=performance.now();
     if(isHostSide){
       setStatus('hostStatus','✅ Jogador conectado! Iniciando...');
-      const seed=Math.floor(Math.random()*1e9);
-      conn.send({type:'start',map:mpSelectedMap,seed});
-      setTimeout(()=>startMultiplayerGame(mpSelectedMap,seed,true),500);
+      // Host inicia o jogo AGORA (gera o mundo localmente)
+      startMultiplayerGame(mpSelectedMap, 0, true);
+      // Depois de um pequeno delay, envia o mundo e o sinal de start
+      setTimeout(()=>{
+        if(MP.conn && MP.conn.open){
+          try{
+            MP.conn.send({type:'worldInit', world: packWorld()});
+            MP.conn.send({type:'start', map: mpSelectedMap});
+          }catch(e){console.error('send worldInit', e);}
+        }
+      }, 300);
     }else{
       setStatus('joinStatus','✅ Conectado! Aguardando Host...');
     }
@@ -1806,9 +1892,13 @@ function setupConn(conn,isHostSide){
 function handleNetData(data,isHostSide){
   MP.lastRecv=performance.now();
   if(!data||!data.type)return;
-  if(data.type==='start'){
-    if(!isHostSide)startMultiplayerGame(data.map,data.seed,false);
-  }else if(data.type==='player'){
+  if(data.type==='worldInit'){
+    applyWorld(data.world);
+  } else if(data.type==='start'){
+    if(!isHostSide) startMultiplayerGame(data.map, 0, false);
+  } else if(data.type==='evt'){
+    handleEvt(data.kind, data.data);
+  } else if(data.type==='player'){
     const rp=remotePlayers[data.id]||{};
     rp.id=data.id;rp.name=data.name||'Jogador';
     rp.tx=data.x;rp.ty=data.y;
@@ -1818,8 +1908,19 @@ function handleNetData(data,isHostSide){
     rp.alive=data.alive!==false;rp.inVehicle=data.inVehicle||false;
     rp.isHost=isHostSide;rp.anim=(rp.anim||0)+(data.moving?0.25:0);
     remotePlayers[data.id]=rp;
-  }else if(data.type==='snapshot'){
-    if(!isHostSide)applySnapshot(data);
+    // Sincroniza veículo conduzido pelo outro jogador
+    if(data.vehicleId !== undefined){
+      const v = vehicles.find(v => v.id === data.vehicleId);
+      if(v && P.inVehicle !== v){
+        v.x = data.vehicleX;
+        v.y = data.vehicleY;
+        v.face = data.vehicleFace || 0;
+        v.spd = data.vehicleSpd || 0;
+        v.looted = data.vehicleLooted || false;
+      }
+    }
+  } else if(data.type==='snapshot'){
+    if(!isHostSide) applySnapshot(data);
   }
 }
 function applySnapshot(snap){
@@ -1832,14 +1933,31 @@ function applySnapshot(snap){
         dead:false,hit:0,vx:0,vy:0,alert:0,lock:0,lunge:0,cd:0,losT:0,seen:false,wt:0,tx:sz.x,ty:sz.y};
     });
   }
-  if(snap.items)items=snap.items;
-  if(snap.vehicles)vehicles=snap.vehicles;
-  if(snap.campfires)campfires=snap.campfires;
-  if(snap.P){
-    if(P){P.hp=snap.P.hp;P.food=snap.P.food;P.water=snap.P.water;P.stam=snap.P.stam;}
+  if(snap.items) items = snap.items;
+  if(snap.campfires) campfires = snap.campfires;
+  // Veículos: atualiza por ID, preservando o que o guest está dirigindo
+  if(snap.vehicles){
+    const byId = {};
+    for(const v of vehicles) byId[v.id] = v;
+    const newList = [];
+    for(const sv of snap.vehicles){
+      let v = byId[sv.id];
+      if(!v){
+        v = {id:sv.id, x:sv.x, y:sv.y, w:sv.w, h:sv.h, col:sv.col, looted:sv.looted, spd:sv.spd||0, face:sv.face||0};
+      } else if(v !== P.inVehicle){
+        v.x = sv.x; v.y = sv.y; v.face = sv.face||0; v.spd = sv.spd||0;
+        v.looted = sv.looted; v.col = sv.col; v.w = sv.w; v.h = sv.h;
+      }
+      newList.push(v);
+    }
+    vehicles = newList;
+    if(P.inVehicle && !vehicles.includes(P.inVehicle)) P.inVehicle = null;
   }
-  if(snap.day!==undefined)day=snap.day;
-  if(snap.dark!==undefined)dark=snap.dark;
+  if(snap.P && P){
+    P.hp=snap.P.hp;P.food=snap.P.food;P.water=snap.P.water;P.stam=snap.P.stam;
+  }
+  if(snap.day!==undefined) day=snap.day;
+  if(snap.dark!==undefined) dark=snap.dark;
 }
 function packSnapshot(){
   return {type:'snapshot',
@@ -1852,26 +1970,37 @@ function packSnapshot(){
   };
 }
 function packMyPlayer(){
-  return {type:'player',id:MP.myId||'me',name:MP.playerName||'Jogador',
+  const p = {type:'player',id:MP.myId||'me',name:MP.playerName||'Jogador',
     x:Math.round(P.x),y:Math.round(P.y),face:+P.face.toFixed(2),
     moving:P.moving,sprint:P.sprint,weapon:P.weapon,swing:+P.swing.toFixed(2),
     hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle};
+  if(P.inVehicle){
+    p.vehicleId = P.inVehicle.id;
+    p.vehicleX = Math.round(P.inVehicle.x);
+    p.vehicleY = Math.round(P.inVehicle.y);
+    p.vehicleFace = +P.inVehicle.face.toFixed(2);
+    p.vehicleSpd = +P.inVehicle.spd.toFixed(1);
+    p.vehicleLooted = P.inVehicle.looted;
+  }
+  return p;
 }
 function startMultiplayerGame(map,seed,isHost){
-  requestFullscreenLandscape();
+  requestFullscreenLandscape();  // só aqui, quando o jogo de fato começa
   MP.isHost=isHost;MP.connected=true;selectedMap=map;
   try{
-    genWorld();
-    if(!plane)throw new Error('plane não gerado');
+    if(isHost){
+      genWorld();
+      if(!plane) throw new Error('plane não gerado');
+      populate();
+    }
+    if(!plane) throw new Error('mundo não carregado');
     P={x:plane.x+70,y:plane.y,r:5,hp:100,food:85,water:85,stam:100,
       face:Math.PI/2,moving:false,sprint:false,exhausted:false,cd:0,swing:0,flash:0,bleed:false,dead:false,
       weapon:'fists',melee:null,firearms:{},ammo:0,
       inv:[{t:'bandage',n:1},{t:'water',n:1}],
       walk:0,inside:null,inVehicle:null};
-    if(!isHost){P.x+=30;P.y+=30;}
+    if(!isHost){P.x+=40;P.y+=40;}
     pushOut(P,P.r);
-    if(isHost)populate();
-    else{zombies=[];items=[];}
     T=0;kills=0;shake=0;flash=0;spawnTimer=3;dark=0;day=1;atkHeld=false;sprintHeld=false;
     touchGas=0;touchSteer=0;stepT=0;
     remotePlayers={};
