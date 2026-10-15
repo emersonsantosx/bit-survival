@@ -55,6 +55,23 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
 
 #veh-hud{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:5}
 .veh-btn{position:absolute;pointer-events:auto;background:rgba(20,20,20,.75);border:2px solid rgba(255,255,255,.6);color:#fff;font-family:inherit;font-weight:bold;font-size:11px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+/* Multiplayer chat — camada própria, não mexe na HUD */
+#mpchat-layer{position:fixed;inset:0;pointer-events:none;z-index:8}
+#bchat{position:fixed;top:10px;right:118px;width:40px;height:40px;border-radius:10px;background:rgba(20,20,20,.75);border:2px solid rgba(140,180,220,.7);color:#fff;font-size:18px;pointer-events:auto;z-index:9;display:none;align-items:center;justify-content:center;padding:0;line-height:1}
+#bchat.show{display:flex}
+#bchat.has-new{border-color:#ffd84a;box-shadow:0 0 10px rgba(255,216,74,.5)}
+#chat-msgs{position:fixed;left:10px;bottom:150px;width:min(260px,55vw);max-height:140px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:3px;pointer-events:none;z-index:8}
+.chat-bubble{background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:4px 8px;font:11px "Courier New",monospace;color:#e8e8d0;line-height:1.25;text-shadow:1px 1px #000;animation:chatIn .2s ease}
+.chat-bubble .cn{color:#8ac4ff;font-weight:bold}
+.chat-bubble.me .cn{color:#9fd68a}
+.chat-bubble.sys{color:#aaa;font-style:italic;border-color:rgba(255,255,255,.1)}
+@keyframes chatIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#chat-panel{position:fixed;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:rgba(6,10,8,.94);border-top:2px solid rgba(140,180,220,.5);display:none;pointer-events:auto;z-index:12;gap:8px;align-items:center}
+#chat-panel.open{display:flex}
+#chat-input{flex:1;min-width:0;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;font:14px "Courier New",monospace;padding:10px 12px;outline:none}
+#chat-input:focus{border-color:#8ac4ff}
+#chat-send,#chat-close{background:rgba(40,60,90,.9);border:1px solid #8ac4ff;color:#fff;border-radius:8px;font:bold 12px "Courier New",monospace;padding:10px 12px;white-space:nowrap}
+#chat-close{background:rgba(60,30,30,.9);border-color:#d08080}
 .veh-btn.on{background:rgba(255,255,255,.4);border-color:#ffd84a;color:#ffd84a}
 #v-up{right:20px;bottom:110px;width:72px;height:72px}
 #v-down{right:20px;bottom:24px;width:72px;height:72px}
@@ -208,6 +225,17 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
   </div>
 </div>
 
+<!-- Chat multiplayer (camada separada da HUD) -->
+<div id="mpchat-layer" aria-hidden="true">
+  <button type="button" id="bchat" title="Chat">💬</button>
+  <div id="chat-msgs"></div>
+</div>
+<div id="chat-panel">
+  <input type="text" id="chat-input" maxlength="60" placeholder="Mensagem (max 60)..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <button type="button" id="chat-send">ENVIAR</button>
+  <button type="button" id="chat-close">✕</button>
+</div>
+
 <div id="menu" class="screen">
   <div class="card">
     <h1>MINI SURVIVAL</h1>
@@ -285,7 +313,10 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
     </div>
     <div id="hostCodeWrap" class="hide">
       <p style="font-size:11px;color:#aaa">Compartilhe este código com seu amigo:</p>
-      <div class="room-code" id="hostCode">------</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin:8px 0">
+        <div class="room-code" id="hostCode">------</div>
+        <button class="menu-btn" id="btnCopyCode" style="padding:12px 22px;font-size:13px;width:auto;min-width:160px">📋 COPIAR CÓDIGO</button>
+      </div>
       <div class="mp-status" id="hostStatus">Aguardando conexão...</div>
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
@@ -733,6 +764,72 @@ let P=null,T=0,kills=0,shake=0,flash=0,spawnTimer=3,dark=0,day=1,hudT=0;
 let atkHeld=false,sprintHeld=false,noiseT=0,tt=null;
 let touchGas=0,touchSteer=0,stepT=0;
 let MP={active:false,isHost:false,peer:null,conn:null,roomCode:'',connected:false,syncT:0,lastRecv:0,myId:null,scriptLoaded:false,playerName:'Jogador',gameOver:false};
+/* Chat multiplayer (não altera HUD) */
+let chatOpen=false;
+const chatLog=[]; // {name,text,me,t}
+function setChatButtonVisible(on){
+  const b=$('bchat');
+  if(!b) return;
+  if(on) b.classList.add('show'); else b.classList.remove('show');
+  if(!on) b.classList.remove('has-new');
+}
+function pushChatBubble(name, text, me, sys){
+  const box=$('chat-msgs');
+  if(!box) return;
+  const el=document.createElement('div');
+  el.className='chat-bubble'+(me?' me':'')+(sys?' sys':'');
+  if(sys) el.textContent=text;
+  else {
+    const n=document.createElement('span'); n.className='cn'; n.textContent=(name||'?')+': ';
+    el.appendChild(n);
+    el.appendChild(document.createTextNode(text));
+  }
+  box.appendChild(el);
+  while(box.children.length>6) box.removeChild(box.firstChild);
+  // Auto-fade after a few seconds
+  setTimeout(()=>{ if(el.parentNode){ el.style.opacity='0'; el.style.transition='opacity .4s'; setTimeout(()=>{if(el.parentNode)el.remove();},450);} }, 8000);
+}
+function openChat(){
+  if(!MP.active || !MP.connected) return;
+  if(state!=='play' && state!=='craft') return;
+  chatOpen=true;
+  const p=$('chat-panel'); if(p) p.classList.add('open');
+  const b=$('bchat'); if(b) b.classList.remove('has-new');
+  const inp=$('chat-input');
+  if(inp){ inp.value=''; setTimeout(()=>{ try{inp.focus();}catch(e){} }, 50); }
+  // Solta controles para não atacar enquanto digita
+  atkHeld=false; sprintHeld=false; joy.id=null; joy.active=false; joy.x=joy.y=0;
+}
+function closeChat(){
+  chatOpen=false;
+  const p=$('chat-panel'); if(p) p.classList.remove('open');
+  const inp=$('chat-input'); if(inp){ try{inp.blur();}catch(e){} }
+}
+function sendChatMessage(){
+  if(!MP.active || !MP.connected) return;
+  const inp=$('chat-input');
+  let text=(inp&&inp.value||'').trim();
+  if(!text) return;
+  if(text.length>60) text=text.slice(0,60);
+  const name=(MP.playerName||'Jogador').slice(0,12);
+  pushChatBubble(name, text, true, false);
+  try{
+    if(MP.conn&&MP.conn.open) MP.conn.send({type:'chat', name:name, text:text});
+  }catch(e){}
+  if(inp) inp.value='';
+  closeChat();
+}
+function receiveChat(data){
+  if(!data || typeof data.text!=='string') return;
+  const text=data.text.trim().slice(0,60);
+  if(!text) return;
+  const name=(typeof data.name==='string'?data.name:'Amigo').slice(0,12);
+  pushChatBubble(name, text, false, false);
+  if(!chatOpen){
+    const b=$('bchat'); if(b) b.classList.add('has-new');
+  }
+  try{ beep(620,.06,'sine',.04); }catch(e){}
+}
 
 const joy={id:null,ox:0,oy:0,px:0,py:0,x:0,y:0,active:false};
 const JR=48;
@@ -1970,7 +2067,7 @@ function update(dt){
   setAmbient(.018+nightMix*.075+weatherMix);
   updateP(dt);
   P.cd=Math.max(0,P.cd-dt);P.swing=Math.max(0,P.swing-dt);P.flash=Math.max(0,P.flash-dt);
-  if(atkHeld&&!P.dead)attack();
+  if(atkHeld&&!P.dead&&!chatOpen)attack();
   if(!MP.active||MP.isHost){
     for(const z of zombies){
       if(z.dead)continue;
@@ -2568,6 +2665,8 @@ function handleNetData(data,isHostSide){
       remotePlayers[data.id].alive=true;
       if(Number.isFinite(data.hp)) remotePlayers[data.id].hp=data.hp;
     }
+  } else if(data.type==='chat'){
+    receiveChat(data);
   }
 }
 function applySnapshot(snap){
@@ -2748,6 +2847,10 @@ function enterMultiplayerGame(isHost){
         console.log('[Host] snapshot inicial enviado — zumbis:',zombies.length);
       }catch(e){ console.error('[Host] falha snapshot inicial',e); }
     }
+    closeChat();
+    setChatButtonVisible(true);
+    const cm=$('chat-msgs'); if(cm) cm.innerHTML='';
+    pushChatBubble('','Chat pronto — toque em 💬',false,true);
     console.log('[MP] jogo iniciado. Host?',isHost);
   }catch(err){
     console.error('[enterMultiplayerGame]',err);
@@ -3510,6 +3613,45 @@ on('btnMPHost','click',()=>{aud();showScreen('mphostscreen');const w=$('hostCode
 on('btnMPJoin','click',()=>{aud();showScreen('mpjoinscreen');setStatus('joinStatus','');const i=$('joinCode');if(i)i.value='';});
 
 on('btnHostCreate','click',()=>{aud();mpHostStart();});
+on('btnCopyCode','click',async e=>{
+  e.preventDefault();e.stopPropagation();
+  aud();
+  const codeEl=$('hostCode');
+  const code=(codeEl&&codeEl.textContent||'').trim().toUpperCase();
+  if(!code || code==='------' || code.length<4){
+    setStatus('hostStatus','Crie a sala primeiro para copiar o código',true);
+    return;
+  }
+  const btn=$('btnCopyCode');
+  const ok=()=>{
+    if(btn){btn.textContent='✅ COPIADO!';setTimeout(()=>{if(btn)btn.textContent='📋 COPIAR CÓDIGO';},1800);}
+    setStatus('hostStatus','Código '+code+' copiado! Cole no WhatsApp.');
+    toast('Código copiado: '+code);
+  };
+  const fail=()=>{
+    // Fallback: select text so user can copy manually
+    try{
+      const range=document.createRange();range.selectNodeContents(codeEl);
+      const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+    }catch(_){}
+    if(btn){btn.textContent='👆 SELECIONE E COPIE';setTimeout(()=>{if(btn)btn.textContent='📋 COPIAR CÓDIGO';},2500);}
+    setStatus('hostStatus','Selecione o código e copie (Ctrl+C / pressione e segure)');
+  };
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(code);
+      ok();
+    } else {
+      // Older Android WebView fallback
+      const ta=document.createElement('textarea');
+      ta.value=code;ta.style.position='fixed';ta.style.left='-9999px';
+      document.body.appendChild(ta);ta.select();
+      const done=document.execCommand('copy');
+      document.body.removeChild(ta);
+      if(done) ok(); else fail();
+    }
+  }catch(err){ fail(); }
+});
 on('btnHostBack','click',()=>{
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
   MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;MP.isHost=false;
@@ -3623,6 +3765,12 @@ vehBtn('v-right',()=>touchSteer=1,()=>touchSteer=0);
 vehBtn('v-exit',()=>exitVehicle(),()=>{});
 
 window.addEventListener('keydown',e=>{
+  // Chat open: only handle Enter/Escape for chat, don't steal game keys
+  if(chatOpen){
+    if(e.code==='Escape'){ e.preventDefault(); closeChat(); return; }
+    if(e.code==='Enter'){ e.preventDefault(); sendChatMessage(); return; }
+    return;
+  }
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD'].includes(e.code))e.preventDefault();
   if(e.code==='KeyC'&&state==='craft'){closeCraft();return;}
   if(e.code==='Escape'){
@@ -3638,6 +3786,15 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyC')openCraft();
   if(e.code==='KeyR'){if(P.inv.length>0)discardItem(P.inv.length-1);else toast('Inventário vazio');}
   if(e.code>='Digit1'&&e.code<='Digit6')useItem(+e.code.slice(5)-1);
+  if(e.code==='KeyT'&&MP.active&&MP.connected){ e.preventDefault(); openChat(); }
+});
+on('bchat','pointerup',e=>{e.preventDefault();e.stopPropagation();aud(); if(chatOpen) closeChat(); else openChat();});
+on('bchat','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
+on('chat-send','click',e=>{e.preventDefault();sendChatMessage();});
+on('chat-close','click',e=>{e.preventDefault();closeChat();});
+on('chat-input','keydown',e=>{
+  if(e.key==='Enter'){ e.preventDefault(); sendChatMessage(); }
+  if(e.key==='Escape'){ e.preventDefault(); closeChat(); }
 });
 window.addEventListener('contextmenu',e=>e.preventDefault());
 
@@ -3653,6 +3810,7 @@ let pauseReadyAt=0; // ignore button presses for a short time after opening paus
 function pause(){
   if(state!=='play')return;
   closeWeaponWheel();
+  closeChat();
   state='pause';atkHeld=false;sprintHeld=false;joy.id=null;joy.active=false;joy.x=joy.y=0;
   pauseReadyAt=performance.now()+450; // prevent the same touch from hitting CONTINUAR
   updatePauseFSButton();
@@ -3674,6 +3832,9 @@ function exitFullscreen(){
 }
 function quitToMenu(){
   closeWeaponWheel();
+  closeChat();
+  setChatButtonVisible(false);
+  const cm=$('chat-msgs'); if(cm) cm.innerHTML='';
   userWantsFS=false;
   try{
     if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
@@ -3690,6 +3851,9 @@ function quitToMenu(){
 }
 function startGame(){
   aud();
+  closeChat();
+  setChatButtonVisible(false);
+  const cm=$('chat-msgs'); if(cm) cm.innerHTML='';
   userWantsFS=true;
   requestFullscreenLandscape(true);
   showScreen(null);
