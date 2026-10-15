@@ -716,6 +716,7 @@ let weatherTimer=120;
 let weatherParticles=[];
 let trees=[],rocks=[],blds=[],walls=[],items=[],zombies=[],roads=[],decals=[],parts=[],tracers=[],towns=[],lakes=[],vehicles=[],campfires=[],spits=[],decorations=[];
 let remotePlayers={};
+let nextZombieNetId=1;
 let plane=null;
 let P=null,T=0,kills=0,shake=0,flash=0,spawnTimer=3,dark=0,day=1,hudT=0;
 let atkHeld=false,sprintHeld=false,noiseT=0,tt=null;
@@ -1067,6 +1068,7 @@ function spawnZ(x,y,kind){
   const t=ZTYPES[kind];
   const hpScale=1+(day-1)*0.08;
   const z={
+    netId:(MP.active&&MP.isHost?'z'+(nextZombieNetId++):'local'+(nextZombieNetId++)),
     x,y,kind,hp:t.hp*hpScale,max:t.hp*hpScale,
     spd:t.spd*(1+(day-1)*0.02),dmg:t.dmg,r:t.r,
     face:rnd(0,6.28),tx:x,ty:y,wt:rnd(0,3),
@@ -1367,7 +1369,7 @@ function damageZ(z,dmg,kx,ky){
   z.hp-=dmg;z.hit=.15;z.vx+=kx;z.vy+=ky;z.lock=5;z.alert=0;
   for(let i=0;i<5;i++)parts.push({x:z.x,y:z.y-7,vx:rnd(-40,40),vy:rnd(-50,10),t:rnd(.25,.5),c:'#a01818'});
   hitFlesh();
-  if(MP.active) sendEvt('zombieDmg', {x:z.x, y:z.y, dmg:dmg});
+  if(MP.active) sendEvt('zombieDmg', {id:z.netId,x:z.x,y:z.y,dmg:dmg});
   if(z.hp<=0){
     z.dead=true;kills++;
     decals.push({x:z.x,y:z.y});
@@ -1837,8 +1839,8 @@ function packWorld(){
     campfires: campfires.map(c=>({x:c.x,y:c.y,t:c.t,flicker:c.flicker||0})),
     plane: plane ? {x:plane.x,y:plane.y,w:plane.w,h:plane.h} : null,
     decorations: decorations.map(d=>({x:d.x,y:d.y,type:d.type,solid:d.solid,seed:d.seed})),
-    lakes: lakes.slice(),
-    items: items.slice(0, 200).map(it=>({t:it.t,x:it.x,y:it.y}))
+    lakes: lakes.map(l=>({...l,blobs:Array.isArray(l.blobs)?l.blobs.map(b=>({...b})):[]})),
+    items: items.slice(0, 500).map(it=>({...it}))
   };
 }
 function applyWorld(w){
@@ -1852,8 +1854,8 @@ function applyWorld(w){
   campfires = w.campfires || [];
   plane = w.plane || null;
   decorations = w.decorations || [];
-  lakes = w.lakes || [];
-  items = w.items || [];
+  lakes = (w.lakes || []).map(l=>({...l,blobs:Array.isArray(l.blobs)?l.blobs.map(b=>({...b})):[]}));
+  items = (w.items || []).map(it=>({...it}));
   zombies = [];
   spits = [];
   // Reconstrói minimapa
@@ -1879,17 +1881,20 @@ function handleEvt(kind, data){
       if(Math.abs(items[i].x-data.x)<3 && Math.abs(items[i].y-data.y)<3){ items.splice(i,1); break; }
     }
   } else if(kind==='itemAdded'){
-    items.push({t:data.t, x:data.x, y:data.y});
+    if(typeof data.t==='string'&&Number.isFinite(data.x)&&Number.isFinite(data.y)&&!items.some(it=>it.t===data.t&&Math.abs(it.x-data.x)<2&&Math.abs(it.y-data.y)<2)) items.push({t:data.t,x:data.x,y:data.y});
   } else if(kind==='vehicleLooted'){
     const v = vehicles.find(v => v.id===data.id);
     if(v) v.looted = true;
   } else if(kind==='zombieDmg'){
-    // Encontra zumbi mais próximo e aplica dano
-    let best=null, bd=25;
-    for(const z of zombies){
-      if(z.dead) continue;
-      const d = Math.hypot(z.x-data.x, z.y-data.y);
-      if(d<bd){bd=d; best=z;}
+    // Usa identidade estável; posição fica apenas como compatibilidade com mensagens antigas.
+    let best=data.id ? zombies.find(z=>z.netId===data.id&&!z.dead) : null;
+    if(!best){
+      let bd=25;
+      for(const z of zombies){
+        if(z.dead) continue;
+        const d=Math.hypot(z.x-data.x,z.y-data.y);
+        if(d<bd){bd=d;best=z;}
+      }
     }
     if(best && Number.isFinite(data.dmg)){
       best.hp -= clamp(data.dmg,0,100);
@@ -1913,6 +1918,8 @@ function makeRoomCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(
 function setStatus(id,msg,isErr){const e=$(id);if(!e)return;e.textContent=msg;e.classList.toggle('err',!!isErr);}
 
 function mpHostStart(){
+  if(MP.peer){try{MP.peer.destroy();}catch(e){}}
+  MP.peer=null;MP.conn=null;MP.connected=false;MP.myId=null;
   const nameEl=$('hostName');
   MP.playerName=((nameEl&&nameEl.value.trim())||'Host').slice(0,12);
   try{localStorage.setItem('minisurv_name',MP.playerName);}catch(e){}
@@ -1931,10 +1938,19 @@ function mpHostStart(){
       MP.conn=conn;
       setupConn(conn,true);
     });
-    MP.peer.on('error',err=>{console.error(err);setStatus('hostStatus','Erro: '+err.type,true);});
+    MP.peer.on('error',err=>{
+      console.error('[PeerJS host]',err);
+      const msg=err&&err.type==='unavailable-id'
+        ?'Código de sala ocupado. Volte e crie outra sala.'
+        :('Falha de conexão: '+((err&&err.type)||'erro desconhecido'));
+      setStatus('hostStatus',msg,true);
+      if(!MP.connected){MP.active=false;MP.isHost=false;}
+    });
   });
 }
 function mpJoinStart(code){
+  if(MP.peer){try{MP.peer.destroy();}catch(e){}}
+  MP.peer=null;MP.conn=null;MP.connected=false;MP.myId=null;
   const nameEl=$('joinName');
   MP.playerName=((nameEl&&nameEl.value.trim())||'Convidado').slice(0,12);
   try{localStorage.setItem('minisurv_name',MP.playerName);}catch(e){}
@@ -1947,12 +1963,13 @@ function mpJoinStart(code){
     MP.peer.on('open',id=>{
       MP.myId=id;
       setStatus('joinStatus','Conectando à sala...');
-      const conn=MP.peer.connect(MP.roomCode,{reliable:true});
+      const conn=MP.peer.connect(MP.roomCode,{reliable:true,serialization:'json'});
       MP.conn=conn;
       setupConn(conn,false);
     });
     MP.peer.on('error',err=>{
-      let msg='Erro: '+err.type;
+      console.error('[PeerJS convidado]',err);
+      let msg='Erro: '+((err&&err.type)||'conexão');
       if(err.type==='peer-unavailable')msg='Sala não encontrada. Verifique o código.';
       setStatus('joinStatus',msg,true);
     });
@@ -1982,6 +1999,9 @@ function setupConn(conn,isHostSide){
   conn.on('close',()=>{
     MP.connected=false;
     if(MP.conn===conn) MP.conn=null;
+    if(MP.active){
+      setStatus(isHostSide?'hostStatus':'joinStatus','Conexão encerrada. Crie/entre novamente na sala.',true);
+    }
     if(state==='play' && MP.active){
       toast('Conexão perdida');
       const closedConn=conn;
@@ -2012,7 +2032,7 @@ function handleNetData(data,isHostSide){
     rp.isHost=!isHostSide;rp.anim=(rp.anim||0)+(data.moving?0.25:0);
     remotePlayers[data.id]=rp;
     // Sincroniza veículo conduzido pelo outro jogador
-    if(data.vehicleId !== undefined){
+    if(data.vehicleId !== undefined && Number.isFinite(data.vehicleX) && Number.isFinite(data.vehicleY)){
       const v = vehicles.find(v => v.id === data.vehicleId);
       if(v && P.inVehicle !== v){
         v.x = data.vehicleX;
@@ -2027,7 +2047,7 @@ function handleNetData(data,isHostSide){
   }
 }
 function applySnapshot(snap){
-  if(!snap || typeof snap !== 'object') return;
+  if(!snap || typeof snap !== 'object' || !MP.active) return;
   // O host é a autoridade para o mundo compartilhado. Mantém os objetos existentes
   // quando possível para reduzir saltos visuais entre snapshots.
   if(Array.isArray(snap.trees)) trees = snap.trees;
@@ -2039,7 +2059,7 @@ function applySnapshot(snap){
     zombies = snap.zombies.map((sz,i)=>{
       const t=ZTYPES[sz.kind]||ZTYPES[0];
       const prev=old[i];
-      return {x:sz.x,y:sz.y,kind:sz.kind,face:sz.face||0,anim:sz.anim||0,hp:sz.hp,
+      return {netId:sz.netId||('remote-z'+i),x:sz.x,y:sz.y,kind:sz.kind,face:sz.face||0,anim:sz.anim||0,hp:sz.hp,
         max:t.hp,r:t.r,dmg:t.dmg,spd:t.spd,moving:!!sz.moving,skin:sz.skin,shirt:sz.shirt,
         crawler:t.crawler,ranged:t.ranged,range:t.range,screams:t.screams,
         dead:false,hit:prev?prev.hit:0,vx:0,vy:0,alert:0,lock:0,lunge:0,cd:prev?prev.cd:0,
@@ -2075,7 +2095,7 @@ function packSnapshot(){
   return {type:'snapshot',day,dark,T,weather,weatherTimer,
     trees:trees.map(t=>({x:t.x,y:t.y,k:t.k,hp:t.hp})),
     rocks:rocks.map(r=>({x:r.x,y:r.y,k:r.k,hp:r.hp})),
-    zombies:zombies.slice(0,60).map(z=>({x:Math.round(z.x),y:Math.round(z.y),kind:z.kind,face:+z.face.toFixed(2),anim:+z.anim.toFixed(1),hp:Math.round(z.hp),moving:z.moving,skin:z.skin,shirt:z.shirt})),
+    zombies:zombies.slice(0,100).map(z=>({netId:z.netId,x:Math.round(z.x),y:Math.round(z.y),kind:z.kind,face:+z.face.toFixed(2),anim:+z.anim.toFixed(1),hp:Math.round(z.hp),moving:z.moving,skin:z.skin,shirt:z.shirt})),
     items:items.slice(0,200).map(it=>({t:it.t,x:Math.round(it.x),y:Math.round(it.y)})),
     vehicles:vehicles.map(v=>({id:v.id,x:Math.round(v.x),y:Math.round(v.y),w:v.w,h:v.h,col:v.col,looted:!!v.looted,spd:+(v.spd||0).toFixed(1),face:+(v.face||0).toFixed(2)})),
     campfires:campfires.map(c=>({x:c.x,y:c.y,t:c.t||0,flicker:+(c.flicker||0).toFixed(2)}))
@@ -2709,7 +2729,7 @@ on('deadMenu','click',()=>{
   setAmbient(0);setRain(false);document.body.classList.remove('nohud');
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
   MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;MP.isHost=false;MP.roomCode='';MP.myId=null;MP.syncT=0;
-  remotePlayers={};
+  remotePlayers={};nextZombieNetId=1;
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#0b100b';ctx.fillRect(0,0,W,H);
 });
 on('craftclose','click',closeCraft);
@@ -2830,7 +2850,7 @@ function quitToMenu(){
   setAmbient(0);setRain(false);document.body.classList.remove('nohud');
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
   MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;MP.isHost=false;MP.roomCode='';MP.myId=null;MP.syncT=0;
-  remotePlayers={};
+  remotePlayers={};nextZombieNetId=1;
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#0b100b';ctx.fillRect(0,0,W,H);
 }
 function startGame(){
