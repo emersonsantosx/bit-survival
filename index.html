@@ -362,24 +362,26 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
 </div>
 
 <div id="pausescr" class="screen hide">
-  <div class="card">
-    <h1>PAUSADO</h1>
-    <div class="menu-btns">
-      <button class="menu-btn" id="resume">▶ CONTINUAR</button>
-      <button class="menu-btn sec" id="pauseFS">⛶ TELA CHEIA</button>
-      <button class="menu-btn sec" id="pauseCfg">⚙ CONFIGURAÇÕES</button>
-      <button class="menu-btn danger" id="quitmenu">✕ MENU PRINCIPAL</button>
+  <div class="card" style="max-width:420px">
+    <h1 style="margin-bottom:12px">PAUSADO</h1>
+    <p style="font-size:11px;color:#9fd68a;margin:0 0 14px">Toque em uma opção abaixo</p>
+    <div class="menu-btns" style="gap:12px;margin:0">
+      <button class="menu-btn sec" id="pauseFS" style="padding:14px 22px">⛶ TELA CHEIA</button>
+      <button class="menu-btn sec" id="pauseCfg" style="padding:14px 22px">⚙ CONFIGURAÇÕES</button>
+      <button class="menu-btn" id="resume" style="padding:16px 22px;margin-top:8px">▶ CONTINUAR</button>
+      <button class="menu-btn danger" id="quitmenu" style="padding:14px 22px">✕ MENU PRINCIPAL</button>
     </div>
   </div>
 </div>
 
 <div id="deadscr" class="screen hide">
-  <div class="card">
-    <h2>VOCÊ MORREU</h2>
+  <div class="card" style="max-width:420px">
+    <h2 id="deadtitle">VOCÊ MORREU</h2>
     <p id="deadtxt"></p>
-    <div class="menu-btns">
-      <button class="menu-btn" id="again">↻ TENTAR DE NOVO</button>
-      <button class="menu-btn sec" id="deadMenu">✕ MENU PRINCIPAL</button>
+    <div class="menu-btns" style="gap:12px">
+      <button class="menu-btn" id="btnRespawn" style="display:none;padding:16px 22px">↻ RESSUSCITAR</button>
+      <button class="menu-btn" id="again" style="padding:16px 22px">↻ TENTAR DE NOVO</button>
+      <button class="menu-btn sec" id="deadMenu" style="padding:14px 22px">✕ MENU PRINCIPAL</button>
     </div>
   </div>
 </div>
@@ -730,7 +732,7 @@ let plane=null;
 let P=null,T=0,kills=0,shake=0,flash=0,spawnTimer=3,dark=0,day=1,hudT=0;
 let atkHeld=false,sprintHeld=false,noiseT=0,tt=null;
 let touchGas=0,touchSteer=0,stepT=0;
-let MP={active:false,isHost:false,peer:null,conn:null,roomCode:'',connected:false,syncT:0,lastRecv:0,myId:null,scriptLoaded:false,playerName:'Jogador'};
+let MP={active:false,isHost:false,peer:null,conn:null,roomCode:'',connected:false,syncT:0,lastRecv:0,myId:null,scriptLoaded:false,playerName:'Jogador',gameOver:false};
 
 const joy={id:null,ox:0,oy:0,px:0,py:0,x:0,y:0,active:false};
 const JR=48;
@@ -1428,18 +1430,102 @@ function hurt(n,bleedChance){
   beep(120,.18,'sawtooth',.07,-60);
   if(P.hp<=0)die();
 }
+function isOtherPlayerAlive(){
+  if(!MP.active || !MP.connected) return false;
+  const keys=Object.keys(remotePlayers);
+  // If we haven't received teammate data yet, assume they are still alive
+  if(keys.length===0) return true;
+  for(const id of keys){
+    const rp=remotePlayers[id];
+    if(rp && rp.alive!==false) return true;
+  }
+  return false;
+}
+function showDeathScreen(canRespawn){
+  const best=Math.max(+(LSget()||0),Math.floor(T));LSset(best);
+  const title=$('deadtitle');
+  const txt=$('deadtxt');
+  const btnAgain=$('again');
+  const btnRespawn=$('btnRespawn');
+  if(canRespawn){
+    if(title) title.textContent='VOCÊ MORREU';
+    if(txt) txt.textContent='Seu amigo ainda está vivo! Você pode ressuscitar e voltar à luta.';
+    if(btnRespawn) btnRespawn.style.display='';
+    if(btnAgain) btnAgain.style.display='none';
+  } else {
+    if(title) title.textContent=MP.active?'FIM DE JOGO':'VOCÊ MORREU';
+    if(txt) txt.textContent='Você sobreviveu '+fmt(T)+' ('+day+' dia'+(day>1?'s':'')+'). Zumbis: '+kills+'. Recorde: '+fmt(best)+'.';
+    if(btnRespawn) btnRespawn.style.display='none';
+    if(btnAgain) btnAgain.style.display=MP.active?'none':'';
+  }
+  $('deadscr').classList.remove('hide');
+  document.body.classList.remove('nohud');
+}
 function die(){
+  if(!P || P.dead) return;
   closeWeaponWheel();
-  P.hp=0;P.dead=true;state='dead';atkHeld=false;touchGas=0;touchSteer=0;
+  P.hp=0;P.dead=true;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;
+  if(P.inVehicle){ try{exitVehicle();}catch(e){} }
   $('veh-hud').classList.add('hide');
   $('inv').classList.remove('hide');$('atk').classList.remove('hide');
   $('pick').classList.remove('hide');$('run').classList.remove('hide');$('swap').classList.remove('hide');
-  setAmbient(0);setRain(false);
-  const best=Math.max(+(LSget()||0),Math.floor(T));LSset(best);
-  $('deadtxt').textContent='Você sobreviveu '+fmt(T)+' ('+day+' dia'+(day>1?'s':'')+'). Zumbis: '+kills+'. Recorde: '+fmt(best)+'.';
-  $('deadscr').classList.remove('hide');
-  document.body.classList.remove('nohud');
   beep(200,.6,'sawtooth',.08,-150);boom(.5,.3,200);
+
+  if(MP.active){
+    // Notify the other player we died
+    try{ if(MP.conn&&MP.conn.open) MP.conn.send({type:'playerDied', id:MP.myId||'me'}); }catch(e){}
+    const otherAlive = isOtherPlayerAlive();
+    if(otherAlive){
+      // Keep world running for the teammate — local is dead but can respawn
+      state='dead';
+      showDeathScreen(true);
+      return;
+    }
+    // Both dead (or no teammate alive) → full game over
+    MP.gameOver=true;
+    try{ if(MP.conn&&MP.conn.open) MP.conn.send({type:'gameOver'}); }catch(e){}
+    state='dead';
+    setAmbient(0);setRain(false);
+    showDeathScreen(false);
+    return;
+  }
+
+  // Singleplayer
+  state='dead';
+  setAmbient(0);setRain(false);
+  showDeathScreen(false);
+}
+function respawnPlayer(){
+  if(!P || !MP.active || !P.dead) return;
+  if(MP.gameOver) return;
+  // Only allow if teammate still alive
+  if(!isOtherPlayerAlive()){
+    MP.gameOver=true;
+    showDeathScreen(false);
+    return;
+  }
+  // Respawn near plane or a safe offset from current area
+  let rx=plane?plane.x+70:WW/2, ry=plane?plane.y:WH/2;
+  // Prefer near living teammate if available
+  for(const id in remotePlayers){
+    const rp=remotePlayers[id];
+    if(rp && rp.alive!==false && Number.isFinite(rp.x)){
+      rx=rp.x+rnd(-40,40); ry=rp.y+rnd(-40,40);
+      break;
+    }
+  }
+  P.x=clamp(rx,20,WW-20); P.y=clamp(ry,20,WH-20);
+  pushOut(P,P.r);
+  P.hp=100; P.food=Math.max(P.food,55); P.water=Math.max(P.water,55);
+  P.stam=100; P.bleed=false; P.dead=false; P.exhausted=false;
+  P.cd=0; P.swing=0; P.flash=0; P.inVehicle=null;
+  state='play';
+  const d=$('deadscr'); if(d) d.classList.add('hide');
+  document.body.classList.toggle('nohud',!CFG.hud);
+  toast('Você ressuscitou!');
+  beep(520,.15,'sine',.07,200);
+  startAmbient(); startRain();
+  try{ if(MP.conn&&MP.conn.open) MP.conn.send({type:'playerRespawned', id:MP.myId||'me', hp:P.hp}); }catch(e){}
 }
 function damageZ(z,dmg,kx,ky,fromNet){
   if(z.dead)return;
@@ -1570,6 +1656,7 @@ function darkness(h){
   return 1-(h-4)/3;
 }
 function updateP(dt){
+  if(P.dead) return;
   if(P.inVehicle){
     const v=P.inVehicle;
     if(touchGas>0)v.spd=Math.min(130,v.spd+90*dt);
@@ -1632,8 +1719,8 @@ function updateZ(z,dt){
     if(Math.abs(z.vy)<2)z.vy=0;
   }
   // Choose nearest living player (local or remote) so both players aggro zombies
-  let targetX=P.x, targetY=P.y, targetSprint=P.sprint&&P.moving, targetMoving=P.moving, targetDead=P.dead, targetIsLocal=true;
-  let bestD=Math.hypot(P.x-z.x,P.y-z.y);
+  let targetX=P.x, targetY=P.y, targetSprint=P.sprint&&P.moving, targetMoving=P.moving, targetDead=!!P.dead, targetIsLocal=true;
+  let bestD=P.dead?1e9:Math.hypot(P.x-z.x,P.y-z.y);
   if(MP.active && MP.isHost){
     for(const id in remotePlayers){
       const rp=remotePlayers[id];
@@ -1646,6 +1733,8 @@ function updateZ(z,dt){
       }
     }
   }
+  // No living players nearby — wander
+  if(bestD>=1e9){ targetDead=true; }
   const d=bestD;
   let det=95;
   if(targetSprint)det=185;else if(!targetMoving)det=52;
@@ -2237,6 +2326,7 @@ function handleNetData(data,isHostSide){
   } else if(data.type==='player'){
     if(typeof data.id!=='string' || !Number.isFinite(data.x) || !Number.isFinite(data.y)) return;
     const rp=remotePlayers[data.id]||{};
+    const wasAlive=rp.alive!==false && rp.id;
     rp.id=data.id;rp.name=data.name||'Jogador';
     rp.tx=data.x;rp.ty=data.y;
     if(rp.x===undefined){rp.x=data.x;rp.y=data.y;}
@@ -2245,6 +2335,13 @@ function handleNetData(data,isHostSide){
     rp.alive=data.alive!==false;rp.inVehicle=data.inVehicle||false;
     rp.isHost=!isHostSide;rp.anim=(rp.anim||0)+(data.moving?0.25:0);
     remotePlayers[data.id]=rp;
+    // Teammate just died and we are also dead → end the match
+    if(wasAlive && rp.alive===false && P && P.dead && !MP.gameOver){
+      MP.gameOver=true; state='dead';
+      setAmbient(0);setRain(false);
+      showDeathScreen(false);
+      toast('Seu amigo também morreu. Fim de jogo.');
+    }
     if(data.vehicleId !== undefined && Number.isFinite(data.vehicleX) && Number.isFinite(data.vehicleY)){
       const v = vehicles.find(v => v.id === data.vehicleId);
       if(v && P.inVehicle !== v){
@@ -2255,6 +2352,32 @@ function handleNetData(data,isHostSide){
     }
   } else if(data.type==='snapshot'){
     if(!isHostSide) applySnapshot(data);
+  } else if(data.type==='playerDied'){
+    if(typeof data.id==='string' && remotePlayers[data.id]){
+      remotePlayers[data.id].alive=false;
+      remotePlayers[data.id].hp=0;
+    }
+    // If we are also dead, it's game over for both
+    if(P && P.dead && !MP.gameOver){
+      MP.gameOver=true;
+      state='dead';
+      setAmbient(0);setRain(false);
+      showDeathScreen(false);
+      toast('Seu amigo também morreu. Fim de jogo.');
+    }
+  } else if(data.type==='gameOver'){
+    if(!MP.gameOver){
+      MP.gameOver=true;
+      if(P) P.dead=true;
+      state='dead';
+      setAmbient(0);setRain(false);
+      showDeathScreen(false);
+    }
+  } else if(data.type==='playerRespawned'){
+    if(typeof data.id==='string' && remotePlayers[data.id]){
+      remotePlayers[data.id].alive=true;
+      if(Number.isFinite(data.hp)) remotePlayers[data.id].hp=data.hp;
+    }
   }
 }
 function applySnapshot(snap){
@@ -2360,12 +2483,13 @@ function enterMultiplayerGame(isHost){
     }
     T=0; kills=0; shake=0; flash=0; spawnTimer=3; dark=0; day=1;
     atkHeld=false; sprintHeld=false; touchGas=0; touchSteer=0; stepT=0;
-    remotePlayers={};
+    remotePlayers={}; MP.gameOver=false;
     document.body.classList.toggle('nohud',!CFG.hud);
     buildInv(); updateHud(true);
     state='play';
     showScreen(null);
     const hud=$('hud'); if(hud) hud.classList.remove('hide');
+    const ds=$('deadscr'); if(ds) ds.classList.add('hide');
     toast(isHost?'Você é o HOST ('+MP.playerName+')':'Você é o CONVIDADO ('+MP.playerName+')');
     startAmbient(); startRain();
     console.log('[MP] jogo iniciado. Host?',isHost);
@@ -2960,7 +3084,10 @@ on('hostName','input',e=>{e.target.value=e.target.value.slice(0,12);});
 on('joinName','input',e=>{e.target.value=e.target.value.slice(0,12);});
 
 on('btnBackCfg','click',()=>{if(state==='pause')showScreen('pausescr');else showScreen('menu');});
-on('pauseCfg','click',()=>showScreen('configscreen'));
+on('pauseCfg','click',e=>{
+  if(performance.now()<pauseReadyAt){e.preventDefault();e.stopPropagation();return;}
+  showScreen('configscreen');
+});
 on('deadMenu','click',()=>{ quitToMenu(); });
 on('craftclose','click',closeCraft);
 
@@ -3072,14 +3199,20 @@ function updatePauseFSButton(){
   if(!btn) return;
   btn.textContent = isFullscreen() ? '⛶ SAIR DA TELA CHEIA' : '⛶ TELA CHEIA';
 }
+let pauseReadyAt=0; // ignore button presses for a short time after opening pause (mobile touch bleed)
 function pause(){
   if(state!=='play')return;
   closeWeaponWheel();
   state='pause';atkHeld=false;sprintHeld=false;joy.id=null;joy.active=false;joy.x=joy.y=0;
+  pauseReadyAt=performance.now()+450; // prevent the same touch from hitting CONTINUAR
   updatePauseFSButton();
   const e=$('pausescr');if(e)e.classList.remove('hide');
 }
-function resume(){if(state!=='pause')return;const e=$('pausescr');if(e)e.classList.add('hide');state='play';}
+function resume(){
+  if(state!=='pause')return;
+  if(performance.now()<pauseReadyAt) return; // still ignoring accidental tap
+  const e=$('pausescr');if(e)e.classList.add('hide');state='play';
+}
 function exitFullscreen(){
   try{
     if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
@@ -3110,8 +3243,14 @@ on('again','click',()=>{
   showScreen(null);const d=$('deadscr');if(d)d.classList.add('hide');
   startGame();
 });
-on('resume','click',resume);
-on('pauseFS','click',()=>{
+on('btnRespawn','click',()=>{
+  aud();
+  respawnPlayer();
+});
+on('resume','click',e=>{e.preventDefault();e.stopPropagation();resume();});
+on('pauseFS','click',e=>{
+  e.preventDefault();e.stopPropagation();
+  if(performance.now()<pauseReadyAt) return;
   aud();
   if(isFullscreen()){
     exitFullscreen();
@@ -3121,8 +3260,14 @@ on('pauseFS','click',()=>{
   setTimeout(updatePauseFSButton, 200);
   setTimeout(updatePauseFSButton, 600);
 });
-on('quitmenu','click',quitToMenu);
-on('bpause','pointerdown',e=>{e.preventDefault();pause();});
+on('quitmenu','click',e=>{
+  e.preventDefault();e.stopPropagation();
+  if(performance.now()<pauseReadyAt) return;
+  quitToMenu();
+});
+// Use pointerup so the finger is already lifted when the pause menu appears (avoids accidental CONTINUAR)
+on('bpause','pointerup',e=>{e.preventDefault();e.stopPropagation();aud();pause();});
+on('bpause','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
 on('bsound','pointerdown',e=>{
   e.preventDefault();muted=!muted;e.target.textContent=muted?'🔇':'🔊';
   if(muted){setAmbient(0);setRain(false);}else{setRain(weather==='rain');}
@@ -3147,7 +3292,8 @@ function frame(ts){
   requestAnimationFrame(frame);
   const dt=Math.min(.05,((ts-last)/1000)||0);
   last=ts;
-  if(state==='play')update(dt);
+  // Keep simulating world while dead in MP if teammate still alive (so they can keep playing)
+  if(state==='play' || (state==='dead' && MP.active && !MP.gameOver)) update(dt);
   if(P&&(state==='play'||state==='craft'||state==='pause'||state==='dead'))render();
 }
 requestAnimationFrame(frame);
