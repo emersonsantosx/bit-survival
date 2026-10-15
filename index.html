@@ -1654,11 +1654,14 @@ function attack(){
     const pellets=w.pellets||1;
     const spread=w.spread||0;
     let hits=0;
+    const shotTracers=[];
     for(let p=0;p<pellets;p++){
       const a=P.face+(Math.random()-.5)*spread;
       const res=castRay(P.x,P.y-5,a,w.range);
       const fx=Math.cos(a),fy=Math.sin(a);
-      tracers.push({x1:P.x+fx*9,y1:P.y-5+fy*9,x2:res.x,y2:res.y,t:w.heavy?.12:.07});
+      const tr={x1:P.x+fx*9,y1:P.y-5+fy*9,x2:res.x,y2:res.y,t:w.heavy?.12:.07};
+      tracers.push(tr);
+      shotTracers.push({x1:Math.round(tr.x1),y1:Math.round(tr.y1),x2:Math.round(tr.x2),y2:Math.round(tr.y2)});
       if(res.z){damageZ(res.z,w.dmg*(Math.random()<.15?2:1),fx*w.kb,fy*w.kb);hits++;}
     }
     // Forgiving aim assist: if no ray hit, damage nearest zombie in front cone (helps multiplayer lag)
@@ -1680,6 +1683,14 @@ function attack(){
     P.flash=.06;
     makeNoise(P.x,P.y,w.heavy?700:420);
     gunshot(w.heavy);shake=Math.max(shake,w.heavy?4:2);
+    // Sync gunfire visuals to the other player
+    if(MP.active){
+      sendEvt('shot', {
+        x:Math.round(P.x), y:Math.round(P.y),
+        face:+P.face.toFixed(2), weapon:P.weapon,
+        tracers:shotTracers
+      });
+    }
   } else if(w.melee){
     let tgt=null,bd=w.range+8;
     for(const z of zombies){if(z.dead)continue;const d=Math.hypot(z.x-P.x,z.y-P.y);if(d<bd){bd=d;tgt=z;}}
@@ -2001,7 +2012,7 @@ function update(dt){
   if(MP.active&&MP.connected&&MP.conn&&MP.conn.open){
     MP.syncT-=dt;
     if(MP.syncT<=0){
-      MP.syncT=MP.isHost?0.1:0.08;
+      MP.syncT=MP.isHost?0.08:0.07;
       try{
         if(MP.isHost){MP.conn.send(packSnapshot());MP.conn.send(packMyPlayer());}
         else{MP.conn.send(packMyPlayer());}
@@ -2014,6 +2025,8 @@ function update(dt){
       rp.x+=(rp.tx-rp.x)*Math.min(1,dt*8);
       rp.y+=(rp.ty-rp.y)*Math.min(1,dt*8);
     }
+    if(rp.flash) rp.flash=Math.max(0,rp.flash-dt);
+    if(rp.swing) rp.swing=Math.max(0,rp.swing-dt);
   }
 }
 
@@ -2070,7 +2083,13 @@ function craft(r){
     let cx=P.x+fx*22,cy=P.y+fy*22;
     if(solidPoint(cx,cy,4)){cx=P.x+10;cy=P.y+10;}
     campfires.push({x:cx,y:cy,t:0,flicker:0});
-    if(MP.active) sendEvt('campfireAdded', {x:cx, y:cy});
+    if(MP.active){
+      sendEvt('campfireAdded', {x:cx, y:cy});
+      // Host also force-pushes snapshot so guest sees the fire immediately
+      if(MP.isHost && MP.conn && MP.conn.open){
+        try{ MP.conn.send(packSnapshot()); }catch(e){}
+      }
+    }
     pushOut(P,P.r);
     toast('🔥 Fogueira acesa!');buildSound();boom(.3,.15,400);
     for(let i=0;i<15;i++)parts.push({x:cx,y:cy-4,vx:rnd(-30,30),vy:rnd(-70,-20),t:rnd(.5,1),c:'#ffb040'});
@@ -2162,7 +2181,9 @@ function applyWorld(w){
 
 /* ============ EVENTOS REPLICADOS ============ */
 function sendEvt(kind, data){
-  if(!MP.active || !MP.connected || state!=='play') return;
+  // Allow events during play AND craft (campfire is crafted in craft menu!)
+  if(!MP.active || !MP.connected) return;
+  if(state!=='play' && state!=='craft') return;
   if(!MP.conn || !MP.conn.open) return;
   try{ MP.conn.send({type:'evt', kind:kind, data:data}); }catch(e){}
 }
@@ -2207,6 +2228,30 @@ function handleEvt(kind, data){
     if(best && Number.isFinite(data.dmg)){
       damageZ(best, clamp(data.dmg,0,100), 0, 0, true);
     }
+  } else if(kind==='shot'){
+    // Show remote player's gunfire tracers + muzzle flash
+    if(Array.isArray(data.tracers)){
+      for(const t of data.tracers){
+        if(Number.isFinite(t.x1)&&Number.isFinite(t.y1)&&Number.isFinite(t.x2)&&Number.isFinite(t.y2)){
+          tracers.push({x1:t.x1,y1:t.y1,x2:t.x2,y2:t.y2,t:0.12});
+        }
+      }
+    }
+    let nearest=null, nd=80;
+    for(const id in remotePlayers){
+      const rp=remotePlayers[id];
+      if(!rp) continue;
+      const d=Math.hypot((rp.x||0)-(data.x||0),(rp.y||0)-(data.y||0));
+      if(d<nd){nd=d;nearest=rp;}
+    }
+    if(nearest){
+      nearest.flash=0.12;
+      nearest.swing=0.12;
+      if(Number.isFinite(data.face)) nearest.face=data.face;
+      if(data.weapon) nearest.weapon=data.weapon;
+    }
+    // Quiet gunshot so both hear each other fire
+    try{ gunshot(!!(data.weapon==='rifle'||data.weapon==='shotgun')); }catch(e){}
   }
 }
 
@@ -2441,7 +2486,16 @@ function applySnapshot(snap){
   if(!snap || typeof snap !== 'object' || !MP.active) return;
   // Items: Host is authority — replace guest list (events give immediate feedback)
   if(Array.isArray(snap.items)) items = snap.items;
-  if(Array.isArray(snap.campfires)) campfires = snap.campfires;
+  // Campfires: merge (never wipe guest-only events that arrived slightly earlier)
+  if(Array.isArray(snap.campfires)){
+    const merged = snap.campfires.map(c=>({x:c.x,y:c.y,t:c.t||0,flicker:c.flicker||0}));
+    for(const c of campfires){
+      if(!merged.some(m=>Math.abs(m.x-c.x)<8&&Math.abs(m.y-c.y)<8)){
+        merged.push({x:c.x,y:c.y,t:c.t||0,flicker:c.flicker||0});
+      }
+    }
+    campfires = merged;
+  }
   if(Array.isArray(snap.zombies)){
     const byId = new Map();
     for(const z of zombies) if(z.netId) byId.set(z.netId, z);
@@ -2512,16 +2566,41 @@ function applySnapshot(snap){
   if(Number.isFinite(snap.kills)) kills = snap.kills;
 }
 function packSnapshot(){
-  // Keep snapshots small: NO full trees/rocks (seed + damage events handle those)
+  // Prioritize zombies near host AND guests so both always see enemies around them
+  const anchors=[{x:P.x,y:P.y}];
+  for(const id in remotePlayers){
+    const rp=remotePlayers[id];
+    if(rp && rp.alive!==false && Number.isFinite(rp.x)) anchors.push({x:rp.x,y:rp.y});
+  }
+  const scored=[];
+  for(const z of zombies){
+    if(z.dead) continue;
+    let minD=1e9;
+    for(const a of anchors){
+      const d=Math.hypot(z.x-a.x,z.y-a.y);
+      if(d<minD) minD=d;
+    }
+    scored.push({z,minD});
+  }
+  scored.sort((a,b)=>a.minD-b.minD);
+  const zPack=scored.slice(0,55).map(({z})=>({
+    netId:z.netId,x:Math.round(z.x),y:Math.round(z.y),kind:z.kind|0,
+    face:+(z.face||0).toFixed(2),anim:+(z.anim||0).toFixed(1),hp:Math.round(z.hp),
+    moving:!!z.moving,skin:z.skin||'#7a9a5a',shirt:z.shirt||'#4a4a5a'
+  }));
+  // Items near players first
+  const iScored=items.map(it=>{
+    let minD=1e9;
+    for(const a of anchors) minD=Math.min(minD,Math.hypot(it.x-a.x,it.y-a.y));
+    return {it,minD};
+  });
+  iScored.sort((a,b)=>a.minD-b.minD);
+  const iPack=iScored.slice(0,80).map(({it})=>({t:it.t,x:Math.round(it.x),y:Math.round(it.y)}));
   return {type:'snapshot',day,dark,T,weather,weatherTimer,kills,
-    zombies:zombies.filter(z=>!z.dead).slice(0,80).map(z=>({
-      netId:z.netId,x:Math.round(z.x),y:Math.round(z.y),kind:z.kind,
-      face:+z.face.toFixed(2),anim:+(z.anim||0).toFixed(1),hp:Math.round(z.hp),
-      moving:!!z.moving,skin:z.skin,shirt:z.shirt
-    })),
-    items:items.slice(0,150).map(it=>({t:it.t,x:Math.round(it.x),y:Math.round(it.y)})),
+    zombies:zPack,
+    items:iPack,
     vehicles:vehicles.map(v=>({id:v.id,x:Math.round(v.x),y:Math.round(v.y),w:v.w,h:v.h,col:v.col,looted:!!v.looted,spd:+(v.spd||0).toFixed(1),face:+(v.face||0).toFixed(2)})),
-    campfires:campfires.map(c=>({x:c.x,y:c.y,t:c.t||0,flicker:+(c.flicker||0).toFixed(2)}))
+    campfires:campfires.map(c=>({x:Math.round(c.x),y:Math.round(c.y),t:c.t||0,flicker:+(c.flicker||0).toFixed(2)}))
   };
 }
 function packMyPlayer(){
@@ -2560,7 +2639,7 @@ function enterMultiplayerGame(isHost){
     }
     T=0; kills=0; shake=0; flash=0; spawnTimer=3; dark=0; day=1;
     atkHeld=false; sprintHeld=false; touchGas=0; touchSteer=0; stepT=0;
-    remotePlayers={}; MP.gameOver=false;
+    remotePlayers={}; MP.gameOver=false; MP.syncT=0;
     document.body.classList.toggle('nohud',!CFG.hud);
     buildInv(); updateHud(true);
     state='play';
@@ -2569,6 +2648,14 @@ function enterMultiplayerGame(isHost){
     const ds=$('deadscr'); if(ds) ds.classList.add('hide');
     toast(isHost?'Você é o HOST ('+MP.playerName+')':'Você é o CONVIDADO ('+MP.playerName+')');
     startAmbient(); startRain();
+    // Host: push zombies/campfires to guest immediately
+    if(isHost && MP.conn && MP.conn.open){
+      try{
+        MP.conn.send(packSnapshot());
+        MP.conn.send(packMyPlayer());
+        console.log('[Host] snapshot inicial enviado — zumbis:',zombies.length);
+      }catch(e){ console.error('[Host] falha snapshot inicial',e); }
+    }
     console.log('[MP] jogo iniciado. Host?',isHost);
   }catch(err){
     console.error('[enterMultiplayerGame]',err);
@@ -2907,7 +2994,7 @@ function render(){
       const rp=remotePlayers[id];
       if(!rp || rp.alive===false) continue;
       if(rp.x<b.x||rp.x>b.x+b.w||rp.y<b.y||rp.y>b.y+b.h) continue;
-      human(rp.x,rp.y,rp.face||0,{skin:'#e8b890',shirt:rp.isHost?'#8a3a3a':'#3a8a5a',pants:'#3a3a48',hair:'#3a2a1a',moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:0});
+      human(rp.x,rp.y,rp.face||0,{skin:'#e8b890',shirt:rp.isHost?'#8a3a3a':'#3a8a5a',pants:'#3a3a48',hair:'#3a2a1a',moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:rp.flash||0});
       const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
       ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
       ctx.fillStyle='#000';ctx.fillText(label,rp.x+1,rp.y-20);
@@ -2998,7 +3085,7 @@ function render(){
     }else if(e.k===5){
       const rp=e.o;
       if(rp.alive!==false){
-        human(rp.x,rp.y,rp.face||0,{skin:'#e8b890',shirt:rp.isHost?'#8a3a3a':'#3a8a5a',pants:'#3a3a48',hair:'#3a2a1a',moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:0});
+        human(rp.x,rp.y,rp.face||0,{skin:'#e8b890',shirt:rp.isHost?'#8a3a3a':'#3a8a5a',pants:'#3a3a48',hair:'#3a2a1a',moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:rp.flash||0});
         const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
         ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
         ctx.fillStyle='#000';ctx.fillText(label,rp.x+1,rp.y-20);
@@ -3370,7 +3457,8 @@ function frame(ts){
   const dt=Math.min(.05,((ts-last)/1000)||0);
   last=ts;
   // Keep simulating world while dead in MP if teammate still alive (so they can keep playing)
-  if(state==='play' || (state==='dead' && MP.active && !MP.gameOver)) update(dt);
+  // Keep world + network sync running during craft/dead-wait in multiplayer
+  if(state==='play' || (MP.active && !MP.gameOver && (state==='craft' || state==='dead'))) update(dt);
   if(P&&(state==='play'||state==='craft'||state==='pause'||state==='dead'))render();
 }
 requestAnimationFrame(frame);
