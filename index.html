@@ -38,6 +38,22 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
 #pick{right:118px;bottom:26px;width:64px;height:64px}
 #run{right:28px;bottom:122px;width:64px;height:64px}
 #swap{right:104px;bottom:104px;width:52px;height:52px}
+/* Seletor de armas: painel estável, compatível com mouse e toque */
+#weapon-wheel{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.72);touch-action:pan-y;pointer-events:auto}
+#weapon-wheel.hide{display:none!important}
+.weapon-wheel-ring{position:relative;width:min(92vw,430px);max-height:78vh;overflow:auto;border:2px solid rgba(159,214,138,.8);border-radius:16px;background:linear-gradient(160deg,rgba(27,38,25,.99),rgba(8,12,8,.99));box-shadow:0 0 36px #000; padding:58px 14px 16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;align-content:start}
+.weapon-wheel-title{position:absolute;left:12px;right:12px;top:12px;text-align:center;color:#d9e8b0;font-size:13px;line-height:1.5;pointer-events:none;text-shadow:1px 1px #000}
+.weapon-option{position:relative;width:100%;min-height:72px;border:1px solid rgba(255,255,255,.3);border-radius:10px;background:rgba(15,22,14,.98);color:#eee9d0;font:bold 11px "Courier New",monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px 4px;box-shadow:0 2px 8px #0008;touch-action:manipulation;cursor:pointer}
+.weapon-option .weapon-icon{font-size:24px;line-height:1.1}.weapon-option.selected{border:2px solid #ffd84a;background:rgba(75,82,35,.98);color:#ffe98a;box-shadow:0 0 15px rgba(255,216,74,.4)}
+#weapon-wheel-hint{grid-column:1/-1;text-align:center;color:#eee9d0;font-size:11px;background:rgba(0,0,0,.35);padding:8px;border-radius:8px;pointer-events:none}
+@media(max-width:420px){.weapon-wheel-ring{grid-template-columns:repeat(2,minmax(0,1fr));padding:58px 10px 12px;gap:7px}.weapon-option{min-height:64px;font-size:10px}.weapon-option .weapon-icon{font-size:22px}}
+.craft-tabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:0 0 8px}
+.craft-tab{background:#252c22;border:1px solid #65735a;color:#dfe8c8;border-radius:7px;padding:6px 9px;font:bold 10px "Courier New",monospace}
+.craft-tab.active{background:#3d7a2e;border-color:#9fd68a;color:#fff}
+.craft-row .recipe-icon{font-size:22px;flex:0 0 28px;text-align:center}
+.craft-row .status{font-size:10px;color:#9fd68a;margin-top:3px}
+.craft-row.no .status{color:#e5a39a}
+@media(max-width:420px){.weapon-option{width:68px;min-height:58px;font-size:9px}.weapon-option .weapon-icon{font-size:20px}#weapon-wheel-hint{bottom:4%;font-size:10px}.weapon-wheel-title{font-size:10px}}
 
 #veh-hud{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:5}
 .veh-btn{position:absolute;pointer-events:auto;background:rgba(20,20,20,.75);border:2px solid rgba(255,255,255,.6);color:#fff;font-family:inherit;font-weight:bold;font-size:11px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -177,7 +193,13 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
   <button class="btn" id="atk">ATACAR</button>
   <button class="btn" id="pick">PEGAR</button>
   <button class="btn" id="run">CORRER</button>
-  <button class="btn" id="swap">TROCAR<br>ARMA</button>
+  <button class="btn" id="swap" aria-label="Trocar arma">TROCAR<br>ARMA</button>
+  <div id="weapon-wheel" class="hide" aria-label="Seletor de armas">
+    <div class="weapon-wheel-ring" id="weapon-wheel-ring">
+      <div class="weapon-wheel-title" id="weapon-wheel-title">ARSENAL<br><span style="color:#aaa;font-size:10px">toque na arma para equipar</span></div>
+    </div>
+    <div id="weapon-wheel-hint">Toque em qualquer arma para equipá-la</div>
+  </div>
 
   <div id="veh-hud" class="hide">
     <button class="veh-btn" id="v-up">▲<br>ACELERAR</button>
@@ -326,6 +348,11 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
         <span>🪵 <b id="cw">0</b></span>
         <span>🪨 <b id="cs">0</b></span>
       </div>
+    </div>
+    <div class="craft-tabs" id="craft-tabs">
+      <button class="craft-tab active" data-craft-filter="all">TODOS</button>
+      <button class="craft-tab" data-craft-filter="weapon">ARMAS</button>
+      <button class="craft-tab" data-craft-filter="utility">UTILIDADES</button>
     </div>
     <div class="ui-scroll">
       <div id="craftlist" class="craft-grid"></div>
@@ -1080,7 +1107,7 @@ function newGame(){
     if(!plane){throw new Error('plane não gerado');}
     P={x:plane.x+70,y:plane.y,r:5,hp:100,food:85,water:85,stam:100,
       face:Math.PI/2,moving:false,sprint:false,exhausted:false,cd:0,swing:0,flash:0,bleed:false,dead:false,
-      weapon:'fists',melee:null,firearms:{},ammo:0,
+      weapon:'fists',melee:null,meleeWeapons:[],firearms:{},ammo:0,
       inv:[{t:'bandage',n:1},{t:'water',n:1}],
       walk:0,inside:null,inVehicle:null};
     pushOut(P,P.r);
@@ -1171,15 +1198,51 @@ function useItem(i){
 }
 function weaponList(){
   const l=['fists'];
-  if(P.melee)l.push(P.melee);
-  for(const k in P.firearms)if(P.firearms[k])l.push(k);
+  // Compatibilidade com saves/estados antigos que só guardavam uma arma branca.
+  const owned=Array.isArray(P?.meleeWeapons)?P.meleeWeapons:[];
+  for(const k of owned)if(WEAPONS[k]?.melee&&k!=='fists'&&!l.includes(k))l.push(k);
+  if(P?.melee&&WEAPONS[P.melee]?.melee&&!l.includes(P.melee))l.push(P.melee);
+  for(const k in (P?.firearms||{}))if(P.firearms[k]&&WEAPONS[k]?.firearm&&!l.includes(k))l.push(k);
   return l;
 }
+function addMeleeWeapon(key){
+  if(!P||!WEAPONS[key]?.melee||key==='fists')return;
+  if(!Array.isArray(P.meleeWeapons))P.meleeWeapons=[];
+  if(!P.meleeWeapons.includes(key))P.meleeWeapons.push(key);
+  // P.melee fica como campo legado, mas deixa de ser o único espaço para arma branca.
+  P.melee=key;
+}
 function cycleWeapon(){
-  if(state!=='play')return;
-  const l=weaponList();
-  P.weapon=l[(l.indexOf(P.weapon)+1)%l.length];
-  beep(300,.05,'square',.04);
+  if(state!=='play'||!P)return;
+  const l=weaponList();if(!l.length)return;
+  const i=l.indexOf(P.weapon);P.weapon=l[(Math.max(-1,i)+1)%l.length];
+  beep(300,.05,'square',.04);updateWeaponHud();
+  toast('Arma: '+(WEAPONS[P.weapon]?.n||'Mãos'));
+}
+const WEAPON_ICON={fists:'👊',bat:'🏏',axe:'🪓',pickaxe:'⛏️',stoneaxe:'🪓',sword:'⚔️',spear:'🔱',pistol:'🔫',smg:'🔫',shotgun:'💥',rifle:'🎯'};
+let weaponWheelOpen=false;
+function updateWeaponHud(){const el=$('wpn');if(el)el.textContent=(WEAPONS[P.weapon]?.n||'Mãos');}
+function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
+function chooseWeapon(key){if(!P||!weaponList().includes(key))return;P.weapon=key;updateWeaponHud();beep(360,.06,'square',.045);toast('Arma equipada: '+(WEAPONS[key]?.n||key));closeWeaponWheel();}
+function buildWeaponWheel(){
+  const root=$('weapon-wheel'),ring=$('weapon-wheel-ring');if(!root||!ring||!P)return;
+  ring.querySelectorAll('.weapon-option,#weapon-wheel-hint').forEach(e=>e.remove());
+  const list=weaponList();
+  const title=$('weapon-wheel-title');if(title)title.innerHTML='ARSENAL · '+list.length+' ARMAS<br><span style="color:#aaa;font-size:10px">toque em uma arma para equipar</span>';
+  list.forEach(key=>{
+    const w=WEAPONS[key];if(!w)return;
+    const btn=document.createElement('button');btn.type='button';
+    btn.className='weapon-option'+(key===P.weapon?' selected':'');btn.dataset.weapon=key;
+    btn.innerHTML='<span class="weapon-icon">'+(WEAPON_ICON[key]||'⚔️')+'</span><span>'+w.n+'</span>';
+    btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();chooseWeapon(key);});
+    ring.appendChild(btn);
+  });
+  const hint=document.createElement('div');hint.id='weapon-wheel-hint';hint.textContent='Toque em uma arma para equipar. Toque fora para fechar.';ring.appendChild(hint);
+  root.classList.remove('hide');weaponWheelOpen=true;
+}
+function openWeaponWheel(){
+  if(state!=='play'||!P||P.inVehicle||weaponWheelOpen)return;
+  aud();buildWeaponWheel();
 }
 function nearestItem(){
   let b=null,bd=24;
@@ -1228,7 +1291,7 @@ function pickup(){
       if(found==='ammo'){const n=rint(5,12);P.ammo+=n;toast('+'+n+' munição');}
       else if(found==='pistol'){
         if(P.firearms.pistol){P.ammo+=6;toast('+6 munição');}
-        else{P.firearms.pistol=true;P.ammo+=6;P.weapon='pistol';toast('Pegou: Pistola (+6 munição)');}
+        else{P.firearms.pistol=true;P.ammo+=6;P.weapon='pistol';updateWeaponHud();toast('Pegou: Pistola (+6 munição)');}
       }
       else {if(!addItem(found)){toast('Mochila cheia');return;}toast('Achou: '+ITEMS[found].n);}
       beep(620,.12,'square',.05);
@@ -1255,10 +1318,10 @@ function pickup(){
   if(t==='ammo'){const n=rint(5,10);P.ammo+=n;toast('+'+n+' munição');}
   else if(t==='pistol'||t==='smg'||t==='shotgun'||t==='rifle'){
     if(P.firearms[t]){P.ammo+=8;toast('+8 munição ('+ITEMS[t].n+' já equipada)');}
-    else{P.firearms[t]=true;P.ammo+=8;P.weapon=t;toast('Pegou: '+ITEMS[t].n+' (+8 munição)');}
+    else{P.firearms[t]=true;P.ammo+=8;P.weapon=t;updateWeaponHud();toast('Pegou: '+ITEMS[t].n+' (+8 munição)');}
   }
   else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='sword'||t==='spear'||t==='stoneaxe'){
-    P.melee=t;P.weapon=t;toast('Pegou: '+ITEMS[t].n);
+    addMeleeWeapon(t);P.weapon=t;updateWeaponHud();toast('Pegou: '+ITEMS[t].n+' (arsenal: '+weaponList().length+')');
   }
   else {
     if(!addItem(t)){toast('Mochila cheia');return;}
@@ -1271,7 +1334,12 @@ function pickup(){
 function makeNoise(x,y,r){
   for(const z of zombies){
     if(z.dead)continue;
-    if(Math.hypot(z.x-x,z.y-y)<r){z.alert=7;z.tx=x;z.ty=y;}
+    const d=Math.hypot(z.x-x,z.y-y);
+    if(d<r){
+      z.alert=Math.max(z.alert||0,7);z.tx=x+rnd(-12,12);z.ty=y+rnd(-12,12);z.heardAt=T||0;
+      // Infectados próximos reagem em cadeia ao ruído, sem revelar a posição exata do jogador.
+      if(d<r*.48){for(const other of zombies){if(other===z||other.dead)continue;if(Math.hypot(other.x-z.x,other.y-z.y)<95){other.alert=Math.max(other.alert||0,4);other.tx=x+rnd(-24,24);other.ty=y+rnd(-24,24);}}}
+    }
   }
 }
 function hurt(n,bleedChance){
@@ -1282,6 +1350,7 @@ function hurt(n,bleedChance){
   if(P.hp<=0)die();
 }
 function die(){
+  closeWeaponWheel();
   P.hp=0;P.dead=true;state='dead';atkHeld=false;touchGas=0;touchSteer=0;
   $('veh-hud').classList.add('hide');
   $('inv').classList.remove('hide');$('atk').classList.remove('hide');
@@ -1471,8 +1540,11 @@ function updateZ(z,dt){
   }
   const dx=P.x-z.x,dy=P.y-z.y,d=Math.hypot(dx,dy);
   let det=95;
-  if(P.sprint&&P.moving)det=170;else if(!P.moving)det=55;
-  if(dark>.5)det*=.75;
+  if(P.sprint&&P.moving)det=185;else if(!P.moving)det=52;
+  // Ruídos recentes e escuridão mudam a percepção: correr chama atenção, mas a noite reduz visão.
+  if(dark>.5)det*=.72;
+  if(z.kind===1)det*=1.18; // rápidos percebem movimento a maior distância
+  if(z.kind===5)det*=1.12; // infectados especiais ficam atentos ao redor
   if(z.crawler)det*=.7;
   if(z.screams){
     z.screamT-=dt;
@@ -1494,10 +1566,14 @@ function updateZ(z,dt){
   z.losT-=dt;
   if(z.losT<=0){z.losT=.3;z.seen=d<det*1.2?losClear(z.x,z.y-5,P.x,P.y-5):false;}
   z.lock=Math.max(0,z.lock-dt);
-  if(z.seen&&d<det)z.lock=4;
+  if(z.seen&&d<det)z.lock=Math.max(z.lock,4);
+  // Se perdeu o alvo, o infectado procura por alguns segundos na última posição vista.
+  if(z.lock>0&&d>det*2&&!z.lastSeen){z.lastSeen={x:P.x,y:P.y};z.searchT=3.2;}
+  if(z.seen)z.lastSeen={x:P.x,y:P.y};
   let mode='wander';
   if(z.lock>0&&d<det*2)mode='chase';
   else if(z.alert>0)mode='noise';
+  else if(z.lastSeen&&z.searchT>0)mode='search';
   let tx,ty,sp;
   if(mode==='chase'){
     if(z.ranged&&d<80){
@@ -1505,8 +1581,11 @@ function updateZ(z,dt){
       tx=z.x+Math.cos(a)*100;ty=z.y+Math.sin(a)*100;sp=z.spd;
     }else{tx=P.x;ty=P.y;sp=pointInLake(z.x,z.y)?z.spd*.6:z.spd;}
   }else if(mode==='noise'){
-    tx=z.tx;ty=z.ty;sp=z.spd*.9;
-    if(Math.hypot(tx-z.x,ty-z.y)<12)z.alert=0;
+    tx=z.tx;ty=z.ty;sp=z.spd*.92;
+    if(Math.hypot(tx-z.x,ty-z.y)<12){z.alert=0;z.lastSeen={x:z.tx,y:z.ty};z.searchT=2.4;}
+  }else if(mode==='search'){
+    z.searchT=Math.max(0,(z.searchT||0)-dt);tx=z.lastSeen.x;ty=z.lastSeen.y;sp=z.spd*.68;
+    if(z.searchT<=0)z.lastSeen=null;
   }else{
     z.wt-=dt;
     if(z.wt<=0){
@@ -1517,6 +1596,8 @@ function updateZ(z,dt){
     tx=z.tx;ty=z.ty;sp=14;
     if(Math.hypot(tx-z.x,ty-z.y)<6)sp=0;
   }
+  // À noite, os infectados ficam mais rápidos, sem alterar os atributos-base.
+  if(dark>.58 && sp>0) sp*=1+Math.min(.22,(dark-.58)*.55);
   z.moving=sp>0;
   if(sp>0){
     const a=Math.atan2(ty-z.y,tx-z.x);
@@ -1572,7 +1653,10 @@ function update(dt){
     for(const wp of weatherParticles){wp.x+=wp.vx*dt;wp.y+=wp.vy*dt;wp.t-=dt;}
     weatherParticles=weatherParticles.filter(wp=>wp.t>0&&wp.y<camY+H/Z+20);
   }
-  setAmbient(dark>.3?.04:.025);
+  // Ambiente dinámico: el viento grave aumenta de noche y se atenúa con lluvia/nieve.
+  const nightMix=clamp((dark-.12)/.75,0,1);
+  const weatherMix=weather==='rain'?.018:(weather==='snow'?.008:0);
+  setAmbient(.018+nightMix*.075+weatherMix);
   updateP(dt);
   P.cd=Math.max(0,P.cd-dt);P.swing=Math.max(0,P.swing-dt);P.flash=Math.max(0,P.flash-dt);
   if(atkHeld&&!P.dead)attack();
@@ -1608,8 +1692,9 @@ function update(dt){
     zombies=zombies.filter(z=>!z.dead);
     spawnTimer-=dt;
     if(spawnTimer<=0){
-      spawnTimer=3;
-      const cap=Math.min(125,55+(day-1)*8)+Math.round(dark*15);
+      // Noite: mais pressão de spawn; durante o dia, mantém o ritmo original.
+      spawnTimer=dark>.58?2.15:3;
+      const cap=Math.min(125,55+(day-1)*8)+Math.round(dark*22);
       if(zombies.length<cap){
         for(let k=0;k<12;k++){
           const a=rnd(0,6.283),d=rnd(380,560);
@@ -1692,11 +1777,14 @@ function updateHud(force){
 }
 
 /* ============ CRAFTING ============ */
+let craftFilter='all';
 function canCraft(r){for(const k in r.need)if(countInv(k)<r.need[k])return false;return true;}
 function craft(r){
   if(!canCraft(r)){toast('Recursos insuficientes');beep(120,.1,'square',.05);return;}
-  for(const k in r.need)removeInv(k,r.need[k]);
   const out=r.out;
+  // Não consumir recursos se uma futura receita produzir item e a mochila estiver cheia.
+  if(out!=='campfire'&&!['pickaxe','stoneaxe','sword','spear'].includes(out)&&P.inv.length>=MAX_SLOTS&&!P.inv.some(slot=>slot.t===out)){toast('Mochila cheia');beep(120,.1,'square',.05);return;}
+  for(const k in r.need)removeInv(k,r.need[k]);
   if(out==='campfire'){
     const fx=Math.cos(P.face),fy=Math.sin(P.face);
     let cx=P.x+fx*22,cy=P.y+fy*22;
@@ -1706,8 +1794,8 @@ function craft(r){
     toast('🔥 Fogueira acesa!');buildSound();boom(.3,.15,400);
     for(let i=0;i<15;i++)parts.push({x:cx,y:cy-4,vx:rnd(-30,30),vy:rnd(-70,-20),t:rnd(.5,1),c:'#ffb040'});
   }else if(out==='pickaxe'||out==='stoneaxe'||out==='sword'||out==='spear'){
-    P.melee=out;P.weapon=out;
-    toast('Fabricou: '+ITEMS[out].n+'! Equipada.');buildSound();
+    addMeleeWeapon(out);P.weapon=out;updateWeaponHud();
+    toast('Fabricou: '+ITEMS[out].n+'! Arma adicionada ao arsenal.');buildSound();
   }else{
     if(!addItem(out)){toast('Mochila cheia');return;}
     toast('Fabricou: '+ITEMS[out].n);buildSound();
@@ -1721,16 +1809,20 @@ function refreshCraft(){
   const el=$('craftlist');if(!el)return;
   el.innerHTML='';
   for(const r of RECIPES){
+    const isWeapon=['pickaxe','stoneaxe','sword','spear'].includes(r.out),category=isWeapon?'weapon':'utility';
+    if(craftFilter!=='all'&&craftFilter!==category)continue;
     const ok=canCraft(r);
     const row=document.createElement('div');
     row.className='craft-row '+(ok?'can':'no');
-    const cost=Object.entries(r.need).map(([k,v])=>ITEMS[k].e+' '+v).join('  ');
-    row.innerHTML='<div class="info"><div class="name">'+r.label+'</div><div class="cost">'+r.desc+'</div><div class="cost">Custo: '+(cost||'—')+'</div></div>';
+    const cost=Object.entries(r.need).map(([k,v])=>((ITEMS[k]&&ITEMS[k].e)||'')+' '+v+' '+(ITEMS[k]?.n||k)).join(' · ');
+    const icon=isWeapon?(WEAPON_ICON[r.out]||'⚔️'):'🔥';
+    row.innerHTML='<div class="recipe-icon">'+icon+'</div><div class="info"><div class="name">'+r.label+'</div><div class="cost">'+r.desc+'</div><div class="cost">Custo: '+(cost||'—')+'</div><div class="status">'+(ok?'✓ Recursos suficientes':'Faltam recursos')+'</div></div>';
     const btn=document.createElement('button');
     btn.textContent='CRIAR';btn.disabled=!ok;
     btn.onclick=()=>{aud();craft(r);};
     row.appendChild(btn);el.appendChild(row);
   }
+  const tabs=$('craft-tabs');if(tabs)tabs.querySelectorAll('[data-craft-filter]').forEach(b=>b.classList.toggle('active',b.dataset.craftFilter===craftFilter));
 }
 
 /* ============ SINCRONIZAÇÃO DE MUNDO ============ */
@@ -1774,12 +1866,13 @@ function sendEvt(kind, data){
   try{ MP.conn.send({type:'evt', kind:kind, data:data}); }catch(e){}
 }
 function handleEvt(kind, data){
+  if(!data || typeof data!=='object') return;
   if(kind==='treeDmg'){
     const t = trees.find(t => t.x===data.x && t.y===data.y);
-    if(t){ t.hp -= data.dmg; if(t.hp<=0){ const i=trees.indexOf(t); if(i>=0) trees.splice(i,1); } }
+    if(t && Number.isFinite(data.dmg)){ t.hp -= clamp(data.dmg,0,10); if(t.hp<=0){ const i=trees.indexOf(t); if(i>=0) trees.splice(i,1); } }
   } else if(kind==='rockDmg'){
     const r = rocks.find(r => r.x===data.x && r.y===data.y);
-    if(r){ r.hp -= data.dmg; if(r.hp<=0){ const i=rocks.indexOf(r); if(i>=0) rocks.splice(i,1); } }
+    if(r && Number.isFinite(data.dmg)){ r.hp -= clamp(data.dmg,0,10); if(r.hp<=0){ const i=rocks.indexOf(r); if(i>=0) rocks.splice(i,1); } }
   } else if(kind==='itemRemoved'){
     // Remove item próximo à posição
     for(let i=items.length-1;i>=0;i--){
@@ -1798,8 +1891,8 @@ function handleEvt(kind, data){
       const d = Math.hypot(z.x-data.x, z.y-data.y);
       if(d<bd){bd=d; best=z;}
     }
-    if(best){
-      best.hp -= data.dmg;
+    if(best && Number.isFinite(data.dmg)){
+      best.hp -= clamp(data.dmg,0,100);
       if(best.hp<=0){ best.dead = true; kills++; }
     }
   } else if(kind==='spawnZ'){
@@ -1829,7 +1922,7 @@ function mpHostStart(){
   const wrap=$('hostCodeWrap');if(wrap)wrap.classList.remove('hide');
   setStatus('hostStatus','Carregando motor P2P...');
   loadPeerJS(err=>{
-    if(err||typeof Peer==='undefined'){setStatus('hostStatus','Falha ao carregar P2P',true);return;}
+    if(err||typeof Peer==='undefined'){MP.active=false;MP.isHost=false;setStatus('hostStatus','Falha ao carregar P2P',true);return;}
     try{MP.peer=new Peer(MP.roomCode,{debug:1});}
     catch(e){setStatus('hostStatus','Erro: '+e.message,true);return;}
     MP.peer.on('open',id=>{MP.myId=id;setStatus('hostStatus','Sala criada! Aguardando jogador...');});
@@ -1848,7 +1941,7 @@ function mpJoinStart(code){
   MP.isHost=false;MP.active=true;MP.roomCode='MINISURV-'+code.toUpperCase();
   setStatus('joinStatus','Carregando motor P2P...');
   loadPeerJS(err=>{
-    if(err||typeof Peer==='undefined'){setStatus('joinStatus','Falha ao carregar P2P',true);return;}
+    if(err||typeof Peer==='undefined'){MP.active=false;MP.isHost=false;setStatus('joinStatus','Falha ao carregar P2P',true);return;}
     try{MP.peer=new Peer({debug:1});}
     catch(e){setStatus('joinStatus','Erro: '+e.message,true);return;}
     MP.peer.on('open',id=>{
@@ -1886,19 +1979,29 @@ function setupConn(conn,isHostSide){
     }
   });
   conn.on('data',data=>handleNetData(data,isHostSide));
-  conn.on('close',()=>{MP.connected=false;if(state==='play'){toast('Conexão perdida');setTimeout(quitToMenu,1200);}});
+  conn.on('close',()=>{
+    MP.connected=false;
+    if(MP.conn===conn) MP.conn=null;
+    if(state==='play' && MP.active){
+      toast('Conexão perdida');
+      const closedConn=conn;
+      setTimeout(()=>{if(MP.active && !MP.connected && (!MP.conn || MP.conn===closedConn)) quitToMenu();},1200);
+    }
+  });
   conn.on('error',err=>console.error(err));
 }
 function handleNetData(data,isHostSide){
   MP.lastRecv=performance.now();
   if(!data||!data.type)return;
   if(data.type==='worldInit'){
-    applyWorld(data.world);
+    if(!isHostSide && data.world) applyWorld(data.world);
   } else if(data.type==='start'){
     if(!isHostSide) startMultiplayerGame(data.map, 0, false);
   } else if(data.type==='evt'){
-    handleEvt(data.kind, data.data);
+    // Ignore unknown/malformed event payloads. Host state is reconciled by snapshots.
+    if(typeof data.kind==='string' && data.data && typeof data.data==='object') handleEvt(data.kind, data.data);
   } else if(data.type==='player'){
+    if(typeof data.id!=='string' || !Number.isFinite(data.x) || !Number.isFinite(data.y)) return;
     const rp=remotePlayers[data.id]||{};
     rp.id=data.id;rp.name=data.name||'Jogador';
     rp.tx=data.x;rp.ty=data.y;
@@ -1906,7 +2009,7 @@ function handleNetData(data,isHostSide){
     rp.face=data.face;rp.moving=data.moving;rp.sprint=data.sprint;
     rp.weapon=data.weapon;rp.swing=data.swing;rp.hp=data.hp;
     rp.alive=data.alive!==false;rp.inVehicle=data.inVehicle||false;
-    rp.isHost=isHostSide;rp.anim=(rp.anim||0)+(data.moving?0.25:0);
+    rp.isHost=!isHostSide;rp.anim=(rp.anim||0)+(data.moving?0.25:0);
     remotePlayers[data.id]=rp;
     // Sincroniza veículo conduzido pelo outro jogador
     if(data.vehicleId !== undefined){
@@ -1924,49 +2027,58 @@ function handleNetData(data,isHostSide){
   }
 }
 function applySnapshot(snap){
-  if(snap.zombies){
-    zombies=snap.zombies.map(sz=>{
+  if(!snap || typeof snap !== 'object') return;
+  // O host é a autoridade para o mundo compartilhado. Mantém os objetos existentes
+  // quando possível para reduzir saltos visuais entre snapshots.
+  if(Array.isArray(snap.trees)) trees = snap.trees;
+  if(Array.isArray(snap.rocks)) rocks = snap.rocks;
+  if(Array.isArray(snap.items)) items = snap.items;
+  if(Array.isArray(snap.campfires)) campfires = snap.campfires;
+  if(Array.isArray(snap.zombies)){
+    const old = zombies;
+    zombies = snap.zombies.map((sz,i)=>{
       const t=ZTYPES[sz.kind]||ZTYPES[0];
+      const prev=old[i];
       return {x:sz.x,y:sz.y,kind:sz.kind,face:sz.face||0,anim:sz.anim||0,hp:sz.hp,
-        max:t.hp,r:t.r,dmg:t.dmg,spd:t.spd,moving:sz.moving,skin:sz.skin,shirt:sz.shirt,
+        max:t.hp,r:t.r,dmg:t.dmg,spd:t.spd,moving:!!sz.moving,skin:sz.skin,shirt:sz.shirt,
         crawler:t.crawler,ranged:t.ranged,range:t.range,screams:t.screams,
-        dead:false,hit:0,vx:0,vy:0,alert:0,lock:0,lunge:0,cd:0,losT:0,seen:false,wt:0,tx:sz.x,ty:sz.y};
+        dead:false,hit:prev?prev.hit:0,vx:0,vy:0,alert:0,lock:0,lunge:0,cd:prev?prev.cd:0,
+        losT:0,seen:false,wt:0,tx:sz.x,ty:sz.y};
     });
   }
-  if(snap.items) items = snap.items;
-  if(snap.campfires) campfires = snap.campfires;
-  // Veículos: atualiza por ID, preservando o que o guest está dirigindo
-  if(snap.vehicles){
-    const byId = {};
-    for(const v of vehicles) byId[v.id] = v;
+  if(Array.isArray(snap.vehicles)){
+    const byId = new Map(vehicles.filter(v=>v.id!==undefined).map(v=>[v.id,v]));
     const newList = [];
     for(const sv of snap.vehicles){
-      let v = byId[sv.id];
-      if(!v){
-        v = {id:sv.id, x:sv.x, y:sv.y, w:sv.w, h:sv.h, col:sv.col, looted:sv.looted, spd:sv.spd||0, face:sv.face||0};
-      } else if(v !== P.inVehicle){
-        v.x = sv.x; v.y = sv.y; v.face = sv.face||0; v.spd = sv.spd||0;
-        v.looted = sv.looted; v.col = sv.col; v.w = sv.w; v.h = sv.h;
+      if(!sv || sv.id===undefined) continue;
+      let v = byId.get(sv.id);
+      if(!v) v = {id:sv.id,x:sv.x,y:sv.y,w:sv.w,h:sv.h,col:sv.col,looted:!!sv.looted,spd:sv.spd||0,face:sv.face||0};
+      if(v !== P?.inVehicle){
+        v.x=sv.x;v.y=sv.y;v.face=sv.face||0;v.spd=sv.spd||0;
+        v.looted=!!sv.looted;v.col=sv.col;v.w=sv.w;v.h=sv.h;
       }
       newList.push(v);
     }
     vehicles = newList;
-    if(P.inVehicle && !vehicles.includes(P.inVehicle)) P.inVehicle = null;
+    if(P?.inVehicle && !vehicles.some(v=>v.id===P.inVehicle.id)) P.inVehicle=null;
   }
-  if(snap.P && P){
-    P.hp=snap.P.hp;P.food=snap.P.food;P.water=snap.P.water;P.stam=snap.P.stam;
+  if(Number.isFinite(snap.day)) day=clamp(snap.day,1,9999);
+  if(Number.isFinite(snap.dark)) dark=clamp(snap.dark,0,1);
+  // Campos opcionales para mantener compatibilidad con clientes anteriores.
+  if(Number.isFinite(snap.T)) T=Math.max(0,snap.T);
+  if(snap.weather==='none'||snap.weather==='rain'||snap.weather==='snow'){
+    if(weather!==snap.weather){weather=snap.weather;setRain(weather==='rain');}
   }
-  if(snap.day!==undefined) day=snap.day;
-  if(snap.dark!==undefined) dark=snap.dark;
+  if(Number.isFinite(snap.weatherTimer)) weatherTimer=clamp(snap.weatherTimer,0,300);
 }
 function packSnapshot(){
-  return {type:'snapshot',
-    P:{hp:P.hp,food:P.food,water:P.water,stam:P.stam},
-    day,dark,
+  return {type:'snapshot',day,dark,T,weather,weatherTimer,
+    trees:trees.map(t=>({x:t.x,y:t.y,k:t.k,hp:t.hp})),
+    rocks:rocks.map(r=>({x:r.x,y:r.y,k:r.k,hp:r.hp})),
     zombies:zombies.slice(0,60).map(z=>({x:Math.round(z.x),y:Math.round(z.y),kind:z.kind,face:+z.face.toFixed(2),anim:+z.anim.toFixed(1),hp:Math.round(z.hp),moving:z.moving,skin:z.skin,shirt:z.shirt})),
-    items:items.slice(0,120).map(it=>({t:it.t,x:Math.round(it.x),y:Math.round(it.y)})),
-    vehicles:vehicles.map(v=>({x:Math.round(v.x),y:Math.round(v.y),w:v.w,h:v.h,col:v.col,looted:v.looted,spd:+v.spd.toFixed(1),face:+v.face.toFixed(2)})),
-    campfires:campfires.map(c=>({x:Math.round(c.x),y:Math.round(c.y),flicker:+(c.flicker||0).toFixed(2)}))
+    items:items.slice(0,200).map(it=>({t:it.t,x:Math.round(it.x),y:Math.round(it.y)})),
+    vehicles:vehicles.map(v=>({id:v.id,x:Math.round(v.x),y:Math.round(v.y),w:v.w,h:v.h,col:v.col,looted:!!v.looted,spd:+(v.spd||0).toFixed(1),face:+(v.face||0).toFixed(2)})),
+    campfires:campfires.map(c=>({x:c.x,y:c.y,t:c.t||0,flicker:+(c.flicker||0).toFixed(2)}))
   };
 }
 function packMyPlayer(){
@@ -1996,7 +2108,7 @@ function startMultiplayerGame(map,seed,isHost){
     if(!plane) throw new Error('mundo não carregado');
     P={x:plane.x+70,y:plane.y,r:5,hp:100,food:85,water:85,stam:100,
       face:Math.PI/2,moving:false,sprint:false,exhausted:false,cd:0,swing:0,flash:0,bleed:false,dead:false,
-      weapon:'fists',melee:null,firearms:{},ammo:0,
+      weapon:'fists',melee:null,meleeWeapons:[],firearms:{},ammo:0,
       inv:[{t:'bandage',n:1},{t:'water',n:1}],
       walk:0,inside:null,inVehicle:null};
     if(!isHost){P.x+=40;P.y+=40;}
@@ -2595,7 +2707,8 @@ on('pauseCfg','click',()=>showScreen('configscreen'));
 on('deadMenu','click',()=>{
   showScreen('menu');$('hud').classList.add('hide');state='menu';
   setAmbient(0);setRain(false);document.body.classList.remove('nohud');
-  if(MP.peer){try{MP.peer.destroy();}catch(e){}MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;}
+  if(MP.peer){try{MP.peer.destroy();}catch(e){}}
+  MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;MP.isHost=false;MP.roomCode='';MP.myId=null;MP.syncT=0;
   remotePlayers={};
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#0b100b';ctx.fillRect(0,0,W,H);
 });
@@ -2633,7 +2746,42 @@ function holdBtn(id,down,up){
 holdBtn('atk',()=>{atkHeld=true;attack();},()=>{atkHeld=false;});
 holdBtn('run',()=>{sprintHeld=true;},()=>{sprintHeld=false;});
 holdBtn('pick',()=>pickup());
-holdBtn('swap',()=>cycleWeapon());
+const swapBtn=$('swap');
+// Estado explícito do botão: evita ReferenceError e mantém o toque consistente em mobile.
+let swapPressTimer=null,swapPressActive=false,swapLongTriggered=false,swapPressPointer=null;
+function cancelSwapPress(){
+  if(swapPressTimer!==null){clearTimeout(swapPressTimer);swapPressTimer=null;}
+  swapPressActive=false;swapLongTriggered=false;swapPressPointer=null;
+  if(swapBtn)swapBtn.classList.remove('on');
+}
+function endSwapPress(e){
+  if(!swapPressActive||(swapPressPointer!==null&&e?.pointerId!==undefined&&e.pointerId!==swapPressPointer))return;
+  if(swapPressTimer!==null){clearTimeout(swapPressTimer);swapPressTimer=null;}
+  const wasLong=swapLongTriggered;
+  cancelSwapPress();
+  if(!wasLong&&state==='play'&&P&&!P.inVehicle)cycleWeapon();
+  // Segurar abre o painel; soltar o botão não o fecha. O jogador escolhe com um toque.
+}
+if(swapBtn){
+  swapBtn.addEventListener('pointerdown',e=>{
+    if(state!=='play'||!P||P.inVehicle)return;
+    e.preventDefault();e.stopPropagation();aud();
+    if(swapPressActive)return;
+    swapPressActive=true;swapLongTriggered=false;swapPressPointer=e.pointerId;swapBtn.classList.add('on');
+    swapPressTimer=setTimeout(()=>{
+      if(!swapPressActive||swapPressPointer!==e.pointerId)return;
+      swapPressTimer=null;swapLongTriggered=true;openWeaponWheel();
+    },420);
+  });
+  // pointerup é tratado no document: o dedo pode terminar fora do botão/painel.
+  swapBtn.addEventListener('pointercancel',()=>cancelSwapPress());
+}
+document.addEventListener('pointerup',endSwapPress);
+document.addEventListener('pointercancel',()=>{if(swapPressActive)cancelSwapPress();});
+const weaponWheelRoot=$('weapon-wheel');
+if(weaponWheelRoot)weaponWheelRoot.addEventListener('click',e=>{if(e.target===weaponWheelRoot)closeWeaponWheel();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&weaponWheelOpen)closeWeaponWheel();});
+const craftTabs=$('craft-tabs');if(craftTabs)craftTabs.addEventListener('click',e=>{const b=e.target.closest('[data-craft-filter]');if(!b)return;craftFilter=b.dataset.craftFilter;refreshCraft();});
 
 function vehBtn(id,downVal,upVal){
   const b=$(id);if(!b)return;
@@ -2654,6 +2802,7 @@ window.addEventListener('keydown',e=>{
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD'].includes(e.code))e.preventDefault();
   if(e.code==='KeyC'&&state==='craft'){closeCraft();return;}
   if(e.code==='Escape'){
+    if(weaponWheelOpen){closeWeaponWheel();return;}
     if(state==='craft'){closeCraft();return;}
     if(state==='play'){pause();return;}
     if(state==='pause'){resume();return;}
@@ -2670,14 +2819,17 @@ window.addEventListener('contextmenu',e=>e.preventDefault());
 
 function pause(){
   if(state!=='play')return;
+  closeWeaponWheel();
   state='pause';atkHeld=false;sprintHeld=false;joy.id=null;joy.active=false;joy.x=joy.y=0;
   const e=$('pausescr');if(e)e.classList.remove('hide');
 }
 function resume(){if(state!=='pause')return;const e=$('pausescr');if(e)e.classList.add('hide');state='play';}
 function quitToMenu(){
+  closeWeaponWheel();
   showScreen('menu');$('hud').classList.add('hide');state='menu';
   setAmbient(0);setRain(false);document.body.classList.remove('nohud');
-  if(MP.peer){try{MP.peer.destroy();}catch(e){}MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;}
+  if(MP.peer){try{MP.peer.destroy();}catch(e){}}
+  MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;MP.isHost=false;MP.roomCode='';MP.myId=null;MP.syncT=0;
   remotePlayers={};
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#0b100b';ctx.fillRect(0,0,W,H);
 }
