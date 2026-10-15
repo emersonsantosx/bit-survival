@@ -881,7 +881,8 @@ function addBuilding(x,y,w,h,type){
   const n=type==='mil'?rint(4,6):type==='shop'?rint(3,5):rint(2,4);
   for(let i=0;i<n;i++)items.push({t:wpick(LOOT[type]||LOOT.house),x:rnd(x+t+8,x+w-t-8),y:rnd(y+t+12,y+h-t-16)});
 }
-function genWorld(){
+function genWorld() {
+  try {
   trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];spits=[];decorations=[];
   plane=null;
 
@@ -1033,10 +1034,14 @@ function genWorld(){
     if(!solidPoint(x,y,14))items.push({t:'stone',x,y});
   }
 
-  weather=Math.random()<.4?(Math.random()<.5?'rain':'snow'):'none';
+    weather=Math.random()<.4?(Math.random()<.5?'rain':'snow'):'none';
   weatherTimer=rnd(120,240);
   weatherParticles=[];
   buildMinimap();
+  }catch(e){
+    console.error('[genWorld] FALHOU na linha:',e.stack);
+    throw e;
+  }
 }
 function buildMinimap(){
   const s=76/WW;
@@ -1076,14 +1081,21 @@ function spawnZ(x,y,kind){
   zombies.push(z);return z;
 }
 function populate(){
+  // Blindagem: se P ainda não existe, não faz nada (evita crash)
+  if(!P){ console.warn('[populate] chamado sem P definido — ignorado'); return; }
+  if(!Array.isArray(blds) || !Array.isArray(towns)) return;
   for(const b of blds){
+    if(!b) continue;
     const n=rint(0,b.type==='mil'?4:2);
     for(let i=0;i<n;i++)spawnZ(rnd(b.x+12,b.x+b.w-12),rnd(b.y+16,b.y+b.h-20));
   }
-  for(const t of towns)for(let i=0;i<5;i++)for(let k=0;k<10;k++){
-    const x=t.x+rnd(-280,280),y=t.y+rnd(-280,280);
-    if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12))continue;
-    spawnZ(x,y);break;
+  for(const t of towns){
+    if(!t) continue;
+    for(let i=0;i<5;i++)for(let k=0;k<10;k++){
+      const x=t.x+rnd(-280,280),y=t.y+rnd(-280,280);
+      if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12))continue;
+      spawnZ(x,y);break;
+    }
   }
   let c=0,g=0;
   while(c<35&&g<500){
@@ -1810,22 +1822,22 @@ function refreshCraft(){
 function packWorld(){
   try{
     return {
-      trees: trees.map(t=>({x:t.x,y:t.y,k:t.k,hp:t.hp})),
-      rocks: rocks.map(r=>({x:r.x,y:r.y,k:r.k,hp:r.hp})),
-      blds: blds.map(b=>({x:b.x,y:b.y,w:b.w,h:b.h,type:b.type,roof:b.roof,doorX:b.doorX,door:b.door})),
-      walls: walls.map(w=>({x:w.x,y:w.y,w:w.w,h:w.h})),
-      roads: roads.map(r=>({x:r.x,y:r.y,w:r.w,h:r.h})),
-      vehicles: vehicles.map(v=>({id:v.id,x:v.x,y:v.y,w:v.w,h:v.h,col:v.col,looted:!!v.looted,spd:v.spd||0,face:v.face||0})),
-      campfires: campfires.map(c=>({x:c.x,y:c.y,t:c.t||0,flicker:c.flicker||0})),
-      plane: plane ? {x:plane.x,y:plane.y,w:plane.w,h:plane.h} : null,
-      decorations: decorations.map(d=>({x:d.x,y:d.y,type:d.type,solid:!!d.solid,seed:d.seed})),
-      lakes: lakes.map(l=>({
+      trees: trees.filter(Boolean).map(t=>({x:t.x,y:t.y,k:t.k,hp:t.hp})),
+      rocks: rocks.filter(Boolean).map(r=>({x:r.x,y:r.y,k:r.k,hp:r.hp})),
+      blds: blds.filter(Boolean).map(b=>({x:b.x,y:b.y,w:b.w,h:b.h,type:b.type,roof:b.roof,doorX:b.doorX,door:b.door})),
+      walls: walls.filter(Boolean).map(w=>({x:w.x,y:w.y,w:w.w,h:w.h})),
+      roads: roads.filter(Boolean).map(r=>({x:r.x,y:r.y,w:r.w,h:r.h})),
+      vehicles: vehicles.filter(Boolean).map(v=>({id:v.id,x:v.x,y:v.y,w:v.w,h:v.h,col:v.col,looted:!!v.looted,spd:v.spd||0,face:v.face||0})),
+      campfires: campfires.filter(Boolean).map(c=>({x:c.x,y:c.y,t:c.t||0,flicker:c.flicker||0})),
+      plane: (plane && Number.isFinite(plane.x)) ? {x:plane.x,y:plane.y,w:plane.w,h:plane.h} : null,
+      decorations: decorations.filter(Boolean).map(d=>({x:d.x,y:d.y,type:d.type,solid:!!d.solid,seed:d.seed})),
+      lakes: lakes.filter(Boolean).map(l=>({
         cx:l.cx,cy:l.cy,r:l.r,
-        blobs:Array.isArray(l.blobs)?l.blobs.map(b=>({x:b.x,y:b.y,r:b.r})):[],
-        islands:Array.isArray(l.islands)?l.islands.map(i=>({x:i.x,y:i.y,r:i.r})):[],
-        pads:Array.isArray(l.pads)?l.pads.map(p=>({x:p.x,y:p.y,r:p.r})):[]
+        blobs:Array.isArray(l.blobs)?l.blobs.filter(Boolean).map(b=>({x:b.x,y:b.y,r:b.r})):[],
+        islands:Array.isArray(l.islands)?l.islands.filter(Boolean).map(i=>({x:i.x,y:i.y,r:i.r})):[],
+        pads:Array.isArray(l.pads)?l.pads.filter(Boolean).map(p=>({x:p.x,y:p.y,r:p.r})):[]
       })),
-      items: items.slice(0, 500).map(it=>({t:it.t,x:Math.round(it.x),y:Math.round(it.y)}))
+      items: items.filter(Boolean).slice(0, 500).map(it=>({t:it.t,x:Math.round(it.x),y:Math.round(it.y)}))
     };
   }catch(e){
     console.error('[packWorld] erro:',e);
@@ -1985,16 +1997,16 @@ function setupConn(conn,isHostSide){
     console.log('[MP] conn.on("open") disparado. Host?',isHostSide);
     if(isHostSide){
       setStatus('hostStatus','✅ Jogador conectado! Gerando mundo...');
-      setTimeout(() => {
-      try {
-        genWorld();
-        if (!plane) throw new Error('plane não gerado');
-        console.log('[Host] mundo gerado com', trees.length, 'árvores,', rocks.length, 'rochas');
-      } catch (e) {
-        console.error('[Host genWorld]', e);
-        setStatus('hostStatus', 'Erro ao gerar mundo: ' + (e.message || e), true);
-        return;
-      }
+      setTimeout(()=>{
+        try{
+          genWorld();  // ⚠️ APENAS genWorld, NUNCA populate aqui!
+          if(!plane) throw new Error('plane não gerado');
+          console.log('[Host] genWorld OK:',trees.length,'árvores,',rocks.length,'rochas');
+        }catch(e){
+          console.error('[Host genWorld]',e);
+          setStatus('hostStatus','Erro ao gerar mundo: '+(e.message||e),true);
+          return;
+        }
         try{
           if(MP.conn && MP.conn.open){
             const world=packWorld();
@@ -2003,7 +2015,6 @@ function setupConn(conn,isHostSide){
             MP.conn.send({type:'start', map: selectedMap});
             setStatus('hostStatus','🎮 Partida iniciada!');
           } else {
-            console.error('[Host] conexão fechou antes do envio');
             setStatus('hostStatus','Conexão caiu antes do envio',true);
             return;
           }
@@ -2013,7 +2024,7 @@ function setupConn(conn,isHostSide){
           return;
         }
         try{
-          enterMultiplayerGame(true);
+          enterMultiplayerGame(true);  // ← populate() roda AQUI dentro, após criar P
         }catch(e){
           console.error('[Host enter]',e);
           setStatus('hostStatus','Erro ao iniciar: '+(e.message||e),true);
@@ -2025,15 +2036,11 @@ function setupConn(conn,isHostSide){
   };
   conn.on('open',onOpen);
   if(conn.open) setTimeout(onOpen,0);
-
   conn.on('data',data=>handleNetData(data,isHostSide));
   conn.on('close',()=>{
-    console.log('[MP] conexão fechada');
     MP.connected=false;
     if(MP.conn===conn) MP.conn=null;
-    if(MP.active){
-      setStatus(isHostSide?'hostStatus':'joinStatus','Conexão encerrada.',true);
-    }
+    if(MP.active) setStatus(isHostSide?'hostStatus':'joinStatus','Conexão encerrada.',true);
     if(state==='play' && MP.active){
       toast('Conexão perdida');
       const closedConn=conn;
@@ -2164,13 +2171,14 @@ function enterMultiplayerGame(isHost){
     if(!plane) throw new Error('mundo não carregado');
     const offX = isHost ? 0 : 40;
     const offY = isHost ? 0 : 40;
+    // ⚠️ ORDEM CORRETA: cria P PRIMEIRO
     P={x:plane.x+70+offX, y:plane.y+offY, r:5, hp:100, food:85, water:85, stam:100,
       face:Math.PI/2, moving:false, sprint:false, exhausted:false, cd:0, swing:0, flash:0, bleed:false, dead:false,
       weapon:'fists', melee:null, meleeWeapons:[], firearms:{}, ammo:0,
       inv:[{t:'bandage',n:1},{t:'water',n:1}],
       walk:0, inside:null, inVehicle:null};
     pushOut(P,P.r);
-    // Só o Host popula zumbis — o Guest recebe via snapshot
+    // ⚠️ DEPOIS de criar P, aí sim popula zumbis (só no Host)
     if(isHost && zombies.length===0){
       populate();
       console.log('[Host] populate() executado —',zombies.length,'zumbis gerados');
