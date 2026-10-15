@@ -1985,17 +1985,16 @@ function setupConn(conn,isHostSide){
     console.log('[MP] conn.on("open") disparado. Host?',isHostSide);
     if(isHostSide){
       setStatus('hostStatus','✅ Jogador conectado! Gerando mundo...');
-      setTimeout(()=>{
-        try{
-          genWorld();
-          populate();
-          if(!plane) throw new Error('plane não gerado');
-          console.log('[Host] mundo gerado com',trees.length,'árvores,',zombies.length,'zumbis');
-        }catch(e){
-          console.error('[Host genWorld]',e);
-          setStatus('hostStatus','Erro ao gerar mundo: '+(e.message||e),true);
-          return;
-        }
+      setTimeout(() => {
+      try {
+        genWorld();
+        if (!plane) throw new Error('plane não gerado');
+        console.log('[Host] mundo gerado com', trees.length, 'árvores,', rocks.length, 'rochas');
+      } catch (e) {
+        console.error('[Host genWorld]', e);
+        setStatus('hostStatus', 'Erro ao gerar mundo: ' + (e.message || e), true);
+        return;
+      }
         try{
           if(MP.conn && MP.conn.open){
             const world=packWorld();
@@ -2171,6 +2170,11 @@ function enterMultiplayerGame(isHost){
       inv:[{t:'bandage',n:1},{t:'water',n:1}],
       walk:0, inside:null, inVehicle:null};
     pushOut(P,P.r);
+    // Só o Host popula zumbis — o Guest recebe via snapshot
+    if(isHost && zombies.length===0){
+      populate();
+      console.log('[Host] populate() executado —',zombies.length,'zumbis gerados');
+    }
     T=0; kills=0; shake=0; flash=0; spawnTimer=3; dark=0; day=1;
     atkHeld=false; sprintHeld=false; touchGas=0; touchSteer=0; stepT=0;
     remotePlayers={};
