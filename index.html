@@ -1232,6 +1232,7 @@ function discardItem(i){
   let dx=P.x+Math.cos(a)*d,dy=P.y+Math.sin(a)*d;
   if(solidPoint(dx,dy,4)){dx=P.x;dy=P.y;}
   items.push({t:it,x:dx,y:dy});
+  if(MP.active) sendEvt('itemAdded', {t:it, x:dx, y:dy});
   slot.n--;
   if(slot.n<=0)P.inv.splice(i,1);
   buildInv();
@@ -1335,7 +1336,10 @@ function pickup(){
   const cf=nearestCampfire();
   if(cf && countInv('fish')>0){
     removeInv('fish',1);
-    if(!addItem('cookedfish')) items.push({t:'cookedfish',x:P.x,y:P.y});
+    if(!addItem('cookedfish')){
+      items.push({t:'cookedfish',x:P.x,y:P.y});
+      if(MP.active) sendEvt('itemAdded', {t:'cookedfish', x:P.x, y:P.y});
+    }
     toast('🐟 → 🍣 Peixe assado!');
     beep(680,.18,'triangle',.08,120);
     for(let i=0;i<8;i++)parts.push({x:cf.x+rnd(-8,8),y:cf.y-6,vx:rnd(-20,20),vy:rnd(-60,-20),t:.6,c:'#ffd27a'});
@@ -1422,23 +1426,34 @@ function die(){
   document.body.classList.remove('nohud');
   beep(200,.6,'sawtooth',.08,-150);boom(.5,.3,200);
 }
-function damageZ(z,dmg,kx,ky){
+function damageZ(z,dmg,kx,ky,fromNet){
   if(z.dead)return;
-  z.hp-=dmg;z.hit=.15;z.vx+=kx;z.vy+=ky;z.lock=5;z.alert=0;
+  z.hit=.15;z.vx+=(kx||0);z.vy+=(ky||0);z.lock=5;z.alert=0;
   for(let i=0;i<5;i++)parts.push({x:z.x,y:z.y-7,vx:rnd(-40,40),vy:rnd(-50,10),t:rnd(.25,.5),c:'#a01818'});
   hitFlesh();
-  if(MP.active) sendEvt('zombieDmg', {id:z.netId,x:z.x,y:z.y,dmg:dmg});
+  // Only the local attacker sends the event (not when applying remote damage)
+  if(MP.active && !fromNet){
+    sendEvt('zombieDmg', {id:z.netId,x:z.x,y:z.y,dmg:dmg});
+  }
+  z.hp-=dmg;
   if(z.hp<=0){
     z.dead=true;kills++;
     decals.push({x:z.x,y:z.y});
     if(decals.length>70)decals.shift();
-    let lootTable={food:3,water:3,bandage:2,ammo:2,fish:1,stone:2};
-    if(z.kind===2)lootTable={stone:5,medkit:2,ammo:3,food:2};
-    else if(z.kind===3)lootTable={medkit:4,ammo:5,shotgun:2,rifle:1,food:2,water:2};
-    else if(z.kind===5)lootTable={stone:2,bandage:2,food:1};
-    else if(z.kind===6)lootTable={ammo:3,food:2,water:2};
-    if(Math.random()<.20)items.push({t:wpick(lootTable),x:z.x,y:z.y});
     for(let i=0;i<8;i++)parts.push({x:z.x,y:z.y-5,vx:rnd(-60,60),vy:rnd(-60,20),t:rnd(.3,.7),c:'#7a1010'});
+    // Loot only Host / singleplayer (Guest gets loot via itemAdded event)
+    if(!MP.active || MP.isHost){
+      let lootTable={food:3,water:3,bandage:2,ammo:2,fish:1,stone:2};
+      if(z.kind===2)lootTable={stone:5,medkit:2,ammo:3,food:2};
+      else if(z.kind===3)lootTable={medkit:4,ammo:5,shotgun:2,rifle:1,food:2,water:2};
+      else if(z.kind===5)lootTable={stone:2,bandage:2,food:1};
+      else if(z.kind===6)lootTable={ammo:3,food:2,water:2};
+      if(Math.random()<.20){
+        const lt=wpick(lootTable);
+        items.push({t:lt,x:z.x,y:z.y});
+        if(MP.active) sendEvt('itemAdded', {t:lt, x:z.x, y:z.y});
+      }
+    }
   }
 }
 function attack(){
@@ -1463,7 +1478,10 @@ function attack(){
         trees.splice(trees.indexOf(hitTree), 1);
         const n = (P.weapon === 'stoneaxe') ? 2 : 1;
         for(let i = 0; i < n; i++){
-          if(!addItem('wood')) items.push({ t: 'wood', x: hitTree.x, y: hitTree.y });
+          if(!addItem('wood')){
+            items.push({ t: 'wood', x: hitTree.x, y: hitTree.y });
+            if(MP.active) sendEvt('itemAdded', {t:'wood', x:hitTree.x, y:hitTree.y});
+          }
         }
         toast('Árvore derrubada! +' + n + ' Madeira');
         beep(260, .18, 'triangle', .09, 120);
@@ -1484,7 +1502,11 @@ function attack(){
         rocks.splice(rocks.indexOf(hitRock),1);
         const n=rint(1,3);
         for(let i=0;i<n;i++){
-          if(!addItem('stone')) items.push({t:'stone',x:hitRock.x+rnd(-6,6),y:hitRock.y+rnd(-6,6)});
+          if(!addItem('stone')){
+            const sx=hitRock.x+rnd(-6,6), sy=hitRock.y+rnd(-6,6);
+            items.push({t:'stone',x:sx,y:sy});
+            if(MP.active) sendEvt('itemAdded', {t:'stone', x:sx, y:sy});
+          }
         }
         toast('Pedra quebrada! +'+n+' Pedra');beep(320,.18,'triangle',.09,80);
       }
@@ -1594,36 +1616,51 @@ function updateZ(z,dt){
     if(Math.abs(z.vx)<2)z.vx=0;
     if(Math.abs(z.vy)<2)z.vy=0;
   }
-  const dx=P.x-z.x,dy=P.y-z.y,d=Math.hypot(dx,dy);
+  // Choose nearest living player (local or remote) so both players aggro zombies
+  let targetX=P.x, targetY=P.y, targetSprint=P.sprint&&P.moving, targetMoving=P.moving, targetDead=P.dead, targetIsLocal=true;
+  let bestD=Math.hypot(P.x-z.x,P.y-z.y);
+  if(MP.active && MP.isHost){
+    for(const id in remotePlayers){
+      const rp=remotePlayers[id];
+      if(!rp || rp.alive===false) continue;
+      const dd=Math.hypot((rp.x||0)-z.x,(rp.y||0)-z.y);
+      if(dd<bestD){
+        bestD=dd; targetX=rp.x; targetY=rp.y;
+        targetSprint=!!(rp.sprint&&rp.moving); targetMoving=!!rp.moving;
+        targetDead=false; targetIsLocal=false;
+      }
+    }
+  }
+  const d=bestD;
   let det=95;
-  if(P.sprint&&P.moving)det=185;else if(!P.moving)det=52;
+  if(targetSprint)det=185;else if(!targetMoving)det=52;
   if(dark>.5)det*=.72;
   if(z.kind===1)det*=1.18;
   if(z.kind===5)det*=1.12;
   if(z.crawler)det*=.7;
   if(z.screams){
-    z.screamT-=dt;
+    z.screamT=(z.screamT||0)-dt;
     if(z.screamT<=0&&d<300&&z.lock>0){
       z.screamT=rnd(6,12);
-      for(const other of zombies)if(other!==z&&!other.dead&&Math.hypot(other.x-z.x,other.y-z.y)<300){other.alert=8;other.tx=P.x;other.ty=P.y;}
+      for(const other of zombies)if(other!==z&&!other.dead&&Math.hypot(other.x-z.x,other.y-z.y)<300){other.alert=8;other.tx=targetX;other.ty=targetY;}
       for(let i=0;i<12;i++)parts.push({x:z.x,y:z.y-14,vx:rnd(-40,40),vy:rnd(-60,-20),t:.6,c:'#fff0f0'});
     }
   }
   if(z.ranged){
-    z.spitT-=dt;
+    z.spitT=(z.spitT||0)-dt;
     if(z.spitT<=0&&z.lock>0&&d<z.range&&d>40){
       z.spitT=rnd(1.8,3.5);
-      const a=Math.atan2(P.y-z.y,P.x-z.x);
-      spits.push({x:z.x,y:z.y-8,vx:Math.cos(a)*160,vy:Math.sin(a)*160,t:1.4});
+      const a=Math.atan2(targetY-z.y,targetX-z.x);
+      spits.push({x:z.x,y:z.y-8,vx:Math.cos(a)*160,vy:Math.sin(a)*160,t:1.4, targetLocal:targetIsLocal});
       beep(420,.15,'sawtooth',.05,-200);
     }
   }
   z.losT-=dt;
-  if(z.losT<=0){z.losT=.3;z.seen=d<det*1.2?losClear(z.x,z.y-5,P.x,P.y-5):false;}
+  if(z.losT<=0){z.losT=.3;z.seen=d<det*1.2?losClear(z.x,z.y-5,targetX,targetY-5):false;}
   z.lock=Math.max(0,z.lock-dt);
   if(z.seen&&d<det)z.lock=Math.max(z.lock,4);
-  if(z.lock>0&&d>det*2&&!z.lastSeen){z.lastSeen={x:P.x,y:P.y};z.searchT=3.2;}
-  if(z.seen)z.lastSeen={x:P.x,y:P.y};
+  if(z.lock>0&&d>det*2&&!z.lastSeen){z.lastSeen={x:targetX,y:targetY};z.searchT=3.2;}
+  if(z.seen)z.lastSeen={x:targetX,y:targetY};
   let mode='wander';
   if(z.lock>0&&d<det*2)mode='chase';
   else if(z.alert>0)mode='noise';
@@ -1631,9 +1668,9 @@ function updateZ(z,dt){
   let tx,ty,sp;
   if(mode==='chase'){
     if(z.ranged&&d<80){
-      const a=Math.atan2(z.y-P.y,z.x-P.x);
+      const a=Math.atan2(z.y-targetY,z.x-targetX);
       tx=z.x+Math.cos(a)*100;ty=z.y+Math.sin(a)*100;sp=z.spd;
-    }else{tx=P.x;ty=P.y;sp=pointInLake(z.x,z.y)?z.spd*.6:z.spd;}
+    }else{tx=targetX;ty=targetY;sp=pointInLake(z.x,z.y)?z.spd*.6:z.spd;}
   }else if(mode==='noise'){
     tx=z.tx;ty=z.ty;sp=z.spd*.92;
     if(Math.hypot(tx-z.x,ty-z.y)<12){z.alert=0;z.lastSeen={x:z.tx,y:z.ty};z.searchT=2.4;}
@@ -1670,7 +1707,8 @@ function updateZ(z,dt){
       }
     }
   }
-  if(!z.ranged&&d<z.r+P.r+6&&z.cd<=0&&!P.dead){
+  // Melee hit: only damages the local player (remote damage is handled by their own client via proximity + snapshot)
+  if(!z.ranged&&targetIsLocal&&d<z.r+P.r+6&&z.cd<=0&&!P.dead){
     hurt(z.dmg,z.kind===2?.5:z.kind===3?.6:.25);
     z.cd=1.1;z.lunge=.15;
     if(z.kind===2||z.kind===3){
@@ -1715,8 +1753,18 @@ function update(dt){
   if(!MP.active||MP.isHost){
     for(const z of zombies){
       if(z.dead)continue;
+      let nearAny=false;
       const dx=z.x-P.x,dy=z.y-P.y;
-      if(dx*dx+dy*dy<UPD*UPD)updateZ(z,dt);
+      if(dx*dx+dy*dy<UPD*UPD) nearAny=true;
+      if(!nearAny && MP.active){
+        for(const id in remotePlayers){
+          const rp=remotePlayers[id];
+          if(!rp) continue;
+          const rdx=z.x-(rp.x||0), rdy=z.y-(rp.y||0);
+          if(rdx*rdx+rdy*rdy<UPD*UPD){nearAny=true;break;}
+        }
+      }
+      if(nearAny) updateZ(z,dt);
     }
     for(const s of spits){
       s.x+=s.vx*dt;s.y+=s.vy*dt;s.t-=dt;
@@ -1747,11 +1795,36 @@ function update(dt){
       spawnTimer=dark>.58?2.15:3;
       const cap=Math.min(125,55+(day-1)*8)+Math.round(dark*22);
       if(zombies.length<cap){
+        // Spawn near a random living player (host or guest)
+        let sx=P.x, sy=P.y;
+        if(MP.active && MP.isHost){
+          const pts=[{x:P.x,y:P.y}];
+          for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.alive!==false)pts.push({x:rp.x,y:rp.y});}
+          const pickP=pts[Math.floor(Math.random()*pts.length)];
+          sx=pickP.x; sy=pickP.y;
+        }
         for(let k=0;k<12;k++){
           const a=rnd(0,6.283),d=rnd(380,560);
-          const x=P.x+Math.cos(a)*d,y=P.y+Math.sin(a)*d;
+          const x=sx+Math.cos(a)*d,y=sy+Math.sin(a)*d;
           if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12))continue;
           spawnZ(x,y);break;
+        }
+      }
+    }
+  }
+  // Guest: take melee damage from nearby zombies (Host runs AI, Guest applies local hits)
+  if(MP.active && !MP.isHost && P && !P.dead){
+    for(const z of zombies){
+      if(z.dead) continue;
+      z._hitCD = (z._hitCD||0) - dt;
+      const dd=Math.hypot(z.x-P.x,z.y-P.y);
+      if(dd < (z.r||5)+P.r+6 && z._hitCD<=0){
+        const kind = z.kind||0;
+        hurt(z.dmg||9, kind===2?.5:kind===3?.6:.25);
+        z._hitCD = 1.1;
+        if(kind===2||kind===3){
+          const a=Math.atan2(P.y-z.y,P.x-z.x);
+          P.x+=Math.cos(a)*20;P.y+=Math.sin(a)*20;
         }
       }
     }
@@ -1840,6 +1913,7 @@ function craft(r){
     let cx=P.x+fx*22,cy=P.y+fy*22;
     if(solidPoint(cx,cy,4)){cx=P.x+10;cy=P.y+10;}
     campfires.push({x:cx,y:cy,t:0,flicker:0});
+    if(MP.active) sendEvt('campfireAdded', {x:cx, y:cy});
     pushOut(P,P.r);
     toast('🔥 Fogueira acesa!');buildSound();boom(.3,.15,400);
     for(let i=0;i<15;i++)parts.push({x:cx,y:cy-4,vx:rnd(-30,30),vy:rnd(-70,-20),t:rnd(.5,1),c:'#ffb040'});
@@ -1945,17 +2019,23 @@ function handleEvt(kind, data){
     if(r && Number.isFinite(data.dmg)){ r.hp -= clamp(data.dmg,0,10); if(r.hp<=0){ const i=rocks.indexOf(r); if(i>=0) rocks.splice(i,1); } }
   } else if(kind==='itemRemoved'){
     for(let i=items.length-1;i>=0;i--){
-      if(Math.abs(items[i].x-data.x)<3 && Math.abs(items[i].y-data.y)<3){ items.splice(i,1); break; }
+      if(Math.abs(items[i].x-data.x)<4 && Math.abs(items[i].y-data.y)<4){ items.splice(i,1); break; }
     }
   } else if(kind==='itemAdded'){
-    if(typeof data.t==='string'&&Number.isFinite(data.x)&&Number.isFinite(data.y)&&!items.some(it=>it.t===data.t&&Math.abs(it.x-data.x)<2&&Math.abs(it.y-data.y)<2)) items.push({t:data.t,x:data.x,y:data.y});
+    if(typeof data.t==='string'&&Number.isFinite(data.x)&&Number.isFinite(data.y)&&!items.some(it=>it.t===data.t&&Math.abs(it.x-data.x)<3&&Math.abs(it.y-data.y)<3)){
+      items.push({t:data.t,x:data.x,y:data.y});
+    }
+  } else if(kind==='campfireAdded'){
+    if(Number.isFinite(data.x)&&Number.isFinite(data.y)&&!campfires.some(c=>Math.abs(c.x-data.x)<8&&Math.abs(c.y-data.y)<8)){
+      campfires.push({x:data.x,y:data.y,t:0,flicker:0});
+    }
   } else if(kind==='vehicleLooted'){
     const v = vehicles.find(v => v.id===data.id);
     if(v) v.looted = true;
   } else if(kind==='zombieDmg'){
     let best=data.id ? zombies.find(z=>z.netId===data.id&&!z.dead) : null;
     if(!best){
-      let bd=25;
+      let bd=30;
       for(const z of zombies){
         if(z.dead) continue;
         const d=Math.hypot(z.x-data.x,z.y-data.y);
@@ -1963,11 +2043,9 @@ function handleEvt(kind, data){
       }
     }
     if(best && Number.isFinite(data.dmg)){
-      best.hp -= clamp(data.dmg,0,100);
-      if(best.hp<=0){ best.dead = true; kills++; }
+      // Apply as remote damage (no re-broadcast)
+      damageZ(best, clamp(data.dmg,0,100), 0, 0, true);
     }
-  } else if(kind==='spawnZ'){
-    // Nada a fazer
   }
 }
 
@@ -2166,21 +2244,32 @@ function handleNetData(data,isHostSide){
 }
 function applySnapshot(snap){
   if(!snap || typeof snap !== 'object' || !MP.active) return;
-  if(Array.isArray(snap.trees)) trees = snap.trees;
-  if(Array.isArray(snap.rocks)) rocks = snap.rocks;
+  // Items: Host is authority — replace guest list (events give immediate feedback)
   if(Array.isArray(snap.items)) items = snap.items;
   if(Array.isArray(snap.campfires)) campfires = snap.campfires;
   if(Array.isArray(snap.zombies)){
-    const old = zombies;
-    zombies = snap.zombies.map((sz,i)=>{
-      const t=ZTYPES[sz.kind]||ZTYPES[0];
-      const prev=old[i];
-      return {netId:sz.netId||('remote-z'+i),x:sz.x,y:sz.y,kind:sz.kind,face:sz.face||0,anim:sz.anim||0,hp:sz.hp,
-        max:t.hp,r:t.r,dmg:t.dmg,spd:t.spd,moving:!!sz.moving,skin:sz.skin,shirt:sz.shirt,
-        crawler:t.crawler,ranged:t.ranged,range:t.range,screams:t.screams,
-        dead:false,hit:prev?prev.hit:0,vx:0,vy:0,alert:0,lock:0,lunge:0,cd:prev?prev.cd:0,
-        losT:0,seen:false,wt:0,tx:sz.x,ty:sz.y};
-    });
+    const byId = new Map();
+    for(const z of zombies) if(z.netId) byId.set(z.netId, z);
+    const next = [];
+    for(let i=0;i<snap.zombies.length;i++){
+      const sz = snap.zombies[i];
+      if(!sz) continue;
+      const t = ZTYPES[sz.kind] || ZTYPES[0];
+      const prev = sz.netId ? byId.get(sz.netId) : null;
+      next.push({
+        netId: sz.netId || ('remote-z'+i),
+        x: sz.x, y: sz.y, kind: sz.kind,
+        face: sz.face||0, anim: sz.anim||0, hp: sz.hp,
+        max: t.hp*(1+(day-1)*0.08), r: t.r, dmg: t.dmg, spd: t.spd,
+        moving: !!sz.moving, skin: sz.skin, shirt: sz.shirt,
+        crawler: t.crawler, ranged: t.ranged, range: t.range, screams: t.screams,
+        dead: false, hit: prev ? prev.hit : 0, vx: 0, vy: 0,
+        alert: 0, lock: prev ? Math.max(0, prev.lock) : 0, lunge: 0,
+        cd: prev ? prev.cd : 0, losT: 0, seen: false, wt: 0,
+        tx: sz.x, ty: sz.y, spitT: prev ? prev.spitT : 0, screamT: prev ? prev.screamT : 0
+      });
+    }
+    zombies = next;
   }
   if(Array.isArray(snap.vehicles)){
     const byId = new Map(vehicles.filter(v=>v.id!==undefined).map(v=>[v.id,v]));
@@ -2205,13 +2294,17 @@ function applySnapshot(snap){
     if(weather!==snap.weather){weather=snap.weather;setRain(weather==='rain');}
   }
   if(Number.isFinite(snap.weatherTimer)) weatherTimer=clamp(snap.weatherTimer,0,300);
+  if(Number.isFinite(snap.kills)) kills = snap.kills;
 }
 function packSnapshot(){
-  return {type:'snapshot',day,dark,T,weather,weatherTimer,
-    trees:trees.map(t=>({x:t.x,y:t.y,k:t.k,hp:t.hp})),
-    rocks:rocks.map(r=>({x:r.x,y:r.y,k:r.k,hp:r.hp})),
-    zombies:zombies.slice(0,100).map(z=>({netId:z.netId,x:Math.round(z.x),y:Math.round(z.y),kind:z.kind,face:+z.face.toFixed(2),anim:+z.anim.toFixed(1),hp:Math.round(z.hp),moving:z.moving,skin:z.skin,shirt:z.shirt})),
-    items:items.slice(0,200).map(it=>({t:it.t,x:Math.round(it.x),y:Math.round(it.y)})),
+  // Keep snapshots small: NO full trees/rocks (seed + damage events handle those)
+  return {type:'snapshot',day,dark,T,weather,weatherTimer,kills,
+    zombies:zombies.filter(z=>!z.dead).slice(0,80).map(z=>({
+      netId:z.netId,x:Math.round(z.x),y:Math.round(z.y),kind:z.kind,
+      face:+z.face.toFixed(2),anim:+(z.anim||0).toFixed(1),hp:Math.round(z.hp),
+      moving:!!z.moving,skin:z.skin,shirt:z.shirt
+    })),
+    items:items.slice(0,150).map(it=>({t:it.t,x:Math.round(it.x),y:Math.round(it.y)})),
     vehicles:vehicles.map(v=>({id:v.id,x:Math.round(v.x),y:Math.round(v.y),w:v.w,h:v.h,col:v.col,looted:!!v.looted,spd:+(v.spd||0).toFixed(1),face:+(v.face||0).toFixed(2)})),
     campfires:campfires.map(c=>({x:c.x,y:c.y,t:c.t||0,flicker:+(c.flicker||0).toFixed(2)}))
   };
