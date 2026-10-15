@@ -366,6 +366,7 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
     <h1>PAUSADO</h1>
     <div class="menu-btns">
       <button class="menu-btn" id="resume">▶ CONTINUAR</button>
+      <button class="menu-btn sec" id="pauseFS">⛶ TELA CHEIA</button>
       <button class="menu-btn sec" id="pauseCfg">⚙ CONFIGURAÇÕES</button>
       <button class="menu-btn danger" id="quitmenu">✕ MENU PRINCIPAL</button>
     </div>
@@ -980,37 +981,51 @@ function genWorld(seed) {
     roads.push({x:x1,y:Math.round(a.y)-7,w:x2-x1,h:14});
     roads.push({x:Math.round(b.x)-7,y:y1,w:14,h:y2-y1});
   }
+  // Lake ONLY on forest map, in a fully isolated area far from towns/roads/buildings
   if(selectedMap==='forest'){
-    let cx=rnd(1200,WW-1200),cy=rnd(1200,WH-1200),mainR=rnd(160,220),valid=false,lTries=0;
-    while(!valid&&lTries<200){
+    let cx=0,cy=0,mainR=180,valid=false,lTries=0;
+    while(!valid&&lTries<400){
       lTries++;
-      cx=rnd(1200,WW-1200);cy=rnd(1200,WH-1200);mainR=rnd(160,220);
+      cx=rnd(900,WW-900);cy=rnd(900,WH-900);mainR=rnd(140,200);
       let ok=true;
-      for(const b of blds)if(Math.hypot(b.x+b.w/2-cx,b.y+b.h/2-cy)<mainR+320){ok=false;break;}
-      if(ok)for(const r of roads){
-        const rx=clamp(cx,r.x,r.x+r.w),ry=clamp(cy,r.y,r.y+r.h);
-        if(Math.hypot(cx-rx,cy-ry)<mainR+240){ok=false;break;}
+      // Keep far from all buildings
+      for(const b of blds){
+        if(Math.hypot(b.x+b.w/2-cx,b.y+b.h/2-cy)<mainR+420){ok=false;break;}
       }
-      if(ok)valid=true;
+      if(!ok) continue;
+      // Keep far from roads
+      for(const r of roads){
+        const rx=clamp(cx,r.x,r.x+r.w),ry=clamp(cy,r.y,r.y+r.h);
+        if(Math.hypot(cx-rx,cy-ry)<mainR+320){ok=false;break;}
+      }
+      if(!ok) continue;
+      // Keep far from town centers
+      for(const t of towns){
+        if(Math.hypot(t.x-cx,t.y-cy)<mainR+500){ok=false;break;}
+      }
+      if(ok) valid=true;
     }
-    const blobs=[{x:cx,y:cy,r:mainR}];
-    const subCount=rint(10,16);
-    for(let j=0;j<subCount;j++){
-      const ang=(j/subCount)*6.283+rnd(-0.25,0.25);
-      const dist=mainR*rnd(0.55,0.85);
-      blobs.push({x:cx+Math.cos(ang)*dist,y:cy+Math.sin(ang)*dist,r:rnd(mainR*0.45,mainR*0.7)});
+    // Only place the lake if we found a truly isolated spot
+    if(valid){
+      const blobs=[{x:cx,y:cy,r:mainR}];
+      const subCount=rint(10,16);
+      for(let j=0;j<subCount;j++){
+        const ang=(j/subCount)*6.283+rnd(-0.25,0.25);
+        const dist=mainR*rnd(0.55,0.85);
+        blobs.push({x:cx+Math.cos(ang)*dist,y:cy+Math.sin(ang)*dist,r:rnd(mainR*0.45,mainR*0.7)});
+      }
+      const islands=[],islCount=rint(2,4);
+      for(let j=0;j<islCount;j++){
+        const ang=rnd(0,6.283),dist=rnd(0,mainR*0.55);
+        islands.push({x:cx+Math.cos(ang)*dist,y:cy+Math.sin(ang)*dist,r:rnd(10,22)});
+      }
+      const pads=[],padCount=rint(15,25);
+      for(let j=0;j<padCount;j++){
+        const ang=rnd(0,6.283),dist=rnd(mainR*0.4,mainR*0.95);
+        pads.push({x:cx+Math.cos(ang)*dist,y:cy+Math.sin(ang)*dist,r:rnd(2,4)});
+      }
+      lakes.push({cx,cy,r:mainR,blobs,islands,pads});
     }
-    const islands=[],islCount=rint(2,4);
-    for(let j=0;j<islCount;j++){
-      const ang=rnd(0,6.283),dist=rnd(0,mainR*0.55);
-      islands.push({x:cx+Math.cos(ang)*dist,y:cy+Math.sin(ang)*dist,r:rnd(10,22)});
-    }
-    const pads=[],padCount=rint(15,25);
-    for(let j=0;j<padCount;j++){
-      const ang=rnd(0,6.283),dist=rnd(mainR*0.4,mainR*0.95);
-      pads.push({x:cx+Math.cos(ang)*dist,y:cy+Math.sin(ang)*dist,r:rnd(2,4)});
-    }
-    lakes.push({cx,cy,r:mainR,blobs,islands,pads});
   }
   let vId = 0;
   for(const r of roads){
@@ -2686,6 +2701,18 @@ function render(){
     for(const it of items)if(it.x>=b.x&&it.x<=b.x+b.w&&it.y>=b.y&&it.y<=b.y+b.h)drawItem(it,it===nearestItem());
     for(const w of b.walls)R(w.x,w.y,w.w,w.h,'#3a2a1c');
     R(b.doorX,b.y+b.h-6,b.door,6,'#7a5a3c');
+    // Draw remote players inside this building (fixes multiplayer cabin disappear bug)
+    for(const id in remotePlayers){
+      const rp=remotePlayers[id];
+      if(!rp || rp.alive===false) continue;
+      if(rp.x<b.x||rp.x>b.x+b.w||rp.y<b.y||rp.y>b.y+b.h) continue;
+      human(rp.x,rp.y,rp.face||0,{skin:'#e8b890',shirt:rp.isHost?'#8a3a3a':'#3a8a5a',pants:'#3a3a48',hair:'#3a2a1a',moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:0});
+      const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
+      ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
+      ctx.fillStyle='#000';ctx.fillText(label,rp.x+1,rp.y-20);
+      ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
+      if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
+    }
     human(P.x,P.y,P.face,{skin:'#e8b890',shirt:'#3a5a8a',pants:'#3a3a48',hair:'#3a2a1a',moving:P.moving,anim:P.walk,wpn:P.weapon,swing:P.swing,flash:P.flash});
     for(const z of zombies)if(!z.dead&&z.x>=b.x&&z.x<=b.x+b.w&&z.y>=b.y&&z.y<=b.y+b.h){
       human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:z.kind===2?1.25:(z.kind===3?1.35:1),kind:z.kind,spitter:z.ranged,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3});
@@ -2908,7 +2935,7 @@ on('btnMPBack','click',()=>showScreen('menu'));
 on('btnMPHost','click',()=>{aud();showScreen('mphostscreen');const w=$('hostCodeWrap');if(w)w.classList.add('hide');setStatus('hostStatus','');});
 on('btnMPJoin','click',()=>{aud();showScreen('mpjoinscreen');setStatus('joinStatus','');const i=$('joinCode');if(i)i.value='';});
 
-on('btnHostCreate','click',()=>{aud();requestFullscreenLandscape(true);mpHostStart();});
+on('btnHostCreate','click',()=>{aud();mpHostStart();});
 on('btnHostBack','click',()=>{
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
   MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;MP.isHost=false;
@@ -2917,7 +2944,6 @@ on('btnHostBack','click',()=>{
 
 on('btnJoinConnect','click',()=>{
   aud();
-  requestFullscreenLandscape(true);
   const inp=$('joinCode');if(!inp)return;
   const code=inp.value.trim().toUpperCase();
   if(!/^[A-Z0-9]{6}$/.test(code)){setStatus('joinStatus','Código inválido (6 caracteres)',true);return;}
@@ -3038,10 +3064,19 @@ window.addEventListener('keydown',e=>{
 });
 window.addEventListener('contextmenu',e=>e.preventDefault());
 
+function isFullscreen(){
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+}
+function updatePauseFSButton(){
+  const btn=$('pauseFS');
+  if(!btn) return;
+  btn.textContent = isFullscreen() ? '⛶ SAIR DA TELA CHEIA' : '⛶ TELA CHEIA';
+}
 function pause(){
   if(state!=='play')return;
   closeWeaponWheel();
   state='pause';atkHeld=false;sprintHeld=false;joy.id=null;joy.active=false;joy.x=joy.y=0;
+  updatePauseFSButton();
   const e=$('pausescr');if(e)e.classList.remove('hide');
 }
 function resume(){if(state!=='pause')return;const e=$('pausescr');if(e)e.classList.add('hide');state='play';}
@@ -3076,6 +3111,16 @@ on('again','click',()=>{
   startGame();
 });
 on('resume','click',resume);
+on('pauseFS','click',()=>{
+  aud();
+  if(isFullscreen()){
+    exitFullscreen();
+  } else {
+    requestFullscreenLandscape(true);
+  }
+  setTimeout(updatePauseFSButton, 200);
+  setTimeout(updatePauseFSButton, 600);
+});
 on('quitmenu','click',quitToMenu);
 on('bpause','pointerdown',e=>{e.preventDefault();pause();});
 on('bsound','pointerdown',e=>{
