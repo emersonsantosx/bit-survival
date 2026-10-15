@@ -60,7 +60,7 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
 #bchat{position:fixed;top:10px;right:118px;width:40px;height:40px;border-radius:10px;background:rgba(20,20,20,.75);border:2px solid rgba(140,180,220,.7);color:#fff;font-size:18px;pointer-events:auto;z-index:9;display:none;align-items:center;justify-content:center;padding:0;line-height:1}
 #bchat.show{display:flex}
 #bchat.has-new{border-color:#ffd84a;box-shadow:0 0 10px rgba(255,216,74,.5)}
-#chat-msgs{position:fixed;left:10px;bottom:150px;width:min(260px,55vw);max-height:140px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:3px;pointer-events:none;z-index:8}
+#chat-msgs{position:fixed;left:148px;top:8px;width:min(240px,42vw);max-height:120px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-start;gap:3px;pointer-events:none;z-index:8}
 .chat-bubble{background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:4px 8px;font:11px "Courier New",monospace;color:#e8e8d0;line-height:1.25;text-shadow:1px 1px #000;animation:chatIn .2s ease}
 .chat-bubble .cn{color:#8ac4ff;font-weight:bold}
 .chat-bubble.me .cn{color:#9fd68a}
@@ -202,7 +202,7 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
     <canvas id="mm" width="76" height="76"></canvas>
     <div id="clk">Dia 1 09:00</div>
     <div id="kl">Zumbis: 0</div>
-    <div><button class="sm" id="bpause">⏸</button><button class="sm" id="bsound">🔊</button><button class="sm" id="bcraft">🛠</button></div>
+    <div><button class="sm" id="bpause">⏸</button><button class="sm" id="bcraft">🛠</button></div>
   </div>
   <div id="inv"></div>
   <button class="btn" id="atk">ATACAR</button>
@@ -790,7 +790,7 @@ function pushChatBubble(name, text, me, sys){
   setTimeout(()=>{ if(el.parentNode){ el.style.opacity='0'; el.style.transition='opacity .4s'; setTimeout(()=>{if(el.parentNode)el.remove();},450);} }, 8000);
 }
 function openChat(){
-  if(!MP.active || !MP.connected) return;
+  if(!MP.active) return;
   if(state!=='play' && state!=='craft') return;
   chatOpen=true;
   const p=$('chat-panel'); if(p) p.classList.add('open');
@@ -806,28 +806,30 @@ function closeChat(){
   const inp=$('chat-input'); if(inp){ try{inp.blur();}catch(e){} }
 }
 function sendChatMessage(){
-  if(!MP.active || !MP.connected) return;
+  if(!MP.active) return;
   const inp=$('chat-input');
   let text=(inp&&inp.value||'').trim();
   if(!text) return;
   if(text.length>60) text=text.slice(0,60);
   const name=(MP.playerName||'Jogador').slice(0,12);
+  const msg={type:'chat', name:name, text:text, id:myNetId(), t:Date.now()};
   pushChatBubble(name, text, true, false);
-  try{
-    if(MP.conn&&MP.conn.open) MP.conn.send({type:'chat', name:name, text:text});
-  }catch(e){}
+  const trySend=()=>{
+    try{ if(MP.conn&&MP.conn.open){ MP.conn.send(msg); return true; } }catch(e){ console.error('[chat send]',e); }
+    return false;
+  };
+  if(!trySend()){ setTimeout(trySend,120); setTimeout(trySend,400); }
   if(inp) inp.value='';
   closeChat();
 }
 function receiveChat(data){
   if(!data || typeof data.text!=='string') return;
-  const text=data.text.trim().slice(0,60);
+  if(data.id && data.id===myNetId()) return;
+  const text=String(data.text).trim().slice(0,60);
   if(!text) return;
   const name=(typeof data.name==='string'?data.name:'Amigo').slice(0,12);
   pushChatBubble(name, text, false, false);
-  if(!chatOpen){
-    const b=$('bchat'); if(b) b.classList.add('has-new');
-  }
+  if(!chatOpen){ const b=$('bchat'); if(b) b.classList.add('has-new'); }
   try{ beep(620,.06,'sine',.04); }catch(e){}
 }
 
@@ -922,6 +924,8 @@ function removeInv(t, n){
 
 /* ============ GEOMETRIA ============ */
 function pointInLake(x,y){
+  // Lagos removidos do jogo
+  return false;
   for(const l of lakes)for(const b of l.blobs)if(Math.hypot(b.x-x,b.y-y)<b.r)return true;
   return false;
 }
@@ -1084,52 +1088,8 @@ function genWorld(seed) {
     roads.push({x:x1,y:Math.round(a.y)-7,w:x2-x1,h:14});
     roads.push({x:Math.round(b.x)-7,y:y1,w:14,h:y2-y1});
   }
-  // Lake ONLY on forest map, in a fully isolated area far from towns/roads/buildings
-  if(selectedMap==='forest'){
-    let cx=0,cy=0,mainR=180,valid=false,lTries=0;
-    while(!valid&&lTries<400){
-      lTries++;
-      cx=rnd(900,WW-900);cy=rnd(900,WH-900);mainR=rnd(140,200);
-      let ok=true;
-      // Keep far from all buildings
-      for(const b of blds){
-        if(Math.hypot(b.x+b.w/2-cx,b.y+b.h/2-cy)<mainR+420){ok=false;break;}
-      }
-      if(!ok) continue;
-      // Keep far from roads
-      for(const r of roads){
-        const rx=clamp(cx,r.x,r.x+r.w),ry=clamp(cy,r.y,r.y+r.h);
-        if(Math.hypot(cx-rx,cy-ry)<mainR+320){ok=false;break;}
-      }
-      if(!ok) continue;
-      // Keep far from town centers
-      for(const t of towns){
-        if(Math.hypot(t.x-cx,t.y-cy)<mainR+500){ok=false;break;}
-      }
-      if(ok) valid=true;
-    }
-    // Only place the lake if we found a truly isolated spot
-    if(valid){
-      const blobs=[{x:cx,y:cy,r:mainR}];
-      const subCount=rint(10,16);
-      for(let j=0;j<subCount;j++){
-        const ang=(j/subCount)*6.283+rnd(-0.25,0.25);
-        const dist=mainR*rnd(0.55,0.85);
-        blobs.push({x:cx+Math.cos(ang)*dist,y:cy+Math.sin(ang)*dist,r:rnd(mainR*0.45,mainR*0.7)});
-      }
-      const islands=[],islCount=rint(2,4);
-      for(let j=0;j<islCount;j++){
-        const ang=rnd(0,6.283),dist=rnd(0,mainR*0.55);
-        islands.push({x:cx+Math.cos(ang)*dist,y:cy+Math.sin(ang)*dist,r:rnd(10,22)});
-      }
-      const pads=[],padCount=rint(15,25);
-      for(let j=0;j<padCount;j++){
-        const ang=rnd(0,6.283),dist=rnd(mainR*0.4,mainR*0.95);
-        pads.push({x:cx+Math.cos(ang)*dist,y:cy+Math.sin(ang)*dist,r:rnd(2,4)});
-      }
-      lakes.push({cx,cy,r:mainR,blobs,islands,pads});
-    }
-  }
+  // Lagos removidos do jogo (não gerados)
+  lakes=[];
   let vId = 0;
   const carCols=['#7a3030','#30507a','#505050','#6a6a30','#8a7030','#4a6a8a','#2a5a3a','#6a3a5a','#3a3a3a','#8a5a20'];
   // More cars on city roads; still some on other maps
@@ -1255,8 +1215,6 @@ function buildMinimap(){
   mms.fillRect(0,0,76,76);
   mms.fillStyle=selectedMap==='snow'?'#90a8b8':'#6a5c40';
   for(const r of roads)mms.fillRect(r.x*s,r.y*s,Math.max(1,r.w*s),Math.max(1,r.h*s));
-  mms.fillStyle='#206090';
-  for(const l of lakes)for(const b of l.blobs)mms.beginPath(),mms.arc(b.x*s,b.y*s,b.r*s,0,6.283),mms.fill();
   for(const b of blds){
     mms.fillStyle=b.type==='mil'?'#a8c070':b.type==='shop'?'#e07070':b.type==='warehouse'?'#708090':b.type==='barn'?'#a05030':b.type==='cabin'?'#8a5a3a':'#c9a070';
     mms.fillRect(Math.floor(b.x*s),Math.floor(b.y*s),Math.max(2,Math.ceil(b.w*s)),Math.max(2,Math.ceil(b.h*s)));
@@ -1470,7 +1428,7 @@ function isVehicleOccupied(v){
   // Local player already driving
   if(P && P.inVehicle===v) return true;
   // Marked by network
-  if(v.driverId && v.driverId!==(MP.myId||'me')) return true;
+  if(v.driverId && v.driverId!==myNetId()) return true;
   // Remote player claims this vehicle
   for(const id in remotePlayers){
     const rp=remotePlayers[id];
@@ -1482,7 +1440,7 @@ function isVehicleOccupied(v){
 function exitVehicle(){
   if(!P.inVehicle)return;
   const v=P.inVehicle;
-  if(v.driverId===(MP.myId||'me')) v.driverId=null;
+  if(v.driverId===myNetId()) v.driverId=null;
   v.spd=0;
   P.x=v.x+Math.cos(v.face+1.57)*25;P.y=v.y+Math.sin(v.face+1.57)*25;
   P.inVehicle=null;touchGas=0;touchSteer=0;
@@ -1532,20 +1490,13 @@ function pickup(){
       if(isVehicleOccupied(nv)){
         toast('Veículo ocupado!');beep(160,.08,'square',.05);return;
       }
-      P.inVehicle=nv;nv.spd=0;nv.driverId=MP.myId||'me';
+      P.inVehicle=nv;nv.spd=0;nv.driverId=myNetId();
       $('veh-hud').classList.remove('hide');
       $('inv').classList.add('hide');$('atk').classList.add('hide');
       $('pick').classList.add('hide');$('run').classList.add('hide');$('swap').classList.add('hide');
-      if(MP.active) sendEvt('vehicleEnter', {id:nv.id, driver:MP.myId||'me'});
+      if(MP.active) sendEvt('vehicleEnter', {id:nv.id, driver:myNetId()});
       toast('Entrou no veículo!');beep(440,.15,'square',.06);return;
     }
-  }
-
-  if(pointInLake(P.x,P.y)){
-    if(!addItem('fish')){toast('Mochila cheia');return;}
-    toast('Pescou um peixe! 🐟');
-    beep(580,.15,'sine',.05);
-    return;
   }
 
   const it=nearestItem();
@@ -1627,7 +1578,7 @@ function die(){
 
   if(MP.active){
     // Notify the other player we died
-    try{ if(MP.conn&&MP.conn.open) MP.conn.send({type:'playerDied', id:MP.myId||'me'}); }catch(e){}
+    try{ if(MP.conn&&MP.conn.open) MP.conn.send({type:'playerDied', id:myNetId()}); }catch(e){}
     const otherAlive = isOtherPlayerAlive();
     if(otherAlive){
       // Keep world running for the teammate — local is dead but can respawn
@@ -1679,7 +1630,7 @@ function respawnPlayer(){
   toast('Você ressuscitou!');
   beep(520,.15,'sine',.07,200);
   startAmbient(); startRain();
-  try{ if(MP.conn&&MP.conn.open) MP.conn.send({type:'playerRespawned', id:MP.myId||'me', hp:P.hp}); }catch(e){}
+  try{ if(MP.conn&&MP.conn.open) MP.conn.send({type:'playerRespawned', id:myNetId(), hp:P.hp}); }catch(e){}
 }
 function damageZ(z,dmg,kx,ky,fromNet){
   if(z.dead)return;
@@ -2171,21 +2122,32 @@ function update(dt){
   }
   flash=Math.max(0,flash-dt);shake=Math.max(0,shake-dt*12);
   hudT-=dt;if(hudT<=0){hudT=.1;updateHud(false);}
-  if(MP.active&&MP.connected&&MP.conn&&MP.conn.open){
+  if(MP.active&&MP.connected&&MP.conn&&MP.conn.open && P){
     MP.syncT-=dt;
     if(MP.syncT<=0){
-      MP.syncT=MP.isHost?0.08:0.07;
-      try{
-        if(MP.isHost){MP.conn.send(packSnapshot());MP.conn.send(packMyPlayer());}
-        else{MP.conn.send(packMyPlayer());}
-      }catch(e){}
+      // Player updates are frequent and SMALL — always send first (avoids freeze)
+      MP.syncT=0.05;
+      try{ MP.conn.send(packMyPlayer()); }catch(e){}
+    }
+    // Host snapshots less often so they don't flood the channel
+    if(MP.isHost){
+      MP.snapT=(MP.snapT||0)-dt;
+      if(MP.snapT<=0){
+        MP.snapT=0.16;
+        try{ MP.conn.send(packSnapshot()); }catch(e){}
+      }
     }
   }
   for(const id in remotePlayers){
     const rp=remotePlayers[id];
     if(rp.tx!==undefined&&rp.x!==undefined){
-      rp.x+=(rp.tx-rp.x)*Math.min(1,dt*8);
-      rp.y+=(rp.ty-rp.y)*Math.min(1,dt*8);
+      const dx=rp.tx-rp.x, dy=rp.ty-rp.y;
+      // Snap if too far (prevents permanent freeze from lag spikes)
+      if(dx*dx+dy*dy>90*90){ rp.x=rp.tx; rp.y=rp.ty; }
+      else {
+        const k=Math.min(1,dt*14);
+        rp.x+=dx*k; rp.y+=dy*k;
+      }
     }
     if(rp.flash) rp.flash=Math.max(0,rp.flash-dt);
     if(rp.swing) rp.swing=Math.max(0,rp.swing-dt);
@@ -2221,7 +2183,6 @@ function updateHud(force){
   const stat=$('stat');if(stat)stat.textContent=st;
   let canInteract=false,btnText='PEGAR';
   if(nearestItem())canInteract=true;
-  if(pointInLake(P.x,P.y))canInteract=true;
   const cf=nearestCampfire();
   if(cf && countInv('fish')>0){canInteract=true;btnText='ASSAR';}
   for(const v of vehicles){
@@ -2377,7 +2338,7 @@ function handleEvt(kind, data){
     if(v){
       v.driverId = data.driver || 'remote';
       // If we somehow thought we were in this car, kick us out
-      if(P && P.inVehicle===v && v.driverId!==(MP.myId||'me')){
+      if(P && P.inVehicle===v && v.driverId!==myNetId()){
         P.inVehicle=null;touchGas=0;touchSteer=0;
         $('veh-hud').classList.add('hide');
         $('inv').classList.remove('hide');$('atk').classList.remove('hide');
@@ -2574,6 +2535,9 @@ function setupConn(conn,isHostSide){
 function handleNetData(data,isHostSide){
   MP.lastRecv=performance.now();
   if(!data||!data.type) return;
+  // Chat first — never blocked by heavier handlers
+  if(data.type==='chat'){ receiveChat(data); return; }
+  try{
   if(data.type==='worldInit'){
     if(!isHostSide && data.seed != null){
       console.log('[Guest] worldInit recebido — seed='+data.seed+' map='+data.map);
@@ -2665,9 +2629,8 @@ function handleNetData(data,isHostSide){
       remotePlayers[data.id].alive=true;
       if(Number.isFinite(data.hp)) remotePlayers[data.id].hp=data.hp;
     }
-  } else if(data.type==='chat'){
-    receiveChat(data);
   }
+  }catch(err){ console.error('[handleNetData]', data&&data.type, err); }
 }
 function applySnapshot(snap){
   if(!snap || typeof snap !== 'object' || !MP.active) return;
@@ -2773,7 +2736,8 @@ function packSnapshot(){
     scored.push({z,minD});
   }
   scored.sort((a,b)=>a.minD-b.minD);
-  const zPack=scored.slice(0,55).map(({z})=>({
+  // Keep snapshot small so player/chat packets aren't starved on mobile WebRTC
+  const zPack=scored.slice(0,40).map(({z})=>({
     netId:z.netId,x:Math.round(z.x),y:Math.round(z.y),kind:z.kind|0,
     face:+(z.face||0).toFixed(2),anim:+(z.anim||0).toFixed(1),hp:Math.round(z.hp),
     moving:!!z.moving,skin:z.skin||'#7a9a5a',shirt:z.shirt||'#4a4a5a'
@@ -2785,7 +2749,7 @@ function packSnapshot(){
     return {it,minD};
   });
   iScored.sort((a,b)=>a.minD-b.minD);
-  const iPack=iScored.slice(0,80).map(({it})=>({t:it.t,x:Math.round(it.x),y:Math.round(it.y)}));
+  const iPack=iScored.slice(0,50).map(({it})=>({t:it.t,x:Math.round(it.x),y:Math.round(it.y)}));
   return {type:'snapshot',day,dark,T,weather,weatherTimer,kills,
     zombies:zPack,
     items:iPack,
@@ -2793,18 +2757,22 @@ function packSnapshot(){
     campfires:campfires.map(c=>({x:Math.round(c.x),y:Math.round(c.y),t:c.t||0,flicker:+(c.flicker||0).toFixed(2)}))
   };
 }
+function myNetId(){
+  return MP.isHost ? 'host' : 'guest';
+}
 function packMyPlayer(){
-  const p = {type:'player',id:MP.myId||'me',name:MP.playerName||'Jogador',
+  if(!P) return {type:'player',id:myNetId(),name:MP.playerName||'Jogador',x:0,y:0,alive:false};
+  const p = {type:'player',id:myNetId(),name:MP.playerName||'Jogador',
     x:Math.round(P.x),y:Math.round(P.y),face:+P.face.toFixed(2),
-    moving:P.moving,sprint:P.sprint,weapon:P.weapon,swing:+P.swing.toFixed(2),
+    moving:!!P.moving,sprint:!!P.sprint,weapon:P.weapon||'fists',swing:+(P.swing||0).toFixed(2),
     hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle};
   if(P.inVehicle){
     p.vehicleId = P.inVehicle.id;
     p.vehicleX = Math.round(P.inVehicle.x);
     p.vehicleY = Math.round(P.inVehicle.y);
-    p.vehicleFace = +P.inVehicle.face.toFixed(2);
-    p.vehicleSpd = +P.inVehicle.spd.toFixed(1);
-    p.vehicleLooted = P.inVehicle.looted;
+    p.vehicleFace = +(P.inVehicle.face||0).toFixed(2);
+    p.vehicleSpd = +(P.inVehicle.spd||0).toFixed(1);
+    p.vehicleLooted = !!P.inVehicle.looted;
   }
   return p;
 }
@@ -3390,7 +3358,6 @@ function render(){
       else if(v<52) R(px+5,py+5,6,6,'#3a3a40');
     }
   }
-  for(const l of lakes)if(l.cx+l.r>vx0&&l.cx-l.r<vx1&&l.cy+l.r>vy0&&l.cy-l.r<vy1)drawLake(l);
   for(const r of roads){
     if(r.x>vx1||r.x+r.w<vx0||r.y>vy1||r.y+r.h<vy0)continue;
     const roadCol=selectedMap==='snow'?'#98a4b0':selectedMap==='desert'?'#8c7c5c':selectedMap==='city'?'#3a3a40':'#7a6a4a';
@@ -3786,7 +3753,7 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyC')openCraft();
   if(e.code==='KeyR'){if(P.inv.length>0)discardItem(P.inv.length-1);else toast('Inventário vazio');}
   if(e.code>='Digit1'&&e.code<='Digit6')useItem(+e.code.slice(5)-1);
-  if(e.code==='KeyT'&&MP.active&&MP.connected){ e.preventDefault(); openChat(); }
+  if(e.code==='KeyT'&&MP.active){ e.preventDefault(); openChat(); }
 });
 on('bchat','pointerup',e=>{e.preventDefault();e.stopPropagation();aud(); if(chatOpen) closeChat(); else openChat();});
 on('bchat','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
@@ -3892,10 +3859,6 @@ on('quitmenu','click',e=>{
 // Use pointerup so the finger is already lifted when the pause menu appears (avoids accidental CONTINUAR)
 on('bpause','pointerup',e=>{e.preventDefault();e.stopPropagation();aud();pause();});
 on('bpause','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
-on('bsound','pointerdown',e=>{
-  e.preventDefault();muted=!muted;e.target.textContent=muted?'🔇':'🔊';
-  if(muted){setAmbient(0);setRain(false);}else{setRain(weather==='rain');}
-});
 on('bcraft','pointerdown',e=>{e.preventDefault();aud();openCraft();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play'&&!MP.active)pause();});
 {
