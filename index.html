@@ -892,14 +892,17 @@ function pushOut(e,r){
 }
 function castRay(x,y,ang,maxd){
   const cx=Math.cos(ang),cy=Math.sin(ang);
-  for(let d=6;d<=maxd;d+=4){
+  // Finer step + larger hit radius so firearms reliably hit (esp. multiplayer guest)
+  for(let d=4;d<=maxd;d+=3){
     const px=x+cx*d,py=y+cy*d;
     for(const z of zombies){
       if(z.dead)continue;
+      const hitR = Math.max(10, (z.r||5)+6);
       const dx=z.x-px,dy=(z.y-5)-py;
-      if(dx*dx+dy*dy<49)return{x:px,y:py,z};
+      if(dx*dx+dy*dy<hitR*hitR)return{x:px,y:py,z};
     }
-    if(pointSolid(px,py+5))return{x:px,y:py,z:null};
+    // Only block on solid walls/trees, not every frame (keeps shots fair)
+    if(d>12 && pointSolid(px,py+5))return{x:px,y:py,z:null};
   }
   return{x:x+cx*maxd,y:y+cy*maxd,z:null};
 }
@@ -1030,9 +1033,34 @@ function genWorld(seed) {
     }
   }
   let vId = 0;
+  const carCols=['#7a3030','#30507a','#505050','#6a6a30','#8a7030','#4a6a8a','#2a5a3a','#6a3a5a','#3a3a3a','#8a5a20'];
+  // More cars on city roads; still some on other maps
+  const roadCarChance = selectedMap==='city' ? 0.85 : 0.45;
   for(const r of roads){
-    if(_rng()<.45&&r.w>100){
-      vehicles.push({id:vId++, x:r.x+r.w/2, y:r.y+7, w:36, h:20, col:pick(['#7a3030','#30507a','#505050','#6a6a30','#8a7030','#4a6a8a']), looted:false, spd:0, face:0});
+    if(r.w>80 && _rng()<roadCarChance){
+      vehicles.push({id:vId++, x:r.x+r.w/2, y:r.y+7, w:36, h:20, col:pick(carCols), looted:false, spd:0, face:0});
+    }
+    // City: extra car further along long roads
+    if(selectedMap==='city' && r.w>220 && _rng()<0.7){
+      vehicles.push({id:vId++, x:r.x+r.w*0.25, y:r.y+7, w:36, h:20, col:pick(carCols), looted:false, spd:0, face:0});
+    }
+    if(selectedMap==='city' && r.h>220 && _rng()<0.7){
+      vehicles.push({id:vId++, x:r.x+7, y:r.y+r.h*0.5, w:36, h:20, col:pick(carCols), looted:false, spd:0, face:Math.PI/2});
+    }
+  }
+  // City: parked cars near buildings
+  if(selectedMap==='city'){
+    for(const b of blds){
+      if(_rng()>0.55) continue;
+      const side=_rng();
+      let cx,cy,face=0;
+      if(side<0.25){ cx=b.x-28; cy=b.y+b.h/2; face=Math.PI/2; }
+      else if(side<0.5){ cx=b.x+b.w+28; cy=b.y+b.h/2; face=Math.PI/2; }
+      else if(side<0.75){ cx=b.x+b.w/2; cy=b.y-24; face=0; }
+      else { cx=b.x+b.w/2; cy=b.y+b.h+24; face=0; }
+      if(cx<40||cy<40||cx>WW-40||cy>WH-40) continue;
+      if(solidPoint(cx,cy,20)) continue;
+      vehicles.push({id:vId++, x:cx, y:cy, w:36, h:20, col:pick(carCols), looted:false, spd:0, face:face});
     }
   }
   let planeX=rnd(500,WW-500),planeY=rnd(500,WH-500),validPlane=false,pTries=0;
@@ -1529,12 +1557,17 @@ function respawnPlayer(){
 }
 function damageZ(z,dmg,kx,ky,fromNet){
   if(z.dead)return;
-  z.hit=.15;z.vx+=(kx||0);z.vy+=(ky||0);z.lock=5;z.alert=0;
+  z.hit=.25;z.vx+=(kx||0);z.vy+=(ky||0);z.lock=5;z.alert=0;
+  z._predT=0.5; // keep local prediction for 0.5s so snapshot doesn't erase guest damage
   for(let i=0;i<5;i++)parts.push({x:z.x,y:z.y-7,vx:rnd(-40,40),vy:rnd(-50,10),t:rnd(.25,.5),c:'#a01818'});
   hitFlesh();
   // Only the local attacker sends the event (not when applying remote damage)
   if(MP.active && !fromNet){
-    sendEvt('zombieDmg', {id:z.netId,x:z.x,y:z.y,dmg:dmg});
+    sendEvt('zombieDmg', {
+      id:z.netId,
+      x:Math.round(z.x), y:Math.round(z.y),
+      dmg:dmg, kind:z.kind
+    });
   }
   z.hp-=dmg;
   if(z.hp<=0){
@@ -1627,6 +1660,22 @@ function attack(){
       const fx=Math.cos(a),fy=Math.sin(a);
       tracers.push({x1:P.x+fx*9,y1:P.y-5+fy*9,x2:res.x,y2:res.y,t:w.heavy?.12:.07});
       if(res.z){damageZ(res.z,w.dmg*(Math.random()<.15?2:1),fx*w.kb,fy*w.kb);hits++;}
+    }
+    // Forgiving aim assist: if no ray hit, damage nearest zombie in front cone (helps multiplayer lag)
+    if(hits===0){
+      let best=null,bd=w.range;
+      for(const z of zombies){
+        if(z.dead) continue;
+        const dx=z.x-P.x,dy=z.y-P.y,d=Math.hypot(dx,dy);
+        if(d>bd || d<8) continue;
+        const ang=Math.abs(wrap(Math.atan2(dy,dx)-P.face));
+        if(ang<0.55){bd=d;best=z;}
+      }
+      if(best){
+        const fx=Math.cos(P.face),fy=Math.sin(P.face);
+        damageZ(best,w.dmg,fx*w.kb,fy*w.kb);
+        hits++;
+      }
     }
     P.flash=.06;
     makeNoise(P.x,P.y,w.heavy?700:420);
@@ -1916,6 +1965,10 @@ function update(dt){
       }
     }
   }
+  // Decay local damage prediction timers
+  for(const z of zombies){
+    if(z._predT) z._predT = Math.max(0, z._predT - dt);
+  }
   // Guest: take melee damage from nearby zombies (Host runs AI, Guest applies local hits)
   if(MP.active && !MP.isHost && P && !P.dead){
     for(const z of zombies){
@@ -2137,9 +2190,14 @@ function handleEvt(kind, data){
     const v = vehicles.find(v => v.id===data.id);
     if(v) v.looted = true;
   } else if(kind==='zombieDmg'){
-    let best=data.id ? zombies.find(z=>z.netId===data.id&&!z.dead) : null;
-    if(!best){
-      let bd=30;
+    let best=null;
+    // Prefer exact netId match
+    if(data.id){
+      best = zombies.find(z=>z.netId===data.id && !z.dead) || null;
+    }
+    // Fallback: nearest zombie to reported position (generous radius for lag)
+    if(!best && Number.isFinite(data.x) && Number.isFinite(data.y)){
+      let bd=90;
       for(const z of zombies){
         if(z.dead) continue;
         const d=Math.hypot(z.x-data.x,z.y-data.y);
@@ -2147,7 +2205,6 @@ function handleEvt(kind, data){
       }
     }
     if(best && Number.isFinite(data.dmg)){
-      // Apply as remote damage (no re-broadcast)
       damageZ(best, clamp(data.dmg,0,100), 0, 0, true);
     }
   }
@@ -2389,23 +2446,43 @@ function applySnapshot(snap){
     const byId = new Map();
     for(const z of zombies) if(z.netId) byId.set(z.netId, z);
     const next = [];
+    const seenIds = new Set();
     for(let i=0;i<snap.zombies.length;i++){
       const sz = snap.zombies[i];
       if(!sz) continue;
       const t = ZTYPES[sz.kind] || ZTYPES[0];
       const prev = sz.netId ? byId.get(sz.netId) : null;
+      // Keep local prediction HP if we recently damaged this zombie (prevents snapshot from erasing guest shots)
+      let hp = sz.hp;
+      let predT = 0;
+      if(prev){
+        predT = Math.max(0, (prev._predT||0));
+        if(predT>0 && Number.isFinite(prev.hp)){
+          hp = Math.min(sz.hp, prev.hp);
+        }
+        // If local prediction already killed it, skip until host confirms (omit from list)
+        if(prev.dead && predT>0){ seenIds.add(sz.netId); continue; }
+      }
+      if(sz.netId) seenIds.add(sz.netId);
       next.push({
         netId: sz.netId || ('remote-z'+i),
         x: sz.x, y: sz.y, kind: sz.kind,
-        face: sz.face||0, anim: sz.anim||0, hp: sz.hp,
+        face: sz.face||0, anim: sz.anim||0, hp: hp,
         max: t.hp*(1+(day-1)*0.08), r: t.r, dmg: t.dmg, spd: t.spd,
         moving: !!sz.moving, skin: sz.skin, shirt: sz.shirt,
         crawler: t.crawler, ranged: t.ranged, range: t.range, screams: t.screams,
         dead: false, hit: prev ? prev.hit : 0, vx: 0, vy: 0,
         alert: 0, lock: prev ? Math.max(0, prev.lock) : 0, lunge: 0,
         cd: prev ? prev.cd : 0, losT: 0, seen: false, wt: 0,
-        tx: sz.x, ty: sz.y, spitT: prev ? prev.spitT : 0, screamT: prev ? prev.screamT : 0
+        tx: sz.x, ty: sz.y, spitT: prev ? prev.spitT : 0, screamT: prev ? prev.screamT : 0,
+        _predT: predT, _hitCD: prev ? prev._hitCD : 0
       });
+    }
+    // Keep briefly-predicted-dead zombies so they don't flicker back
+    for(const z of zombies){
+      if(z.dead && (z._predT||0)>0 && z.netId && !seenIds.has(z.netId)){
+        next.push(z);
+      }
     }
     zombies = next;
   }
