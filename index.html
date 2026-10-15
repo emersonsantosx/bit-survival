@@ -388,11 +388,22 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
 const $=id=>document.getElementById(id);
 const on=(id,ev,fn)=>{const e=$(id);if(e)e.addEventListener(ev,fn);};
 const clamp=(v,a,b)=>isFinite(v)?(v<a?a:v>b?b:v):a;
-const rnd=(a,b)=>a+Math.random()*(b-a);
+/* Seeded RNG for deterministic multiplayer world generation */
+let _rng = Math.random;
+function setRng(seed){
+  if(seed==null){ _rng = Math.random; return; }
+  let s = Math.floor(Math.abs(seed)) % 2147483647;
+  if(s <= 0) s += 2147483646;
+  _rng = function(){
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+const rnd=(a,b)=>a+_rng()*(b-a);
 const rint=(a,b)=>Math.floor(rnd(a,b+1));
-const pick=a=>a[Math.floor(Math.random()*a.length)];
+const pick=a=>a[Math.floor(_rng()*a.length)];
 const wrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;};
-function wpick(t){let s=0;for(const k in t)s+=t[k];let r=Math.random()*s;for(const k in t){r-=t[k];if(r<=0)return k;}return Object.keys(t)[0];}
+function wpick(t){let s=0;for(const k in t)s+=t[k];let r=_rng()*s;for(const k in t){r-=t[k];if(r<=0)return k;}return Object.keys(t)[0];}
 function LSget(){try{return localStorage.getItem('minisurv_best');}catch(e){return null;}}
 function LSset(v){try{localStorage.setItem('minisurv_best',String(v));}catch(e){}}
 const pad=n=>(n<10?'0':'')+n;
@@ -881,7 +892,8 @@ function addBuilding(x,y,w,h,type){
   const n=type==='mil'?rint(4,6):type==='shop'?rint(3,5):rint(2,4);
   for(let i=0;i<n;i++)items.push({t:wpick(LOOT[type]||LOOT.house),x:rnd(x+t+8,x+w-t-8),y:rnd(y+t+12,y+h-t-16)});
 }
-function genWorld() {
+function genWorld(seed) {
+  setRng(seed);
   try {
   trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];spits=[];decorations=[];
   plane=null;
@@ -902,7 +914,7 @@ function genWorld() {
       let type='house';
       if(t.mil) type='mil';
       else {
-        const r=Math.random();
+        const r=_rng();
         if(selectedMap==='city') type = r<.35?'warehouse':(r<.6?'shop':'house');
         else if(selectedMap==='desert') type = r<.25?'barn':(r<.5?'shop':'house');
         else if(selectedMap==='snow') type = r<.3?'cabin':(r<.55?'shop':'house');
@@ -959,7 +971,7 @@ function genWorld() {
   }
   let vId = 0;
   for(const r of roads){
-    if(Math.random()<.45&&r.w>100){
+    if(_rng()<.45&&r.w>100){
       vehicles.push({id:vId++, x:r.x+r.w/2, y:r.y+7, w:36, h:20, col:pick(['#7a3030','#30507a','#505050','#6a6a30','#8a7030','#4a6a8a']), looted:false, spd:0, face:0});
     }
   }
@@ -982,13 +994,13 @@ function genWorld() {
   while(count<treeCount&&g<10000){
     g++;
     let x,y;
-    if(Math.random()<.78){const c=pick(centers),a=rnd(0,6.283),d=Math.random()*c.r;x=c.x+Math.cos(a)*d;y=c.y+Math.sin(a)*d;}
+    if(_rng()<.78){const c=pick(centers),a=rnd(0,6.283),d=_rng()*c.r;x=c.x+Math.cos(a)*d;y=c.y+Math.sin(a)*d;}
     else{x=rnd(30,WW-30);y=rnd(30,WH-30);}
     if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,16))continue;
     let nearLake=false;
     for(const l of lakes)if(Math.hypot(l.cx-x,l.cy-y)<l.r+25){nearLake=true;break;}
     if(nearLake)continue;
-    trees.push({x:Math.round(x),y:Math.round(y),k:selectedMap==='snow'?2:(selectedMap==='desert'?3:(Math.random()<.55?0:1)),hp:3});count++;
+    trees.push({x:Math.round(x),y:Math.round(y),k:selectedMap==='snow'?2:(selectedMap==='desert'?3:(_rng()<.55?0:1)),hp:3});count++;
   }
 
   const rockCount=selectedMap==='desert'?200:selectedMap==='snow'?240:selectedMap==='city'?100:300;
@@ -996,7 +1008,7 @@ function genWorld() {
   while(rc<rockCount&&rg<10000){
     rg++;
     let x,y;
-    if(Math.random()<.7){const c=pick(centers),a=rnd(0,6.283),d=Math.random()*c.r;x=c.x+Math.cos(a)*d;y=c.y+Math.sin(a)*d;}
+    if(_rng()<.7){const c=pick(centers),a=rnd(0,6.283),d=_rng()*c.r;x=c.x+Math.cos(a)*d;y=c.y+Math.sin(a)*d;}
     else{x=rnd(40,WW-40);y=rnd(40,WH-40);}
     if(x<40||y<40||x>WW-40||y>WH-40||solidPoint(x,y,20))continue;
     let nearLake=false;
@@ -1018,7 +1030,7 @@ function genWorld() {
     if(nearLake)continue;
     const type=pick(decorList);
     const solid = ['cactus_bg','crate','trash','hydrant','sign','bench','lamp','snowman','pine_sm','log','stump'].includes(type);
-    decorations.push({x:Math.round(x),y:Math.round(y),type:type,solid:solid,seed:Math.random()});
+    decorations.push({x:Math.round(x),y:Math.round(y),type:type,solid:solid,seed:_rng()});
     dc++;
   }
 
@@ -1034,13 +1046,15 @@ function genWorld() {
     if(!solidPoint(x,y,14))items.push({t:'stone',x,y});
   }
 
-    weather=Math.random()<.4?(Math.random()<.5?'rain':'snow'):'none';
+  weather=_rng()<.4?(_rng()<.5?'rain':'snow'):'none';
   weatherTimer=rnd(120,240);
   weatherParticles=[];
   buildMinimap();
   }catch(e){
     console.error('[genWorld] FALHOU na linha:',e.stack);
     throw e;
+  } finally {
+    setRng(null);
   }
 }
 function buildMinimap(){
@@ -1940,7 +1954,11 @@ function mpHostStart(){
   setStatus('hostStatus','Carregando motor P2P...');
   loadPeerJS(err=>{
     if(err||typeof Peer==='undefined'){MP.active=false;MP.isHost=false;setStatus('hostStatus','Falha ao carregar P2P',true);return;}
-    try{MP.peer=new Peer(MP.roomCode,{debug:1});}
+    const peerOpts={debug:1, config:{iceServers:[
+      {urls:'stun:stun.l.google.com:19302'},
+      {urls:'stun:stun1.l.google.com:19302'}
+    ]}};
+    try{MP.peer=new Peer(MP.roomCode, peerOpts);}
     catch(e){setStatus('hostStatus','Erro: '+e.message,true);return;}
     MP.peer.on('open',id=>{MP.myId=id;setStatus('hostStatus','Sala criada! Aguardando jogador...');console.log('[Host] peer aberto:',id);});
     MP.peer.on('connection',conn=>{
@@ -1970,7 +1988,11 @@ function mpJoinStart(code){
   setStatus('joinStatus','Carregando motor P2P...');
   loadPeerJS(err=>{
     if(err||typeof Peer==='undefined'){MP.active=false;MP.isHost=false;setStatus('joinStatus','Falha ao carregar P2P',true);return;}
-    try{MP.peer=new Peer({debug:1});}
+    const peerOpts={debug:1, config:{iceServers:[
+      {urls:'stun:stun.l.google.com:19302'},
+      {urls:'stun:stun1.l.google.com:19302'}
+    ]}};
+    try{MP.peer=new Peer(peerOpts);}
     catch(e){setStatus('joinStatus','Erro: '+e.message,true);return;}
     MP.peer.on('open',id=>{
       MP.myId=id;
@@ -1999,19 +2021,14 @@ function setupConn(conn,isHostSide){
       setStatus('hostStatus','✅ Jogador conectado! Gerando mundo...');
       setTimeout(()=>{
         try{
-          genWorld();  // ⚠️ APENAS genWorld, NUNCA populate aqui!
+          selectedMap = mpSelectedMap || 'forest';
+          const seed = Math.floor(Math.random()*1e9) + 1;
+          genWorld(seed);
           if(!plane) throw new Error('plane não gerado');
-          console.log('[Host] genWorld OK:',trees.length,'árvores,',rocks.length,'rochas');
-        }catch(e){
-          console.error('[Host genWorld]',e);
-          setStatus('hostStatus','Erro ao gerar mundo: '+(e.message||e),true);
-          return;
-        }
-        try{
+          console.log('[Host] genWorld OK (seed='+seed+'):',trees.length,'árvores,',rocks.length,'rochas');
           if(MP.conn && MP.conn.open){
-            const world=packWorld();
-            console.log('[Host] enviando worldInit...');
-            MP.conn.send({type:'worldInit', world});
+            console.log('[Host] enviando seed+map...');
+            MP.conn.send({type:'worldInit', seed: seed, map: selectedMap});
             MP.conn.send({type:'start', map: selectedMap});
             setStatus('hostStatus','🎮 Partida iniciada!');
           } else {
@@ -2019,17 +2036,17 @@ function setupConn(conn,isHostSide){
             return;
           }
         }catch(e){
-          console.error('[Host send]',e);
-          setStatus('hostStatus','Erro ao enviar mundo: '+(e.message||e),true);
+          console.error('[Host gen/send]',e);
+          setStatus('hostStatus','Erro: '+(e.message||e),true);
           return;
         }
         try{
-          enterMultiplayerGame(true);  // ← populate() roda AQUI dentro, após criar P
+          enterMultiplayerGame(true);
         }catch(e){
           console.error('[Host enter]',e);
           setStatus('hostStatus','Erro ao iniciar: '+(e.message||e),true);
         }
-      }, 30);
+      }, 50);
     }else{
       setStatus('joinStatus','✅ Conectado! Aguardando Host...');
     }
@@ -2053,9 +2070,16 @@ function handleNetData(data,isHostSide){
   MP.lastRecv=performance.now();
   if(!data||!data.type) return;
   if(data.type==='worldInit'){
-    if(!isHostSide && data.world){
-      console.log('[Guest] worldInit recebido');
-      applyWorld(data.world);
+    if(!isHostSide && data.seed != null){
+      console.log('[Guest] worldInit recebido — seed='+data.seed+' map='+data.map);
+      try{
+        selectedMap = data.map || 'forest';
+        genWorld(data.seed);
+        console.log('[Guest] mundo gerado:',trees.length,'árvores, plane?',!!plane);
+      }catch(e){
+        console.error('[Guest genWorld]',e);
+        setStatus('joinStatus','Erro ao gerar mundo: '+(e.message||e),true);
+      }
     }
   } else if(data.type==='start'){
     if(!isHostSide){
@@ -2069,7 +2093,7 @@ function handleNetData(data,isHostSide){
             console.error('[Guest] start sem plane');
             setStatus('joinStatus','Erro: mundo não chegou do Host',true);
           }
-        }, 400);
+        }, 600);
       }
     }
   } else if(data.type==='evt'){
