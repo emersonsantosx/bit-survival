@@ -13,6 +13,10 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
 #hud{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none}
 #hud *{pointer-events:none}
 #hud button{pointer-events:auto}
+/* CFG "Mostrar HUD" — esconde barras, minimapa, inventário, arma e botões de ação */
+body.nohud #bars,body.nohud #top,body.nohud #inv,body.nohud #wpn,
+body.nohud #atk,body.nohud #pick,body.nohud #run,body.nohud #swap{display:none!important}
+body.nohud #bpause,body.nohud #bcraft{display:flex!important} /* pause/craft sempre visíveis */
 .hide{display:none!important}
 #bars{position:absolute;left:8px;top:8px;width:132px}
 .row{display:flex;align-items:center;gap:4px;margin-bottom:3px;font-size:11px}
@@ -1285,6 +1289,7 @@ function newGame(){
     T=0;kills=0;shake=0;flash=0;spawnTimer=3;dark=0;day=1;atkHeld=false;sprintHeld=false;
     touchGas=0;touchSteer=0;stepT=0;
     MP.active=false;remotePlayers={};
+    restoreWalkHUD(); // E1: always reset vehicle HUD when starting a match
     document.body.classList.toggle('nohud',!CFG.hud);
     buildInv();updateHud(true);
     state='play';
@@ -1437,19 +1442,26 @@ function isVehicleOccupied(v){
   }
   return false;
 }
+function restoreWalkHUD(){
+  // Always restore on-foot controls (fixes quit while driving → broken next game)
+  const vh=$('veh-hud'); if(vh) vh.classList.add('hide');
+  const show=['inv','atk','pick','run','swap'];
+  for(const id of show){ const e=$(id); if(e) e.classList.remove('hide'); }
+  touchGas=0; touchSteer=0;
+}
+function showVehicleHUD(){
+  const vh=$('veh-hud'); if(vh) vh.classList.remove('hide');
+  const hide=['inv','atk','pick','run','swap'];
+  for(const id of hide){ const e=$(id); if(e) e.classList.add('hide'); }
+}
 function exitVehicle(){
-  if(!P.inVehicle)return;
+  if(!P||!P.inVehicle)return;
   const v=P.inVehicle;
   if(v.driverId===myNetId()) v.driverId=null;
   v.spd=0;
   P.x=v.x+Math.cos(v.face+1.57)*25;P.y=v.y+Math.sin(v.face+1.57)*25;
-  P.inVehicle=null;touchGas=0;touchSteer=0;
-  $('veh-hud').classList.add('hide');
-  $('inv').classList.remove('hide');
-  $('atk').classList.remove('hide');
-  $('pick').classList.remove('hide');
-  $('run').classList.remove('hide');
-  $('swap').classList.remove('hide');
+  P.inVehicle=null;
+  restoreWalkHUD();
   if(MP.active) sendEvt('vehicleExit', {id:v.id});
   toast('Saiu do veículo');beep(300,.1,'square',.05);
 }
@@ -1470,36 +1482,42 @@ function pickup(){
     return;
   }
 
-  let nv=null,nd=36;
-  for(const v of vehicles){const d=Math.hypot(v.x-P.x,v.y-P.y);if(d<nd){nd=d;nv=v;}}
-  if(nv){
+  // Choose nearest interactable: ground item vs vehicle (fixes item blocked by car)
+  const it=nearestItem();
+  let nv=null,ndCar=36;
+  for(const v of vehicles){const d=Math.hypot(v.x-P.x,v.y-P.y);if(d<ndCar){ndCar=d;nv=v;}}
+  const dItem=it?Math.hypot(it.x-P.x,it.y-P.y):1e9;
+  const preferItem=it && dItem<=24 && dItem<=ndCar;
+
+  if(nv && !preferItem){
     if(!nv.looted){
-      nv.looted=true;
-      if(MP.active) sendEvt('vehicleLooted', { id: nv.id });
+      // E2: only mark looted AFTER successful loot (don't lose item on full bag)
       const found=wpick(LOOT.car);
-      if(found==='ammo'){const n=rint(5,12);P.ammo+=n;toast('+'+n+' munição');}
-      else if(found==='pistol'){
+      if(found==='ammo'){
+        const n=rint(5,12);P.ammo+=n;toast('+'+n+' munição');
+        nv.looted=true; if(MP.active) sendEvt('vehicleLooted', { id: nv.id });
+      } else if(found==='pistol'){
         if(P.firearms.pistol){P.ammo+=6;toast('+6 munição');}
         else{P.firearms.pistol=true;P.ammo+=6;P.weapon='pistol';updateWeaponHud();toast('Pegou: Pistola (+6 munição)');}
+        nv.looted=true; if(MP.active) sendEvt('vehicleLooted', { id: nv.id });
+      } else {
+        if(!addItem(found)){toast('Mochila cheia');beep(140,.08,'square',.05);return;}
+        toast('Achou: '+ITEMS[found].n);
+        nv.looted=true; if(MP.active) sendEvt('vehicleLooted', { id: nv.id });
       }
-      else {if(!addItem(found)){toast('Mochila cheia');return;}toast('Achou: '+ITEMS[found].n);}
       beep(620,.12,'square',.05);
       return;
     } else {
-      // Cannot enter a car already occupied by another player
       if(isVehicleOccupied(nv)){
         toast('Veículo ocupado!');beep(160,.08,'square',.05);return;
       }
       P.inVehicle=nv;nv.spd=0;nv.driverId=myNetId();
-      $('veh-hud').classList.remove('hide');
-      $('inv').classList.add('hide');$('atk').classList.add('hide');
-      $('pick').classList.add('hide');$('run').classList.add('hide');$('swap').classList.add('hide');
+      showVehicleHUD();
       if(MP.active) sendEvt('vehicleEnter', {id:nv.id, driver:myNetId()});
       toast('Entrou no veículo!');beep(440,.15,'square',.06);return;
     }
   }
 
-  const it=nearestItem();
   if(!it){toast('Nada por perto');return;}
   const t=it.t;
   if(t==='ammo'){const n=rint(5,10);P.ammo+=n;toast('+'+n+' munição');}
@@ -1571,9 +1589,7 @@ function die(){
   closeWeaponWheel();
   P.hp=0;P.dead=true;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;
   if(P.inVehicle){ try{exitVehicle();}catch(e){} }
-  $('veh-hud').classList.add('hide');
-  $('inv').classList.remove('hide');$('atk').classList.remove('hide');
-  $('pick').classList.remove('hide');$('run').classList.remove('hide');$('swap').classList.remove('hide');
+  restoreWalkHUD();
   beep(200,.6,'sawtooth',.08,-150);boom(.5,.3,200);
 
   if(MP.active){
@@ -2339,10 +2355,8 @@ function handleEvt(kind, data){
       v.driverId = data.driver || 'remote';
       // If we somehow thought we were in this car, kick us out
       if(P && P.inVehicle===v && v.driverId!==myNetId()){
-        P.inVehicle=null;touchGas=0;touchSteer=0;
-        $('veh-hud').classList.add('hide');
-        $('inv').classList.remove('hide');$('atk').classList.remove('hide');
-        $('pick').classList.remove('hide');$('run').classList.remove('hide');$('swap').classList.remove('hide');
+        P.inVehicle=null;
+        restoreWalkHUD();
         toast('Veículo já estava ocupado!');
       }
     }
@@ -2777,8 +2791,9 @@ function packMyPlayer(){
   return p;
 }
 function enterMultiplayerGame(isHost){
-  userWantsFS=true;
-  requestFullscreenLandscape(true);
+  // E4: respect fullscreen config
+  if(CFG.fullscreen){ userWantsFS=true; requestFullscreenLandscape(true); }
+  else { userWantsFS=false; }
   MP.isHost=isHost;
   try{
     if(!plane) throw new Error('mundo não carregado');
@@ -2799,6 +2814,7 @@ function enterMultiplayerGame(isHost){
     T=0; kills=0; shake=0; flash=0; spawnTimer=3; dark=0; day=1;
     atkHeld=false; sprintHeld=false; touchGas=0; touchSteer=0; stepT=0;
     remotePlayers={}; MP.gameOver=false; MP.syncT=0;
+    restoreWalkHUD();
     document.body.classList.toggle('nohud',!CFG.hud);
     buildInv(); updateHud(true);
     state='play';
@@ -3380,7 +3396,35 @@ function render(){
       human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:z.kind===2?1.25:(z.kind===3?1.35:1),kind:z.kind,spitter:z.ranged,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3});
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
     }
-    ctx.setTransform(1,0,0,1,0,0);return;
+    // E3: tracers + particles inside buildings (were skipped by early return)
+    if(CFG.tracers){
+      for(const t of tracers){
+        ctx.globalAlpha=Math.min(1,t.t*14);ctx.strokeStyle='#ffe27a';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(t.x1,t.y1);ctx.lineTo(t.x2,t.y2);ctx.stroke();ctx.globalAlpha=1;
+      }
+    }
+    for(const p of parts)R(p.x,p.y,2,2,p.c);
+    // Screen overlays (flash, joystick, minimap) — shared with outdoor path
+    ctx.setTransform(1,0,0,1,0,0);
+    if(CFG.dmgflash&&flash>0){ctx.fillStyle='rgba(190,0,0,'+(flash*.7).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
+    else if(CFG.screenflash&&P.hp<30&&!P.dead){ctx.fillStyle='rgba(120,0,0,'+(.1+.07*Math.sin(T*6)).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
+    if(joy.active&&!P.inVehicle){
+      ctx.globalAlpha=.55;ctx.lineWidth=3;ctx.strokeStyle='#fff';ctx.fillStyle='rgba(255,255,255,.12)';
+      ctx.beginPath();ctx.arc(joy.ox,joy.oy,JR,0,6.283);ctx.fill();ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.6)';ctx.beginPath();ctx.arc(joy.px,joy.py,22,0,6.283);ctx.fill();ctx.globalAlpha=1;
+    }
+    mm.clearRect(0,0,76,76);
+    mm.drawImage(mmStatic,0,0);
+    const mx=P.x/WW*76,my=P.y/WH*76;
+    mm.fillStyle=Math.floor(T*2)%2?'#ffffff':'#4aa3ff';
+    mm.fillRect(Math.round(mx)-2,Math.round(my)-2,4,4);
+    for(const c of campfires){mm.fillStyle='#ff8020';mm.fillRect(Math.round(c.x/WW*76)-1,Math.round(c.y/WH*76)-1,2,2);}
+    for(const id in remotePlayers){
+      const rp=remotePlayers[id];
+      mm.fillStyle=rp.isHost?'#ff8080':'#80ffa0';
+      mm.fillRect(Math.round(rp.x/WW*76)-2,Math.round(rp.y/WH*76)-2,4,4);
+    }
+    return;
   }
   const ox=Math.round(-(P.x-W/(2*Z))*Z),oy=Math.round(-(P.y-H/(2*Z))*Z);
   camX=-ox/Z;camY=-oy/Z;
@@ -3860,6 +3904,9 @@ function quitToMenu(){
   closeChat();
   setChatButtonVisible(false);
   const cm=$('chat-msgs'); if(cm) cm.innerHTML='';
+  // E1: clear vehicle state + restore on-foot HUD before leaving
+  if(P){ P.inVehicle=null; }
+  restoreWalkHUD();
   userWantsFS=false;
   try{
     if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
@@ -3879,10 +3926,16 @@ function startGame(){
   closeChat();
   setChatButtonVisible(false);
   const cm=$('chat-msgs'); if(cm) cm.innerHTML='';
-  userWantsFS=true;
-  requestFullscreenLandscape(true);
+  // E4: respect "Tela cheia ao jogar" config
+  if(CFG.fullscreen){
+    userWantsFS=true;
+    requestFullscreenLandscape(true);
+  } else {
+    userWantsFS=false;
+  }
   showScreen(null);
   $('hud').classList.remove('hide');
+  restoreWalkHUD();
   newGame();
 }
 on('again','click',()=>{
@@ -3937,9 +3990,9 @@ function frame(ts){
   requestAnimationFrame(frame);
   const dt=Math.min(.05,((ts-last)/1000)||0);
   last=ts;
-  // Keep simulating world while dead in MP if teammate still alive (so they can keep playing)
-  // Keep world + network sync running during craft/dead-wait in multiplayer
-  if(state==='play' || (MP.active && !MP.gameOver && (state==='craft' || state==='dead'))) update(dt);
+  // E5: in multiplayer, keep simulating while paused/craft/dead so the other player is not frozen
+  // (local input is already cleared on pause; joy=0 so local character stays still)
+  if(state==='play' || (MP.active && !MP.gameOver && (state==='craft' || state==='dead' || state==='pause'))) update(dt);
   if(P&&(state==='play'||state==='craft'||state==='pause'||state==='dead'))render();
 }
 requestAnimationFrame(frame);
