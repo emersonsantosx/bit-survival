@@ -13,10 +13,13 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
 #hud{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none}
 #hud *{pointer-events:none}
 #hud button{pointer-events:auto}
-/* CFG "Mostrar HUD" — esconde barras, minimapa, inventário, arma e botões de ação */
-body.nohud #bars,body.nohud #top,body.nohud #inv,body.nohud #wpn,
-body.nohud #atk,body.nohud #pick,body.nohud #run,body.nohud #swap{display:none!important}
-body.nohud #bpause,body.nohud #bcraft{display:flex!important} /* pause/craft sempre visíveis */
+/* HUD oculta: NÃO esconde #top inteiro (senão some o pause). Só esconde filhos. */
+body.nohud #bars,body.nohud #inv,body.nohud #wpn,
+body.nohud #atk,body.nohud #pick,body.nohud #run,body.nohud #swap,
+body.nohud #mm,body.nohud #clk,body.nohud #kl{display:none!important}
+body.nomap #mm{display:none!important}
+/* Pause e craft SEMPRE acessíveis */
+#bpause,#bcraft{display:inline-flex!important;align-items:center;justify-content:center}
 .hide{display:none!important}
 #bars{position:absolute;left:8px;top:8px;width:132px}
 .row{display:flex;align-items:center;gap:4px;margin-bottom:3px;font-size:11px}
@@ -42,14 +45,16 @@ body.nohud #bpause,body.nohud #bcraft{display:flex!important} /* pause/craft sem
 #pick{right:118px;bottom:26px;width:64px;height:64px}
 #run{right:28px;bottom:122px;width:64px;height:64px}
 #swap{right:104px;bottom:104px;width:52px;height:52px}
-#weapon-wheel{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.72);touch-action:pan-y;pointer-events:auto}
+#weapon-wheel{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(0,0,0,.72);touch-action:pan-y;pointer-events:auto;-webkit-overflow-scrolling:touch}
 #weapon-wheel.hide{display:none!important}
-.weapon-wheel-ring{position:relative;width:min(92vw,430px);max-height:78vh;overflow:auto;border:2px solid rgba(159,214,138,.8);border-radius:16px;background:linear-gradient(160deg,rgba(27,38,25,.99),rgba(8,12,8,.99));box-shadow:0 0 36px #000; padding:58px 14px 16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;align-content:start}
-.weapon-wheel-title{position:absolute;left:12px;right:12px;top:12px;text-align:center;color:#d9e8b0;font-size:13px;line-height:1.5;pointer-events:none;text-shadow:1px 1px #000}
-.weapon-option{position:relative;width:100%;min-height:72px;border:1px solid rgba(255,255,255,.3);border-radius:10px;background:rgba(15,22,14,.98);color:#eee9d0;font:bold 11px "Courier New",monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px 4px;box-shadow:0 2px 8px #0008;touch-action:manipulation;cursor:pointer}
-.weapon-option .weapon-icon{font-size:24px;line-height:1.1}.weapon-option.selected{border:2px solid #ffd84a;background:rgba(75,82,35,.98);color:#ffe98a;box-shadow:0 0 15px rgba(255,216,74,.4)}
+.weapon-wheel-ring{position:relative;width:min(92vw,430px);max-height:min(78vh,520px);overflow-y:auto;overflow-x:hidden;border:2px solid rgba(159,214,138,.8);border-radius:16px;background:linear-gradient(160deg,rgba(27,38,25,.99),rgba(8,12,8,.99));box-shadow:0 0 36px #000; padding:52px 12px 12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-content:start;overscroll-behavior:contain}
+.weapon-wheel-title{position:absolute;left:12px;right:12px;top:10px;text-align:center;color:#d9e8b0;font-size:12px;line-height:1.4;pointer-events:none;text-shadow:1px 1px #000}
+.weapon-option{position:relative;width:100%;min-height:62px;border:1px solid rgba(255,255,255,.3);border-radius:10px;background:rgba(15,22,14,.98);color:#eee9d0;font:bold 11px "Courier New",monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 4px;box-shadow:0 2px 8px #0008;touch-action:manipulation;cursor:pointer}
+.weapon-option .weapon-icon{font-size:22px;line-height:1.1}.weapon-option.selected{border:2px solid #ffd84a;background:rgba(75,82,35,.98);color:#ffe98a;box-shadow:0 0 15px rgba(255,216,74,.4)}
 #weapon-wheel-hint{grid-column:1/-1;text-align:center;color:#eee9d0;font-size:11px;background:rgba(0,0,0,.35);padding:8px;border-radius:8px;pointer-events:none}
-@media(max-width:420px){.weapon-wheel-ring{grid-template-columns:repeat(2,minmax(0,1fr));padding:58px 10px 12px;gap:7px}.weapon-option{min-height:64px;font-size:10px}.weapon-option .weapon-icon{font-size:22px}}
+@media(max-width:420px){.weapon-wheel-ring{grid-template-columns:repeat(2,minmax(0,1fr));padding:50px 8px 10px;gap:6px;max-height:min(82vh,480px)}.weapon-option{min-height:56px;font-size:10px}.weapon-option .weapon-icon{font-size:20px}}
+@media(max-height:430px){.weapon-wheel-ring{max-height:90vh;grid-template-columns:repeat(4,minmax(0,1fr));padding:40px 6px 6px;gap:4px}.weapon-option{min-height:44px;font-size:9px;padding:3px 2px}.weapon-option .weapon-icon{font-size:16px}.weapon-wheel-title{font-size:10px;top:4px}#weapon-wheel{padding:4px}#weapon-wheel-hint{padding:5px;font-size:10px}}
+@media(max-height:360px){.weapon-wheel-ring{max-height:94vh;grid-template-columns:repeat(5,minmax(0,1fr));padding:36px 4px 4px;gap:3px}.weapon-option{min-height:40px;font-size:8px}.weapon-option .weapon-icon{font-size:15px}}
 .craft-tabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:0 0 8px}
 .craft-tab{background:#252c22;border:1px solid #65735a;color:#dfe8c8;border-radius:7px;padding:6px 9px;font:bold 10px "Courier New",monospace}
 .craft-tab.active{background:#3d7a2e;border-color:#9fd68a;color:#fff}
@@ -259,27 +264,27 @@ body.nohud #bpause,body.nohud #bcraft{display:flex!important} /* pause/craft sem
     <div class="map-grid">
       <button class="map-opt selected" data-map="forest">
         <span class="ic">🌲</span><span>FLORESTA</span>
-        <span class="map-desc">Bosques densos, cogumelos e lago p/ pescar</span>
+        <span class="map-desc">Bosques densos e um lago isolado — pesque e asse</span>
       </button>
       <button class="map-opt" data-map="desert">
         <span class="ic">🏜</span><span>DESERTO</span>
-        <span class="map-desc">Cactos, ossadas, crateras e oásis</span>
+        <span class="map-desc">Cactos, ossadas e pouca sombra — sem lago</span>
       </button>
       <button class="map-opt" data-map="snow">
         <span class="ic">❄</span><span>NEVE</span>
-        <span class="map-desc">Pinheiros, icebergs, bonecos de neve</span>
+        <span class="map-desc">Pinheiros, gelo e lago congelado p/ pescar</span>
       </button>
       <button class="map-opt" data-map="city">
         <span class="ic">🏙</span><span>CIDADE</span>
-        <span class="map-desc">Prédios, ruas com carros, lixeiras e postes</span>
+        <span class="map-desc">Bairros densos, prédios, lojas, carros e hordas</span>
       </button>
     </div>
     <div class="help">
-      🎯 Objetivo: sobreviva o máximo de tempo<br>
-      🌲 Todas as armas brancas derrubam árvores<br>
-      🔫 Armas de fogo: Pistola, SMG, Shotgun, Rifle (compartilham munição)<br>
-      🧟 7 tipos de zumbis (Brute, Spitter, Crawler, Screamer...)<br>
-      🔥 Fogueira cozinha peixe e afasta zumbis à noite
+      🎯 Sobreviva o máximo de tempo · 🛠 Craft (C) · ⏸ Pause<br>
+      🧟 9 tipos de zumbis — a horda fica pior a cada dia<br>
+      🔫 Pistola / SMG / Shotgun / Rifle (mesma munição)<br>
+      🐟 Peixe só em Floresta e Neve (lago) → asse na fogueira<br>
+      🚗 Saqueie carros e dirija · 💬 Chat só no multiplayer
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
       <button class="go" id="btnStart" style="margin:0">INICIAR PARTIDA</button>
@@ -298,8 +303,10 @@ body.nohud #bpause,body.nohud #bcraft{display:flex!important} /* pause/craft sem
       <button class="menu-btn sec" id="btnMPBack">← VOLTAR</button>
     </div>
     <div class="help" style="text-align:center;font-size:10px">
-      💡 O Host gera o mundo e escolhe o mapa. O Convidado digita o código de 6 caracteres.<br>
-      ⚠️ Ao entrar, o jogo vira para paisagem automaticamente.
+      💡 Host cria a sala, escolhe o mapa e compartilha o código (6 caracteres).<br>
+      📋 Use COPIAR CÓDIGO e envie no WhatsApp. Convidado cola e conecta.<br>
+      📱 Tela cheia/paisagem no 1º toque após a partida começar.<br>
+      💬 Chat in-game (botão 💬). A partida só acaba quando os dois morrem.
     </div>
   </div>
 </div>
@@ -350,23 +357,28 @@ body.nohud #bpause,body.nohud #bcraft{display:flex!important} /* pause/craft sem
     <div class="ui-scroll">
       <h3>🔊 ÁUDIO</h3>
       <div class="cfg-grid">
-        <div class="cfg-row"><label>Volume Geral</label><input type="range" id="cfg_master" min="0" max="100" value="80"><span class="val" id="v_master">80%</span></div>
+        <div class="cfg-row"><label>Geral</label><input type="range" id="cfg_master" min="0" max="100" value="80"><span class="val" id="v_master">80%</span></div>
         <div class="cfg-row"><label>Efeitos</label><input type="range" id="cfg_sfx" min="0" max="100" value="100"><span class="val" id="v_sfx">100%</span></div>
         <div class="cfg-row"><label>Ambiente</label><input type="range" id="cfg_amb" min="0" max="100" value="60"><span class="val" id="v_amb">60%</span></div>
-        <div class="cfg-row"><label>Chuva</label><input type="range" id="cfg_rain" min="0" max="100" value="70"><span class="val" id="v_rain">70%</span></div>
+        <div class="cfg-row"><label>Clima</label><input type="range" id="cfg_rain" min="0" max="100" value="70"><span class="val" id="v_rain">70%</span></div>
         <div class="cfg-row"><label>Passos</label><input type="range" id="cfg_step" min="0" max="100" value="80"><span class="val" id="v_step">80%</span></div>
       </div>
-      <h3>🖥 INTERFACE</h3>
+      <h3>🎮 JOGO</h3>
       <div class="cfg-grid">
-        <div class="cfg-toggle on" id="cfg_hud"><label>Mostrar HUD (barras, minimapa)</label><div class="sw"></div></div>
-        <div class="cfg-toggle on" id="cfg_dmgflash"><label>Flash vermelho ao levar dano</label><div class="sw"></div></div>
-        <div class="cfg-toggle on" id="cfg_screenflash"><label>Vinheta de vida baixa</label><div class="sw"></div></div>
-        <div class="cfg-toggle on" id="cfg_fullscreen"><label>Tela cheia ao jogar</label><div class="sw"></div></div>
-        <div class="cfg-toggle" id="cfg_tracers"><label>Mostrar traçantes de tiro</label><div class="sw"></div></div>
+        <div class="cfg-toggle on" id="cfg_fullscreen"><label>Tela cheia ao iniciar partida</label><div class="sw"></div></div>
+        <div class="cfg-toggle on" id="cfg_tracers"><label>Traçantes de tiro</label><div class="sw"></div></div>
+        <div class="cfg-toggle on" id="cfg_dmgflash"><label>Flash ao levar dano</label><div class="sw"></div></div>
+        <div class="cfg-toggle on" id="cfg_screenflash"><label>Vinheta com vida baixa</label><div class="sw"></div></div>
+      </div>
+      <h3>👁 INTERFACE</h3>
+      <p style="font-size:10px;color:#9fd68a;margin:0 0 6px;text-align:left">Pause ⏸ e Craft 🛠 nunca são ocultados.</p>
+      <div class="cfg-grid">
+        <div class="cfg-toggle on" id="cfg_hud"><label>HUD (barras, inventário, botões)</label><div class="sw"></div></div>
+        <div class="cfg-toggle on" id="cfg_minimap"><label>Minimapa e relógio</label><div class="sw"></div></div>
       </div>
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">
-      <button class="go" id="btnReset" style="background:#8a3030;border-color:#d06060;margin:0">RESTAURAR PADRÃO</button>
+      <button class="go" id="btnReset" style="background:#8a3030;border-color:#d06060;margin:0">RESTAURAR</button>
       <button class="back" id="btnBackCfg" style="margin:0">← VOLTAR</button>
     </div>
   </div>
@@ -466,9 +478,15 @@ window.addEventListener('resize',resize);
 resize();
 
 /* ============ CONFIG ============ */
-const CFG={master:0.8,sfx:1.0,amb:0.6,rain:0.7,step:0.8,hud:true,dmgflash:true,screenflash:true,fullscreen:true,tracers:true};
+const CFG={master:0.8,sfx:1.0,amb:0.6,rain:0.7,step:0.8,hud:true,minimap:true,dmgflash:true,screenflash:true,fullscreen:true,tracers:true};
 try{const raw=localStorage.getItem('minisurv_cfg');if(raw)Object.assign(CFG,JSON.parse(raw));}catch(e){}
+if(CFG.minimap===undefined) CFG.minimap=true;
 function saveCfg(){try{localStorage.setItem('minisurv_cfg',JSON.stringify(CFG));}catch(e){}}
+function applyHudClasses(){
+  document.body.classList.toggle('nohud', !CFG.hud);
+  document.body.classList.toggle('nomap', !CFG.minimap);
+}
+applyHudClasses();
 
 /* ============ ÁUDIO ============ */
 let AC=null,muted=false,nbuf=null;
@@ -732,19 +750,69 @@ const LOOT={
   house:{food:25,water:25,bandage:20,bat:8,ammo:6,axe:4,medkit:4,stone:4},
   shop:{food:35,water:35,bandage:15,medkit:5,bat:5,axe:5},
   mil:{pistol:12,smg:10,shotgun:8,rifle:6,ammo:35,medkit:15,bandage:15,food:8,water:7,stone:5},
-  car:{food:15,water:15,ammo:20,bandage:10,medkit:5,pistol:5}
+  car:{food:15,water:15,ammo:20,bandage:10,medkit:5,pistol:5},
+  // Cidade — tipos extras
+  apartment:{food:20,water:20,bandage:18,ammo:10,bat:6,medkit:6,stone:3},
+  office:{food:15,water:20,bandage:10,ammo:8,bat:4,medkit:3},
+  garage:{ammo:25,food:10,water:10,bandage:8,pistol:6,bat:5,axe:4},
+  clinic:{medkit:30,bandage:35,food:10,water:15,ammo:5},
+  gas:{food:20,water:25,ammo:15,bandage:10,bat:4,medkit:4},
+  warehouse:{food:20,water:15,ammo:18,bandage:10,axe:8,bat:6,stone:8,medkit:5}
 };
 const OUT_LOOT={food:30,water:30,bandage:15,ammo:5,bat:6,axe:3,medkit:3};
 
 const ZTYPES=[
-  {name:'Comum',   hp:5,  spd:34, dmg:9,  r:5, color:'#7a9a5a'},
-  {name:'Rápido',  hp:3,  spd:62, dmg:6,  r:5, color:'#a0b070'},
-  {name:'Brute',   hp:18, spd:22, dmg:22, r:7, color:'#8a5a4a'},
-  {name:'Chefe',   hp:30, spd:38, dmg:25, r:8, color:'#556b2f'},
-  {name:'Spitter', hp:7,  spd:30, dmg:12, r:6, color:'#7ac070', ranged:true, range:180},
-  {name:'Crawler', hp:4,  spd:48, dmg:11, r:5, color:'#6a8060', crawler:true},
-  {name:'Screamer',hp:8,  spd:40, dmg:8,  r:6, color:'#c0a0a0', screams:true}
+  {name:'Comum',    hp:5,  spd:34, dmg:9,  r:5, color:'#7a9a5a'},
+  {name:'Rápido',   hp:3,  spd:64, dmg:7,  r:5, color:'#a0b070'},
+  {name:'Brute',    hp:20, spd:22, dmg:24, r:7, color:'#8a5a4a'},
+  {name:'Chefe',    hp:34, spd:36, dmg:28, r:8, color:'#556b2f'},
+  {name:'Spitter',  hp:8,  spd:30, dmg:13, r:6, color:'#7ac070', ranged:true, range:190},
+  {name:'Crawler',  hp:4,  spd:50, dmg:12, r:5, color:'#6a8060', crawler:true},
+  {name:'Screamer', hp:9,  spd:40, dmg:9,  r:6, color:'#c0a0a0', screams:true},
+  // Novos
+  {name:'Inchado',  hp:16, spd:18, dmg:18, r:7, color:'#5a8a4a', bloater:true},   // tank tóxico
+  {name:'Berserker',hp:6,  spd:72, dmg:14, r:5, color:'#c05040', berserk:true}    // muito rápido
 ];
+function dayDiff(){
+  const d=Math.max(1, day|0);
+  const night=dark>0.55?1:0;
+  return {
+    d,
+    hp:1+(d-1)*0.14,
+    spd:1+(d-1)*0.04,
+    dmg:1+(d-1)*0.07,
+    // intervalo entre spawns (menor = mais horda)
+    interval: Math.max(0.7, (night?1.35:2.4) - (d-1)*0.14),
+    // teto de zumbis vivos
+    cap: Math.min(200, 48+(d-1)*14 + Math.round(dark*35) + (MP.active?18:0) + (selectedMap==='city'?20:0)),
+    // quantos nascem por tick de spawn
+    batch: Math.min(8, 1+Math.floor((d-1)/2) + night + (d>=5?1:0) + (d>=8?1:0)),
+    // chance de especial sobe com o dia
+    special: clamp(0.18+(d-1)*0.055, 0.18, 0.72)
+  };
+}
+function pickZombieKind(){
+  const dd=dayDiff();
+  const r=Math.random();
+  // Dias 1–2: maioria comum/rápido
+  if(dd.d<=2){
+    if(r<0.55) return 0;
+    if(r<0.82) return 1;
+    if(r<0.90) return 5; // crawler
+    if(r<0.96) return 4; // spitter
+    return 2; // brute raro
+  }
+  // Depois: mistura pesada
+  if(r > 1-dd.special*0.12) return 3; // chefe (mais frequente com o tempo)
+  if(r > 1-dd.special*0.28) return 2; // brute
+  if(r > 1-dd.special*0.42) return 7; // inchado
+  if(r > 1-dd.special*0.55) return 8; // berserker
+  if(r > 1-dd.special*0.68) return 4; // spitter
+  if(r > 1-dd.special*0.80) return 6; // screamer
+  if(r > 1-dd.special*0.90) return 5; // crawler
+  if(r<0.42) return 0;
+  return 1;
+}
 
 const DECOR_BY_MAP={
   forest:['bush','bush2','flower_r','flower_b','flower_y','mushroom','fern','log','stump','lily','tallgrass','berry','rock_moss'],
@@ -768,6 +836,25 @@ let P=null,T=0,kills=0,shake=0,flash=0,spawnTimer=3,dark=0,day=1,hudT=0;
 let atkHeld=false,sprintHeld=false,noiseT=0,tt=null;
 let touchGas=0,touchSteer=0,stepT=0;
 let MP={active:false,isHost:false,peer:null,conn:null,roomCode:'',connected:false,syncT:0,lastRecv:0,myId:null,scriptLoaded:false,playerName:'Jogador',gameOver:false};
+/* Validação básica de pacotes / nomes (anti-lixo) */
+const NET_OK_TYPES=new Set(['worldInit','start','evt','player','snapshot','chat','gameOver','playerDied','playerRespawned']);
+const NET_OK_MAPS=new Set(['forest','desert','snow','city']);
+const NET_OK_EVT=new Set(['treeDmg','rockDmg','itemRemoved','itemAdded','vehicleEnter','vehicleExit','vehicleLooted','shot','spit','campfireAdded','zombieDmg']);
+const NET_OK_IDS=new Set(['host','guest']);
+function sanitizeName(n){
+  if(typeof n!=='string') return 'Jogador';
+  // Letras (incl. acentos), números, espaço e -_. — sem regex unicode avançada (WebView antigo)
+  const s=n.replace(/[^a-zA-Z0-9À-ÿ\s\-_.]/g,'').replace(/\s+/g,' ').trim().slice(0,12);
+  return s || 'Jogador';
+}
+function sanitizeRoomCode(c){
+  if(typeof c!=='string') return '';
+  return c.replace(/[^A-Za-z0-9]/g,'').toUpperCase().slice(0,6);
+}
+function isFiniteNum(v){ return typeof v==='number' && Number.isFinite(v); }
+function clampWorldPos(x,y){
+  return { x: clamp(x,0,WW), y: clamp(y,0,WH) };
+}
 /* Chat multiplayer (não altera HUD) */
 let chatOpen=false;
 const chatLog=[]; // {name,text,me,t}
@@ -853,6 +940,13 @@ function lockLandscape(){
 }
 // userWantsFS: only true when game starts or player explicitly re-enables via pause menu
 let userWantsFS=false;
+function tryFullscreenFromGesture(){
+  // Called from real user input (touch/click) so browsers allow requestFullscreen
+  if(!userWantsFS || !CFG.fullscreen) return;
+  if(state!=='play' && state!=='craft' && state!=='pause') return;
+  if(isFullscreen()) return;
+  requestFullscreenLandscape(true);
+}
 function requestFullscreenLandscape(force){
   if(!force && !userWantsFS) return;
   userWantsFS=true;
@@ -928,9 +1022,10 @@ function removeInv(t, n){
 
 /* ============ GEOMETRIA ============ */
 function pointInLake(x,y){
-  // Lagos removidos do jogo
-  return false;
-  for(const l of lakes)for(const b of l.blobs)if(Math.hypot(b.x-x,b.y-y)<b.r)return true;
+  for(const l of lakes){
+    if(!l.blobs){ if(Math.hypot(l.cx-x,l.cy-y)<l.r) return true; continue; }
+    for(const b of l.blobs)if(Math.hypot(b.x-x,b.y-y)<b.r)return true;
+  }
   return false;
 }
 function solidPoint(x,y,m){
@@ -952,25 +1047,48 @@ function pointSolid(px,py){
   for(const l of lakes){if(Math.hypot(l.cx-px,l.cy-py)<l.r)return true;}
   return false;
 }
+/* Grade espacial — evita varrer milhares de árvores/rochas por entity/frame */
+const SOLID_GRID=128;
+let solidGrid=null;
+function rebuildSolidGrid(){
+  solidGrid=new Map();
+  const put=(x,y,kind,ref)=>{
+    const cx=Math.floor(x/SOLID_GRID), cy=Math.floor(y/SOLID_GRID);
+    const k=cx+','+cy;
+    let arr=solidGrid.get(k);
+    if(!arr){ arr=[]; solidGrid.set(k,arr); }
+    arr.push({x,y,kind,ref});
+  };
+  for(const t of trees) put(t.x,t.y,'tree',t);
+  for(const r of rocks) put(r.x,r.y,'rock',r);
+  for(const d of decorations) if(d.solid) put(d.x,d.y,'decor',d);
+}
+function querySolidNear(x,y,pad){
+  if(!solidGrid) return [];
+  const cx0=Math.floor((x-pad)/SOLID_GRID), cx1=Math.floor((x+pad)/SOLID_GRID);
+  const cy0=Math.floor((y-pad)/SOLID_GRID), cy1=Math.floor((y+pad)/SOLID_GRID);
+  const out=[];
+  for(let cx=cx0;cx<=cx1;cx++){
+    for(let cy=cy0;cy<=cy1;cy++){
+      const arr=solidGrid.get(cx+','+cy);
+      if(arr) for(let i=0;i<arr.length;i++) out.push(arr[i]);
+    }
+  }
+  return out;
+}
 function pushOut(e,r){
-  for(const t of trees){
-    const dx=e.x-t.x,dy=e.y-t.y;
-    if(dx>20||dx<-20||dy>20||dy<-20)continue;
-    const d=Math.hypot(dx,dy),m=r+4;
-    if(d<m){if(d>.001){e.x=t.x+dx/d*m;e.y=t.y+dy/d*m;}else{e.x+=m;}}
-  }
-  for(const t of rocks){
-    const dx=e.x-t.x,dy=e.y-t.y;
-    if(dx>20||dx<-20||dy>20||dy<-20)continue;
-    const d=Math.hypot(dx,dy),m=r+6;
-    if(d<m){if(d>.001){e.x=t.x+dx/d*m;e.y=t.y+dy/d*m;}else{e.x+=m;}}
-  }
-  for(const d of decorations){
-    if(!d.solid)continue;
-    const dx=e.x-d.x,dy=e.y-d.y;
-    if(dx>20||dx<-20||dy>20||dy<-20)continue;
-    const dd=Math.hypot(dx,dy),m=r+6;
-    if(dd<m){if(dd>.001){e.x=d.x+dx/dd*m;e.y=d.y+dy/dd*m;}else{e.x+=m;}}
+  // Árvores / rochas / decorações sólidas via grade (bem mais barato)
+  const near=querySolidNear(e.x,e.y,24);
+  for(let i=0;i<near.length;i++){
+    const n=near[i];
+    const dx=e.x-n.x, dy=e.y-n.y;
+    if(dx>22||dx<-22||dy>22||dy<-22) continue;
+    const rad=n.kind==='tree'?r+4:r+6;
+    const d=Math.hypot(dx,dy);
+    if(d<rad){
+      if(d>.001){ e.x=n.x+dx/d*rad; e.y=n.y+dy/d*rad; }
+      else e.x+=rad;
+    }
   }
   for(const v of vehicles){
     if(v===e)continue;
@@ -1022,15 +1140,26 @@ function losClear(x1,y1,x2,y2){
 }
 
 /* ============ GERAÇÃO DE MUNDO ============ */
+function cityRoofColor(type){
+  if(type==='warehouse') return pick(['#3a3a4a','#2e3844','#404850']);
+  if(type==='mil') return '#56683f';
+  if(type==='shop') return pick(['#7a3030','#8a4040','#6a2828']);
+  if(type==='apartment') return pick(['#4a5560','#3a4550','#555a68','#4a4a58']);
+  if(type==='office') return pick(['#3a4a5a','#2a3a4a','#455568']);
+  if(type==='garage') return '#4a4a40';
+  if(type==='clinic') return '#d0d8e0';
+  if(type==='gas') return '#6a5a30';
+  return pick(['#4a4a52','#555560','#3e4248','#5a5860']);
+}
 function addBuilding(x,y,w,h,type){
-  const t=6,door=26,doorX=x+Math.floor(w/2-door/2);
+  const t=6,door=type==='garage'?34:26,doorX=x+Math.floor(w/2-door/2);
   let roof;
   if(selectedMap==='snow'){
     roof = type==='cabin'?'#5a3a2a':(type==='mil'?'#3a4a3a':'#405566');
   } else if(selectedMap==='desert'){
     roof = type==='barn'?'#7a3a20':(type==='mil'?'#6a7040':'#8a6030');
   } else if(selectedMap==='city'){
-    roof = type==='warehouse'?'#3a3a4a':(type==='mil'?'#56683f':type==='shop'?'#7a3030':'#4a4a52');
+    roof = cityRoofColor(type);
   } else {
     roof = type==='cabin'?'#5a3a2a':(type==='mil'?'#56683f':type==='shop'?'#9a4040':pick(['#74503a','#5a606e','#6a4a4a','#6b5a38']));
   }
@@ -1041,11 +1170,45 @@ function addBuilding(x,y,w,h,type){
     {x:x,y:y+h-t,w:doorX-x,h:t},
     {x:doorX+door,y:y+h-t,w:x+w-(doorX+door),h:t}
   ];
-  const b={x,y,w,h,type,roof,roofA:1,doorX,door,walls:ws};
+  const floors = type==='apartment'?rint(3,5):(type==='office'?rint(2,3):1);
+  const b={x,y,w,h,type,roof,roofA:1,doorX,door,walls:ws,floors};
   for(const q of ws)walls.push(q);
   blds.push(b);
-  const n=type==='mil'?rint(4,6):type==='shop'?rint(3,5):rint(2,4);
-  for(let i=0;i<n;i++)items.push({t:wpick(LOOT[type]||LOOT.house),x:rnd(x+t+8,x+w-t-8),y:rnd(y+t+12,y+h-t-16)});
+  const lootKey = LOOT[type] ? type : (type==='mil'?'mil':type==='shop'||type==='gas'?'shop':'house');
+  const n=type==='mil'?rint(4,6):type==='clinic'?rint(4,7):type==='apartment'?rint(3,6):type==='shop'||type==='gas'?rint(3,5):rint(2,4);
+  for(let i=0;i<n;i++)items.push({t:wpick(LOOT[lootKey]||LOOT.house),x:rnd(x+t+8,x+w-t-8),y:rnd(y+t+12,y+h-t-16)});
+}
+function tryPlaceBuilding(cx,cy,type,pad){
+  pad = pad==null ? (selectedMap==='city'?16:34) : pad;
+  let w,h;
+  if(type==='mil'){ w=rint(100,130); h=rint(80,100); }
+  else if(type==='warehouse'){ w=rint(110,160); h=rint(80,115); }
+  else if(type==='apartment'){ w=rint(70,100); h=rint(110,160); }
+  else if(type==='office'){ w=rint(90,130); h=rint(85,120); }
+  else if(type==='garage'){ w=rint(80,110); h=rint(50,70); }
+  else if(type==='clinic'){ w=rint(75,105); h=rint(60,85); }
+  else if(type==='gas'){ w=rint(70,95); h=rint(55,75); }
+  else if(type==='barn'){ w=rint(90,120); h=rint(70,90); }
+  else if(type==='shop'){ w=rint(60,95); h=rint(55,80); }
+  else { w=rint(60,95); h=rint(55,85); }
+  const x=Math.round(cx-w/2), y=Math.round(cy-h/2);
+  if(x<40||y<40||x+w>WW-40||y+h>WH-40) return false;
+  if(blds.some(b=>x<b.x+b.w+pad&&x+w+pad>b.x&&y<b.y+b.h+pad&&y+h+pad>b.y)) return false;
+  addBuilding(x,y,w,h,type);
+  return true;
+}
+function pickCityBuildingType(forceMil){
+  if(forceMil) return 'mil';
+  const r=_rng();
+  if(r<0.18) return 'apartment';
+  if(r<0.30) return 'office';
+  if(r<0.42) return 'shop';
+  if(r<0.52) return 'warehouse';
+  if(r<0.60) return 'garage';
+  if(r<0.66) return 'clinic';
+  if(r<0.72) return 'gas';
+  if(r<0.78) return 'mil';
+  return 'house';
 }
 function genWorld(seed) {
   setRng(seed);
@@ -1053,34 +1216,46 @@ function genWorld(seed) {
   trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];spits=[];decorations=[];
   plane=null;
 
-  const townCount=selectedMap==='city'?9:selectedMap==='desert'?4:6;
+  const townCount=selectedMap==='city'?13:selectedMap==='desert'?4:6;
+  const townMinDist=selectedMap==='city'?380:600;
   let tries=0;
-  while(towns.length<townCount&&tries<1000){
+  while(towns.length<townCount&&tries<1400){
     tries++;
-    const x=rnd(500,WW-500),y=rnd(500,WH-500);
-    if(towns.every(t=>Math.hypot(t.x-x,t.y-y)>600))towns.push({x,y,mil:false});
+    const x=rnd(420,WW-420),y=rnd(420,WH-420);
+    if(towns.every(t=>Math.hypot(t.x-x,t.y-y)>townMinDist))towns.push({x,y,mil:false});
   }
   if(towns.length>=3){towns[towns.length-1].mil=true;towns[towns.length-2].mil=true;}
+  if(selectedMap==='city' && towns.length>=5) towns[0].mil=true;
   for(const t of towns){
-    const n=selectedMap==='city'?rint(8,12):(t.mil?5:rint(4,7));
+    const n=selectedMap==='city'?rint(14,22):(t.mil?5:rint(4,7));
+    const spread=selectedMap==='city'?320:260;
+    const pad=selectedMap==='city'?14:34;
     let placed=0,guard=0;
-    while(placed<n&&guard<300){
+    while(placed<n&&guard<(selectedMap==='city'?500:300)){
       guard++;
       let type='house';
-      if(t.mil) type='mil';
+      if(t.mil && _rng()<0.55) type='mil';
+      else if(selectedMap==='city') type = pickCityBuildingType(false);
       else {
         const r=_rng();
-        if(selectedMap==='city') type = r<.35?'warehouse':(r<.6?'shop':'house');
-        else if(selectedMap==='desert') type = r<.25?'barn':(r<.5?'shop':'house');
+        if(selectedMap==='desert') type = r<.25?'barn':(r<.5?'shop':'house');
         else if(selectedMap==='snow') type = r<.3?'cabin':(r<.55?'shop':'house');
         else type = r<.3?'cabin':(r<.55?'shop':'house');
       }
-      const w=t.mil?rint(100,130):(type==='warehouse'?rint(110,150):type==='barn'?rint(90,120):rint(66,100));
-      const h=t.mil?rint(80,100):(type==='warehouse'?rint(80,110):type==='barn'?rint(70,90):rint(58,80));
-      const x=Math.round(t.x+rnd(-260,260)-w/2),y=Math.round(t.y+rnd(-260,260)-h/2);
-      if(x<40||y<40||x+w>WW-40||y+h>WH-40)continue;
-      if(blds.some(b=>x<b.x+b.w+34&&x+w+34>b.x&&y<b.y+b.h+34&&y+h+34>b.y))continue;
-      addBuilding(x,y,w,h,type);placed++;
+      const cx=t.x+rnd(-spread,spread), cy=t.y+rnd(-spread,spread);
+      if(tryPlaceBuilding(cx,cy,type,pad)) placed++;
+    }
+    // Cidade: quarteirão em grade perto do centro do bairro
+    if(selectedMap==='city'){
+      const cols=rint(2,4), rows=rint(2,3);
+      const ox=t.x-cols*55, oy=t.y-rows*60;
+      for(let row=0;row<rows;row++){
+        for(let col=0;col<cols;col++){
+          if(_rng()<0.15) continue;
+          const type=pickCityBuildingType(t.mil && row===0 && col===0);
+          tryPlaceBuilding(ox+col*110+rnd(-8,8), oy+row*120+rnd(-8,8), type, 12);
+        }
+      }
     }
   }
   for(let i=1;i<towns.length;i++){
@@ -1092,8 +1267,77 @@ function genWorld(seed) {
     roads.push({x:x1,y:Math.round(a.y)-7,w:x2-x1,h:14});
     roads.push({x:Math.round(b.x)-7,y:y1,w:14,h:y2-y1});
   }
-  // Lagos removidos do jogo (não gerados)
+  // Cidade: prédios ao longo das ruas (preenche o “vazio” entre bairros)
+  if(selectedMap==='city'){
+    for(const r of roads){
+      if(r.w>=r.h && r.w>160){
+        for(let x=r.x+80;x<r.x+r.w-80;x+=rint(90,140)){
+          if(_rng()>0.62) continue;
+          const side=_rng()<0.5?-1:1;
+          const type=pickCityBuildingType(false);
+          tryPlaceBuilding(x, r.y+side*rint(55,95), type, 12);
+        }
+      } else if(r.h>160){
+        for(let y=r.y+80;y<r.y+r.h-80;y+=rint(90,140)){
+          if(_rng()>0.62) continue;
+          const side=_rng()<0.5?-1:1;
+          const type=pickCityBuildingType(false);
+          tryPlaceBuilding(r.x+side*rint(55,95), y, type, 12);
+        }
+      }
+    }
+    // Alguns prédios soltos no miolo urbano
+    let fill=0, fg=0;
+    while(fill<28 && fg<400){
+      fg++;
+      const x=rnd(200,WW-200), y=rnd(200,WH-200);
+      if(towns.every(t=>Math.hypot(t.x-x,t.y-y)>200)) continue;
+      if(tryPlaceBuilding(x,y,pickCityBuildingType(false),14)) fill++;
+    }
+  }
+  // Um único lago isolado — só Floresta e Neve (seed-determinístico = sync no multiplayer)
   lakes=[];
+  if(selectedMap==='forest' || selectedMap==='snow'){
+    let cx=0,cy=0,mainR=160,valid=false,lTries=0;
+    while(!valid && lTries<450){
+      lTries++;
+      cx=rnd(850,WW-850); cy=rnd(850,WH-850); mainR=rnd(130,175);
+      let ok=true;
+      for(const b of blds){
+        if(Math.hypot(b.x+b.w/2-cx, b.y+b.h/2-cy) < mainR+380){ ok=false; break; }
+      }
+      if(!ok) continue;
+      for(const r of roads){
+        const rx=clamp(cx,r.x,r.x+r.w), ry=clamp(cy,r.y,r.y+r.h);
+        if(Math.hypot(cx-rx,cy-ry) < mainR+280){ ok=false; break; }
+      }
+      if(!ok) continue;
+      for(const t of towns){
+        if(Math.hypot(t.x-cx,t.y-cy) < mainR+450){ ok=false; break; }
+      }
+      if(ok) valid=true;
+    }
+    if(valid){
+      const blobs=[{x:cx,y:cy,r:mainR}];
+      const subCount=rint(8,14);
+      for(let j=0;j<subCount;j++){
+        const ang=(j/subCount)*6.283+rnd(-0.2,0.2);
+        const dist=mainR*rnd(0.5,0.82);
+        blobs.push({x:cx+Math.cos(ang)*dist, y:cy+Math.sin(ang)*dist, r:rnd(mainR*0.4,mainR*0.65)});
+      }
+      const islands=[], islCount=rint(1,3);
+      for(let j=0;j<islCount;j++){
+        const ang=rnd(0,6.283), dist=rnd(0,mainR*0.5);
+        islands.push({x:cx+Math.cos(ang)*dist, y:cy+Math.sin(ang)*dist, r:rnd(10,20)});
+      }
+      const pads=[], padCount=selectedMap==='forest'?rint(12,20):rint(4,8);
+      for(let j=0;j<padCount;j++){
+        const ang=rnd(0,6.283), dist=rnd(mainR*0.35,mainR*0.92);
+        pads.push({x:cx+Math.cos(ang)*dist, y:cy+Math.sin(ang)*dist, r:rnd(2,4)});
+      }
+      lakes.push({cx,cy,r:mainR,blobs,islands,pads,frozen:selectedMap==='snow'});
+    }
+  }
   let vId = 0;
   const carCols=['#7a3030','#30507a','#505050','#6a6a30','#8a7030','#4a6a8a','#2a5a3a','#6a3a5a','#3a3a3a','#8a5a20'];
   // More cars on city roads; still some on other maps
@@ -1205,6 +1449,7 @@ function genWorld(seed) {
   weather=_rng()<.4?(_rng()<.5?'rain':'snow'):'none';
   weatherTimer=rnd(120,240);
   weatherParticles=[];
+  rebuildSolidGrid();
   buildMinimap();
   }catch(e){
     console.error('[genWorld] FALHOU na linha:',e.stack);
@@ -1219,54 +1464,78 @@ function buildMinimap(){
   mms.fillRect(0,0,76,76);
   mms.fillStyle=selectedMap==='snow'?'#90a8b8':'#6a5c40';
   for(const r of roads)mms.fillRect(r.x*s,r.y*s,Math.max(1,r.w*s),Math.max(1,r.h*s));
+  mms.fillStyle=selectedMap==='snow'?'#a0c8e0':'#206090';
+  for(const l of lakes){
+    if(l.blobs){ for(const b of l.blobs){ mms.beginPath(); mms.arc(b.x*s,b.y*s,Math.max(1.5,b.r*s),0,6.283); mms.fill(); } }
+    else { mms.beginPath(); mms.arc(l.cx*s,l.cy*s,Math.max(1.5,l.r*s),0,6.283); mms.fill(); }
+  }
   for(const b of blds){
-    mms.fillStyle=b.type==='mil'?'#a8c070':b.type==='shop'?'#e07070':b.type==='warehouse'?'#708090':b.type==='barn'?'#a05030':b.type==='cabin'?'#8a5a3a':'#c9a070';
+    mms.fillStyle=
+      b.type==='mil'?'#a8c070':
+      b.type==='shop'||b.type==='gas'?'#e07070':
+      b.type==='warehouse'?'#708090':
+      b.type==='apartment'?'#8090a8':
+      b.type==='office'?'#607088':
+      b.type==='clinic'?'#e0e8f0':
+      b.type==='garage'?'#908870':
+      b.type==='barn'?'#a05030':
+      b.type==='cabin'?'#8a5a3a':'#c9a070';
     mms.fillRect(Math.floor(b.x*s),Math.floor(b.y*s),Math.max(2,Math.ceil(b.w*s)),Math.max(2,Math.ceil(b.h*s)));
   }
 }
+function zombieScale(z){
+  if(!z) return 1;
+  if(z.kind===3) return 1.35;
+  if(z.kind===2||z.kind===7) return 1.28;
+  if(z.kind===8) return 1.05;
+  if(z.crawler||z.kind===5) return 0.85;
+  return 1;
+}
 function spawnZ(x,y,kind){
-  if(kind===undefined){
-    const r=Math.random();
-    if(r<0.45)kind=0;else if(r<0.70)kind=1;else if(r<0.78)kind=2;
-    else if(r<0.82)kind=3;else if(r<0.90)kind=4;else if(r<0.96)kind=5;else kind=6;
-  }
+  if(kind===undefined) kind=pickZombieKind();
+  kind=clamp(kind|0,0,ZTYPES.length-1);
   const t=ZTYPES[kind];
-  const hpScale=1+(day-1)*0.08;
+  const dd=dayDiff();
   const z={
     netId:(MP.active&&MP.isHost?'z'+(nextZombieNetId++):'local'+(nextZombieNetId++)),
-    x,y,kind,hp:t.hp*hpScale,max:t.hp*hpScale,
-    spd:t.spd*(1+(day-1)*0.02),dmg:t.dmg,r:t.r,
+    x,y,kind,
+    hp:t.hp*dd.hp, max:t.hp*dd.hp,
+    spd:t.spd*dd.spd, dmg:Math.round(t.dmg*dd.dmg), r:t.r,
     face:rnd(0,6.28),tx:x,ty:y,wt:rnd(0,3),
     cd:0,alert:0,lock:0,hit:0,anim:rnd(0,6),
     vx:0,vy:0,seen:false,losT:rnd(0,.3),
     moving:false,dead:false,lunge:0,
     screamT:kind===6?rnd(3,8):0,
     spitT:kind===4?rnd(1,3):0,
-    ranged:t.ranged,range:t.range,crawler:t.crawler,screams:t.screams,
-    skin:kind===3?'#556b2f':kind===2?'#8a5a4a':kind===4?'#7ac070':kind===5?'#6a8060':kind===6?'#c0a0a0':t.color,
-    shirt:kind===3?'#b22222':kind===2?'#3a1a1a':kind===5?'#4a3a20':kind===6?'#7a4a7a':pick(['#6b4e3a','#4a4a5a','#7a3b3b','#3d5a4a','#58503a'])
+    ranged:!!t.ranged, range:t.range, crawler:!!t.crawler, screams:!!t.screams,
+    bloater:!!t.bloater, berserk:!!t.berserk,
+    skin:kind===3?'#556b2f':kind===2?'#8a5a4a':kind===4?'#7ac070':kind===5?'#6a8060':kind===6?'#c0a0a0':kind===7?'#4a7a38':kind===8?'#c05040':t.color,
+    shirt:kind===3?'#b22222':kind===2?'#3a1a1a':kind===5?'#4a3a20':kind===6?'#7a4a7a':kind===7?'#2a4a20':kind===8?'#5a1010':pick(['#6b4e3a','#4a4a5a','#7a3b3b','#3d5a4a','#58503a'])
   };
   zombies.push(z);return z;
 }
 function populate(){
-  // Blindagem: se P ainda não existe, não faz nada (evita crash)
   if(!P){ console.warn('[populate] chamado sem P definido — ignorado'); return; }
   if(!Array.isArray(blds) || !Array.isArray(towns)) return;
+  // Mais zumbis iniciais na cidade
+  const cityBonus=selectedMap==='city'?1.35:1;
   for(const b of blds){
     if(!b) continue;
-    const n=rint(0,b.type==='mil'?4:2);
+    const n=rint(0, Math.round((b.type==='mil'?5:2)*cityBonus));
     for(let i=0;i<n;i++)spawnZ(rnd(b.x+12,b.x+b.w-12),rnd(b.y+16,b.y+b.h-20));
   }
   for(const t of towns){
     if(!t) continue;
-    for(let i=0;i<5;i++)for(let k=0;k<10;k++){
+    const around=Math.round(6*cityBonus);
+    for(let i=0;i<around;i++)for(let k=0;k<10;k++){
       const x=t.x+rnd(-280,280),y=t.y+rnd(-280,280);
       if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12))continue;
       spawnZ(x,y);break;
     }
   }
   let c=0,g=0;
-  while(c<35&&g<500){
+  const openCap=Math.round(40*cityBonus);
+  while(c<openCap&&g<600){
     g++;
     const x=rnd(40,WW-40),y=rnd(40,WH-40);
     if(Math.hypot(x-P.x,y-P.y)<500||solidPoint(x,y,12))continue;
@@ -1290,7 +1559,7 @@ function newGame(){
     touchGas=0;touchSteer=0;stepT=0;
     MP.active=false;remotePlayers={};
     restoreWalkHUD(); // E1: always reset vehicle HUD when starting a match
-    document.body.classList.toggle('nohud',!CFG.hud);
+    applyHudClasses();
     buildInv();updateHud(true);
     state='play';
     toast('Sobreviva no mapa '+selectedMap.toUpperCase()+'!');
@@ -1394,7 +1663,7 @@ function cycleWeapon(){
   toast('Arma: '+(WEAPONS[P.weapon]?.n||'Mãos'));
 }
 const WEAPON_ICON={fists:'👊',bat:'🏏',axe:'🪓',pickaxe:'⛏️',stoneaxe:'🪓',sword:'⚔️',spear:'🔱',pistol:'🔫',smg:'🔫',shotgun:'💥',rifle:'🎯'};
-let weaponWheelOpen=false;
+let weaponWheelOpen=false, weaponWheelOpenedAt=0;
 function updateWeaponHud(){const el=$('wpn');if(el)el.textContent=(WEAPONS[P.weapon]?.n||'Mãos');}
 function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
 function chooseWeapon(key){if(!P||!weaponList().includes(key))return;P.weapon=key;updateWeaponHud();beep(360,.06,'square',.045);toast('Arma equipada: '+(WEAPONS[key]?.n||key));closeWeaponWheel();}
@@ -1408,11 +1677,14 @@ function buildWeaponWheel(){
     const btn=document.createElement('button');btn.type='button';
     btn.className='weapon-option'+(key===P.weapon?' selected':'');btn.dataset.weapon=key;
     btn.innerHTML='<span class="weapon-icon">'+(WEAPON_ICON[key]||'⚔️')+'</span><span>'+w.n+'</span>';
-    btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();chooseWeapon(key);});
+    // pointerup avoids the long-press release synthesizing a bad click
+    btn.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();chooseWeapon(key);});
+    btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
     ring.appendChild(btn);
   });
   const hint=document.createElement('div');hint.id='weapon-wheel-hint';hint.textContent='Toque em uma arma para equipar. Toque fora para fechar.';ring.appendChild(hint);
   root.classList.remove('hide');weaponWheelOpen=true;
+  weaponWheelOpenedAt=performance.now();
 }
 function openWeaponWheel(){
   if(state!=='play'||!P||P.inVehicle||weaponWheelOpen)return;
@@ -1479,6 +1751,14 @@ function pickup(){
     toast('🐟 → 🍣 Peixe assado!');
     beep(680,.18,'triangle',.08,120);
     for(let i=0;i<8;i++)parts.push({x:cf.x+rnd(-8,8),y:cf.y-6,vx:rnd(-20,20),vy:rnd(-60,-20),t:.6,c:'#ffd27a'});
+    return;
+  }
+
+  // Pesca no lago (só Floresta/Neve) — inventário local de cada player (sem sync de item no chão)
+  if(pointInLake(P.x,P.y) && (selectedMap==='forest' || selectedMap==='snow')){
+    if(!addItem('fish')){ toast('Mochila cheia'); return; }
+    toast(selectedMap==='snow'?'Pescou no lago gelado! 🐟':'Pescou um peixe! 🐟');
+    beep(580,.15,'sine',.05);
     return;
   }
 
@@ -1582,7 +1862,7 @@ function showDeathScreen(canRespawn){
     if(btnAgain) btnAgain.style.display=MP.active?'none':'';
   }
   $('deadscr').classList.remove('hide');
-  document.body.classList.remove('nohud');
+  applyHudClasses();
 }
 function die(){
   if(!P || P.dead) return;
@@ -1642,7 +1922,7 @@ function respawnPlayer(){
   P.cd=0; P.swing=0; P.flash=0; P.inVehicle=null;
   state='play';
   const d=$('deadscr'); if(d) d.classList.add('hide');
-  document.body.classList.toggle('nohud',!CFG.hud);
+  applyHudClasses();
   toast('Você ressuscitou!');
   beep(520,.15,'sine',.07,200);
   startAmbient(); startRain();
@@ -1668,14 +1948,26 @@ function damageZ(z,dmg,kx,ky,fromNet){
     decals.push({x:z.x,y:z.y});
     if(decals.length>70)decals.shift();
     for(let i=0;i<8;i++)parts.push({x:z.x,y:z.y-5,vx:rnd(-60,60),vy:rnd(-60,20),t:rnd(.3,.7),c:'#7a1010'});
-    // Loot only Host / singleplayer (Guest gets loot via itemAdded event)
+    // Inchado: explosão tóxica ao morrer
+    if(z.bloater || z.kind===7){
+      for(let i=0;i<16;i++)parts.push({x:z.x,y:z.y-4,vx:rnd(-90,90),vy:rnd(-90,30),t:rnd(.4,.8),c:'#60c040'});
+      if(P && !P.dead && Math.hypot(P.x-z.x,P.y-z.y)<55){
+        hurt(12,.2);
+        toast('Nuvem tóxica!');
+      }
+      // Dano ao parceiro no MP: cada client aplica se estiver perto
+      try{ beep(180,.25,'sawtooth',.06,-100); }catch(e){}
+    }
     if(!MP.active || MP.isHost){
-      let lootTable={food:3,water:3,bandage:2,ammo:2,fish:1,stone:2};
+      let lootTable={food:3,water:3,bandage:2,ammo:2,stone:2};
       if(z.kind===2)lootTable={stone:5,medkit:2,ammo:3,food:2};
       else if(z.kind===3)lootTable={medkit:4,ammo:5,shotgun:2,rifle:1,food:2,water:2};
       else if(z.kind===5)lootTable={stone:2,bandage:2,food:1};
       else if(z.kind===6)lootTable={ammo:3,food:2,water:2};
-      if(Math.random()<.20){
+      else if(z.kind===7)lootTable={medkit:3,bandage:3,ammo:2,food:2};
+      else if(z.kind===8)lootTable={ammo:4,bandage:2,food:2};
+      const dropChance=z.kind===3?0.45:(z.kind>=2?0.28:0.18);
+      if(Math.random()<dropChance){
         const lt=wpick(lootTable);
         items.push({t:lt,x:z.x,y:z.y});
         if(MP.active) sendEvt('itemAdded', {t:lt, x:z.x, y:z.y});
@@ -1728,6 +2020,7 @@ function attack(){
       if(MP.active) sendEvt('treeDmg', { x: hitTree.x, y: hitTree.y, dmg: w.chopRate || 0.5 });
       if(hitTree.hp <= 0){
         trees.splice(trees.indexOf(hitTree), 1);
+        rebuildSolidGrid();
         const n = (P.weapon === 'stoneaxe') ? 2 : 1;
         for(let i = 0; i < n; i++){
           if(!addItem('wood')){
@@ -1752,6 +2045,7 @@ function attack(){
       if(MP.active) sendEvt('rockDmg', {x:hitRock.x, y:hitRock.y, dmg:1});
       if(hitRock.hp<=0){
         rocks.splice(rocks.indexOf(hitRock),1);
+        rebuildSolidGrid();
         const n=rint(1,3);
         for(let i=0;i<n;i++){
           if(!addItem('stone')){
@@ -1936,7 +2230,10 @@ function updateZ(z,dt){
     if(z.spitT<=0&&z.lock>0&&d<z.range&&d>40){
       z.spitT=rnd(1.8,3.5);
       const a=Math.atan2(targetY-z.y,targetX-z.x);
-      spits.push({x:z.x,y:z.y-8,vx:Math.cos(a)*160,vy:Math.sin(a)*160,t:1.4, targetLocal:targetIsLocal});
+      const spit={x:z.x,y:z.y-8,vx:Math.cos(a)*160,vy:Math.sin(a)*160,t:1.4};
+      spits.push(spit);
+      // Sync projectile to guest so both see/take spit damage
+      if(MP.active && MP.isHost) sendEvt('spit', {x:spit.x,y:spit.y,vx:spit.vx,vy:spit.vy,t:spit.t});
       beep(420,.15,'sawtooth',.05,-200);
     }
   }
@@ -1994,11 +2291,12 @@ function updateZ(z,dt){
   }
   // Melee hit: only damages the local player (remote damage is handled by their own client via proximity + snapshot)
   if(!z.ranged&&targetIsLocal&&d<z.r+P.r+6&&z.cd<=0&&!P.dead){
-    hurt(z.dmg,z.kind===2?.5:z.kind===3?.6:.25);
-    z.cd=1.1;z.lunge=.15;
-    if(z.kind===2||z.kind===3){
+    const knock=z.kind===2||z.kind===3||z.kind===7;
+    hurt(z.dmg, z.kind===3?.65:z.kind===2||z.kind===7?.5:z.kind===8?.35:.25);
+    z.cd=z.berserk||z.kind===8?0.75:1.1;z.lunge=.15;
+    if(knock){
       const a=Math.atan2(P.y-z.y,P.x-z.x);
-      P.x+=Math.cos(a)*20;P.y+=Math.sin(a)*20;
+      P.x+=Math.cos(a)*22;P.y+=Math.sin(a)*22;
     }
   }
 }
@@ -2051,19 +2349,22 @@ function update(dt){
       }
       if(nearAny) updateZ(z,dt);
     }
-    for(const s of spits){
-      s.x+=s.vx*dt;s.y+=s.vy*dt;s.t-=dt;
-      if(Math.hypot(s.x-P.x,s.y-P.y)<10){
-        hurt(8,.15);
-        for(let i=0;i<10;i++)parts.push({x:s.x,y:s.y,vx:rnd(-60,60),vy:rnd(-60,20),t:.5,c:'#80e060'});
-        s.t=0;
-      }
-      if(pointSolid(s.x,s.y)){
-        for(let i=0;i<6;i++)parts.push({x:s.x,y:s.y,vx:rnd(-40,40),vy:rnd(-40,20),t:.4,c:'#80e060'});
-        s.t=0;
-      }
+  }
+  // Spits run on BOTH sides (host spawns+syncs; guest receives via evt)
+  for(const s of spits){
+    s.x+=s.vx*dt;s.y+=s.vy*dt;s.t-=dt;
+    if(P && !P.dead && Math.hypot(s.x-P.x,s.y-P.y)<10){
+      hurt(8,.15);
+      for(let i=0;i<10;i++)parts.push({x:s.x,y:s.y,vx:rnd(-60,60),vy:rnd(-60,20),t:.5,c:'#80e060'});
+      s.t=0;
     }
-    spits=spits.filter(s=>s.t>0);
+    if(pointSolid(s.x,s.y)){
+      for(let i=0;i<6;i++)parts.push({x:s.x,y:s.y,vx:rnd(-40,40),vy:rnd(-40,20),t:.4,c:'#80e060'});
+      s.t=0;
+    }
+  }
+  spits=spits.filter(s=>s.t>0);
+  if(!MP.active||MP.isHost){
     const near=zombies.filter(z=>!z.dead&&Math.abs(z.x-P.x)<300&&Math.abs(z.y-P.y)<300);
     for(let i=0;i<near.length;i++){
       const a=near[i];
@@ -2075,12 +2376,12 @@ function update(dt){
       }
     }
     zombies=zombies.filter(z=>!z.dead);
+    // Horda cresce com o dia (single e multi — só host spawna no MP)
+    const dd=dayDiff();
     spawnTimer-=dt;
     if(spawnTimer<=0){
-      spawnTimer=dark>.58?2.15:3;
-      const cap=Math.min(125,55+(day-1)*8)+Math.round(dark*22);
-      if(zombies.length<cap){
-        // Spawn near a random living player (host or guest)
+      spawnTimer=dd.interval;
+      if(zombies.length<dd.cap){
         let sx=P.x, sy=P.y;
         if(MP.active && MP.isHost){
           const pts=[{x:P.x,y:P.y}];
@@ -2088,14 +2389,42 @@ function update(dt){
           const pickP=pts[Math.floor(Math.random()*pts.length)];
           sx=pickP.x; sy=pickP.y;
         }
-        for(let k=0;k<12;k++){
-          const a=rnd(0,6.283),d=rnd(380,560);
-          const x=sx+Math.cos(a)*d,y=sy+Math.sin(a)*d;
-          if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12))continue;
-          spawnZ(x,y);break;
+        const toSpawn=Math.min(dd.batch, dd.cap-zombies.length);
+        let spawned=0;
+        for(let n=0;n<toSpawn;n++){
+          for(let k=0;k<14;k++){
+            const a=rnd(0,6.283),dist=rnd(320,580);
+            const x=sx+Math.cos(a)*dist,y=sy+Math.sin(a)*dist;
+            if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12))continue;
+            spawnZ(x,y);
+            spawned++;
+            break;
+          }
+        }
+        // Mini-horda extra à noite a partir do dia 3
+        if(dark>0.58 && day>=3 && Math.random()<0.22 && zombies.length<dd.cap){
+          for(let n=0;n<Math.min(3,dd.cap-zombies.length);n++){
+            const a=rnd(0,6.283),dist=rnd(280,480);
+            const x=sx+Math.cos(a)*dist,y=sy+Math.sin(a)*dist;
+            if(x>40&&y>40&&x<WW-40&&y<WH-40&&!solidPoint(x,y,12)) spawnZ(x,y);
+          }
         }
       }
     }
+    // Anúncio de horda ao virar o dia
+    if(typeof update._lastDay==='number' && day>update._lastDay){
+      toast('Dia '+day+' — a horda está pior!');
+      // burst de spawn ao amanhecer do novo dia
+      if(zombies.length<dd.cap){
+        const burst=Math.min(4+day, dd.cap-zombies.length, 12);
+        for(let n=0;n<burst;n++){
+          const a=rnd(0,6.283),dist=rnd(360,620);
+          const x=P.x+Math.cos(a)*dist,y=P.y+Math.sin(a)*dist;
+          if(x>40&&y>40&&x<WW-40&&y<WH-40&&!solidPoint(x,y,12)) spawnZ(x,y, pickZombieKind());
+        }
+      }
+    }
+    update._lastDay=day;
   }
   // Decay local damage prediction timers
   for(const z of zombies){
@@ -2153,6 +2482,13 @@ function update(dt){
         try{ MP.conn.send(packSnapshot()); }catch(e){}
       }
     }
+    // Timeout: no packet from peer for 10s → connection lost
+    if(MP.lastRecv && (performance.now()-MP.lastRecv)>10000){
+      MP.connected=false;
+      toast('Conexão perdida (sem resposta)');
+      const closedConn=MP.conn;
+      setTimeout(()=>{ if(MP.active && !MP.connected && (!MP.conn || MP.conn===closedConn)) quitToMenu(); }, 1500);
+    }
   }
   for(const id in remotePlayers){
     const rp=remotePlayers[id];
@@ -2199,6 +2535,7 @@ function updateHud(force){
   const stat=$('stat');if(stat)stat.textContent=st;
   let canInteract=false,btnText='PEGAR';
   if(nearestItem())canInteract=true;
+  if(pointInLake(P.x,P.y)&&(selectedMap==='forest'||selectedMap==='snow')){canInteract=true;btnText='PESCAR';}
   const cf=nearestCampfire();
   if(cf && countInv('fish')>0){canInteract=true;btnText='ASSAR';}
   for(const v of vehicles){
@@ -2264,60 +2601,6 @@ function refreshCraft(){
   const tabs=$('craft-tabs');if(tabs)tabs.querySelectorAll('[data-craft-filter]').forEach(b=>b.classList.toggle('active',b.dataset.craftFilter===craftFilter));
 }
 
-/* ============ SINCRONIZAÇÃO DE MUNDO ============ */
-function packWorld(){
-  try{
-    return {
-      trees: trees.filter(Boolean).map(t=>({x:t.x,y:t.y,k:t.k,hp:t.hp})),
-      rocks: rocks.filter(Boolean).map(r=>({x:r.x,y:r.y,k:r.k,hp:r.hp})),
-      blds: blds.filter(Boolean).map(b=>({x:b.x,y:b.y,w:b.w,h:b.h,type:b.type,roof:b.roof,doorX:b.doorX,door:b.door})),
-      walls: walls.filter(Boolean).map(w=>({x:w.x,y:w.y,w:w.w,h:w.h})),
-      roads: roads.filter(Boolean).map(r=>({x:r.x,y:r.y,w:r.w,h:r.h})),
-      vehicles: vehicles.filter(Boolean).map(v=>({id:v.id,x:v.x,y:v.y,w:v.w,h:v.h,col:v.col,looted:!!v.looted,spd:v.spd||0,face:v.face||0})),
-      campfires: campfires.filter(Boolean).map(c=>({x:c.x,y:c.y,t:c.t||0,flicker:c.flicker||0})),
-      plane: (plane && Number.isFinite(plane.x)) ? {x:plane.x,y:plane.y,w:plane.w,h:plane.h} : null,
-      decorations: decorations.filter(Boolean).map(d=>({x:d.x,y:d.y,type:d.type,solid:!!d.solid,seed:d.seed})),
-      lakes: lakes.filter(Boolean).map(l=>({
-        cx:l.cx,cy:l.cy,r:l.r,
-        blobs:Array.isArray(l.blobs)?l.blobs.filter(Boolean).map(b=>({x:b.x,y:b.y,r:b.r})):[],
-        islands:Array.isArray(l.islands)?l.islands.filter(Boolean).map(i=>({x:i.x,y:i.y,r:i.r})):[],
-        pads:Array.isArray(l.pads)?l.pads.filter(Boolean).map(p=>({x:p.x,y:p.y,r:p.r})):[]
-      })),
-      items: items.filter(Boolean).slice(0, 500).map(it=>({t:it.t,x:Math.round(it.x),y:Math.round(it.y)}))
-    };
-  }catch(e){
-    console.error('[packWorld] erro:',e);
-    throw e;
-  }
-}
-function applyWorld(w){
-  if(!w || typeof w !== 'object') return;
-  try{
-    trees = Array.isArray(w.trees) ? w.trees.filter(t=>t&&Number.isFinite(t.x)&&Number.isFinite(t.y)) : [];
-    rocks = Array.isArray(w.rocks) ? w.rocks.filter(r=>r&&Number.isFinite(r.x)&&Number.isFinite(r.y)) : [];
-    blds = Array.isArray(w.blds) ? w.blds : [];
-    walls = Array.isArray(w.walls) ? w.walls : [];
-    roads = Array.isArray(w.roads) ? w.roads : [];
-    vehicles = Array.isArray(w.vehicles) ? w.vehicles : [];
-    campfires = Array.isArray(w.campfires) ? w.campfires : [];
-    plane = (w.plane && Number.isFinite(w.plane.x) && Number.isFinite(w.plane.y)) ? w.plane : null;
-    decorations = Array.isArray(w.decorations) ? w.decorations : [];
-    lakes = Array.isArray(w.lakes) ? w.lakes.map(l=>({
-      cx:l.cx,cy:l.cy,r:l.r,
-      blobs:Array.isArray(l.blobs)?l.blobs:[],
-      islands:Array.isArray(l.islands)?l.islands:[],
-      pads:Array.isArray(l.pads)?l.pads:[]
-    })) : [];
-    items = Array.isArray(w.items) ? w.items : [];
-    zombies = [];
-    spits = [];
-    buildMinimap();
-    console.log('[applyWorld] OK — árvores:',trees.length,'| itens:',items.length,'| veículos:',vehicles.length,'| plane:',!!plane);
-  }catch(e){
-    console.error('[applyWorld] erro:',e);
-  }
-}
-
 /* ============ EVENTOS REPLICADOS ============ */
 function sendEvt(kind, data){
   // Allow events during play AND craft (campfire is crafted in craft menu!)
@@ -2330,10 +2613,10 @@ function handleEvt(kind, data){
   if(!data || typeof data!=='object') return;
   if(kind==='treeDmg'){
     const t = trees.find(t => t.x===data.x && t.y===data.y);
-    if(t && Number.isFinite(data.dmg)){ t.hp -= clamp(data.dmg,0,10); if(t.hp<=0){ const i=trees.indexOf(t); if(i>=0) trees.splice(i,1); } }
+    if(t && Number.isFinite(data.dmg)){ t.hp -= clamp(data.dmg,0,10); if(t.hp<=0){ const i=trees.indexOf(t); if(i>=0){ trees.splice(i,1); rebuildSolidGrid(); } } }
   } else if(kind==='rockDmg'){
     const r = rocks.find(r => r.x===data.x && r.y===data.y);
-    if(r && Number.isFinite(data.dmg)){ r.hp -= clamp(data.dmg,0,10); if(r.hp<=0){ const i=rocks.indexOf(r); if(i>=0) rocks.splice(i,1); } }
+    if(r && Number.isFinite(data.dmg)){ r.hp -= clamp(data.dmg,0,10); if(r.hp<=0){ const i=rocks.indexOf(r); if(i>=0){ rocks.splice(i,1); rebuildSolidGrid(); } } }
   } else if(kind==='itemRemoved'){
     for(let i=items.length-1;i>=0;i--){
       if(Math.abs(items[i].x-data.x)<4 && Math.abs(items[i].y-data.y)<4){ items.splice(i,1); break; }
@@ -2405,6 +2688,12 @@ function handleEvt(kind, data){
     }
     // Quiet gunshot so both hear each other fire
     try{ gunshot(!!(data.weapon==='rifle'||data.weapon==='shotgun')); }catch(e){}
+  } else if(kind==='spit'){
+    // Guest receives spitter projectile from host
+    if(Number.isFinite(data.x)&&Number.isFinite(data.y)&&Number.isFinite(data.vx)&&Number.isFinite(data.vy)){
+      spits.push({x:data.x,y:data.y,vx:data.vx,vy:data.vy,t:Number.isFinite(data.t)?data.t:1.4});
+      try{ beep(420,.12,'sawtooth',.04,-200); }catch(e){}
+    }
   }
 }
 
@@ -2425,7 +2714,8 @@ function mpHostStart(){
   MP.peer=null; MP.conn=null; MP.connected=false; MP.myId=null;
   remotePlayers={}; nextZombieNetId=1;
   const nameEl=$('hostName');
-  MP.playerName=((nameEl&&nameEl.value.trim())||'Host').slice(0,12);
+  MP.playerName=sanitizeName((nameEl&&nameEl.value)||'Host');
+  if(nameEl) nameEl.value=MP.playerName;
   try{localStorage.setItem('minisurv_name',MP.playerName);}catch(e){}
   const code=makeRoomCode();
   MP.roomCode='MINISURV-'+code;MP.isHost=true;MP.active=true;
@@ -2462,9 +2752,12 @@ function mpJoinStart(code){
   MP.peer=null; MP.conn=null; MP.connected=false; MP.myId=null;
   remotePlayers={}; nextZombieNetId=1;
   const nameEl=$('joinName');
-  MP.playerName=((nameEl&&nameEl.value.trim())||'Convidado').slice(0,12);
+  MP.playerName=sanitizeName((nameEl&&nameEl.value)||'Convidado');
+  if(nameEl) nameEl.value=MP.playerName;
   try{localStorage.setItem('minisurv_name',MP.playerName);}catch(e){}
-  MP.isHost=false;MP.active=true;MP.roomCode='MINISURV-'+code.toUpperCase();
+  const clean=sanitizeRoomCode(code);
+  if(clean.length<4){ setStatus('joinStatus','Código inválido',true); MP.active=false; return; }
+  MP.isHost=false;MP.active=true;MP.roomCode='MINISURV-'+clean;
   setStatus('joinStatus','Carregando motor P2P...');
   loadPeerJS(err=>{
     if(err||typeof Peer==='undefined'){MP.active=false;MP.isHost=false;setStatus('joinStatus','Falha ao carregar P2P',true);return;}
@@ -2548,15 +2841,23 @@ function setupConn(conn,isHostSide){
 }
 function handleNetData(data,isHostSide){
   MP.lastRecv=performance.now();
-  if(!data||!data.type) return;
+  if(!data||typeof data!=='object'||typeof data.type!=='string') return;
+  if(!NET_OK_TYPES.has(data.type)) return; // descarta tipo desconhecido
   // Chat first — never blocked by heavier handlers
-  if(data.type==='chat'){ receiveChat(data); return; }
+  if(data.type==='chat'){
+    if(typeof data.text!=='string' || data.text.length>60) return;
+    if(data.name!=null) data.name=sanitizeName(data.name);
+    if(data.id!=null && !NET_OK_IDS.has(data.id)) return;
+    receiveChat(data);
+    return;
+  }
   try{
   if(data.type==='worldInit'){
-    if(!isHostSide && data.seed != null){
-      console.log('[Guest] worldInit recebido — seed='+data.seed+' map='+data.map);
+    if(!isHostSide && isFiniteNum(data.seed)){
+      const map=NET_OK_MAPS.has(data.map)?data.map:'forest';
+      console.log('[Guest] worldInit recebido — seed='+data.seed+' map='+map);
       try{
-        selectedMap = data.map || 'forest';
+        selectedMap = map;
         genWorld(data.seed);
         console.log('[Guest] mundo gerado:',trees.length,'árvores, plane?',!!plane);
       }catch(e){
@@ -2566,6 +2867,7 @@ function handleNetData(data,isHostSide){
     }
   } else if(data.type==='start'){
     if(!isHostSide){
+      if(data.map && NET_OK_MAPS.has(data.map)) selectedMap=data.map;
       console.log('[Guest] start recebido. plane?',!!plane);
       if(plane){
         enterMultiplayerGame(false);
@@ -2580,17 +2882,24 @@ function handleNetData(data,isHostSide){
       }
     }
   } else if(data.type==='evt'){
-    if(typeof data.kind==='string' && data.data && typeof data.data==='object') handleEvt(data.kind, data.data);
+    if(typeof data.kind==='string' && NET_OK_EVT.has(data.kind) && data.data && typeof data.data==='object') handleEvt(data.kind, data.data);
   } else if(data.type==='player'){
-    if(typeof data.id!=='string' || !Number.isFinite(data.x) || !Number.isFinite(data.y)) return;
+    if(typeof data.id!=='string' || !NET_OK_IDS.has(data.id)) return;
+    if(!isFiniteNum(data.x) || !isFiniteNum(data.y)) return;
+    // Limita teleport / lixo de coordenadas
+    if(Math.abs(data.x)>WW+200 || Math.abs(data.y)>WH+200) return;
+    const pos=clampWorldPos(data.x, data.y);
     const rp=remotePlayers[data.id]||{};
     const wasAlive=rp.alive!==false && rp.id;
-    rp.id=data.id;rp.name=data.name||'Jogador';
-    rp.tx=data.x;rp.ty=data.y;
-    if(rp.x===undefined){rp.x=data.x;rp.y=data.y;}
-    rp.face=data.face;rp.moving=data.moving;rp.sprint=data.sprint;
-    rp.weapon=data.weapon;rp.swing=data.swing;rp.hp=data.hp;
-    rp.alive=data.alive!==false;rp.inVehicle=data.inVehicle||false;
+    rp.id=data.id;rp.name=sanitizeName(data.name);
+    rp.tx=pos.x;rp.ty=pos.y;
+    if(rp.x===undefined){rp.x=pos.x;rp.y=pos.y;}
+    rp.face=isFiniteNum(data.face)?data.face:rp.face;
+    rp.moving=!!data.moving;rp.sprint=!!data.sprint;
+    rp.weapon=(typeof data.weapon==='string'?data.weapon.slice(0,16):'fists');
+    rp.swing=isFiniteNum(data.swing)?data.swing:0;
+    rp.hp=isFiniteNum(data.hp)?clamp(data.hp,0,100):rp.hp;
+    rp.alive=data.alive!==false;rp.inVehicle=!!data.inVehicle;
     rp.isHost=!isHostSide;rp.anim=(rp.anim||0)+(data.moving?0.25:0);
     remotePlayers[data.id]=rp;
     // Teammate just died and we are also dead → end the match
@@ -2616,9 +2925,9 @@ function handleNetData(data,isHostSide){
       }
     }
   } else if(data.type==='snapshot'){
-    if(!isHostSide) applySnapshot(data);
+    if(!isHostSide && data && typeof data==='object') applySnapshot(data);
   } else if(data.type==='playerDied'){
-    if(typeof data.id==='string' && remotePlayers[data.id]){
+    if(typeof data.id==='string' && NET_OK_IDS.has(data.id) && remotePlayers[data.id]){
       remotePlayers[data.id].alive=false;
       remotePlayers[data.id].hp=0;
     }
@@ -2639,9 +2948,9 @@ function handleNetData(data,isHostSide){
       showDeathScreen(false);
     }
   } else if(data.type==='playerRespawned'){
-    if(typeof data.id==='string' && remotePlayers[data.id]){
+    if(typeof data.id==='string' && NET_OK_IDS.has(data.id) && remotePlayers[data.id]){
       remotePlayers[data.id].alive=true;
-      if(Number.isFinite(data.hp)) remotePlayers[data.id].hp=data.hp;
+      if(isFiniteNum(data.hp)) remotePlayers[data.id].hp=clamp(data.hp,0,100);
     }
   }
   }catch(err){ console.error('[handleNetData]', data&&data.type, err); }
@@ -2682,13 +2991,15 @@ function applySnapshot(snap){
         if(prev.dead && predT>0){ seenIds.add(sz.netId); continue; }
       }
       if(sz.netId) seenIds.add(sz.netId);
+      const dd=dayDiff();
       next.push({
         netId: sz.netId || ('remote-z'+i),
         x: sz.x, y: sz.y, kind: sz.kind,
         face: sz.face||0, anim: sz.anim||0, hp: hp,
-        max: t.hp*(1+(day-1)*0.08), r: t.r, dmg: t.dmg, spd: t.spd,
+        max: t.hp*dd.hp, r: t.r, dmg: Math.round(t.dmg*dd.dmg), spd: t.spd*dd.spd,
         moving: !!sz.moving, skin: sz.skin, shirt: sz.shirt,
-        crawler: t.crawler, ranged: t.ranged, range: t.range, screams: t.screams,
+        ranged:!!t.ranged, range:t.range, crawler:!!t.crawler, screams:!!t.screams,
+        bloater:!!t.bloater, berserk:!!t.berserk,
         dead: false, hit: prev ? prev.hit : 0, vx: 0, vy: 0,
         alert: 0, lock: prev ? Math.max(0, prev.lock) : 0, lunge: 0,
         cd: prev ? prev.cd : 0, losT: 0, seen: false, wt: 0,
@@ -2791,9 +3102,11 @@ function packMyPlayer(){
   return p;
 }
 function enterMultiplayerGame(isHost){
-  // E4: respect fullscreen config
-  if(CFG.fullscreen){ userWantsFS=true; requestFullscreenLandscape(true); }
-  else { userWantsFS=false; }
+  // Fullscreen no MP: só marca intenção. O navegador exige gesto do usuário
+  // (enterMultiplayerGame é disparado por evento de rede, não por toque).
+  // O primeiro toque em jogo chama tryFullscreenFromGesture().
+  if(CFG.fullscreen) userWantsFS=true;
+  else userWantsFS=false;
   MP.isHost=isHost;
   try{
     if(!plane) throw new Error('mundo não carregado');
@@ -2815,7 +3128,7 @@ function enterMultiplayerGame(isHost){
     atkHeld=false; sprintHeld=false; touchGas=0; touchSteer=0; stepT=0;
     remotePlayers={}; MP.gameOver=false; MP.syncT=0;
     restoreWalkHUD();
-    document.body.classList.toggle('nohud',!CFG.hud);
+    applyHudClasses();
     buildInv(); updateHud(true);
     state='play';
     showScreen(null);
@@ -3287,31 +3600,101 @@ function drawPlane(p){
   if(Math.sin(T*4)>.2)R(p.x-15,p.y-28,8,8,'rgba(80,80,80,.5)');
   if(weather==='snow')R(p.x-25,p.y-12,50,4,'#e8f4f8');
 }
+function lakeShorePath(l, scale){
+  // Contorno orgânico único (não empilha círculos)
+  const N=28, cx=l.cx, cy=l.cy, R0=l.r*(scale||1);
+  const seed=(cx*12.9898+cy*78.233)%100;
+  ctx.beginPath();
+  for(let i=0;i<=N;i++){
+    const t=i/N, ang=t*6.283;
+    const wobble=0.82+0.12*Math.sin(ang*2.3+seed)+0.08*Math.cos(ang*4.1-seed*0.5)+0.05*Math.sin(ang*7+seed*1.3);
+    const px=cx+Math.cos(ang)*R0*wobble;
+    const py=cy+Math.sin(ang)*R0*wobble*0.92; // levemente oval
+    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+}
 function drawLake(l){
-  // Outer deep water
-  ctx.fillStyle='#1a5080';for(const b of l.blobs){ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,6.283);ctx.fill();}
-  // Mid
-  ctx.fillStyle='#2470a0';for(const b of l.blobs){ctx.beginPath();ctx.arc(b.x,b.y,b.r*0.82,0,6.283);ctx.fill();}
-  // Center shallower
-  ctx.fillStyle='#2e88b8';for(const b of l.blobs){ctx.beginPath();ctx.arc(b.x,b.y,b.r*0.55,0,6.283);ctx.fill();}
-  // Shoreline
-  ctx.lineWidth=5;ctx.strokeStyle='#3a9acc';
-  for(const b of l.blobs){ctx.beginPath();ctx.arc(b.x,b.y,b.r*0.98,0,6.283);ctx.stroke();}
-  ctx.lineWidth=2;ctx.strokeStyle='rgba(200,230,255,.25)';
-  for(const b of l.blobs){ctx.beginPath();ctx.arc(b.x,b.y,b.r*0.7,0,6.283);ctx.stroke();}
+  const frozen=!!l.frozen || selectedMap==='snow';
+  const cx=l.cx, cy=l.cy, R0=l.r;
+  // 1) Areia / lama da margem (anel externo)
+  ctx.fillStyle=frozen?'#b8c8d4':(selectedMap==='forest'?'#6a7a48':'#7a6a4a');
+  lakeShorePath(l, 1.12);
+  ctx.fill();
+  // 2) Água principal com gradiente radial
+  lakeShorePath(l, 1.0);
+  const g=ctx.createRadialGradient(cx-R0*0.15,cy-R0*0.2,R0*0.1,cx,cy,R0*1.05);
+  if(frozen){
+    g.addColorStop(0,'#9ec8e0');g.addColorStop(0.45,'#6aa0c0');g.addColorStop(1,'#3a6a88');
+  } else {
+    g.addColorStop(0,'#4ab0d0');g.addColorStop(0.35,'#2a88b0');g.addColorStop(0.7,'#1a6088');g.addColorStop(1,'#0e3a58');
+  }
+  ctx.fillStyle=g;ctx.fill();
+  // 3) Faixa de água rasa perto da margem
+  ctx.strokeStyle=frozen?'rgba(220,240,255,.35)':'rgba(120,200,220,.28)';
+  ctx.lineWidth=Math.max(4,R0*0.06);
+  lakeShorePath(l, 0.97);ctx.stroke();
+  // 4) Ondulações suaves (linhas, não círculos concêntricos)
+  ctx.strokeStyle=frozen?'rgba(255,255,255,.2)':'rgba(180,230,255,.18)';
+  ctx.lineWidth=1.5;
+  for(let k=0;k<3;k++){
+    const yy=cy-R0*0.35+k*R0*0.28+Math.sin(T*1.2+k)*3;
+    ctx.beginPath();
+    for(let x=cx-R0*0.7;x<=cx+R0*0.7;x+=6){
+      const dx=(x-cx)/R0;
+      if(dx*dx>0.55) continue;
+      const wave=Math.sin(x*0.08+T*2.5+k)*4 + Math.sin(x*0.03-T)*2;
+      if(x===cx-R0*0.7) ctx.moveTo(x,yy+wave); else ctx.lineTo(x,yy+wave);
+    }
+    ctx.stroke();
+  }
+  // 5) Reflexo de luz
+  ctx.fillStyle='rgba(255,255,255,'+(0.08+0.05*Math.sin(T*1.5)).toFixed(2)+')';
+  ctx.beginPath();
+  ctx.ellipse(cx-R0*0.2, cy-R0*0.25, R0*0.35, R0*0.12, -0.4, 0, 6.283);
+  ctx.fill();
+  // 6) Ilhas
   if(l.islands)for(const isl of l.islands){
-    ctx.fillStyle='#4a7a3a';ctx.beginPath();ctx.arc(isl.x,isl.y,isl.r,0,6.283);ctx.fill();
-    ctx.fillStyle='#6a9a5a';ctx.beginPath();ctx.arc(isl.x-2,isl.y-2,isl.r*0.6,0,6.283);ctx.fill();
-    R(isl.x-1,isl.y-isl.r-4,2,5,'#5a3d22');R(isl.x-4,isl.y-isl.r-8,8,4,'#2a6a2a');
+    ctx.fillStyle=frozen?'#d8e4ee':'#4a6a38';
+    ctx.beginPath();ctx.ellipse(isl.x,isl.y,isl.r*1.1,isl.r*0.85,0.2,0,6.283);ctx.fill();
+    if(!frozen){
+      ctx.fillStyle='#5a8a48';ctx.beginPath();ctx.ellipse(isl.x-1,isl.y-1,isl.r*0.7,isl.r*0.55,0,0,6.283);ctx.fill();
+      R(isl.x-1,isl.y-isl.r-3,2,5,'#5a3d22');R(isl.x-4,isl.y-isl.r-7,8,4,'#2a6a2a');
+    } else {
+      ctx.fillStyle='#eef4f8';ctx.beginPath();ctx.ellipse(isl.x,isl.y-1,isl.r*0.5,isl.r*0.35,0,0,6.283);ctx.fill();
+    }
   }
-  if(l.pads)for(const pad of l.pads){
-    ctx.fillStyle='#3a8a4a';ctx.beginPath();ctx.arc(pad.x,pad.y,pad.r,0,6.283);ctx.fill();
-    ctx.fillStyle='#f0a0c0';ctx.beginPath();ctx.arc(pad.x,pad.y,pad.r*0.4,0,6.283);ctx.fill();
+  // 7) Vegetação na beira (juncos / pedras) — só floresta
+  if(!frozen && selectedMap==='forest'){
+    const N=18;
+    for(let i=0;i<N;i++){
+      const ang=(i/N)*6.283 + (cx%7)*0.1;
+      const rr=R0*(0.95+0.06*Math.sin(i*2.7));
+      const px=cx+Math.cos(ang)*rr, py=cy+Math.sin(ang)*rr*0.92;
+      if(i%3===0){
+        ctx.fillStyle='#3a6a30';R(px-1,py-5,2,6);R(px-3,py-6,3,2);
+      } else if(i%3===1){
+        ctx.fillStyle='#6a6a68';ctx.beginPath();ctx.arc(px,py,2.2,0,6.283);ctx.fill();
+      }
+    }
+    // Vitórias-régias esparsas
+    if(l.pads)for(const pad of l.pads){
+      if(Math.hypot(pad.x-cx,pad.y-cy)>R0*0.85) continue;
+      ctx.fillStyle='#2a6a3a';ctx.beginPath();ctx.ellipse(pad.x,pad.y,pad.r*1.4,pad.r*1.0,0,0,6.283);ctx.fill();
+      ctx.fillStyle='#e8a0b8';ctx.beginPath();ctx.arc(pad.x+1,pad.y,1.2,0,6.283);ctx.fill();
+    }
   }
-  // Animated sparkle
-  ctx.fillStyle='rgba(255,255,255,'+(0.15+0.1*Math.sin(T*2)).toFixed(2)+')';
-  ctx.beginPath();ctx.ellipse(l.cx-l.r*.25,l.cy-l.r*.25,l.r*.25,l.r*.12,Math.PI/4,0,6.283);ctx.fill();
-  ctx.beginPath();ctx.ellipse(l.cx+l.r*.3,l.cy+l.r*.2,l.r*.15,l.r*.08,-Math.PI/4,0,6.283);ctx.fill();
+  // 8) Gelo rachado (neve)
+  if(frozen){
+    ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1;
+    for(let i=0;i<5;i++){
+      const a=i*1.2+(cx%5);
+      ctx.beginPath();
+      ctx.moveTo(cx+Math.cos(a)*R0*0.2, cy+Math.sin(a)*R0*0.2);
+      ctx.lineTo(cx+Math.cos(a)*R0*0.75, cy+Math.sin(a)*R0*0.7);
+      ctx.stroke();
+    }
+  }
 }
 function drawItem(it,near){
   const x=Math.round(it.x),y=Math.round(it.y),b=Math.round(Math.sin(T*3+it.x));
@@ -3358,6 +3741,12 @@ function drawRoof(b){
   if(b.type==='cabin'||b.type==='house'){
     R(x+w-12,y-6,6,10,'#6a4a3a');R(x+w-12,y-8,6,3,'#5a3a2a');
   }
+  // City: AC units / water towers on taller roofs
+  if(selectedMap==='city' && (b.type==='apartment'||b.type==='office')){
+    R(x+8,y-4,10,5,'#6a7078');R(x+w-20,y-3,8,4,'#5a6068');
+  }
+  if(b.type==='clinic'){ R(x+w/2-4,y-2,8,4,'#e04040'); R(x+w/2-1,y-5,2,10,'#e04040'); } // cruz
+  if(b.type==='gas'){ R(x+6,y-5,10,6,'#e0c040'); }
   if(weather==='snow'||selectedMap==='snow')R(x,y,w,5,'#e8f4f8');
   if(selectedMap==='desert' && (b.type==='barn'||b.type==='house')){
     R(x+4,y+4,w-8,2,'rgba(200,160,80,.2)');
@@ -3393,7 +3782,7 @@ function render(){
     }
     human(P.x,P.y,P.face,{skin:'#e8b890',shirt:'#3a5a8a',pants:'#3a3a48',hair:'#3a2a1a',moving:P.moving,anim:P.walk,wpn:P.weapon,swing:P.swing,flash:P.flash});
     for(const z of zombies)if(!z.dead&&z.x>=b.x&&z.x<=b.x+b.w&&z.y>=b.y&&z.y<=b.y+b.h){
-      human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:z.kind===2?1.25:(z.kind===3?1.35:1),kind:z.kind,spitter:z.ranged,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3});
+      human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,bloater:z.bloater||z.kind===7});
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
     }
     // E3: tracers + particles inside buildings (were skipped by early return)
@@ -3460,6 +3849,9 @@ function render(){
       else if(v<52) R(px+5,py+5,6,6,'#3a3a40');
     }
   }
+  for(const l of lakes){
+    if(l.cx+l.r>vx0&&l.cx-l.r<vx1&&l.cy+l.r>vy0&&l.cy-l.r<vy1) drawLake(l);
+  }
   for(const r of roads){
     if(r.x>vx1||r.x+r.w<vx0||r.y>vy1||r.y+r.h<vy0)continue;
     const roadCol=selectedMap==='snow'?'#98a4b0':selectedMap==='desert'?'#8c7c5c':selectedMap==='city'?'#3a3a40':'#7a6a4a';
@@ -3484,23 +3876,47 @@ function render(){
   const vis=b=>b.x<vx1&&b.x+b.w>vx0&&b.y<vy1&&b.y+b.h>vy0;
   for(const b of blds){
     if(!vis(b))continue;
-    const fl=b.type==='mil'?'#5a6250':b.type==='shop'?'#a09a90':b.type==='warehouse'?'#5a5a62':b.type==='barn'?'#8a4a2a':b.type==='cabin'?'#7a5a3a':(selectedMap==='city'?'#6b665c':'#8a6b47');
+    const fl=
+      b.type==='mil'?'#5a6250':
+      b.type==='shop'||b.type==='gas'?'#a09a90':
+      b.type==='warehouse'?'#5a5a62':
+      b.type==='apartment'?'#6a7078':
+      b.type==='office'?'#5a6878':
+      b.type==='clinic'?'#c8d0d8':
+      b.type==='garage'?'#7a7868':
+      b.type==='barn'?'#8a4a2a':
+      b.type==='cabin'?'#7a5a3a':
+      (selectedMap==='city'?'#6b665c':'#8a6b47');
     R(b.x,b.y,b.w,b.h,fl);
     // Floor grain / tiles
-    if(b.type==='shop'||b.type==='warehouse'){
+    if(b.type==='shop'||b.type==='warehouse'||b.type==='office'||b.type==='garage'){
       for(let fy=b.y+10;fy<b.y+b.h-8;fy+=10) R(b.x+4,fy,b.w-8,1,'rgba(0,0,0,.08)');
     } else {
       for(let fy=b.y+8;fy<b.y+b.h-6;fy+=8) R(b.x+3,fy,b.w-6,1,'rgba(0,0,0,.1)');
     }
-    // Windows (visible under roof when semi-open)
+    // Windows
     const winCol = dark>0.4 ? '#ffe080' : '#6a90b0';
-    const wx1=b.x+10, wx2=b.x+b.w-18;
-    R(wx1,b.y+12,8,7,winCol);R(wx1+1,b.y+13,6,5,'rgba(255,255,255,.25)');
-    if(b.w>70){ R(wx2,b.y+12,8,7,winCol);R(wx2+1,b.y+13,6,5,'rgba(255,255,255,.25)'); }
+    const floors=b.floors||1;
+    if(floors>1 || b.type==='apartment'||b.type==='office'){
+      const rows=Math.max(2, floors);
+      for(let row=0;row<rows;row++){
+        const wy=b.y+10+row*Math.floor((b.h-24)/rows);
+        for(let wx=b.x+8;wx<b.x+b.w-14;wx+=14){
+          R(wx,wy,8,6,winCol);R(wx+1,wy+1,6,4,'rgba(255,255,255,.2)');
+        }
+      }
+    } else {
+      const wx1=b.x+10, wx2=b.x+b.w-18;
+      R(wx1,b.y+12,8,7,winCol);R(wx1+1,b.y+13,6,5,'rgba(255,255,255,.25)');
+      if(b.w>70){ R(wx2,b.y+12,8,7,winCol);R(wx2+1,b.y+13,6,5,'rgba(255,255,255,.25)'); }
+    }
     if(b.type==='mil'){ R(b.x+b.w/2-4,b.y+10,8,5,'#3a4a30'); }
     if(b.type==='shop'){ R(b.x+6,b.y+4,b.w-12,3,'#c04030'); }
+    if(b.type==='gas'){ R(b.x+6,b.y+4,b.w-12,3,'#d0b030'); R(b.x+8,b.y+5,4,2,'#222'); }
+    if(b.type==='clinic'){ R(b.x+b.w/2-5,b.y+8,10,3,'#e04040'); R(b.x+b.w/2-1,b.y+5,2,9,'#e04040'); }
+    if(b.type==='garage'){ R(b.doorX-2,b.y+b.h-14,b.door+4,10,'#2a2a28'); } // portão
     R(b.doorX,b.y+b.h-6,b.door,6,'#3a2a1c');
-    R(b.doorX+2,b.y+b.h-5,3,2,'#5a4a30'); // door handle area
+    R(b.doorX+2,b.y+b.h-5,3,2,'#5a4a30');
   }
   let nearIt=null,nd=24;
   for(const it of items){
@@ -3538,7 +3954,7 @@ function render(){
     else if(e.k===6)drawDecoration(e.o);
     else if(e.k===1){
       const z=e.o;
-      human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:z.kind===2?1.25:(z.kind===3?1.35:1),kind:z.kind,spitter:z.ranged,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3});
+      human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,bloater:z.bloater||z.kind===7});
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
     }else if(e.k===5){
       const rp=e.o;
@@ -3646,7 +4062,7 @@ function bindToggle(id,key){
   el.classList.toggle('on',!!CFG[key]);
   el.addEventListener('click',()=>{
     CFG[key]=!CFG[key];el.classList.toggle('on',CFG[key]);saveCfg();
-    if(key==='hud'&&P&&!P.dead)document.body.classList.toggle('nohud',!CFG.hud);
+    if(key==='hud'||key==='minimap') applyHudClasses();
   });
 }
 bindSlider('cfg_master','master','v_master');
@@ -3655,6 +4071,7 @@ bindSlider('cfg_amb','amb','v_amb');
 bindSlider('cfg_rain','rain','v_rain');
 bindSlider('cfg_step','step','v_step');
 bindToggle('cfg_hud','hud');
+bindToggle('cfg_minimap','minimap');
 bindToggle('cfg_dmgflash','dmgflash');
 bindToggle('cfg_screenflash','screenflash');
 bindToggle('cfg_fullscreen','fullscreen');
@@ -3662,12 +4079,12 @@ bindToggle('cfg_tracers','tracers');
 
 on('btnReset','click',()=>{
   CFG.master=0.8;CFG.sfx=1.0;CFG.amb=0.6;CFG.rain=0.7;CFG.step=0.8;
-  CFG.hud=true;CFG.dmgflash=true;CFG.screenflash=true;CFG.fullscreen=true;CFG.tracers=true;
+  CFG.hud=true;CFG.minimap=true;CFG.dmgflash=true;CFG.screenflash=true;CFG.fullscreen=true;CFG.tracers=true;
   saveCfg();
   const vals={cfg_master:80,cfg_sfx:100,cfg_amb:60,cfg_rain:70,cfg_step:80};
   for(const id in vals){const e=$(id);if(e)e.value=vals[id];const lab=$('v_'+id.split('_')[1]);if(lab)lab.textContent=vals[id]+'%';}
   document.querySelectorAll('.cfg-toggle').forEach(t=>t.classList.add('on'));
-  document.body.classList.remove('nohud');
+  applyHudClasses();
   toast('Configurações restauradas');
 });
 
@@ -3755,6 +4172,7 @@ on('craftclose','click',closeCraft);
 /* ============ CONTROLES ============ */
 cv.addEventListener('pointerdown',e=>{
   aud();
+  tryFullscreenFromGesture(); // MP: fullscreen só após gesto real do jogador
   if(state!=='play'||!P||P.inVehicle)return;
   e.preventDefault();
   if(joy.id===null&&e.clientX<W*.58){
@@ -3775,7 +4193,7 @@ cv.addEventListener('pointercancel',joyEnd);
 
 function holdBtn(id,down,up){
   const b=$(id);if(!b)return;
-  b.addEventListener('pointerdown',e=>{e.preventDefault();aud();b.classList.add('on');down();});
+  b.addEventListener('pointerdown',e=>{e.preventDefault();aud();tryFullscreenFromGesture();b.classList.add('on');down();});
   const end=()=>{b.classList.remove('on');if(up)up();};
   b.addEventListener('pointerup',end);
   b.addEventListener('pointercancel',end);
@@ -3814,7 +4232,19 @@ if(swapBtn){
 document.addEventListener('pointerup',endSwapPress);
 document.addEventListener('pointercancel',()=>{if(swapPressActive)cancelSwapPress();});
 const weaponWheelRoot=$('weapon-wheel');
-if(weaponWheelRoot)weaponWheelRoot.addEventListener('click',e=>{if(e.target===weaponWheelRoot)closeWeaponWheel();});
+if(weaponWheelRoot){
+  // Ignore the finger-up that opened the wheel (prevents instant close)
+  weaponWheelRoot.addEventListener('pointerup',e=>{
+    if(e.target!==weaponWheelRoot) return;
+    if(performance.now()-weaponWheelOpenedAt<450) return;
+    closeWeaponWheel();
+  });
+  weaponWheelRoot.addEventListener('click',e=>{
+    if(e.target!==weaponWheelRoot) return;
+    if(performance.now()-weaponWheelOpenedAt<450) return;
+    closeWeaponWheel();
+  });
+}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&weaponWheelOpen)closeWeaponWheel();});
 const craftTabs=$('craft-tabs');if(craftTabs)craftTabs.addEventListener('click',e=>{const b=e.target.closest('[data-craft-filter]');if(!b)return;craftFilter=b.dataset.craftFilter;refreshCraft();});
 
@@ -3915,7 +4345,7 @@ function quitToMenu(){
     if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
   }catch(e){}
   showScreen('menu');$('hud').classList.add('hide');state='menu';
-  setAmbient(0);setRain(false);document.body.classList.remove('nohud');
+  setAmbient(0);setRain(false);document.body.classList.remove('nohud','nomap');
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
   MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;MP.isHost=false;MP.roomCode='';MP.myId=null;MP.syncT=0;
   remotePlayers={};nextZombieNetId=1;
