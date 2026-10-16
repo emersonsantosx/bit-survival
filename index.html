@@ -3190,17 +3190,75 @@ function drawCampfire(c){
   if(weather==='rain')R(x-2,y-4-fh-8,4,4,'rgba(80,80,80,.5)');
 }
 function drawVehicle(v){
-  ctx.save();ctx.translate(v.x,v.y);ctx.rotate(v.face||0);
-  shadow(0,4,v.w*.5,v.h*.3);
-  R(-v.w/2,-v.h/2,v.w,v.h,v.col);
-  R(-v.w/2+2,-v.h/2+1,v.w-4,2,'rgba(255,255,255,.15)'); // roof shine
-  R(-v.w/2+6,-v.h/2+4,v.w-12,v.h-8,'#a8c0d0');
-  R(-v.w/2+7,-v.h/2+5,v.w-14,2,'rgba(255,255,255,.2)');
-  R(-v.w/2-2,-v.h/2+3,3,5,'#111');R(v.w/2-1,-v.h/2+3,3,5,'#111');
-  R(-v.w/2-2,v.h/2-8,3,5,'#111');R(v.w/2-1,v.h/2-8,3,5,'#111');
-  R(-v.w/2+3,v.h/2-3,4,2,'#e0e040');R(v.w/2-7,v.h/2-3,4,2,'#e04040'); // lights
-  if(!v.looted)R(-4,-3,8,6,'#d9892b');
-  if(v.driverId){ R(-2,-v.h/2-3,4,2,'#80ffa0'); } // occupied marker
+  // Local axes after rotate(face): +X = frente (direção do movimento), +Y = lado
+  const L=v.w||36, W=v.h||20; // L=comprimento, W=largura
+  ctx.save();
+  ctx.translate(v.x,v.y);
+  ctx.rotate(v.face||0);
+  shadow(0,3,L*0.42,W*0.28);
+
+  // --- Corpo principal ---
+  R(-L/2,-W/2,L,W,v.col);
+  // Brilho no teto
+  R(-L/2+3,-W/2+1,L-6,2,'rgba(255,255,255,.12)');
+
+  // --- Capô / frente (mais estreito visualmente) ---
+  R(L/2-9,-W/2+2,8,W-4,v.col);
+  R(L/2-8,-W/2+3,6,W-6,'rgba(0,0,0,.12)');
+
+  // --- Para-choque dianteiro ---
+  R(L/2-2,-W/2+3,3,W-6,'#2a2a2a');
+  R(L/2-1,-W/2+4,2,W-8,'#3a3a3a');
+
+  // --- Faróis (FRENTE = +X) — dois brancos/amarelos ---
+  R(L/2-3,-W/2+3,3,4,'#f0e8a0');
+  R(L/2-3,W/2-7,3,4,'#f0e8a0');
+  R(L/2-2,-W/2+4,2,2,'#fff8d0');
+  R(L/2-2,W/2-6,2,2,'#fff8d0');
+
+  // --- Para-brisa (vidro mais perto da frente) ---
+  R(2,-W/2+3,8,W-6,'#6a90a8');
+  R(3,-W/2+4,6,2,'rgba(255,255,255,.25)');
+  // Divisor do para-brisa
+  R(5,-W/2+3,1,W-6,'rgba(0,0,0,.2)');
+
+  // --- Teto / cabine ---
+  R(-6,-W/2+2,10,W-4,'rgba(0,0,0,.1)');
+  // Janela lateral (vidro mais escuro)
+  R(-4,-W/2+3,6,W-6,'#4a7088');
+  R(-3,-W/2+4,4,2,'rgba(255,255,255,.15)');
+
+  // --- Traseira / porta-malas ---
+  R(-L/2,-W/2+2,7,W-4,'rgba(0,0,0,.15)');
+  // Para-choque traseiro
+  R(-L/2,-W/2+3,3,W-6,'#2a2a2a');
+  // Lanternas traseiras (TRASEIRA = -X) — duas vermelhas
+  R(-L/2+1,-W/2+3,3,4,'#c02828');
+  R(-L/2+1,W/2-7,3,4,'#c02828');
+  R(-L/2+2,-W/2+4,2,2,'#ff5050');
+  R(-L/2+2,W/2-6,2,2,'#ff5050');
+
+  // --- Rodas (4 cantos) ---
+  const rw=4,rh=5;
+  R(-L/2+4,-W/2-2,rw,rh,'#111');
+  R(L/2-8,-W/2-2,rw,rh,'#111');
+  R(-L/2+4,W/2-3,rw,rh,'#111');
+  R(L/2-8,W/2-3,rw,rh,'#111');
+  // Aro
+  R(-L/2+5,-W/2-1,2,3,'#444');
+  R(L/2-7,-W/2-1,2,3,'#444');
+  R(-L/2+5,W/2-2,2,3,'#444');
+  R(L/2-7,W/2-2,2,3,'#444');
+
+  // Loot ainda no carro
+  if(!v.looted){
+    R(-2,-3,5,6,'#d9892b');
+    R(-1,-2,3,2,'#e8a84a');
+  }
+  // Indicador discreto se ocupado (borda no teto, não parece luz)
+  if(v.driverId){
+    R(-3,-W/2,6,1,'#80ffa0');
+  }
   ctx.restore();
 }
 function drawPlane(p){
