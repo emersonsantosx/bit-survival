@@ -1828,11 +1828,20 @@ function drawAnimal(a){
     R(x-bw/2,y-16,Math.max(1,bw*ratio),2,'#dd3333');
   }
 }
+const ZSHIRTS=['#6b4e3a','#4a4a5a','#7a3b3b','#3d5a4a','#58503a'];
+/* Aparência do zumbi: mesma função no host (spawn) e no convidado (snapshot) */
+function zombieLook(kind,si){
+  const t=ZTYPES[kind]||ZTYPES[0];
+  const skin=kind===3?'#556b2f':kind===2?'#8a5a4a':kind===4?'#7ac070':kind===5?'#6a8060':kind===6?'#c0a0a0':kind===7?'#4a7a38':kind===8?'#c05040':t.color;
+  const shirt=kind===3?'#b22222':kind===2?'#3a1a1a':kind===5?'#4a3a20':kind===6?'#7a4a7a':kind===7?'#2a4a20':kind===8?'#5a1010':ZSHIRTS[(si|0)%5];
+  return {skin:skin,shirt:shirt};
+}
 function spawnZ(x,y,kind){
   if(kind===undefined) kind=pickZombieKind();
   kind=clamp(kind|0,0,ZTYPES.length-1);
   const t=ZTYPES[kind];
   const dd=dayDiff();
+  const si=Math.floor(Math.random()*5), look=zombieLook(kind,si);
   const z={
     netId:(MP.active&&MP.isHost?'z'+(nextZombieNetId++):'local'+(nextZombieNetId++)),
     x,y,kind,
@@ -1846,8 +1855,7 @@ function spawnZ(x,y,kind){
     spitT:kind===4?rnd(1,3):0,
     ranged:!!t.ranged, range:t.range, crawler:!!t.crawler, screams:!!t.screams,
     bloater:!!t.bloater, berserk:!!t.berserk,
-    skin:kind===3?'#556b2f':kind===2?'#8a5a4a':kind===4?'#7ac070':kind===5?'#6a8060':kind===6?'#c0a0a0':kind===7?'#4a7a38':kind===8?'#c05040':t.color,
-    shirt:kind===3?'#b22222':kind===2?'#3a1a1a':kind===5?'#4a3a20':kind===6?'#7a4a7a':kind===7?'#2a4a20':kind===8?'#5a1010':pick(['#6b4e3a','#4a4a5a','#7a3b3b','#3d5a4a','#58503a'])
+    si:si, skin:look.skin, shirt:look.shirt
   };
   zombies.push(z);return z;
 }
@@ -2501,17 +2509,24 @@ function tickFishing(dt){
     } else toast('Mochila cheia — o peixe escapou');
   }
 }
-function drawFishing(){
-  if(!P||!P.fish||P.dead)return;
-  const f=P.fish,left=f.wait-f.t;
+function drawFishLine(px,py,face,fx,fy,left){
   const bob=Math.sin(T*4)*0.8,dip=(left<1&&Math.sin(T*28)>0)?2:0;
-  const tx=P.x+Math.cos(P.face)*16,ty=P.y-9+Math.sin(P.face)*16;
+  const tx=px+Math.cos(face)*16,ty=py-9+Math.sin(face)*16;
   ctx.strokeStyle='rgba(235,235,235,.75)';ctx.lineWidth=.6;
-  ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(f.x,f.y-1+bob+dip);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(fx,fy-1+bob+dip);ctx.stroke();
   ctx.strokeStyle='rgba(190,230,250,.5)';ctx.lineWidth=.7;
   const rr=2+((T*6)%1)*5;
-  ctx.beginPath();ctx.ellipse(f.x,f.y+1,rr,rr*.45,0,0,6.283);ctx.stroke();
-  R(f.x-1,f.y-2+bob+dip,3,2,'#f2f2f2');R(f.x-1,f.y+bob+dip,3,2,'#e03030');
+  ctx.beginPath();ctx.ellipse(fx,fy+1,rr,rr*.45,0,0,6.283);ctx.stroke();
+  R(fx-1,fy-2+bob+dip,3,2,'#f2f2f2');R(fx-1,fy+bob+dip,3,2,'#e03030');
+}
+function drawFishing(){
+  if(P&&P.fish&&!P.dead){const f=P.fish;drawFishLine(P.x,P.y,P.face,f.x,f.y,f.wait-f.t);}
+  // Linha de pesca do outro jogador
+  for(const id in remotePlayers){
+    const rp=remotePlayers[id];
+    if(!rp||rp.alive===false||rp.fx==null||!Number.isFinite(rp.x))continue;
+    drawFishLine(rp.x,rp.y,rp.face||0,rp.fx,rp.fy,rp.fl||0);
+  }
 }
 /* Sem munição: equipa a arma branca de maior dano do arsenal (ou as mãos).
    Só acontece no disparo que esvazia a arma — equipar manualmente uma arma vazia continua permitido. */
@@ -3124,6 +3139,19 @@ function update(dt){
         if(d<m&&d>.01){const f=(m-d)/2;a.x-=dx/d*f;a.y-=dy/d*f;b.x+=dx/d*f;b.y+=dy/d*f;}
       }
     }
+    if(MP.active&&MP.isHost){
+      for(const id in remotePlayers){
+        const rp=remotePlayers[id];
+        if(!rp||rp.alive===false||!Number.isFinite(rp.x))continue;
+        for(const a of zombies){
+          if(a.dead)continue;
+          const rx=a.x-rp.x,ry=a.y-rp.y;
+          if(rx>40||rx<-40||ry>40||ry<-40)continue;
+          const rd=Math.hypot(rx,ry),rm=a.r+4;
+          if(rd<rm&&rd>.01){a.x=rp.x+rx/rd*rm;a.y=rp.y+ry/rd*rm;}
+        }
+      }
+    }
     zombies=zombies.filter(z=>!z.dead);
     // Horda cresce com o dia (single e multi — só host spawna no MP)
     const dd=dayDiff();
@@ -3182,15 +3210,17 @@ function update(dt){
   if(MP.active&&!MP.isHost){
     const k=Math.min(1,dt*14);
     for(const z of zombies){
-      if(z.tx===undefined||z.dead)continue;
-      const dx=z.tx-z.x,dy=z.ty-z.y;
-      if(dx*dx+dy*dy>8100){z.x=z.tx;z.y=z.ty;}else{z.x+=dx*k;z.y+=dy*k;}
+      if(z.hit>0)z.hit=Math.max(0,z.hit-dt); // antes só o host zerava: zumbi ficava “branco/rosa” para sempre
+      if(z.dead||z._nx===undefined)continue;
+      if(z.moving)z.anim+=dt*(z.kind===1?10:6);
+      const dx=z._nx-z.x,dy=z._ny-z.y;
+      if(dx*dx+dy*dy>8100){z.x=z._nx;z.y=z._ny;}else{z.x+=dx*k;z.y+=dy*k;}
     }
     for(const a of animals){
       if(a._predT)a._predT=Math.max(0,a._predT-dt);
-      if(a.tx===undefined||a.dead)continue;
-      const dx=a.tx-a.x,dy=a.ty-a.y;
-      if(dx*dx+dy*dy>8100){a.x=a.tx;a.y=a.ty;}else{a.x+=dx*k;a.y+=dy*k;}
+      if(a.dead||a._nx===undefined)continue;
+      const dx=a._nx-a.x,dy=a._ny-a.y;
+      if(dx*dx+dy*dy>8100){a.x=a._nx;a.y=a._ny;}else{a.x+=dx*k;a.y+=dy*k;}
     }
   }
   // Decay local damage prediction timers
@@ -3758,6 +3788,7 @@ function handleNetData(data,isHostSide){
     rp.swing=isFiniteNum(data.swing)?data.swing:0;
     rp.hp=isFiniteNum(data.hp)?clamp(data.hp,0,100):rp.hp;
     rp.alive=data.alive!==false;rp.inVehicle=!!data.inVehicle;
+    if(isFiniteNum(data.fx)&&isFiniteNum(data.fy)){rp.fx=data.fx;rp.fy=data.fy;rp.fl=isFiniteNum(data.fl)?data.fl:3;}else{rp.fx=null;rp.fy=null;}
     rp.isHost=!isHostSide;rp.anim=(rp.anim||0)+(data.moving?0.25:0);
     remotePlayers[data.id]=rp;
     // Teammate just died and we are also dead → end the match
@@ -3875,15 +3906,15 @@ function applySnapshot(snap){
       next.push({
         netId: sz.netId || ('remote-z'+i),
         x: prev&&Number.isFinite(prev.x)?prev.x:sz.x, y: prev&&Number.isFinite(prev.y)?prev.y:sz.y, kind: sz.kind,
-        face: sz.face||0, anim: sz.anim||0, hp: hp,
+        face: sz.face||0, anim: prev&&Number.isFinite(prev.anim)?prev.anim:(sz.anim||0), hp: hp,
         max: t.hp*dd.hp, r: t.r, dmg: Math.round(t.dmg*dd.dmg), spd: t.spd*dd.spd,
-        moving: !!sz.moving, skin: t.color||'#7a9a5a', shirt: '#4a4a5a',
+        moving: !!sz.moving, si: sz.si|0, skin: zombieLook(sz.kind,sz.si).skin, shirt: zombieLook(sz.kind,sz.si).shirt,
         ranged:!!t.ranged, range:t.range, crawler:!!t.crawler, screams:!!t.screams,
         bloater:!!t.bloater, berserk:!!t.berserk,
         dead: false, hit: prev ? prev.hit : 0, vx: 0, vy: 0,
         alert: 0, lock: prev ? Math.max(0, prev.lock) : 0, lunge: 0,
         cd: prev ? prev.cd : 0, losT: 0, seen: false, wt: 0,
-        tx: sz.x, ty: sz.y, spitT: prev ? prev.spitT : 0, screamT: prev ? prev.screamT : 0,
+        tx: sz.x, ty: sz.y, _nx: sz.x, _ny: sz.y, spitT: prev ? prev.spitT : 0, screamT: prev ? prev.screamT : 0,
         _predT: predT, _hitCD: prev ? prev._hitCD : 0
       });
     }
@@ -3930,7 +3961,7 @@ function applySnapshot(snap){
       let prev=null,bd=70;
       for(const o of oldA){
         if(usedA.has(o)||o.k!==k)continue;
-        const d=Math.hypot((o.tx!==undefined?o.tx:o.x)-a.x,(o.ty!==undefined?o.ty:o.y)-a.y);
+        const d=Math.hypot((o._nx!==undefined?o._nx:o.x)-a.x,(o._ny!==undefined?o._ny:o.y)-a.y);
         if(d<bd){bd=d;prev=o;}
       }
       if(prev)usedA.add(prev);
@@ -3941,7 +3972,7 @@ function applySnapshot(snap){
       nextA.push({
         x:prev?prev.x:a.x,y:prev?prev.y:a.y,k:k,face:a.face||0,
         hp:hp,max:a.max||(Number.isFinite(a.hp)?Math.max(a.hp,1):4),
-        dead:false,flee:0,wt:1,tx:a.x,ty:a.y,atkCD:0,
+        dead:false,flee:0,wt:1,tx:a.x,ty:a.y,atkCD:0,_nx:a.x,_ny:a.y,
         _predT:pred,_hitCD:prev?prev._hitCD:0
       });
     }
@@ -3996,9 +4027,12 @@ function packSnapshot(){
   // Cidade: mais zumbis no snapshot (até 70); outros mapas 50
   const zCap=selectedMap==='city'?90:60;
   // Payload enxuto (sem skin/shirt) — evita queda/atraso no MP, esp. cidade
-  const zPack=ordered.slice(0,zCap).map(({z})=>({
+  // Todo zumbi num raio de 600px de algum jogador sempre vai no snapshot (antes os da borda do limite sumiam e reapareciam)
+  let nearCnt=0;for(const sc of scored)if(sc.minD<600)nearCnt++;
+  const zCapF=Math.max(zCap,Math.min(140,nearCnt));
+  const zPack=ordered.slice(0,zCapF).map(({z})=>({
     netId:z.netId,x:Math.round(z.x),y:Math.round(z.y),kind:z.kind|0,
-    face:+(z.face||0).toFixed(2),anim:+(z.anim||0).toFixed(1),hp:Math.round(z.hp),
+    face:+(z.face||0).toFixed(2),anim:+(z.anim||0).toFixed(1),hp:Math.round(z.hp),si:z.si|0,
     moving:!!z.moving
   }));
   // Items near players first
@@ -4037,6 +4071,7 @@ function packMyPlayer(){
     x:Math.round(P.x),y:Math.round(P.y),face:+P.face.toFixed(2),
     moving:!!P.moving,sprint:!!P.sprint,weapon:P.weapon||'fists',swing:+(P.swing||0).toFixed(2),
     hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle};
+  if(P.fish){p.fx=Math.round(P.fish.x);p.fy=Math.round(P.fish.y);p.fl=+Math.max(0,P.fish.wait-P.fish.t).toFixed(1);}
   if(P.inVehicle){
     const v=P.inVehicle;
     p.vehicleId = v.id;
