@@ -771,6 +771,7 @@ const RECIPES=[
   {out:'stoneaxe', need:{wood:3,stone:4}, label:'Machado de Pedra',desc:'Corta árvores rápido (dano 5, 2x madeira)' },
   {out:'sword',    need:{wood:2,stone:5}, label:'Espada',          desc:'Dano alto (6), alcance médio' },
   {out:'spear',    need:{wood:3,stone:2}, label:'Lança',           desc:'Maior alcance (34), dano 4.5' },
+  {out:'bat',      need:{wood:3},         label:'Taco',            desc:'Arma branca básica (dano 2.5)' },
   {out:'bow',      need:{wood:4,stone:1}, label:'Arco',            desc:'Silencioso, usa flechas (dano 8)' },
   {out:'arrows',   need:{wood:2,stone:1}, label:'Flechas (x6)',    desc:'Munição do arco' },
   {out:'campfire', need:{wood:5,stone:3}, label:'Fogueira',        desc:'Cozinha peixe e ilumina à noite' }
@@ -1166,12 +1167,44 @@ function castRay(x,y,ang,maxd){
       if(z.dead)continue;
       const hitR = Math.max(10, (z.r||5)+6);
       const dx=z.x-px,dy=(z.y-5)-py;
-      if(dx*dx+dy*dy<hitR*hitR)return{x:px,y:py,z};
+      if(dx*dx+dy*dy<hitR*hitR)return{x:px,y:py,z,animal:null};
+    }
+    // Animais ao longo do raio (todas as armas de fogo / arco)
+    for(const an of animals){
+      if(an.dead) continue;
+      const hitR=an.k==='deer'||an.k==='boar'||an.k==='camel'?14:10;
+      const dx=an.x-px, dy=(an.y-3)-py;
+      if(dx*dx+dy*dy<hitR*hitR) return{x:px,y:py,z:null,animal:an};
     }
     // Only block on solid walls/trees, not every frame (keeps shots fair)
-    if(d>12 && pointSolid(px,py+5))return{x:px,y:py,z:null};
+    if(d>12 && pointSolid(px,py+5))return{x:px,y:py,z:null,animal:null};
   }
-  return{x:x+cx*maxd,y:y+cy*maxd,z:null};
+  return{x:x+cx*maxd,y:y+cy*maxd,z:null,animal:null};
+}
+function vehicleHitsEnv(v){
+  // Amostras na carroceria (frente/laterais) — detecta parede, árvore, pedra
+  const cos=Math.cos(v.face||0), sin=Math.sin(v.face||0);
+  const L=(v.w||36)*0.48, W=(v.h||20)*0.42;
+  const pts=[
+    [v.x+cos*L, v.y+sin*L],
+    [v.x+cos*L*0.7-sin*W, v.y+sin*L*0.7+cos*W],
+    [v.x+cos*L*0.7+sin*W, v.y+sin*L*0.7-cos*W],
+    [v.x-sin*W*0.9, v.y+cos*W*0.9],
+    [v.x+sin*W*0.9, v.y-cos*W*0.9]
+  ];
+  for(let i=0;i<pts.length;i++){
+    const px=pts[i][0], py=pts[i][1];
+    for(const w of walls){
+      if(px>=w.x-1&&px<=w.x+w.w+1&&py>=w.y-1&&py<=w.y+w.h+1) return true;
+    }
+    const near=querySolidNear(px,py,18);
+    for(let j=0;j<near.length;j++){
+      const n=near[j];
+      const rad=n.kind==='tree'?11:13;
+      if(Math.hypot(px-n.x,py-n.y)<rad) return true;
+    }
+  }
+  return false;
 }
 function losClear(x1,y1,x2,y2){
   const d=Math.hypot(x2-x1,y2-y1),n=Math.ceil(d/8);
@@ -1869,22 +1902,66 @@ let weaponWheelOpen=false, weaponWheelOpenedAt=0;
 function updateWeaponHud(){const el=$('wpn');if(el)el.textContent=(WEAPONS[P.weapon]?.n||'Mãos');}
 function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
 function chooseWeapon(key){if(!P||!weaponList().includes(key))return;P.weapon=key;updateWeaponHud();beep(360,.06,'square',.045);toast('Arma equipada: '+(WEAPONS[key]?.n||key));closeWeaponWheel();}
+function dropWeaponFromArsenal(key){
+  if(!P||key==='fists'||!weaponList().includes(key)) return;
+  const w=WEAPONS[key]; if(!w) return;
+  // Remove do arsenal
+  if(w.melee){
+    P.meleeWeapons=(P.meleeWeapons||[]).filter(k=>k!==key);
+    if(P.melee===key) P.melee=P.meleeWeapons[0]||null;
+  }
+  if(w.firearm){
+    if(P.firearms) delete P.firearms[key];
+  }
+  if(P.weapon===key){
+    P.weapon=weaponList()[0]||'fists';
+    updateWeaponHud();
+  }
+  // Dropa no chão perto do player
+  const ang=P.face||0;
+  const ix=P.x+Math.cos(ang)*18, iy=P.y+Math.sin(ang)*18;
+  items.push({t:key,x:ix,y:iy});
+  if(MP.active) sendEvt('itemAdded',{t:key,x:ix,y:iy});
+  toast('Dropou: '+(ITEMS[key]?.n||w.n)+' (pro aliado)');
+  beep(220,.12,'triangle',.05);
+  closeWeaponWheel();
+  buildInv();
+}
 function buildWeaponWheel(){
   const root=$('weapon-wheel'),ring=$('weapon-wheel-ring');if(!root||!ring||!P)return;
   ring.querySelectorAll('.weapon-option,#weapon-wheel-hint').forEach(e=>e.remove());
   const list=weaponList();
-  const title=$('weapon-wheel-title');if(title)title.innerHTML='ARSENAL · '+list.length+' ARMAS<br><span style="color:#aaa;font-size:10px">toque em uma arma para equipar</span>';
+  const title=$('weapon-wheel-title');if(title)title.innerHTML='ARSENAL · '+list.length+' ARMAS<br><span style="color:#aaa;font-size:10px">toque = equipar · segure 3s = dropar</span>';
   list.forEach(key=>{
     const w=WEAPONS[key];if(!w)return;
     const btn=document.createElement('button');btn.type='button';
     btn.className='weapon-option'+(key===P.weapon?' selected':'');btn.dataset.weapon=key;
     btn.innerHTML='<span class="weapon-icon">'+(WEAPON_ICON[key]||'⚔️')+'</span><span>'+w.n+'</span>';
-    // pointerup avoids the long-press release synthesizing a bad click
-    btn.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();chooseWeapon(key);});
+    let holdT=null, holdStarted=0, dropped=false;
+    const clearHold=()=>{ if(holdT){ clearTimeout(holdT); holdT=null; } };
+    btn.addEventListener('pointerdown',e=>{
+      e.preventDefault(); e.stopPropagation();
+      dropped=false; holdStarted=performance.now();
+      clearHold();
+      if(key==='fists') return;
+      holdT=setTimeout(()=>{
+        dropped=true;
+        dropWeaponFromArsenal(key);
+      }, 3000);
+    });
+    btn.addEventListener('pointerup',e=>{
+      e.preventDefault(); e.stopPropagation();
+      clearHold();
+      if(dropped) return;
+      // Toque curto = equipar
+      if(performance.now()-holdStarted<2800) chooseWeapon(key);
+    });
+    btn.addEventListener('pointerleave',()=>{ clearHold(); });
+    btn.addEventListener('pointercancel',()=>{ clearHold(); });
     btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
     ring.appendChild(btn);
   });
-  const hint=document.createElement('div');hint.id='weapon-wheel-hint';hint.textContent='Toque em uma arma para equipar. Toque fora para fechar.';ring.appendChild(hint);
+  const hint=document.createElement('div');hint.id='weapon-wheel-hint';hint.textContent='Toque = equipar · Segure 3s = dropar no chão (aliado)';ring.appendChild(hint);
   root.classList.remove('hide');weaponWheelOpen=true;
   weaponWheelOpenedAt=performance.now();
 }
@@ -1946,13 +2023,9 @@ function startVehicleDeath(v){
   v.spd=0;
   v.explodeT=5;
   v.driverId=null;
-  toast('Carro destruído! Explode em 5s');
+  toast(P&&P.inVehicle===v ? 'Carro destruído! Saia em 5s ou você morre!' : 'Carro destruído! Explode em 5s');
   boom(0.25,0.15,300);
   beep(100,.3,'sawtooth',.06,-40);
-  if(P && P.inVehicle===v){
-    // Força saída na explosão — enquanto fumaça, ainda pode estar “dentro” visualmente mas parado
-    // Mantém player no carro até explodir (sem controle)
-  }
   if(MP.active) sendEvt('vehicleDying', {id:v.id});
 }
 function updateVehicles(dt){
@@ -1977,15 +2050,19 @@ function updateVehicles(dt){
       for(let i=0;i<28;i++){
         parts.push({x:v.x,y:v.y,vx:rnd(-120,120),vy:rnd(-140,40),t:rnd(0.4,1.0),c:pick(['#ff4020','#ff8020','#ffe060','#333','#666'])});
       }
-      // Dano a quem estiver perto
-      if(P && !P.dead && Math.hypot(P.x-v.x,P.y-v.y)<55){
+      const driverStillInside = !!(P && P.inVehicle===v);
+      if(driverStillInside){
+        // Não saiu a tempo → morre na explosão
+        P.inVehicle=null;
+        restoreWalkHUD();
+        if(v.driverId===myNetId()) v.driverId=null;
+        if(MP.active) sendEvt('vehicleExit', {id:v.id});
+        toast('Você explodiu com o carro!');
+        die();
+      } else if(P && !P.dead && Math.hypot(P.x-v.x,P.y-v.y)<55){
         hurt(25,0.3);
         toast('Explosão do carro!');
       }
-      if(P && P.inVehicle===v){
-        exitVehicle();
-      }
-      // Empurra zumbis
       for(const z of zombies){
         if(z.dead) continue;
         const d=Math.hypot(z.x-v.x,z.y-v.y);
@@ -2384,13 +2461,7 @@ function attack(){
       tracers.push(tr);
       shotTracers.push({x1:Math.round(tr.x1),y1:Math.round(tr.y1),x2:Math.round(tr.x2),y2:Math.round(tr.y2)});
       if(res.z){damageZ(res.z,w.dmg*(Math.random()<.15?2:1),fx*w.kb,fy*w.kb);hits++;}
-      else {
-        // tiro em animal
-        for(const an of animals){
-          if(an.dead) continue;
-          if(Math.hypot(an.x-res.x,an.y-res.y)<12){ damageAnimal(an,w.dmg); hits++; break; }
-        }
-      }
+      else if(res.animal){ damageAnimal(res.animal,w.dmg); hits++; }
     }
     if(hits===0){
       let best=null,bd=w.range;
@@ -2405,6 +2476,17 @@ function attack(){
         const fx=Math.cos(P.face),fy=Math.sin(P.face);
         damageZ(best,w.dmg,fx*w.kb,fy*w.kb);
         hits++;
+      } else {
+        // Aim assist em animais (todas as armas de fogo)
+        let bestA=null,ad=w.range;
+        for(const an of animals){
+          if(an.dead) continue;
+          const dx=an.x-P.x,dy=an.y-P.y,d=Math.hypot(dx,dy);
+          if(d>ad || d<6) continue;
+          const ang=Math.abs(wrap(Math.atan2(dy,dx)-P.face));
+          if(ang<0.5){ad=d;bestA=an;}
+        }
+        if(bestA){ damageAnimal(bestA,w.dmg); hits++; }
       }
     }
     P.flash=w.bow?0:.06;
@@ -2462,23 +2544,49 @@ function updateP(dt){
     else v.spd*=Math.pow(0.08,dt);
     if(touchSteer!==0&&Math.abs(v.spd)>4)v.face+=touchSteer*2.2*dt*(v.spd>0?1:-1);
     const prevSpd=v.spd;
+    const ox=v.x, oy=v.y;
     v.x+=Math.cos(v.face)*v.spd*dt;
     v.y+=Math.sin(v.face)*v.spd*dt;
-    const bx=v.x, by=v.y;
-    pushOut(v,14);
-    // Colisão com ambiente: quanto mais rápido, mais dano
-    const pushed=Math.hypot(v.x-bx, v.y-by);
-    if(pushed>0.8 && Math.abs(prevSpd)>12){
-      const impact=Math.abs(prevSpd);
-      const dmg=Math.min(50, impact*(pushed>2.5?0.85:0.55));
-      v.hp-=dmg;
-      v.spd*=0.25;
-      shake=Math.max(shake, 2+impact/30);
-      boom(0.12, 0.08+impact/200, 400);
-      beep(80,.1,'sawtooth',.05);
-      addFloater(v.x,v.y-18, '-'+Math.round(dmg), '#ff8040');
-      if(v.hp<=0){ startVehicleDeath(v); return; }
+    // Colisão real com paredes/árvores/pedras (amostras na carroceria)
+    let hitEnv=vehicleHitsEnv(v);
+    if(hitEnv){
+      // Reverte e aplica dano proporcional à velocidade
+      v.x=ox; v.y=oy;
+      if(Math.abs(prevSpd)>10){
+        const impact=Math.abs(prevSpd);
+        const dmg=Math.min(55, 8+impact*0.7);
+        v.hp-=dmg;
+        v.spd*=0.15;
+        v._envHitCD=(v._envHitCD||0);
+        if(v._envHitCD<=0){
+          v._envHitCD=0.25;
+          shake=Math.max(shake, 3+impact/25);
+          boom(0.14, 0.1+impact/180, 350);
+          beep(70,.12,'sawtooth',.06);
+          addFloater(v.x,v.y-18, '-'+Math.round(dmg), '#ff8040');
+        }
+        if(v.hp<=0){ startVehicleDeath(v); return; }
+      } else {
+        v.spd=0;
+      }
+    } else {
+      pushOut(v,14);
+      // Se pushOut empurrou forte, também conta como impacto
+      const pushed=Math.hypot(v.x-ox, v.y-oy);
+      if(pushed>1.2 && Math.abs(prevSpd)>14){
+        const impact=Math.abs(prevSpd);
+        const dmg=Math.min(40, impact*0.45);
+        v.hp-=dmg;
+        v.spd*=0.3;
+        if((v._envHitCD||0)<=0){
+          v._envHitCD=0.25;
+          boom(0.1,0.08,400); beep(80,.1,'sawtooth',.05);
+          addFloater(v.x,v.y-18, '-'+Math.round(dmg), '#ff8040');
+        }
+        if(v.hp<=0){ startVehicleDeath(v); return; }
+      }
     }
+    if(v._envHitCD>0) v._envHitCD-=dt;
     v.x=clamp(v.x,16,WW-16);v.y=clamp(v.y,16,WH-16);
     P.x=v.x;P.y=v.y;P.face=v.face;P.moving=Math.abs(v.spd)>8;
     if(Math.abs(v.spd)>15){
@@ -2872,24 +2980,29 @@ function update(dt){
       MP.pingT=2.0;
       mpSend({type:'ping', t:performance.now()});
     }
-    // Intervalo adaptativo: se RTT alto, manda menos snapshot
+    // Intervalo adaptativo + anti-flood (evita queda por pressão no canal)
     const lag=MP.rtt||80;
-    const playerInterval=lag>180?0.08:(lag>120?0.06:0.05);
-    const snapInterval=lag>200?0.28:(lag>140?0.2:0.16);
+    const playerInterval=lag>220?0.1:(lag>150?0.07:0.055);
+    // Snapshot um pouco mais frequente na cidade (zumbis densos), mas limitado se lag alto
+    let snapInterval=selectedMap==='city'?0.14:0.18;
+    if(lag>180) snapInterval=0.24;
+    if(lag>280) snapInterval=0.32;
+    if((MP.failCount||0)>8) snapInterval=Math.max(snapInterval,0.35);
     MP.syncT-=dt;
     if(MP.syncT<=0){
       MP.syncT=playerInterval;
-      mpSend(packMyPlayer());
+      if(!mpSend(packMyPlayer())) MP.failCount=(MP.failCount||0)+1;
+      else if(MP.failCount>0) MP.failCount=Math.max(0,MP.failCount-1);
     }
     if(MP.isHost){
       MP.snapT=(MP.snapT||0)-dt;
       if(MP.snapT<=0){
         MP.snapT=snapInterval;
-        mpSend(packSnapshot());
+        if(!mpSend(packSnapshot())) MP.failCount=(MP.failCount||0)+2;
       }
     }
-    // Timeout: sem pacote por 12s
-    if(MP.lastRecv && (performance.now()-MP.lastRecv)>12000){
+    // Timeout: sem pacote por 15s (mais tolerante em 4G)
+    if(MP.lastRecv && (performance.now()-MP.lastRecv)>15000){
       MP.connected=false;
       toast('Conexão perdida (sem resposta)');
       const closedConn=MP.conn;
@@ -2961,7 +3074,7 @@ function canCraft(r){for(const k in r.need)if(countInv(k)<r.need[k])return false
 function craft(r){
   if(!canCraft(r)){toast('Recursos insuficientes');beep(120,.1,'square',.05);return;}
   const out=r.out;
-  if(out!=='campfire'&&!['pickaxe','stoneaxe','sword','spear','bow','arrows'].includes(out)&&P.inv.length>=MAX_SLOTS&&!P.inv.some(slot=>slot.t===out)){toast('Mochila cheia');beep(120,.1,'square',.05);return;}
+  if(out!=='campfire'&&!['pickaxe','stoneaxe','sword','spear','bow','arrows','bat'].includes(out)&&P.inv.length>=MAX_SLOTS&&!P.inv.some(slot=>slot.t===out)){toast('Mochila cheia');beep(120,.1,'square',.05);return;}
   for(const k in r.need)removeInv(k,r.need[k]);
   if(out==='campfire'){
     const fx=Math.cos(P.face),fy=Math.sin(P.face);
@@ -2977,7 +3090,7 @@ function craft(r){
     pushOut(P,P.r);
     toast('🔥 Fogueira acesa!');buildSound();boom(.3,.15,400);
     for(let i=0;i<15;i++)parts.push({x:cx,y:cy-4,vx:rnd(-30,30),vy:rnd(-70,-20),t:rnd(.5,1),c:'#ffb040'});
-  }else if(out==='pickaxe'||out==='stoneaxe'||out==='sword'||out==='spear'){
+  }else if(out==='pickaxe'||out==='stoneaxe'||out==='sword'||out==='spear'||out==='bat'){
     addMeleeWeapon(out);P.weapon=out;updateWeaponHud();
     toast('Fabricou: '+ITEMS[out].n+'! Arma adicionada ao arsenal.');buildSound();
   }else if(out==='bow'){
@@ -2999,7 +3112,7 @@ function refreshCraft(){
   const el=$('craftlist');if(!el)return;
   el.innerHTML='';
   for(const r of RECIPES){
-    const isWeapon=['pickaxe','stoneaxe','sword','spear','bow'].includes(r.out),category=isWeapon||r.out==='arrows'?'weapon':'utility';
+    const isWeapon=['pickaxe','stoneaxe','sword','spear','bow','bat'].includes(r.out),category=isWeapon||r.out==='arrows'?'weapon':'utility';
     if(craftFilter!=='all'&&craftFilter!==category)continue;
     const ok=canCraft(r);
     const row=document.createElement('div');
@@ -3440,7 +3553,7 @@ function applySnapshot(snap){
         x: sz.x, y: sz.y, kind: sz.kind,
         face: sz.face||0, anim: sz.anim||0, hp: hp,
         max: t.hp*dd.hp, r: t.r, dmg: Math.round(t.dmg*dd.dmg), spd: t.spd*dd.spd,
-        moving: !!sz.moving, skin: sz.skin, shirt: sz.shirt,
+        moving: !!sz.moving, skin: t.color||'#7a9a5a', shirt: '#4a4a5a',
         ranged:!!t.ranged, range:t.range, crawler:!!t.crawler, screams:!!t.screams,
         bloater:!!t.bloater, berserk:!!t.berserk,
         dead: false, hit: prev ? prev.hit : 0, vx: 0, vy: 0,
@@ -3514,12 +3627,26 @@ function packSnapshot(){
     }
     scored.push({z,minD});
   }
+  // Prioridade extra perto do guest (resolve “não vejo zumbis” na cidade)
   scored.sort((a,b)=>a.minD-b.minD);
-  // Keep snapshot small so player/chat packets aren't starved on mobile WebRTC
-  const zPack=scored.slice(0,40).map(({z})=>({
+  const nearGuest=[];
+  const rest=[];
+  for(const s of scored){
+    // guest anchors come after host (index>=1)
+    let nearOther=false;
+    for(let i=1;i<anchors.length;i++){
+      if(Math.hypot(s.z.x-anchors[i].x,s.z.y-anchors[i].y)<420){ nearOther=true; break; }
+    }
+    if(nearOther) nearGuest.push(s); else rest.push(s);
+  }
+  const ordered=nearGuest.concat(rest);
+  // Cidade: mais zumbis no snapshot (até 70); outros mapas 50
+  const zCap=selectedMap==='city'?70:50;
+  // Payload enxuto (sem skin/shirt) — evita queda/atraso no MP, esp. cidade
+  const zPack=ordered.slice(0,zCap).map(({z})=>({
     netId:z.netId,x:Math.round(z.x),y:Math.round(z.y),kind:z.kind|0,
     face:+(z.face||0).toFixed(2),anim:+(z.anim||0).toFixed(1),hp:Math.round(z.hp),
-    moving:!!z.moving,skin:z.skin||'#7a9a5a',shirt:z.shirt||'#4a4a5a'
+    moving:!!z.moving
   }));
   // Items near players first
   const iScored=items.map(it=>{
@@ -3602,13 +3729,13 @@ function enterMultiplayerGame(isHost){
     const ds=$('deadscr'); if(ds) ds.classList.add('hide');
     toast(isHost?'Você é o HOST ('+MP.playerName+')':'Você é o CONVIDADO ('+MP.playerName+')');
     startAmbient(); startRain();
-    // Host: push zombies/campfires to guest immediately
+    // Host: push zombies/campfires to guest immediately (+ reforço 300ms/800ms)
     if(isHost && MP.conn && MP.conn.open){
-      try{
-        MP.conn.send(packSnapshot());
-        MP.conn.send(packMyPlayer());
-        console.log('[Host] snapshot inicial enviado — zumbis:',zombies.length);
-      }catch(e){ console.error('[Host] falha snapshot inicial',e); }
+      const pushSnap=()=>{ try{ mpSend(packSnapshot()); mpSend(packMyPlayer()); }catch(e){} };
+      pushSnap();
+      setTimeout(pushSnap, 300);
+      setTimeout(pushSnap, 800);
+      console.log('[Host] snapshot inicial — zumbis:',zombies.length);
     }
     closeChat();
     setChatButtonVisible(true);
@@ -3685,6 +3812,16 @@ function human(x,y,face,o){
     else if(o.wpn==='stoneaxe'){for(let i=2;i<=8;i+=2)R(hx+wx*i,hy+wy*i-1,2,2,'#6a4a30');R(hx+wx*10-2,hy+wy*10-3,5,4,'#9a9aa0');}
     else if(o.wpn==='sword'){R(hx+wx*2,hy+wy*2-1,3,3,'#6a4a30');for(let i=4;i<=15;i+=1)R(hx+wx*i,hy+wy*i-1,2,2,i>13?'#e8e8f0':'#c0c8d4');}
     else if(o.wpn==='spear'){for(let i=2;i<=18;i+=2)R(hx+wx*i,hy+wy*i-1,2,2,'#8a6a3a');R(hx+wx*20-1,hy+wy*20-2,4,3,'#c0c8d4');}
+    else if(o.wpn==='bow'){
+      // Arco + corda nas mãos
+      const bx=hx+wx*4, by=hy+wy*4;
+      R(bx-1,by-8,2,16,'#8a5a2a');
+      R(bx-4,by-8,5,2,'#a07040');
+      R(bx-4,by+6,5,2,'#a07040');
+      ctx.strokeStyle='#d0c0a0';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(bx-3,by-7);ctx.lineTo(bx+6,by);ctx.lineTo(bx-3,by+7);ctx.stroke();
+      if(o.swing>0){ R(bx+wx*6,by+wy*6-1,8,1,'#c0c0c8'); R(bx+wx*14,by+wy*14-1,2,2,'#a0a0a8'); }
+    }
   }
   ctx.restore();
 }
