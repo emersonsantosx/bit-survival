@@ -9,14 +9,12 @@
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;overscroll-behavior:none;touch-action:none;font-family:"Courier New",monospace;color:#eee9d0}
-#game{position:fixed;left:0;top:0;width:100%;height:100%;image-rendering:pixelated;display:block;touch-action:none}
+#game{position:fixed;left:0;top:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;display:block;touch-action:none}
 #hud{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none}
 #hud *{pointer-events:none}
 #hud button{pointer-events:auto}
-/* HUD oculta: NÃO esconde #top inteiro (senão some o pause). Só esconde filhos. */
-body.nohud #bars,body.nohud #inv,body.nohud #wpn,
-body.nohud #atk,body.nohud #pick,body.nohud #run,body.nohud #swap,
-body.nohud #mm,body.nohud #clk,body.nohud #kl{display:none!important}
+/* HUD oculta: esconde só as barras e textos. Botões de ação e inventário ficam SEMPRE visíveis (senão o celular fica injogável). */
+body.nohud #bars,body.nohud #wpn,body.nohud #clk,body.nohud #kl{display:none!important}
 body.nomap #mm{display:none!important}
 /* Pause e craft SEMPRE acessíveis */
 #bpause,#bcraft{display:inline-flex!important;align-items:center;justify-content:center}
@@ -363,6 +361,13 @@ body.nomap #mm{display:none!important}
         <div class="cfg-row"><label>Clima</label><input type="range" id="cfg_rain" min="0" max="100" value="70"><span class="val" id="v_rain">70%</span></div>
         <div class="cfg-row"><label>Passos</label><input type="range" id="cfg_step" min="0" max="100" value="80"><span class="val" id="v_step">80%</span></div>
       </div>
+      <h3>⚡ DESEMPENHO</h3>
+      <p style="font-size:10px;color:#9fd68a;margin:0 0 6px;text-align:left">No celular, “Economia” liga sozinho e reduz calor/bateria.</p>
+      <div class="cfg-grid">
+        <div class="cfg-toggle on" id="cfg_economy"><label>Modo economia (30 FPS, menos efeitos)</label><div class="sw"></div></div>
+        <div class="cfg-toggle on" id="cfg_lowres"><label>Resolução reduzida</label><div class="sw"></div></div>
+        <div class="cfg-toggle on" id="cfg_simplelight"><label>Iluminação simples (noite)</label><div class="sw"></div></div>
+      </div>
       <h3>🎮 JOGO</h3>
       <div class="cfg-grid">
         <div class="cfg-toggle on" id="cfg_fullscreen"><label>Tela cheia ao iniciar partida</label><div class="sw"></div></div>
@@ -371,9 +376,9 @@ body.nomap #mm{display:none!important}
         <div class="cfg-toggle on" id="cfg_screenflash"><label>Vinheta com vida baixa</label><div class="sw"></div></div>
       </div>
       <h3>👁 INTERFACE</h3>
-      <p style="font-size:10px;color:#9fd68a;margin:0 0 6px;text-align:left">Pause ⏸ e Craft 🛠 nunca são ocultados.</p>
+      <p style="font-size:10px;color:#9fd68a;margin:0 0 6px;text-align:left">Botões, inventário, pause ⏸ e craft 🛠 nunca são ocultados.</p>
       <div class="cfg-grid">
-        <div class="cfg-toggle on" id="cfg_hud"><label>HUD (barras, inventário, botões)</label><div class="sw"></div></div>
+        <div class="cfg-toggle on" id="cfg_hud"><label>Barras e textos (vida, fome, relógio)</label><div class="sw"></div></div>
         <div class="cfg-toggle on" id="cfg_minimap"><label>Minimapa e relógio</label><div class="sw"></div></div>
       </div>
     </div>
@@ -459,34 +464,79 @@ function LSset(v){try{localStorage.setItem('minisurv_best',String(v));}catch(e){
 const pad=n=>(n<10?'0':'')+n;
 const fmt=s=>Math.floor(s/60)+':'+pad(Math.floor(s%60));
 
-/* ============ CANVAS ============ */
-const cv=$('game'), ctx=cv.getContext('2d');
+/* ============ CANVAS + PERFORMANCE ============ */
+const cv=$('game'), ctx=cv.getContext('2d',{alpha:false,desynchronized:true});
 const lightC=document.createElement('canvas'), lctx=lightC.getContext('2d');
 const mmC=$('mm'), mm=mmC.getContext('2d');
 const mmStatic=document.createElement('canvas'); mmStatic.width=76; mmStatic.height=76;
 const mms=mmStatic.getContext('2d');
 
-let W=0,H=0,Z=2,camX=0,camY=0;
+const IS_MOBILE=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'')
+  || ((navigator.maxTouchPoints||0)>1 && Math.min(screen.width||0,screen.height||0)<900);
+
+let W=0,H=0,dispW=0,dispH=0,Z=2,camX=0,camY=0;
+let JR=48,JK=22; // raio do joystick e do botão em px de canvas (resize() ajusta à escala)
+let mmDrawT=0;
+
+function perf(){
+  const eco=!!CFG.economy;
+  return {
+    targetFps: eco?30:60,
+    maxCanvas: CFG.lowres?(IS_MOBILE?720:960):(IS_MOBILE?1080:1600),
+    weatherCap: eco?55:160,
+    weatherSpawn: eco?0.22:0.55,
+    partsCap: eco?70:180,
+    simpleLight: eco||!!CFG.simplelight,
+    hudInterval: eco?0.2:0.1,
+    lightEvery: eco?2:1 // frames
+  };
+}
 function resize(){
-  W=window.innerWidth||800; H=window.innerHeight||360;
-  cv.width=W; cv.height=H;
-  lightC.width=W; lightC.height=H;
-  Z=Math.max(2,Math.floor(Math.min(W,H)/150));
+  dispW=window.innerWidth||800; dispH=window.innerHeight||360;
+  // Zoom escolhido pelo tamanho REAL da tela. Reduzir resolução divide canvas e zoom pelo mesmo
+  // número inteiro (d), então o campo de visão em unidades de mundo NÃO muda.
+  const zDisp=Math.max(2,Math.floor(Math.min(dispW,dispH)/150));
+  const maxSide=perf().maxCanvas, big=Math.max(dispW,dispH);
+  let d=1;
+  while(big/d>maxSide && d<zDisp){ d++; while(zDisp%d!==0 && d<zDisp) d++; }
+  W=Math.max(160,Math.floor(dispW/d));
+  H=Math.max(120,Math.floor(dispH/d));
+  Z=zDisp/d;
+  JR=Math.round(48*W/dispW); JK=Math.round(22*W/dispW);
+  if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
+  // Luz full-res só se não estiver em modo simples
+  if(!perf().simpleLight){
+    if(lightC.width!==W||lightC.height!==H){ lightC.width=W; lightC.height=H; }
+  } else {
+    if(lightC.width>1){ lightC.width=1; lightC.height=1; }
+  }
   ctx.imageSmoothingEnabled=false;
+  if(lctx) lctx.imageSmoothingEnabled=false;
+}
+function toCanvasXY(e){
+  const r=cv.getBoundingClientRect();
+  const rw=r.width||dispW||1, rh=r.height||dispH||1;
+  return {x:(e.clientX-r.left)*(W/rw), y:(e.clientY-r.top)*(H/rh)};
 }
 window.addEventListener('resize',resize);
-resize();
 
 /* ============ CONFIG ============ */
-const CFG={master:0.8,sfx:1.0,amb:0.6,rain:0.7,step:0.8,hud:true,minimap:true,dmgflash:true,screenflash:true,fullscreen:true,tracers:true};
+const CFG={master:0.8,sfx:1.0,amb:0.6,rain:0.7,step:0.8,hud:true,minimap:true,dmgflash:true,screenflash:true,fullscreen:true,tracers:true,
+  economy:IS_MOBILE, lowres:false, simplelight:IS_MOBILE};
 try{const raw=localStorage.getItem('minisurv_cfg');if(raw)Object.assign(CFG,JSON.parse(raw));}catch(e){}
 if(CFG.minimap===undefined) CFG.minimap=true;
+if(CFG.economy===undefined) CFG.economy=IS_MOBILE;
+if(CFG.lowres===undefined) CFG.lowres=false;
+// Config salva por versões antigas ligava "resolução reduzida" sozinha no celular: desliga uma vez
+if(!CFG.cfgv||CFG.cfgv<2){ CFG.lowres=false; CFG.cfgv=2; try{localStorage.setItem('minisurv_cfg',JSON.stringify(CFG));}catch(e){} }
+if(CFG.simplelight===undefined) CFG.simplelight=IS_MOBILE;
 function saveCfg(){try{localStorage.setItem('minisurv_cfg',JSON.stringify(CFG));}catch(e){}}
 function applyHudClasses(){
   document.body.classList.toggle('nohud', !CFG.hud);
   document.body.classList.toggle('nomap', !CFG.minimap);
 }
 applyHudClasses();
+resize();
 
 /* ============ ÁUDIO ============ */
 let AC=null,muted=false,nbuf=null;
@@ -844,7 +894,7 @@ function pickZombieKind(){
 }
 
 const DECOR_BY_MAP={
-  forest:['bush','bush2','flower_r','flower_b','flower_y','mushroom','fern','log','stump','lily','tallgrass','berry','rock_moss'],
+  forest:['bush','bush2','flower_r','flower_b','flower_y','mushroom','fern','log','stump','tallgrass','berry','rock_moss'],
   desert:['cactus_sm','cactus_bg','cactus_tall','skull','tumbleweed','rock_sm','bone','dune','drybush','sandrock','yucca'],
   snow:['ice','snowman','pine_sm','icicle','frozen_bush','snowpile','crystal','frozen_log','ski','flag'],
   city:['trash','bench','lamp','sign','papers','crate','hydrant','cone','dumpster','graffiti','barrier','mailbox','bike']
@@ -969,7 +1019,6 @@ function receiveChat(data){
 }
 
 const joy={id:null,ox:0,oy:0,px:0,py:0,x:0,y:0,active:false};
-const JR=48;
 
 /* ============ FULLSCREEN LANDSCAPE ============ */
 function lockLandscape(){
@@ -1065,10 +1114,19 @@ function removeInv(t, n){
 }
 
 /* ============ GEOMETRIA ============ */
+/* Contorno do lago: UMA função usada pelo desenho, pela colisão e pelo minimapa
+   (antes a colisão usava círculos maiores que o lago desenhado). */
+function lakeWobble(l,ang){
+  if(l._seed===undefined) l._seed=(l.cx*12.9898+l.cy*78.233)%100;
+  const s=l._seed;
+  return 0.82+0.12*Math.sin(ang*2.3+s)+0.08*Math.cos(ang*4.1-s*0.5)+0.05*Math.sin(ang*7+s*1.3);
+}
 function pointInLake(x,y){
   for(const l of lakes){
-    if(!l.blobs){ if(Math.hypot(l.cx-x,l.cy-y)<l.r) return true; continue; }
-    for(const b of l.blobs)if(Math.hypot(b.x-x,b.y-y)<b.r)return true;
+    const dx=x-l.cx, dy=(y-l.cy)/0.92, d2=dx*dx+dy*dy, lim=l.r*1.08;
+    if(d2>lim*lim) continue;
+    let a=Math.atan2(dy,dx); if(a<0) a+=6.283; // mesma faixa 0..2π do desenho
+    if(Math.sqrt(d2)<l.r*lakeWobble(l,a)) return true;
   }
   return false;
 }
@@ -1088,7 +1146,7 @@ function pointSolid(px,py){
   for(const t of trees){const dx=px-t.x,dy=py-t.y;if(dx>-4&&dx<4&&dy>-4&&dy<4&&dx*dx+dy*dy<12)return true;}
   for(const v of vehicles){if(px>=v.x-v.w/2&&px<=v.x+v.w/2&&py>=v.y-v.h/2&&py<=v.y+v.h/2)return true;}
   if(plane&&px>=plane.x-35&&px<=plane.x+35&&py>=plane.y-16&&py<=plane.y+16)return true;
-  for(const l of lakes){if(Math.hypot(l.cx-px,l.cy-py)<l.r)return true;}
+  // (lago não bloqueia tiro nem cuspe)
   return false;
 }
 /* Grade espacial — evita varrer milhares de árvores/rochas por entity/frame */
@@ -1182,25 +1240,31 @@ function castRay(x,y,ang,maxd){
   return{x:x+cx*maxd,y:y+cy*maxd,z:null,animal:null};
 }
 function vehicleHitsEnv(v){
-  // Amostras na carroceria (frente/laterais) — detecta parede, árvore, pedra
+  // Amostras densas na carroceria — parede, árvore, pedra, decoração (todos os mapas)
+  if(!solidGrid) rebuildSolidGrid();
   const cos=Math.cos(v.face||0), sin=Math.sin(v.face||0);
-  const L=(v.w||36)*0.48, W=(v.h||20)*0.42;
+  const L=(v.w||36)*0.5, W=(v.h||20)*0.45;
   const pts=[
     [v.x+cos*L, v.y+sin*L],
-    [v.x+cos*L*0.7-sin*W, v.y+sin*L*0.7+cos*W],
-    [v.x+cos*L*0.7+sin*W, v.y+sin*L*0.7-cos*W],
-    [v.x-sin*W*0.9, v.y+cos*W*0.9],
-    [v.x+sin*W*0.9, v.y-cos*W*0.9]
+    [v.x+cos*L*0.85, v.y+sin*L*0.85],
+    [v.x+cos*L*0.6-sin*W, v.y+sin*L*0.6+cos*W],
+    [v.x+cos*L*0.6+sin*W, v.y+sin*L*0.6-cos*W],
+    [v.x+cos*L*0.25-sin*W, v.y+sin*L*0.25+cos*W],
+    [v.x+cos*L*0.25+sin*W, v.y+sin*L*0.25-cos*W],
+    [v.x-sin*W, v.y+cos*W],
+    [v.x+sin*W, v.y-cos*W],
+    [v.x-cos*L*0.4, v.y-sin*L*0.4]
   ];
   for(let i=0;i<pts.length;i++){
     const px=pts[i][0], py=pts[i][1];
-    for(const w of walls){
-      if(px>=w.x-1&&px<=w.x+w.w+1&&py>=w.y-1&&py<=w.y+w.h+1) return true;
+    for(let wi=0;wi<walls.length;wi++){
+      const w=walls[wi];
+      if(px>=w.x-2&&px<=w.x+w.w+2&&py>=w.y-2&&py<=w.y+w.h+2) return true;
     }
-    const near=querySolidNear(px,py,18);
+    const near=querySolidNear(px,py,22);
     for(let j=0;j<near.length;j++){
       const n=near[j];
-      const rad=n.kind==='tree'?11:13;
+      const rad=n.kind==='tree'?12:(n.kind==='rock'?14:11);
       if(Math.hypot(px-n.x,py-n.y)<rad) return true;
     }
   }
@@ -1571,8 +1635,7 @@ function buildMinimap(){
   for(const r of roads)mms.fillRect(r.x*s,r.y*s,Math.max(1,r.w*s),Math.max(1,r.h*s));
   mms.fillStyle=selectedMap==='snow'?'#a0c8e0':'#206090';
   for(const l of lakes){
-    if(l.blobs){ for(const b of l.blobs){ mms.beginPath(); mms.arc(b.x*s,b.y*s,Math.max(1.5,b.r*s),0,6.283); mms.fill(); } }
-    else { mms.beginPath(); mms.arc(l.cx*s,l.cy*s,Math.max(1.5,l.r*s),0,6.283); mms.fill(); }
+    lakeShorePath(l,1,mms,s,0,0); mms.fill();
   }
   for(const b of blds){
     mms.fillStyle=
@@ -1663,8 +1726,10 @@ function updateAnimals(dt){
       const L=lakes[0];
       if(L){
         const dx=a.x-L.cx, dy=a.y-L.cy, d=Math.hypot(dx,dy)||1;
-        a.x=L.cx+dx/d*(L.r+10);
-        a.y=L.cy+dy/d*(L.r+10);
+        let ang=Math.atan2(dy/0.92,dx); if(ang<0) ang+=6.283;
+        const rr=L.r*lakeWobble(L,ang)+12;
+        a.x=L.cx+Math.cos(ang)*rr;
+        a.y=L.cy+Math.sin(ang)*rr*0.92;
       }
     }
   }
@@ -1710,18 +1775,11 @@ function drawAnimal(a){
   else if(a.k==='vulture'||a.k==='crow'){ R(-4,-1,8,3,col); R(-6,-3,5,2,col); R(1,-3,5,2,col); R(3,-2,3,2,'#c07040'); }
   else { R(-3,-2,6,4,col); }
   ctx.restore();
-  // Barra de vida
-  if(a.max && a.hp<a.max){
+  // Barra de vida (vermelha, igual zumbis)
+  if(a.max && (a.hp<a.max || (P && Math.hypot(P.x-x,P.y-y)<100))){
     const bw=12, ratio=clamp(a.hp/a.max,0,1);
     R(x-bw/2,y-16,bw,2,'#300000');
-    R(x-bw/2,y-16,Math.max(1,bw*ratio),2,ratio>0.4?'#70c040':'#dd3333');
-  } else if(a.max){
-    // sempre mostra barra pequena quando próximo do player
-    if(P && Math.hypot(P.x-x,P.y-y)<90){
-      const bw=12, ratio=clamp(a.hp/a.max,0,1);
-      R(x-bw/2,y-16,bw,2,'#300000');
-      R(x-bw/2,y-16,Math.max(1,bw*ratio),2,'#70c040');
-    }
+    R(x-bw/2,y-16,Math.max(1,bw*ratio),2,'#dd3333');
   }
 }
 function spawnZ(x,y,kind){
@@ -1931,7 +1989,7 @@ function buildWeaponWheel(){
   const root=$('weapon-wheel'),ring=$('weapon-wheel-ring');if(!root||!ring||!P)return;
   ring.querySelectorAll('.weapon-option,#weapon-wheel-hint').forEach(e=>e.remove());
   const list=weaponList();
-  const title=$('weapon-wheel-title');if(title)title.innerHTML='ARSENAL · '+list.length+' ARMAS<br><span style="color:#aaa;font-size:10px">toque = equipar · segure 3s = dropar</span>';
+  const title=$('weapon-wheel-title');if(title)title.innerHTML='ARSENAL · '+list.length+' ARMAS<br><span style="color:#aaa;font-size:10px">toque = equipar · segure 2s = dropar</span>';
   list.forEach(key=>{
     const w=WEAPONS[key];if(!w)return;
     const btn=document.createElement('button');btn.type='button';
@@ -1947,21 +2005,21 @@ function buildWeaponWheel(){
       holdT=setTimeout(()=>{
         dropped=true;
         dropWeaponFromArsenal(key);
-      }, 3000);
+      }, 2000);
     });
     btn.addEventListener('pointerup',e=>{
       e.preventDefault(); e.stopPropagation();
       clearHold();
       if(dropped) return;
       // Toque curto = equipar
-      if(performance.now()-holdStarted<2800) chooseWeapon(key);
+      if(performance.now()-holdStarted<1800) chooseWeapon(key);
     });
     btn.addEventListener('pointerleave',()=>{ clearHold(); });
     btn.addEventListener('pointercancel',()=>{ clearHold(); });
     btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
     ring.appendChild(btn);
   });
-  const hint=document.createElement('div');hint.id='weapon-wheel-hint';hint.textContent='Toque = equipar · Segure 3s = dropar no chão (aliado)';ring.appendChild(hint);
+  const hint=document.createElement('div');hint.id='weapon-wheel-hint';hint.textContent='Toque = equipar · Segure 2s = dropar no chão (aliado)';ring.appendChild(hint);
   root.classList.remove('hide');weaponWheelOpen=true;
   weaponWheelOpenedAt=performance.now();
 }
@@ -2525,12 +2583,29 @@ function darkness(h){
   if(h>=21||h<4)return 1;
   return 1-(h-4)/3;
 }
+/* Desgaste de sobrevivência: vale a pé e dirigindo */
+function survivalTick(dt){
+  P.food=Math.max(0,P.food-.09*dt*(P.sprint?1.8:1));
+  P.water=Math.max(0,P.water-.13*dt*(P.sprint?2:1));
+  if(P.bleed){P.hp-=1.1*dt;if(Math.random()<dt*4)parts.push({x:P.x,y:P.y-2,vx:0,vy:10,t:.5,c:'#a01818'});}
+  if(P.food<=0)P.hp-=.7*dt;
+  if(P.water<=0)P.hp-=1*dt;
+  if(P.food>40&&P.water>40&&!P.bleed&&P.hp<100)P.hp=Math.min(100,P.hp+.5*dt);
+  if(P.hp<=0&&!P.dead)die();
+  if(P.hp<30&&P.hp>0){heartbeatT-=dt;if(heartbeatT<=0){heartbeatT=.9;heartbeat();}}
+}
 function updateP(dt){
   if(P.dead) return;
   if(P.inVehicle){
     const v=P.inVehicle;
     if(v.hp===undefined){ v.hp=100; v.maxHp=100; }
     v.showHp=3; // mostra barra enquanto dirige
+    // Fome, sede, sangramento e regeneração continuam correndo dentro do carro
+    P.sprint=false;
+    survivalTick(dt);
+    if(P.dead) return;
+    P.stam=Math.min(100,P.stam+14*dt);
+    if(P.exhausted&&P.stam>25)P.exhausted=false;
     // Carro morto: não anda, só espera explosão
     if(v.dying || v.hp<=0){
       if(!v.dying) startVehicleDeath(v);
@@ -2570,21 +2645,9 @@ function updateP(dt){
         v.spd=0;
       }
     } else {
+      // Empurrão suave (só desliza em volta de objetos, sem dano e sem perder velocidade).
+      // O dano de batida vem apenas de vehicleHitsEnv (corpo realmente encostando).
       pushOut(v,14);
-      // Se pushOut empurrou forte, também conta como impacto
-      const pushed=Math.hypot(v.x-ox, v.y-oy);
-      if(pushed>1.2 && Math.abs(prevSpd)>14){
-        const impact=Math.abs(prevSpd);
-        const dmg=Math.min(40, impact*0.45);
-        v.hp-=dmg;
-        v.spd*=0.3;
-        if((v._envHitCD||0)<=0){
-          v._envHitCD=0.25;
-          boom(0.1,0.08,400); beep(80,.1,'sawtooth',.05);
-          addFloater(v.x,v.y-18, '-'+Math.round(dmg), '#ff8040');
-        }
-        if(v.hp<=0){ startVehicleDeath(v); return; }
-      }
     }
     if(v._envHitCD>0) v._envHitCD-=dt;
     v.x=clamp(v.x,16,WW-16);v.y=clamp(v.y,16,WH-16);
@@ -2644,14 +2707,7 @@ function updateP(dt){
   if(!P.inVehicle){
     for(const b of blds)if(P.x>b.x&&P.x<b.x+b.w&&P.y>b.y&&P.y<b.y+b.h){P.inside=b;break;}
   }
-  P.food=Math.max(0,P.food-.09*dt*(P.sprint?1.8:1));
-  P.water=Math.max(0,P.water-.13*dt*(P.sprint?2:1));
-  if(P.bleed){P.hp-=1.1*dt;if(Math.random()<dt*4)parts.push({x:P.x,y:P.y-2,vx:0,vy:10,t:.5,c:'#a01818'});}
-  if(P.food<=0)P.hp-=.7*dt;
-  if(P.water<=0)P.hp-=1*dt;
-  if(P.food>40&&P.water>40&&!P.bleed&&P.hp<100)P.hp=Math.min(100,P.hp+.5*dt);
-  if(P.hp<=0&&!P.dead)die();
-  if(P.hp<30&&P.hp>0){heartbeatT-=dt;if(heartbeatT<=0){heartbeatT=.9;heartbeat();}}
+  survivalTick(dt);
 }
 function updateZ(z,dt){
   z.anim+=dt*(z.kind===1?10:6);
@@ -2789,7 +2845,8 @@ function update(dt){
     }
   }
   if(weather!=='none'){
-    if(weatherParticles.length<180&&Math.random()<.6){
+    const pf=perf();
+    if(weatherParticles.length<pf.weatherCap&&Math.random()<pf.weatherSpawn){
       weatherParticles.push({
         x:camX+rnd(-50,W/Z+50),y:camY-10,
         vx:weather==='rain'?rnd(-30,-10):rnd(-10,10),
@@ -2800,6 +2857,8 @@ function update(dt){
     }
     for(const wp of weatherParticles){wp.x+=wp.vx*dt;wp.y+=wp.vy*dt;wp.t-=dt;}
     weatherParticles=weatherParticles.filter(wp=>wp.t>0&&wp.y<camY+H/Z+20);
+  } else if(weatherParticles.length){
+    weatherParticles.length=0;
   }
   // Chuva apaga fogueiras gradualmente
   if(weather==='rain' && campfires.length){
@@ -2957,8 +3016,10 @@ function update(dt){
   }
   for(const c of campfires){
     c.flicker=(c.flicker||0)+dt*8;
-    if(Math.random()<dt*18)parts.push({x:c.x+rnd(-4,4),y:c.y-8,vx:rnd(-6,6),vy:rnd(-40,-20),t:rnd(.5,1.2),c:Math.random()<.5?'#ffb040':'#ff7020'});
-    if(Math.random()<dt*6)parts.push({x:c.x+rnd(-3,3),y:c.y-14,vx:rnd(-8,8),vy:rnd(-30,-15),t:rnd(1,2),c:'rgba(80,80,80,.7)'});
+    const fireRate=CFG.economy?dt*8:dt*18;
+    const smokeRate=CFG.economy?dt*3:dt*6;
+    if(Math.random()<fireRate)parts.push({x:c.x+rnd(-4,4),y:c.y-8,vx:rnd(-6,6),vy:rnd(-40,-20),t:rnd(.5,1.2),c:Math.random()<.5?'#ffb040':'#ff7020'});
+    if(Math.random()<smokeRate)parts.push({x:c.x+rnd(-3,3),y:c.y-14,vx:rnd(-8,8),vy:rnd(-30,-15),t:rnd(1,2),c:'rgba(80,80,80,.7)'});
   }
   flash=Math.max(0,flash-dt);shake=Math.max(0,shake-dt*12);
   // Guest: dano de animais agressivos por proximidade (host simula AI)
@@ -2972,7 +3033,10 @@ function update(dt){
       }
     }
   }
-  hudT-=dt;if(hudT<=0){hudT=.1;updateHud(false);}
+  hudT-=dt;if(hudT<=0){hudT=perf().hudInterval;updateHud(false);}
+  // Limita partículas (economia / anti-GC)
+  const pCap=perf().partsCap;
+  if(parts.length>pCap) parts.splice(0, parts.length-pCap);
   if(MP.active&&MP.connected&&MP.conn&&MP.conn.open && P){
     // Ping periódico pra medir pressão da rede
     MP.pingT=(MP.pingT||0)-dt;
@@ -2982,12 +3046,13 @@ function update(dt){
     }
     // Intervalo adaptativo + anti-flood (evita queda por pressão no canal)
     const lag=MP.rtt||80;
-    const playerInterval=lag>220?0.1:(lag>150?0.07:0.055);
-    // Snapshot um pouco mais frequente na cidade (zumbis densos), mas limitado se lag alto
-    let snapInterval=selectedMap==='city'?0.14:0.18;
-    if(lag>180) snapInterval=0.24;
-    if(lag>280) snapInterval=0.32;
-    if((MP.failCount||0)>8) snapInterval=Math.max(snapInterval,0.35);
+    const playerInterval=lag>220?0.09:(lag>150?0.065:0.05);
+    // Snapshot mais frequente no começo (guest precisa dos zumbis) e na cidade
+    let snapInterval=selectedMap==='city'?0.12:0.16;
+    if(T<8) snapInterval=Math.min(snapInterval, 0.1);
+    if(lag>180) snapInterval=0.22;
+    if(lag>280) snapInterval=0.3;
+    if((MP.failCount||0)>8) snapInterval=Math.max(snapInterval,0.32);
     MP.syncT-=dt;
     if(MP.syncT<=0){
       MP.syncT=playerInterval;
@@ -3074,6 +3139,11 @@ function canCraft(r){for(const k in r.need)if(countInv(k)<r.need[k])return false
 function craft(r){
   if(!canCraft(r)){toast('Recursos insuficientes');beep(120,.1,'square',.05);return;}
   const out=r.out;
+  // Não gasta recursos para fabricar uma arma que já está no arsenal
+  if(['pickaxe','stoneaxe','sword','spear','bat'].includes(out)&&((P.meleeWeapons||[]).includes(out)||P.melee===out)){
+    toast('Você já tem: '+ITEMS[out].n);beep(120,.1,'square',.05);return;
+  }
+  if(out==='bow'&&P.firearms.bow){toast('Você já tem um arco');beep(120,.1,'square',.05);return;}
   if(out!=='campfire'&&!['pickaxe','stoneaxe','sword','spear','bow','arrows','bat'].includes(out)&&P.inv.length>=MAX_SLOTS&&!P.inv.some(slot=>slot.t===out)){toast('Mochila cheia');beep(120,.1,'square',.05);return;}
   for(const k in r.need)removeInv(k,r.need[k]);
   if(out==='campfire'){
@@ -3467,12 +3537,22 @@ function handleNetData(data,isHostSide){
     }
     if(data.vehicleId !== undefined && Number.isFinite(data.vehicleX) && Number.isFinite(data.vehicleY)){
       const v = vehicles.find(v => v.id === data.vehicleId);
-      // Only remote driver can move the car — never overwrite if WE are driving it
+      // Motorista remoto é autoridade — nunca sobrescreve o carro que NÓS dirigimos
       if(v && P.inVehicle !== v){
         v.x = data.vehicleX; v.y = data.vehicleY;
         v.face = data.vehicleFace || 0; v.spd = data.vehicleSpd || 0;
         v.looted = data.vehicleLooted || false;
         v.driverId = data.id || v.driverId || 'remote';
+        if(Number.isFinite(data.vehicleHp)) v.hp = data.vehicleHp;
+        if(Number.isFinite(data.vehicleMaxHp)) v.maxHp = data.vehicleMaxHp;
+        if(data.vehicleDestroyed){ v.destroyed=true; v.dying=false; v.hp=0; v.spd=0; }
+        else if(data.vehicleDying){
+          if(!v.dying && !v.destroyed){
+            v.dying=true; v.hp=0; v.spd=0;
+            v.explodeT=Number.isFinite(data.vehicleExplodeT)?data.vehicleExplodeT:5;
+          } else if(Number.isFinite(data.vehicleExplodeT)) v.explodeT=data.vehicleExplodeT;
+        }
+        v.showHp=2;
       }
     } else if(data.inVehicle===false || data.inVehicle===undefined){
       // Remote left their vehicle — clear driver mark if it was them
@@ -3578,17 +3658,20 @@ function applySnapshot(snap){
       if(!sv || sv.id===undefined) continue;
       let v = byId.get(sv.id);
       if(!v) v = {id:sv.id,x:sv.x,y:sv.y,w:sv.w,h:sv.h,col:sv.col,looted:!!sv.looted,spd:sv.spd||0,face:sv.face||0,driverId:null,hp:sv.hp,maxHp:sv.maxHp||100};
-      // Never overwrite the car we are driving
-      if(v !== P?.inVehicle){
+      const weDrive = (v === P?.inVehicle);
+      // Motorista local é autoridade: snapshot NÃO sobrescreve pos/hp do carro que dirigimos
+      if(!weDrive){
         v.x=sv.x;v.y=sv.y;v.face=sv.face||0;v.spd=sv.spd||0;
         v.looted=!!sv.looted;v.col=sv.col;v.w=sv.w;v.h=sv.h;
+        if(Number.isFinite(sv.hp)) v.hp=sv.hp;
+        if(Number.isFinite(sv.maxHp)) v.maxHp=sv.maxHp;
+        if(sv.destroyed){ v.destroyed=true; v.dying=false; v.hp=0; }
+        else if(sv.dying){ v.dying=true; v.explodeT=Number.isFinite(sv.explodeT)?sv.explodeT:(v.explodeT||5); }
       } else {
         v.looted=!!sv.looted;
+        // Só aceita destroyed remoto se já estamos dying (confirmação)
+        if(sv.destroyed && v.dying){ v.destroyed=true; v.dying=false; }
       }
-      if(Number.isFinite(sv.hp)) v.hp=sv.hp;
-      if(Number.isFinite(sv.maxHp)) v.maxHp=sv.maxHp;
-      if(sv.dying){ v.dying=true; v.explodeT=Number.isFinite(sv.explodeT)?sv.explodeT:(v.explodeT||5); }
-      if(sv.destroyed){ v.destroyed=true; v.dying=false; }
       newList.push(v);
     }
     vehicles = newList;
@@ -3641,7 +3724,7 @@ function packSnapshot(){
   }
   const ordered=nearGuest.concat(rest);
   // Cidade: mais zumbis no snapshot (até 70); outros mapas 50
-  const zCap=selectedMap==='city'?70:50;
+  const zCap=selectedMap==='city'?90:60;
   // Payload enxuto (sem skin/shirt) — evita queda/atraso no MP, esp. cidade
   const zPack=ordered.slice(0,zCap).map(({z})=>({
     netId:z.netId,x:Math.round(z.x),y:Math.round(z.y),kind:z.kind|0,
@@ -3685,12 +3768,19 @@ function packMyPlayer(){
     moving:!!P.moving,sprint:!!P.sprint,weapon:P.weapon||'fists',swing:+(P.swing||0).toFixed(2),
     hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle};
   if(P.inVehicle){
-    p.vehicleId = P.inVehicle.id;
-    p.vehicleX = Math.round(P.inVehicle.x);
-    p.vehicleY = Math.round(P.inVehicle.y);
-    p.vehicleFace = +(P.inVehicle.face||0).toFixed(2);
-    p.vehicleSpd = +(P.inVehicle.spd||0).toFixed(1);
-    p.vehicleLooted = !!P.inVehicle.looted;
+    const v=P.inVehicle;
+    p.vehicleId = v.id;
+    p.vehicleX = Math.round(v.x);
+    p.vehicleY = Math.round(v.y);
+    p.vehicleFace = +(v.face||0).toFixed(2);
+    p.vehicleSpd = +(v.spd||0).toFixed(1);
+    p.vehicleLooted = !!v.looted;
+    // Motorista é autoridade de HP/estado do carro (guest e host)
+    p.vehicleHp = Number.isFinite(v.hp)?Math.round(v.hp):100;
+    p.vehicleMaxHp = v.maxHp||100;
+    p.vehicleDying = !!v.dying;
+    p.vehicleDestroyed = !!v.destroyed;
+    p.vehicleExplodeT = Number.isFinite(v.explodeT)?+v.explodeT.toFixed(2):0;
   }
   return p;
 }
@@ -3712,10 +3802,16 @@ function enterMultiplayerGame(isHost){
       inv:[{t:'bandage',n:1},{t:'water',n:1}],
       walk:0, inside:null, inVehicle:null};
     pushOut(P,P.r);
+    rebuildSolidGrid();
     // ⚠️ DEPOIS de criar P, aí sim popula zumbis (só no Host)
-    if(isHost && zombies.length===0){
-      populate();
-      console.log('[Host] populate() executado —',zombies.length,'zumbis gerados');
+    if(isHost){
+      if(zombies.length===0) populate();
+      console.log('[Host] populate —',zombies.length,'zumbis');
+    } else {
+      // Guest começa limpo e recebe autoridade do host via snapshot
+      zombies=[];
+      campfires=[];
+      animals=animals||[]; // mundo seed já gerou; host sobrescreve via snap
     }
     T=0; kills=0; shake=0; flash=0; spawnTimer=3; dark=0; day=1;
     atkHeld=false; sprintHeld=false; touchGas=0; touchSteer=0; stepT=0;
@@ -4248,19 +4344,20 @@ function drawPlane(p){
   if(Math.sin(T*4)>.2)R(p.x-15,p.y-28,8,8,'rgba(80,80,80,.5)');
   if(weather==='snow')R(p.x-25,p.y-12,50,4,'#e8f4f8');
 }
-function lakeShorePath(l, scale){
-  // Contorno orgânico único (não empilha círculos)
-  const N=28, cx=l.cx, cy=l.cy, R0=l.r*(scale||1);
-  const seed=(cx*12.9898+cy*78.233)%100;
-  ctx.beginPath();
+function lakeShorePath(l, scale, c, sx, ox, oy){
+  // Contorno orgânico único (não empilha círculos). Mesmo formato da colisão (lakeWobble).
+  // c/sx/ox/oy: contexto e escala/offset opcionais (minimapa).
+  c=c||ctx; sx=sx||1; ox=ox||0; oy=oy||0;
+  const N=72, cx=l.cx, cy=l.cy, R0=l.r*(scale||1);
+  c.beginPath();
   for(let i=0;i<=N;i++){
-    const t=i/N, ang=t*6.283;
-    const wobble=0.82+0.12*Math.sin(ang*2.3+seed)+0.08*Math.cos(ang*4.1-seed*0.5)+0.05*Math.sin(ang*7+seed*1.3);
-    const px=cx+Math.cos(ang)*R0*wobble;
-    const py=cy+Math.sin(ang)*R0*wobble*0.92; // levemente oval
-    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    const ang=i/N*6.283;
+    const wobble=lakeWobble(l,ang);
+    const px=(cx+Math.cos(ang)*R0*wobble)*sx+ox;
+    const py=(cy+Math.sin(ang)*R0*wobble*0.92)*sx+oy; // levemente oval
+    if(i===0) c.moveTo(px,py); else c.lineTo(px,py);
   }
-  ctx.closePath();
+  c.closePath();
 }
 function drawLake(l){
   const frozen=!!l.frozen || selectedMap==='snow';
@@ -4460,7 +4557,7 @@ function render(){
     if(joy.active&&!P.inVehicle){
       ctx.globalAlpha=.55;ctx.lineWidth=3;ctx.strokeStyle='#fff';ctx.fillStyle='rgba(255,255,255,.12)';
       ctx.beginPath();ctx.arc(joy.ox,joy.oy,JR,0,6.283);ctx.fill();ctx.stroke();
-      ctx.fillStyle='rgba(255,255,255,.6)';ctx.beginPath();ctx.arc(joy.px,joy.py,22,0,6.283);ctx.fill();ctx.globalAlpha=1;
+      ctx.fillStyle='rgba(255,255,255,.6)';ctx.beginPath();ctx.arc(joy.px,joy.py,JK,0,6.283);ctx.fill();ctx.globalAlpha=1;
     }
     mm.clearRect(0,0,76,76);
     mm.drawImage(mmStatic,0,0);
@@ -4510,7 +4607,8 @@ function render(){
     }
   }
   for(const l of lakes){
-    if(l.cx+l.r>vx0&&l.cx-l.r<vx1&&l.cy+l.r>vy0&&l.cy-l.r<vy1) drawLake(l);
+    const lr=l.r*1.25;
+    if(l.cx+lr>vx0&&l.cx-lr<vx1&&l.cy+lr>vy0&&l.cy-lr<vy1) drawLake(l);
   }
   for(const r of roads){
     if(r.x>vx1||r.x+r.w<vx0||r.y>vy1||r.y+r.h<vy0)continue;
@@ -4667,25 +4765,31 @@ function render(){
     ctx.globalAlpha=1;
   }
   if(dark>.02){
-    lctx.setTransform(1,0,0,1,0,0);
-    lctx.globalCompositeOperation='source-over';
-    lctx.clearRect(0,0,W,H);
-    lctx.fillStyle='rgba(4,8,22,'+(.86*dark).toFixed(3)+')';
-    lctx.fillRect(0,0,W,H);
-    lctx.globalCompositeOperation='destination-out';
-    const px=(P.x-camX)*Z+sx,py=(P.y-5-camY)*Z+sy,r=(P.inside?85:120)*Z;
-    const g=lctx.createRadialGradient(px,py,r*.15,px,py,r);
-    g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.55,'rgba(0,0,0,.75)');g.addColorStop(1,'rgba(0,0,0,0)');
-    lctx.fillStyle=g;lctx.beginPath();lctx.arc(px,py,r,0,6.283);lctx.fill();
-    for(const c of campfires){
-      const fx=(c.x-camX)*Z+sx,fy=(c.y-camY)*Z+sy,fr=(50+Math.sin(c.flicker||0)*8)*Z;
-      const fg=lctx.createRadialGradient(fx,fy,fr*.1,fx,fy,fr);
-      fg.addColorStop(0,'rgba(0,0,0,1)');fg.addColorStop(.6,'rgba(0,0,0,.7)');fg.addColorStop(1,'rgba(0,0,0,0)');
-      lctx.fillStyle=fg;lctx.beginPath();lctx.arc(fx,fy,fr,0,6.283);lctx.fill();
-    }
-    lctx.globalCompositeOperation='source-over';
     ctx.setTransform(1,0,0,1,0,0);
-    ctx.drawImage(lightC,0,0);
+    if(perf().simpleLight){
+      // Overlay barato (sem canvas offscreen nem gradients)
+      ctx.fillStyle='rgba(4,8,22,'+(.78*dark).toFixed(3)+')';
+      ctx.fillRect(0,0,W,H);
+    } else {
+      lctx.setTransform(1,0,0,1,0,0);
+      lctx.globalCompositeOperation='source-over';
+      lctx.clearRect(0,0,W,H);
+      lctx.fillStyle='rgba(4,8,22,'+(.86*dark).toFixed(3)+')';
+      lctx.fillRect(0,0,W,H);
+      lctx.globalCompositeOperation='destination-out';
+      const px=(P.x-camX)*Z+sx,py=(P.y-5-camY)*Z+sy,r=(P.inside?85:120)*Z;
+      const g=lctx.createRadialGradient(px,py,r*.15,px,py,r);
+      g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.55,'rgba(0,0,0,.75)');g.addColorStop(1,'rgba(0,0,0,0)');
+      lctx.fillStyle=g;lctx.beginPath();lctx.arc(px,py,r,0,6.283);lctx.fill();
+      for(const c of campfires){
+        const fx=(c.x-camX)*Z+sx,fy=(c.y-camY)*Z+sy,fr=(50+Math.sin(c.flicker||0)*8)*Z;
+        const fg=lctx.createRadialGradient(fx,fy,fr*.1,fx,fy,fr);
+        fg.addColorStop(0,'rgba(0,0,0,1)');fg.addColorStop(.6,'rgba(0,0,0,.7)');fg.addColorStop(1,'rgba(0,0,0,0)');
+        lctx.fillStyle=fg;lctx.beginPath();lctx.arc(fx,fy,fr,0,6.283);lctx.fill();
+      }
+      lctx.globalCompositeOperation='source-over';
+      ctx.drawImage(lightC,0,0);
+    }
   }
   ctx.setTransform(1,0,0,1,0,0);
   if(CFG.dmgflash&&flash>0){ctx.fillStyle='rgba(190,0,0,'+(flash*.7).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
@@ -4693,18 +4797,22 @@ function render(){
   if(joy.active&&!P.inVehicle){
     ctx.globalAlpha=.55;ctx.lineWidth=3;ctx.strokeStyle='#fff';ctx.fillStyle='rgba(255,255,255,.12)';
     ctx.beginPath();ctx.arc(joy.ox,joy.oy,JR,0,6.283);ctx.fill();ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,.6)';ctx.beginPath();ctx.arc(joy.px,joy.py,22,0,6.283);ctx.fill();ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(255,255,255,.6)';ctx.beginPath();ctx.arc(joy.px,joy.py,JK,0,6.283);ctx.fill();ctx.globalAlpha=1;
   }
-  mm.clearRect(0,0,76,76);
-  mm.drawImage(mmStatic,0,0);
-  const mx=P.x/WW*76,my=P.y/WH*76;
-  mm.fillStyle=Math.floor(T*2)%2?'#ffffff':'#4aa3ff';
-  mm.fillRect(Math.round(mx)-2,Math.round(my)-2,4,4);
-  for(const c of campfires){mm.fillStyle='#ff8020';mm.fillRect(Math.round(c.x/WW*76)-1,Math.round(c.y/WH*76)-1,2,2);}
-  for(const id in remotePlayers){
-    const rp=remotePlayers[id];
-    mm.fillStyle=rp.isHost?'#ff8080':'#80ffa0';
-    mm.fillRect(Math.round(rp.x/WW*76)-2,Math.round(rp.y/WH*76)-2,4,4);
+  // Minimapa: não redesenha todo frame em economia
+  mmDrawT++;
+  if(!CFG.economy || (mmDrawT%3)===0){
+    mm.clearRect(0,0,76,76);
+    mm.drawImage(mmStatic,0,0);
+    const mx=P.x/WW*76,my=P.y/WH*76;
+    mm.fillStyle=Math.floor(T*2)%2?'#ffffff':'#4aa3ff';
+    mm.fillRect(Math.round(mx)-2,Math.round(my)-2,4,4);
+    for(const c of campfires){mm.fillStyle='#ff8020';mm.fillRect(Math.round(c.x/WW*76)-1,Math.round(c.y/WH*76)-1,2,2);}
+    for(const id in remotePlayers){
+      const rp=remotePlayers[id];
+      mm.fillStyle=rp.isHost?'#ff8080':'#80ffa0';
+      mm.fillRect(Math.round(rp.x/WW*76)-2,Math.round(rp.y/WH*76)-2,4,4);
+    }
   }
 }
 
@@ -4755,15 +4863,30 @@ bindToggle('cfg_dmgflash','dmgflash');
 bindToggle('cfg_screenflash','screenflash');
 bindToggle('cfg_fullscreen','fullscreen');
 bindToggle('cfg_tracers','tracers');
+bindToggle('cfg_economy','economy');
+bindToggle('cfg_lowres','lowres');
+bindToggle('cfg_simplelight','simplelight');
+// Reaplica canvas ao mudar perf
+['cfg_economy','cfg_lowres','cfg_simplelight'].forEach(id=>{
+  const el=$(id); if(!el) return;
+  el.addEventListener('click',()=>{ resize(); });
+});
 
 on('btnReset','click',()=>{
   CFG.master=0.8;CFG.sfx=1.0;CFG.amb=0.6;CFG.rain=0.7;CFG.step=0.8;
   CFG.hud=true;CFG.minimap=true;CFG.dmgflash=true;CFG.screenflash=true;CFG.fullscreen=true;CFG.tracers=true;
+  CFG.economy=IS_MOBILE;CFG.lowres=false;CFG.simplelight=IS_MOBILE;
   saveCfg();
   const vals={cfg_master:80,cfg_sfx:100,cfg_amb:60,cfg_rain:70,cfg_step:80};
   for(const id in vals){const e=$(id);if(e)e.value=vals[id];const lab=$('v_'+id.split('_')[1]);if(lab)lab.textContent=vals[id]+'%';}
-  document.querySelectorAll('.cfg-toggle').forEach(t=>t.classList.add('on'));
+  document.querySelectorAll('.cfg-toggle').forEach(t=>{
+    const on = !(t.id==='cfg_economy'||t.id==='cfg_lowres'||t.id==='cfg_simplelight') || IS_MOBILE;
+    // defaults: economy/lowres/simplelight only on for mobile
+    if(t.id==='cfg_economy'||t.id==='cfg_lowres'||t.id==='cfg_simplelight') t.classList.toggle('on', IS_MOBILE);
+    else t.classList.add('on');
+  });
   applyHudClasses();
+  resize();
   toast('Configurações restauradas');
 });
 
@@ -4854,14 +4977,16 @@ cv.addEventListener('pointerdown',e=>{
   tryFullscreenFromGesture(); // MP: fullscreen só após gesto real do jogador
   if(state!=='play'||!P||P.inVehicle)return;
   e.preventDefault();
-  if(joy.id===null&&e.clientX<W*.58){
-    joy.id=e.pointerId;joy.ox=joy.px=e.clientX;joy.oy=joy.py=e.clientY;joy.x=joy.y=0;joy.active=true;
+  const p=toCanvasXY(e);
+  if(joy.id===null&&e.clientX<(dispW||W)*.58){
+    joy.id=e.pointerId;joy.ox=joy.px=p.x;joy.oy=joy.py=p.y;joy.x=joy.y=0;joy.active=true;
     try{cv.setPointerCapture(e.pointerId);}catch(err){}
   }
 });
 cv.addEventListener('pointermove',e=>{
   if(e.pointerId!==joy.id)return;
-  const dx=e.clientX-joy.ox,dy=e.clientY-joy.oy,d=Math.hypot(dx,dy),m=Math.min(d,JR);
+  const p=toCanvasXY(e);
+  const dx=p.x-joy.ox,dy=p.y-joy.oy,d=Math.hypot(dx,dy),m=Math.min(d,JR);
   joy.px=joy.ox+(d?dx/d*m:0);joy.py=joy.oy+(d?dy/d*m:0);
   const f=Math.min(1,d/JR);
   joy.x=d?dx/d*f:0;joy.y=d?dy/d*f:0;
@@ -5095,15 +5220,32 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='p
 
 /* ============ FRAME LOOP ============ */
 let last=0;
+let lastFrameTs=0;
 function frame(ts){
   requestAnimationFrame(frame);
-  const dt=Math.min(.05,((ts-last)/1000)||0);
+  // Aba/app em segundo plano: não gasta CPU
+  if(document.hidden){ last=ts; lastFrameTs=ts; return; }
+  // Menu / telas de UI: zero update/render do mundo
+  const inGame=state==='play'||state==='craft'||state==='pause'||state==='dead';
+  if(!inGame || !P){ last=ts; lastFrameTs=ts; return; }
+  // Cap de FPS (30 em economia, 60 normal)
+  const minMs=1000/perf().targetFps;
+  if(lastFrameTs && (ts-lastFrameTs)<minMs-0.5) return;
+  const dt=Math.min(.05,((ts-last)/1000)||0.016);
   last=ts;
-  // E5: in multiplayer, keep simulating while paused/craft/dead so the other player is not frozen
-  // (local input is already cleared on pause; joy=0 so local character stays still)
+  lastFrameTs=ts;
+  // E5: MP continua simulando em pause/craft/dead
   if(state==='play' || (MP.active && !MP.gameOver && (state==='craft' || state==='dead' || state==='pause'))) update(dt);
-  if(P&&(state==='play'||state==='craft'||state==='pause'||state==='dead'))render();
+  render();
 }
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){
+    try{ if(AC && AC.state==='running') AC.suspend(); }catch(e){}
+  } else {
+    try{ if(AC && AC.state==='suspended') AC.resume(); }catch(e){}
+    last=performance.now(); lastFrameTs=0;
+  }
+});
 requestAnimationFrame(frame);
 </script>
 </body>
