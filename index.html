@@ -281,7 +281,7 @@ body.nomap #mm{display:none!important}
       🎯 Sobreviva o máximo de tempo · 🛠 Craft (C) · ⏸ Pause<br>
       🧟 9 tipos de zumbis — a horda fica pior a cada dia<br>
       🔫 Pistola / SMG / Shotgun / Rifle (mesma munição)<br>
-      🐟 Peixe só em Floresta e Neve (lago) → asse na fogueira<br>
+      🎣 Lago (Floresta/Neve): beba água à vontade · crie a Vara de Pesca e pesque → asse na fogueira<br>
       🚗 Saqueie carros e dirija · 💬 Chat só no multiplayer
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
@@ -467,6 +467,16 @@ const fmt=s=>Math.floor(s/60)+':'+pad(Math.floor(s%60));
 /* ============ CANVAS + PERFORMANCE ============ */
 const cv=$('game'), ctx=cv.getContext('2d',{alpha:false,desynchronized:true});
 const lightC=document.createElement('canvas'), lctx=lightC.getContext('2d');
+// Sprites de luz pré-desenhados (1x): um "buraco" suave na escuridão e um brilho quente de fogo
+function makeLightSprite(stops){
+  const c=document.createElement('canvas'); c.width=c.height=128;
+  const g=c.getContext('2d'), gr=g.createRadialGradient(64,64,10,64,64,64);
+  for(const s of stops) gr.addColorStop(s[0],s[1]);
+  g.fillStyle=gr; g.fillRect(0,0,128,128);
+  return c;
+}
+const lightSprite=makeLightSprite([[0,'rgba(0,0,0,1)'],[.55,'rgba(0,0,0,.75)'],[1,'rgba(0,0,0,0)']]);
+const fireSprite=makeLightSprite([[0,'rgba(255,170,60,.65)'],[.5,'rgba(255,110,30,.25)'],[1,'rgba(255,80,20,0)']]);
 const mmC=$('mm'), mm=mmC.getContext('2d');
 const mmStatic=document.createElement('canvas'); mmStatic.width=76; mmStatic.height=76;
 const mms=mmStatic.getContext('2d');
@@ -505,11 +515,9 @@ function resize(){
   JR=Math.round(48*W/dispW); JK=Math.round(22*W/dispW);
   if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
   // Luz full-res só se não estiver em modo simples
-  if(!perf().simpleLight){
-    if(lightC.width!==W||lightC.height!==H){ lightC.width=W; lightC.height=H; }
-  } else {
-    if(lightC.width>1){ lightC.width=1; lightC.height=1; }
-  }
+  // Buffer de luz: tamanho cheio no modo completo, 1/4 no modo simples (barato, suavizado ao ampliar)
+  const lsc=perf().simpleLight?4:1, lw=Math.ceil(W/lsc), lh=Math.ceil(H/lsc);
+  if(lightC.width!==lw||lightC.height!==lh){ lightC.width=lw; lightC.height=lh; }
   ctx.imageSmoothingEnabled=false;
   if(lctx) lctx.imageSmoothingEnabled=false;
 }
@@ -800,7 +808,8 @@ const ITEMS={
   spear:{n:'Lança',e:''},
   stoneaxe:{n:'Machado de Pedra',e:''},
   bow:{n:'Arco',e:''},
-  arrows:{n:'Flechas',e:''}
+  arrows:{n:'Flechas',e:''},
+  fishingrod:{n:'Vara de Pesca',e:'🎣'}
 };
 const WEAPONS={
   fists:{n:'Mãos',dmg:1,range:18,cd:.5,kb:40,melee:true,chopRate:0.4},
@@ -814,7 +823,8 @@ const WEAPONS={
   pistol:{n:'Pistola',dmg:4,range:190,cd:.4,kb:60,firearm:true,fireRate:1},
   smg:{n:'SMG',dmg:2.5,range:130,cd:.11,kb:40,firearm:true,auto:true,spread:.06},
   shotgun:{n:'Shotgun',dmg:6,range:110,cd:.85,kb:180,firearm:true,pellets:5,spread:.35},
-  rifle:{n:'Rifle',dmg:15,range:290,cd:1.2,kb:260,firearm:true,spread:.01,heavy:true}
+  rifle:{n:'Rifle',dmg:15,range:290,cd:1.2,kb:260,firearm:true,spread:.01,heavy:true},
+  fishingrod:{n:'Vara de Pesca',dmg:.5,range:20,cd:.5,kb:15,melee:true,chopRate:.2,rod:true}
 };
 const RECIPES=[
   {out:'pickaxe',  need:{wood:2,stone:2}, label:'Picareta',        desc:'Quebra pedras + arma (dano 3.5)' },
@@ -824,6 +834,7 @@ const RECIPES=[
   {out:'bat',      need:{wood:3},         label:'Taco',            desc:'Arma branca básica (dano 2.5)' },
   {out:'bow',      need:{wood:4,stone:1}, label:'Arco',            desc:'Silencioso, usa flechas (dano 8)' },
   {out:'arrows',   need:{wood:2,stone:1}, label:'Flechas (x6)',    desc:'Munição do arco' },
+  {out:'fishingrod',need:{wood:3,stone:1}, label:'Vara de Pesca',   desc:'Lance a isca no lago e pesque (só mapas com lago)', lake:true },
   {out:'campfire', need:{wood:5,stone:3}, label:'Fogueira',        desc:'Cozinha peixe e ilumina à noite' }
 ];
 const LOOT={
@@ -838,6 +849,9 @@ const LOOT={
   gas:{food:22,water:28,ammo:12,bandage:10,bat:3,medkit:3},
   warehouse:{food:18,water:14,ammo:14,bandage:8,axe:6,bat:4,stone:10,medkit:3,arrows:5}
 };
+/* Mapas com lago (Floresta e Neve): só neles existe vara de pesca */
+function mapHasLake(){return selectedMap==='forest'||selectedMap==='snow';}
+function lakeLoot(t){return mapHasLake()?Object.assign({fishingrod:1.5},t):t;}
 const OUT_LOOT={food:35,water:32,bandage:14,ammo:4,bat:3,axe:2,medkit:2,arrows:3,stone:8};
 
 const ZTYPES=[
@@ -913,6 +927,7 @@ let nextZombieNetId=1;
 let plane=null;
 let P=null,T=0,kills=0,shake=0,flash=0,spawnTimer=3,dark=0,day=1,hudT=0;
 let atkHeld=false,sprintHeld=false,noiseT=0,tt=null;
+let recentRemoved=[],recentAdded=[]; // convidado: mudanças de itens ainda não confirmadas pelo host
 let touchGas=0,touchSteer=0,stepT=0;
 let MP={active:false,isHost:false,peer:null,conn:null,roomCode:'',connected:false,syncT:0,lastRecv:0,myId:null,scriptLoaded:false,playerName:'Jogador',gameOver:false,rtt:80,pingT:0,snapT:0.16,failCount:0};
 // STUN + TURN públicos (openrelay) — ajuda celular em 4G/CGNAT
@@ -1216,6 +1231,29 @@ function pushOut(e,r){
     }
   }
 }
+/* Segmento (x1,y1)->(x2,y2) cruza algum retângulo de parede? Teste exato (as paredes têm só 6px,
+   então amostrar de 8 em 8px deixava passar). Usado em tiros, golpes e ataques de zumbi. */
+function wallBlocks(x1,y1,x2,y2){
+  const minx=Math.min(x1,x2),maxx=Math.max(x1,x2),miny=Math.min(y1,y2),maxy=Math.max(y1,y2);
+  const dx=x2-x1,dy=y2-y1;
+  for(let i=0;i<walls.length;i++){
+    const w=walls[i];
+    if(maxx<w.x||minx>w.x+w.w||maxy<w.y||miny>w.y+w.h)continue;
+    let t0=0,t1=1;
+    if(Math.abs(dx)<1e-9){ if(x1<w.x||x1>w.x+w.w)continue; }
+    else{
+      let a=(w.x-x1)/dx,b=(w.x+w.w-x1)/dx; if(a>b){const q=a;a=b;b=q;}
+      t0=Math.max(t0,a);t1=Math.min(t1,b); if(t0>t1)continue;
+    }
+    if(Math.abs(dy)<1e-9){ if(y1<w.y||y1>w.y+w.h)continue; }
+    else{
+      let a=(w.y-y1)/dy,b=(w.y+w.h-y1)/dy; if(a>b){const q=a;a=b;b=q;}
+      t0=Math.max(t0,a);t1=Math.min(t1,b); if(t0>t1)continue;
+    }
+    return true;
+  }
+  return false;
+}
 function castRay(x,y,ang,maxd){
   const cx=Math.cos(ang),cy=Math.sin(ang);
   // Finer step + larger hit radius so firearms reliably hit (esp. multiplayer guest)
@@ -1225,21 +1263,21 @@ function castRay(x,y,ang,maxd){
       if(z.dead)continue;
       const hitR = Math.max(10, (z.r||5)+6);
       const dx=z.x-px,dy=(z.y-5)-py;
-      if(dx*dx+dy*dy<hitR*hitR)return{x:px,y:py,z,animal:null};
+      if(dx*dx+dy*dy<hitR*hitR&&!wallBlocks(px,py,z.x,z.y-5))return{x:px,y:py,z,animal:null};
     }
     // Animais ao longo do raio (todas as armas de fogo / arco)
     for(const an of animals){
       if(an.dead) continue;
       const hitR=an.k==='deer'||an.k==='boar'||an.k==='camel'?14:10;
       const dx=an.x-px, dy=(an.y-3)-py;
-      if(dx*dx+dy*dy<hitR*hitR) return{x:px,y:py,z:null,animal:an};
+      if(dx*dx+dy*dy<hitR*hitR&&!wallBlocks(px,py,an.x,an.y-3)) return{x:px,y:py,z:null,animal:an};
     }
     // Only block on solid walls/trees, not every frame (keeps shots fair)
     if(d>12 && pointSolid(px,py+5))return{x:px,y:py,z:null,animal:null};
   }
   return{x:x+cx*maxd,y:y+cy*maxd,z:null,animal:null};
 }
-function vehicleHitsEnv(v){
+function vehicleOverlap(v){
   // Amostras densas na carroceria — parede, árvore, pedra, decoração (todos os mapas)
   if(!solidGrid) rebuildSolidGrid();
   const cos=Math.cos(v.face||0), sin=Math.sin(v.face||0);
@@ -1255,21 +1293,27 @@ function vehicleHitsEnv(v){
     [v.x+sin*W, v.y-cos*W],
     [v.x-cos*L*0.4, v.y-sin*L*0.4]
   ];
+  let cnt=0;
   for(let i=0;i<pts.length;i++){
     const px=pts[i][0], py=pts[i][1];
-    for(let wi=0;wi<walls.length;wi++){
+    let hit=false;
+    for(let wi=0;wi<walls.length&&!hit;wi++){
       const w=walls[wi];
-      if(px>=w.x-2&&px<=w.x+w.w+2&&py>=w.y-2&&py<=w.y+w.h+2) return true;
+      if(px>=w.x-2&&px<=w.x+w.w+2&&py>=w.y-2&&py<=w.y+w.h+2) hit=true;
     }
-    const near=querySolidNear(px,py,22);
-    for(let j=0;j<near.length;j++){
-      const n=near[j];
-      const rad=n.kind==='tree'?12:(n.kind==='rock'?14:11);
-      if(Math.hypot(px-n.x,py-n.y)<rad) return true;
+    if(!hit){
+      const near=querySolidNear(px,py,22);
+      for(let j=0;j<near.length;j++){
+        const n=near[j];
+        const rad=n.kind==='tree'?12:(n.kind==='rock'?14:11);
+        if(Math.hypot(px-n.x,py-n.y)<rad){hit=true;break;}
+      }
     }
+    if(hit)cnt++;
   }
-  return false;
+  return cnt;
 }
+function vehicleHitsEnv(v){return vehicleOverlap(v)>0;}
 function losClear(x1,y1,x2,y2){
   const d=Math.hypot(x2-x1,y2-y1),n=Math.ceil(d/8);
   for(let i=1;i<n;i++){
@@ -1325,7 +1369,7 @@ function addBuilding(x,y,w,h,type){
   else if(type==='apartment'||type==='warehouse') n=rint(1,3);
   else if(type==='shop'||type==='gas') n=rint(1,3);
   else n=rint(0,2);
-  for(let i=0;i<n;i++)items.push({t:wpick(LOOT[lootKey]||LOOT.house),x:rnd(x+t+8,x+w-t-8),y:rnd(y+t+12,y+h-t-16)});
+  for(let i=0;i<n;i++)items.push({t:wpick(lakeLoot(LOOT[lootKey]||LOOT.house)),x:rnd(x+t+8,x+w-t-8),y:rnd(y+t+12,y+h-t-16)});
 }
 function tryPlaceBuilding(cx,cy,type,pad){
   pad = pad==null ? (selectedMap==='city'?16:34) : pad;
@@ -1589,7 +1633,7 @@ function genWorld(seed) {
     og++;
     const x=rnd(60,WW-60),y=rnd(60,WH-60);
     if(solidPoint(x,y,14))continue;
-    items.push({t:wpick(OUT_LOOT),x,y});oc++;
+    items.push({t:wpick(lakeLoot(OUT_LOOT)),x,y});oc++;
   }
   for(let i=0;i<40;i++){
     const x=rnd(60,WW-60),y=rnd(60,WH-60);
@@ -1613,8 +1657,9 @@ function genWorld(seed) {
       const x=rnd(60,WW-60),y=rnd(60,WH-60);
       if(solidPoint(x,y,12)||pointInLake(x,y))continue;
       if(plane&&Math.hypot(x-plane.x,y-plane.y)<120)continue;
-      animals.push({x,y,k:plan.k,face:rnd(0,6.28),spd:0,hp:plan.k==='boar'||plan.k==='wolf'?12:(plan.k==='deer'||plan.k==='camel'?8:4),
-        max:plan.k==='boar'||plan.k==='wolf'?12:8, flee:0, wt:rnd(0,3), tx:x, ty:y, dead:false});
+      const aHp=plan.k==='boar'||plan.k==='wolf'?12:(plan.k==='deer'||plan.k==='camel'?8:4);
+      animals.push({x,y,k:plan.k,face:rnd(0,6.28),spd:0,hp:aHp,
+        max:aHp, flee:0, wt:rnd(0,3), tx:x, ty:y, dead:false});
       ac++;
     }
   }
@@ -1738,6 +1783,7 @@ function updateAnimals(dt){
 function damageAnimal(a,dmg){
   if(!a||a.dead) return;
   a.hp-=dmg; a.flee=1.2;
+  if(MP.active&&!MP.isHost)a._predT=0.8; // convidado: mantém o dano local até o host confirmar
   for(let i=0;i<3;i++)parts.push({x:a.x,y:a.y-2,vx:rnd(-25,25),vy:rnd(-35,5),t:.3,c:'#a03030'});
   addFloater(a.x,a.y-12, Math.round(dmg),'#ffb0a0');
   hitConfirm();
@@ -1846,7 +1892,7 @@ function newGame(){
       walk:0,inside:null,inVehicle:null};
     pushOut(P,P.r);
     populate();
-    T=0;kills=0;shake=0;flash=0;spawnTimer=3;dark=0;day=1;atkHeld=false;sprintHeld=false;
+    T=0;kills=0;shake=0;flash=0;spawnTimer=3;dark=0;day=1;update._lastDay=1;atkHeld=false;sprintHeld=false;
     touchGas=0;touchSteer=0;stepT=0;
     MP.active=false;remotePlayers={};
     restoreWalkHUD(); // E1: always reset vehicle HUD when starting a match
@@ -1955,7 +2001,7 @@ function cycleWeapon(){
   beep(300,.05,'square',.04);updateWeaponHud();
   toast('Arma: '+(WEAPONS[P.weapon]?.n||'Mãos'));
 }
-const WEAPON_ICON={fists:'👊',bat:'🏏',axe:'🪓',pickaxe:'⛏️',stoneaxe:'🪓',sword:'⚔️',spear:'🔱',bow:'🏹',pistol:'🔫',smg:'🔫',shotgun:'💥',rifle:'🎯'};
+const WEAPON_ICON={fists:'👊',bat:'🏏',axe:'🪓',pickaxe:'⛏️',stoneaxe:'🪓',sword:'⚔️',spear:'🔱',bow:'🏹',pistol:'🔫',smg:'🔫',shotgun:'💥',rifle:'🎯',fishingrod:'🎣'};
 let weaponWheelOpen=false, weaponWheelOpenedAt=0;
 function updateWeaponHud(){const el=$('wpn');if(el)el.textContent=(WEAPONS[P.weapon]?.n||'Mãos');}
 function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
@@ -2159,10 +2205,17 @@ function pickup(){
   }
 
   // Pesca no lago (só Floresta/Neve) — inventário local de cada player (sem sync de item no chão)
-  if(pointInLake(P.x,P.y) && (selectedMap==='forest' || selectedMap==='snow')){
-    if(!addItem('fish')){ toast('Mochila cheia'); return; }
-    toast(selectedMap==='snow'?'Pescou no lago gelado! 🐟':'Pescou um peixe! 🐟');
-    beep(580,.15,'sine',.05);
+  if(pointInLake(P.x,P.y) && mapHasLake()){
+    if(P.water<97){
+      P.water=Math.min(100,P.water+14);
+      toast(selectedMap==='snow'?'Você bebeu água gelada do lago 💧':'Você bebeu água do lago 💧');
+    } else {
+      // Sede saciada: enche uma garrafa (empilha no inventário)
+      if(!addItem('water')){ toast('Sede saciada · mochila cheia'); return; }
+      toast('Garrafa enchida 💧');
+    }
+    beep(430,.1,'sine',.045);
+    for(let i=0;i<5;i++)parts.push({x:P.x+rnd(-5,5),y:P.y,vx:rnd(-12,12),vy:rnd(-30,-10),t:.35,c:'#8cc8f0'});
     return;
   }
 
@@ -2220,7 +2273,7 @@ function pickup(){
     else { P.ammo+=8; P.weapon=t; toast('Pegou: '+ITEMS[t].n+' (+8 munição)'); }
     updateWeaponHud();
   }
-  else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='sword'||t==='spear'||t==='stoneaxe'){
+  else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='sword'||t==='spear'||t==='stoneaxe'||t==='fishingrod'){
     if((P.meleeWeapons||[]).includes(t) || P.melee===t){
       toast('Você já tem '+ITEMS[t].n+' — deixe pro parceiro'); return;
     }
@@ -2247,6 +2300,7 @@ function makeNoise(x,y,r){
 function hurt(n,bleedChance){
   if(P.dead)return;
   P.hp-=n;flash=.45;shake=4;
+  if(P.fish)cancelFishing('A linha se soltou!');
   if(Math.random()<bleedChance&&!P.bleed){P.bleed=true;toast('Você está sangrando!');}
   beep(120,.18,'sawtooth',.07,-60);
   if(P.hp<=0)die();
@@ -2285,7 +2339,7 @@ function showDeathScreen(canRespawn){
 function die(){
   if(!P || P.dead) return;
   closeWeaponWheel();
-  P.hp=0;P.dead=true;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;
+  P.hp=0;P.dead=true;P.fish=null;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;
   if(P.inVehicle){ try{exitVehicle();}catch(e){} }
   restoreWalkHUD();
   beep(200,.6,'sawtooth',.08,-150);boom(.5,.3,200);
@@ -2403,10 +2457,80 @@ function damageZ(z,dmg,kx,ky,fromNet){
     }
   }
 }
+/* ===== Pesca: lançar isca (ATACAR com a vara na mão) -> espera aleatória -> peixe ===== */
+function cancelFishing(msg){
+  if(!P||!P.fish)return;
+  P.fish=null;
+  if(msg)toast(msg);
+}
+function tryFish(){
+  // Já pescando: ATACAR recolhe a linha
+  if(P.fish){cancelFishing('Você recolheu a linha 🎣');P.cd=.4;beep(260,.06,'triangle',.04);return true;}
+  const fx=Math.cos(P.face),fy=Math.sin(P.face);
+  let bx=null,by=null;
+  for(let d=46;d>=14;d-=4){
+    const x=P.x+fx*d,y=P.y+fy*d;
+    if(pointInLake(x,y)){bx=x;by=y;break;}
+  }
+  if(bx===null&&pointInLake(P.x,P.y)){bx=P.x+fx*18;by=P.y+fy*18;}
+  if(bx===null){
+    // Sem água à frente: se há zumbi colado, deixa o golpe normal acontecer
+    for(const z of zombies){if(!z.dead&&Math.hypot(z.x-P.x,z.y-P.y)<40)return false;}
+    P.cd=.5;toast('Mire no lago para lançar a isca 🎣');beep(140,.06,'square',.04);
+    return true;
+  }
+  P.fish={x:bx,y:by,t:0,wait:rnd(3,8)};
+  P.cd=.5;P.swing=.18;
+  toast('🎣 Isca lançada... aguarde');
+  beep(380,.08,'sine',.04,-80);
+  for(let i=0;i<6;i++)parts.push({x:bx+rnd(-3,3),y:by,vx:rnd(-14,14),vy:rnd(-35,-12),t:.35,c:'#8cc8f0'});
+  return true;
+}
+function tickFishing(dt){
+  const f=P.fish;if(!f)return;
+  if(P.weapon!=='fishingrod'){cancelFishing('Linha recolhida');return;}
+  if(Math.hypot(f.x-P.x,f.y-P.y)>64){cancelFishing('A linha esticou demais 🎣');return;}
+  f.t+=dt;
+  if(Math.random()<dt*2.2)parts.push({x:f.x+rnd(-4,4),y:f.y+rnd(-2,2),vx:0,vy:rnd(-10,-4),t:.3,c:'#bfe3f8'});
+  if(f.t>=f.wait){
+    P.fish=null;
+    if(addItem('fish')){
+      toast(selectedMap==='snow'?'Pescou no lago gelado! 🐟':'Pescou um peixe! 🐟');
+      beep(580,.15,'sine',.05);
+      for(let i=0;i<8;i++)parts.push({x:f.x+rnd(-4,4),y:f.y,vx:rnd(-25,25),vy:rnd(-55,-20),t:.4,c:'#8cc8f0'});
+    } else toast('Mochila cheia — o peixe escapou');
+  }
+}
+function drawFishing(){
+  if(!P||!P.fish||P.dead)return;
+  const f=P.fish,left=f.wait-f.t;
+  const bob=Math.sin(T*4)*0.8,dip=(left<1&&Math.sin(T*28)>0)?2:0;
+  const tx=P.x+Math.cos(P.face)*16,ty=P.y-9+Math.sin(P.face)*16;
+  ctx.strokeStyle='rgba(235,235,235,.75)';ctx.lineWidth=.6;
+  ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(f.x,f.y-1+bob+dip);ctx.stroke();
+  ctx.strokeStyle='rgba(190,230,250,.5)';ctx.lineWidth=.7;
+  const rr=2+((T*6)%1)*5;
+  ctx.beginPath();ctx.ellipse(f.x,f.y+1,rr,rr*.45,0,0,6.283);ctx.stroke();
+  R(f.x-1,f.y-2+bob+dip,3,2,'#f2f2f2');R(f.x-1,f.y+bob+dip,3,2,'#e03030');
+}
+/* Sem munição: equipa a arma branca de maior dano do arsenal (ou as mãos).
+   Só acontece no disparo que esvazia a arma — equipar manualmente uma arma vazia continua permitido. */
+function autoSwitchMelee(){
+  let best='fists',bd=-1;
+  for(const k of weaponList()){
+    const m=WEAPONS[k];
+    if(!m||!m.melee||m.rod)continue;
+    if((m.dmg||0)>bd){bd=m.dmg||0;best=k;}
+  }
+  P.weapon=best;updateWeaponHud();
+  toast('Sem munição! → '+WEAPONS[best].n);
+  beep(300,.06,'square',.045);
+}
 function attack(){
   if(state!=='play'||P.cd>0||P.inVehicle)return;
   const w=WEAPONS[P.weapon];
   if(!w)return;
+  if(w.rod&&tryFish())return;
 
   // PRIORITY: always hit zombies first if any are in melee range (before trees/rocks)
   if(w.melee || w.mines || (!w.firearm && !w.melee)){
@@ -2414,7 +2538,7 @@ function attack(){
     for(const z of zombies){
       if(z.dead) continue;
       const d=Math.hypot(z.x-P.x,z.y-P.y);
-      if(d<zDist){zDist=d;zNear=z;}
+      if(d<zDist&&!wallBlocks(P.x,P.y,z.x,z.y)){zDist=d;zNear=z;}
     }
     if(zNear && zDist <= (w.range||18)+ (zNear.r||5) + 4){
       P.face=Math.atan2(zNear.y-P.y,zNear.x-P.x);
@@ -2425,6 +2549,7 @@ function attack(){
         if(z.dead)continue;
         const dx=z.x-P.x,dy=z.y-P.y,d=Math.hypot(dx,dy);
         if(d>w.range+z.r)continue;
+        if(wallBlocks(P.x,P.y,z.x,z.y))continue;
         if(Math.abs(wrap(Math.atan2(dy,dx)-P.face))<1.2){damageZ(z,w.dmg||8,fx*(w.kb||40),fy*(w.kb||40));hit++;}
       }
       if(!hit) damageZ(zNear,w.dmg||8,fx*(w.kb||40),fy*(w.kb||40));
@@ -2433,7 +2558,7 @@ function attack(){
     }
     // Caça animais corpo a corpo
     let aNear=null,aDist=(w.range||18)+8;
-    for(const a of animals){ if(a.dead)continue; const d=Math.hypot(a.x-P.x,a.y-P.y); if(d<aDist){aDist=d;aNear=a;} }
+    for(const a of animals){ if(a.dead)continue; const d=Math.hypot(a.x-P.x,a.y-P.y); if(d<aDist&&!wallBlocks(P.x,P.y,a.x,a.y)){aDist=d;aNear=a;} }
     if(aNear && aDist<=(w.range||18)+6){
       P.face=Math.atan2(aNear.y-P.y,aNear.x-P.x);
       P.cd=w.cd;P.swing=.18;
@@ -2528,7 +2653,7 @@ function attack(){
         const dx=z.x-P.x,dy=z.y-P.y,d=Math.hypot(dx,dy);
         if(d>bd || d<8) continue;
         const ang=Math.abs(wrap(Math.atan2(dy,dx)-P.face));
-        if(ang<0.55){bd=d;best=z;}
+        if(ang<0.55&&!wallBlocks(P.x,P.y-5,z.x,z.y-5)){bd=d;best=z;}
       }
       if(best){
         const fx=Math.cos(P.face),fy=Math.sin(P.face);
@@ -2542,7 +2667,7 @@ function attack(){
           const dx=an.x-P.x,dy=an.y-P.y,d=Math.hypot(dx,dy);
           if(d>ad || d<6) continue;
           const ang=Math.abs(wrap(Math.atan2(dy,dx)-P.face));
-          if(ang<0.5){ad=d;bestA=an;}
+          if(ang<0.5&&!wallBlocks(P.x,P.y-5,an.x,an.y-5)){ad=d;bestA=an;}
         }
         if(bestA){ damageAnimal(bestA,w.dmg); hits++; }
       }
@@ -2559,9 +2684,11 @@ function attack(){
         tracers:shotTracers
       });
     }
+    // Acabou a munição neste disparo: troca sozinho para a melhor arma branca
+    if(w.bow?(P.arrows||0)<=0:P.ammo<=0)autoSwitchMelee();
   } else if(w.melee){
     let tgt=null,bd=w.range+8;
-    for(const z of zombies){if(z.dead)continue;const d=Math.hypot(z.x-P.x,z.y-P.y);if(d<bd){bd=d;tgt=z;}}
+    for(const z of zombies){if(z.dead)continue;const d=Math.hypot(z.x-P.x,z.y-P.y);if(d<bd&&!wallBlocks(P.x,P.y,z.x,z.y)){bd=d;tgt=z;}}
     if(tgt)P.face=Math.atan2(tgt.y-P.y,tgt.x-P.x);
     P.cd=w.cd;P.swing=.18;
     const fx=Math.cos(P.face),fy=Math.sin(P.face);
@@ -2570,6 +2697,7 @@ function attack(){
       if(z.dead)continue;
       const dx=z.x-P.x,dy=z.y-P.y,d=Math.hypot(dx,dy);
       if(d>w.range+z.r)continue;
+      if(wallBlocks(P.x,P.y,z.x,z.y))continue;
       if(Math.abs(wrap(Math.atan2(dy,dx)-P.face))<1.1){damageZ(z,w.dmg,fx*w.kb,fy*w.kb);hit++;}
     }
     if(!hit)beep(180,.07,'triangle',.03,-60);
@@ -2598,14 +2726,15 @@ function updateP(dt){
   if(P.dead) return;
   if(P.inVehicle){
     const v=P.inVehicle;
+    if(P.fish)P.fish=null;
     if(v.hp===undefined){ v.hp=100; v.maxHp=100; }
     v.showHp=3; // mostra barra enquanto dirige
     // Fome, sede, sangramento e regeneração continuam correndo dentro do carro
     P.sprint=false;
     survivalTick(dt);
     if(P.dead) return;
-    P.stam=Math.min(100,P.stam+14*dt);
-    if(P.exhausted&&P.stam>25)P.exhausted=false;
+    P.stam=Math.min(100,P.stam+24*dt);
+    if(P.exhausted&&P.stam>20)P.exhausted=false;
     // Carro morto: não anda, só espera explosão
     if(v.dying || v.hp<=0){
       if(!v.dying) startVehicleDeath(v);
@@ -2617,19 +2746,31 @@ function updateP(dt){
     if(touchGas>0)v.spd=Math.min(maxSpd,v.spd+48*dt);
     else if(touchGas<0)v.spd=Math.max(maxRev,v.spd-40*dt);
     else v.spd*=Math.pow(0.08,dt);
-    if(touchSteer!==0&&Math.abs(v.spd)>4)v.face+=touchSteer*2.2*dt*(v.spd>0?1:-1);
     const prevSpd=v.spd;
-    const ox=v.x, oy=v.y;
+    const ox=v.x, oy=v.y, of=v.face;
+    // Quantos pontos da carroceria já estão dentro de algo ANTES de mover (carro encostado/preso)
+    const oldOverlap=vehicleOverlap(v);
+    if(touchSteer!==0&&Math.abs(v.spd)>4)v.face+=touchSteer*2.2*dt*(v.spd>0?1:-1);
+    const newFace=v.face;
     v.x+=Math.cos(v.face)*v.spd*dt;
     v.y+=Math.sin(v.face)*v.spd*dt;
     // Colisão real com paredes/árvores/pedras (amostras na carroceria)
-    let hitEnv=vehicleHitsEnv(v);
+    // Livre = sem colisão; se já estava encostado, aceita qualquer movimento que NÃO piore (permite dar ré)
+    const okMove=()=>{const c=vehicleOverlap(v);return oldOverlap>0?c<=oldOverlap:c===0;};
+    let hitEnv=!okMove();
+    if(hitEnv&&newFace!==of){
+      // Girar o volante contra a parede é o que trava o carro: tenta andar sem girar
+      v.face=of;
+      v.x=ox+Math.cos(of)*v.spd*dt;
+      v.y=oy+Math.sin(of)*v.spd*dt;
+      hitEnv=!okMove();
+    }
     if(hitEnv){
-      // Reverte e aplica dano proporcional à velocidade
-      v.x=ox; v.y=oy;
-      if(Math.abs(prevSpd)>10){
+      // Reverte (posição e direção) e aplica dano proporcional à velocidade
+      v.x=ox; v.y=oy; v.face=of;
+      if(Math.abs(prevSpd)>10&&oldOverlap===0){
         const impact=Math.abs(prevSpd);
-        const dmg=Math.min(55, 8+impact*0.7);
+        const dmg=Math.min(22, 2+impact*0.25);
         v.hp-=dmg;
         v.spd*=0.15;
         v._envHitCD=(v._envHitCD||0);
@@ -2647,7 +2788,26 @@ function updateP(dt){
     } else {
       // Empurrão suave (só desliza em volta de objetos, sem dano e sem perder velocidade).
       // O dano de batida vem apenas de vehicleHitsEnv (corpo realmente encostando).
+      const pbx=v.x,pby=v.y,pov=vehicleOverlap(v);
       pushOut(v,14);
+      if(vehicleOverlap(v)>pov){v.x=pbx;v.y=pby;}
+    }
+    // Anti-preso: se a carroceria ainda está dentro de algo, se desloca aos poucos para o lado livre
+    // (testa 16 direções) mesmo sem o jogador acelerar. Garante que nunca fique travado de vez.
+    {
+      let ov=vehicleOverlap(v);
+      for(let it=0;it<3&&ov>0;it++){
+        let bx=v.x,by=v.y,bo=ov;
+        for(let k=0;k<16;k++){
+          const a=k*Math.PI/8, tx=v.x+Math.cos(a)*2.5, ty=v.y+Math.sin(a)*2.5;
+          const sx=v.x,sy=v.y; v.x=tx;v.y=ty;
+          const c=vehicleOverlap(v);
+          v.x=sx;v.y=sy;
+          if(c<bo){bo=c;bx=tx;by=ty;}
+        }
+        if(bo>=ov)break;
+        v.x=bx;v.y=by;ov=bo;
+      }
     }
     if(v._envHitCD>0) v._envHitCD-=dt;
     v.x=clamp(v.x,16,WW-16);v.y=clamp(v.y,16,WH-16);
@@ -2657,20 +2817,36 @@ function updateP(dt){
       v._engT=(v._engT||0)-dt;
       if(v._engT<=0){ v._engT=0.18; carEngineTick(v.spd); }
     }
+    // Atropelar animais
+    if(Math.abs(v.spd)>30){
+      for(const an of animals){
+        if(an.dead) continue;
+        an._carHit=(an._carHit||0)-dt;
+        if(an._carHit>0) continue;
+        if(Math.hypot(an.x-v.x,an.y-v.y)<22){
+          an._carHit=0.4;
+          damageAnimal(an, 10+Math.min(8,Math.abs(v.spd)/9));
+          an.x+=Math.cos(v.face)*6; an.y+=Math.sin(v.face)*6;
+          v.hp-=0.5;
+          if(v.hp<=0){ startVehicleDeath(v); return; }
+        }
+      }
+    }
     for(const z of zombies){
       if(z.dead) continue;
       if(Math.hypot(z.x-v.x,z.y-v.y)<22&&Math.abs(v.spd)>48){
         damageZ(z, 6+Math.min(6,Math.abs(v.spd)/20), Math.cos(v.face)*90, Math.sin(v.face)*90);
-        v.hp-=8;
+        v.hp-=3;
         if(v.hp<=0){ startVehicleDeath(v); return; }
       }
       if(Math.hypot(z.x-v.x,z.y-v.y)<18 && Math.abs(v.spd)<20 && (z._carHit=(z._carHit||0)-dt)<=0){
-        z._carHit=0.9; v.hp-=3;
+        z._carHit=0.9; v.hp-=1;
         if(v.hp<=0){ startVehicleDeath(v); return; }
       }
     }
     return;
   }
+  if(P.fish)tickFishing(dt);
   let mx=joy.x,my=joy.y,len=Math.hypot(mx,my);
   if(len>1){mx/=len;my/=len;len=1;}
   P.moving=len>.12;
@@ -2691,14 +2867,15 @@ function updateP(dt){
     if(stepT<=0){stepT=P.sprint?0.28:0.42;footstep(inWater);}
   }
   if(P.sprint){
-    const stamDrain=24*(weather==='rain'?1.35:weather==='snow'?1.2:1);
+    const stamDrain=17*(weather==='rain'?1.35:weather==='snow'?1.2:1);
     P.stam-=stamDrain*dt;if(P.stam<=0){P.stam=0;P.exhausted=true;}
     noiseT-=dt;
     if(noiseT<=0){makeNoise(P.x,P.y,70);noiseT=.6;}
   }else{
-    const stamRegen=14*(weather==='snow'?0.7:1);
+    // Recupera mais rápido parado (30/s) do que andando (20/s)
+    const stamRegen=(P.moving?20:30)*(weather==='snow'?0.8:1);
     P.stam=Math.min(100,P.stam+stamRegen*dt);
-    if(P.exhausted&&P.stam>25)P.exhausted=false;
+    if(P.exhausted&&P.stam>20)P.exhausted=false;
   }
   P.x=clamp(P.x,8,WW-8);P.y=clamp(P.y,8,WH-8);
   pushOut(P,P.r);
@@ -2742,6 +2919,8 @@ function updateZ(z,dt){
   if(z.kind===1)det*=1.18;
   if(z.kind===5)det*=1.12;
   if(z.crawler)det*=.7;
+  // Cuspidor enxerga e mira de longe (antes só reagia a ~50-95px, então o alcance 190 nunca era usado)
+  if(z.ranged) det=Math.max(det,150);
   if(z.screams){
     z.screamT=(z.screamT||0)-dt;
     if(z.screamT<=0&&d<300&&z.lock>0){
@@ -2752,14 +2931,22 @@ function updateZ(z,dt){
   }
   if(z.ranged){
     z.spitT=(z.spitT||0)-dt;
-    if(z.spitT<=0&&z.lock>0&&d<z.range&&d>40){
-      z.spitT=rnd(1.8,3.5);
-      const a=Math.atan2(targetY-z.y,targetX-z.x);
-      const spit={x:z.x,y:z.y-8,vx:Math.cos(a)*160,vy:Math.sin(a)*160,t:1.4};
-      spits.push(spit);
-      // Sync projectile to guest so both see/take spit damage
-      if(MP.active && MP.isHost) sendEvt('spit', {x:spit.x,y:spit.y,vx:spit.vx,vy:spit.vy,t:spit.t});
-      beep(420,.15,'sawtooth',.05,-200);
+    if(z.windT>0){
+      // Preparando o cuspe: para, brilha em verde e dispara na posição ATUAL do alvo (corpo, não os pés)
+      z.windT-=dt;
+      z.face=Math.atan2(targetY-z.y,targetX-z.x);
+      if(Math.random()<dt*30)parts.push({x:z.x+Math.cos(z.face)*5,y:z.y-9,vx:rnd(-12,12),vy:rnd(-25,-8),t:.35,c:'#80e060'});
+      if(z.windT<=0){
+        z.spitT=rnd(1.8,3.2);
+        const sy0=z.y-8,a=Math.atan2((targetY-6)-sy0,targetX-z.x);
+        const spit={x:z.x,y:sy0,vx:Math.cos(a)*160,vy:Math.sin(a)*160,t:1.4};
+        spits.push(spit);
+        // Sync projectile to guest so both see/take spit damage
+        if(MP.active && MP.isHost) sendEvt('spit', {x:spit.x,y:spit.y,vx:spit.vx,vy:spit.vy,t:spit.t});
+        beep(420,.15,'sawtooth',.05,-200);
+      }
+    } else if(z.spitT<=0&&z.seen&&z.lock>0&&!targetDead&&d<z.range&&d>40){
+      z.windT=0.4; // aviso visual antes de cuspir
     }
   }
   z.losT-=dt;
@@ -2774,9 +2961,17 @@ function updateZ(z,dt){
   else if(z.lastSeen&&z.searchT>0)mode='search';
   let tx,ty,sp;
   if(mode==='chase'){
-    if(z.ranged&&d<80){
-      const a=Math.atan2(z.y-targetY,z.x-targetX);
-      tx=z.x+Math.cos(a)*100;ty=z.y+Math.sin(a)*100;sp=z.spd;
+    if(z.ranged){
+      // Histerese: recua se d<70 (até d>90), aproxima se d>120, e fica parado atirando entre 90 e 120
+      if(z._kite){ if(d>90) z._kite=false; } else if(d<70) z._kite=true;
+      if(z._kite){
+        const a=Math.atan2(z.y-targetY,z.x-targetX);
+        tx=z.x+Math.cos(a)*100;ty=z.y+Math.sin(a)*100;sp=z.spd;
+      }else if(d>120){
+        tx=targetX;ty=targetY;sp=pointInLake(z.x,z.y)?z.spd*.6:z.spd;
+      }else{
+        tx=z.x;ty=z.y;sp=0;z.face=Math.atan2(targetY-z.y,targetX-z.x);
+      }
     }else{tx=targetX;ty=targetY;sp=pointInLake(z.x,z.y)?z.spd*.6:z.spd;}
   }else if(mode==='noise'){
     tx=z.tx;ty=z.ty;sp=z.spd*.92;
@@ -2794,6 +2989,7 @@ function updateZ(z,dt){
     tx=z.tx;ty=z.ty;sp=14;
     if(Math.hypot(tx-z.x,ty-z.y)<6)sp=0;
   }
+  if(z.windT>0) sp=0; // parado enquanto prepara o cuspe
   if(dark>.58 && sp>0) sp*=1+Math.min(.22,(dark-.58)*.55);
   z.moving=sp>0;
   if(sp>0){
@@ -2815,7 +3011,7 @@ function updateZ(z,dt){
     }
   }
   // Melee hit: only damages the local player (remote damage is handled by their own client via proximity + snapshot)
-  if(!z.ranged&&targetIsLocal&&d<z.r+P.r+6&&z.cd<=0&&!P.dead){
+  if(!z.ranged&&targetIsLocal&&d<z.r+P.r+6&&z.cd<=0&&!P.dead&&!wallBlocks(z.x,z.y,P.x,P.y)){
     const knock=z.kind===2||z.kind===3||z.kind===7;
     hurt(z.dmg, z.kind===3?.65:z.kind===2||z.kind===7?.5:z.kind===8?.35:.25);
     z.cd=z.berserk||z.kind===8?0.75:1.1;z.lunge=.15;
@@ -2832,6 +3028,7 @@ function update(dt){
   dark=darkness(hr%24);
   day=Math.floor(hr/24)+1;
   weatherTimer-=dt;
+  if(weatherTimer<=0&&MP.active&&!MP.isHost)weatherTimer=30; // convidado: só o host sorteia (snapshot manda)
   if(weatherTimer<=0){
     weatherTimer=rnd(100,220);
     const r=Math.random();
@@ -2884,7 +3081,7 @@ function update(dt){
   updateAnimals(dt);
   updateVehicles(dt);
   P.cd=Math.max(0,P.cd-dt);P.swing=Math.max(0,P.swing-dt);P.flash=Math.max(0,P.flash-dt);
-  if(atkHeld&&!P.dead&&!chatOpen)attack();
+  if(atkHeld&&!P.dead&&!chatOpen&&!WEAPONS[P.weapon]?.rod)attack();
   if(!MP.active||MP.isHost){
     for(const z of zombies){
       if(z.dead)continue;
@@ -2905,7 +3102,7 @@ function update(dt){
   // Spits run on BOTH sides (host spawns+syncs; guest receives via evt)
   for(const s of spits){
     s.x+=s.vx*dt;s.y+=s.vy*dt;s.t-=dt;
-    if(P && !P.dead && Math.hypot(s.x-P.x,s.y-P.y)<10){
+    if(P && !P.dead && Math.hypot(s.x-P.x,s.y-(P.y-6))<10){
       hurt(8,.15);
       for(let i=0;i<10;i++)parts.push({x:s.x,y:s.y,vx:rnd(-60,60),vy:rnd(-60,20),t:.5,c:'#80e060'});
       s.t=0;
@@ -2977,6 +3174,24 @@ function update(dt){
       }
     }
     update._lastDay=day;
+  } else {
+    if(typeof update._lastDay==='number'&&day>update._lastDay)toast('Dia '+day+' — a horda está pior!');
+    update._lastDay=day;
+  }
+  // Convidado: suaviza zumbis/animais entre snapshots (antes davam “saltos” a cada ~0,16s)
+  if(MP.active&&!MP.isHost){
+    const k=Math.min(1,dt*14);
+    for(const z of zombies){
+      if(z.tx===undefined||z.dead)continue;
+      const dx=z.tx-z.x,dy=z.ty-z.y;
+      if(dx*dx+dy*dy>8100){z.x=z.tx;z.y=z.ty;}else{z.x+=dx*k;z.y+=dy*k;}
+    }
+    for(const a of animals){
+      if(a._predT)a._predT=Math.max(0,a._predT-dt);
+      if(a.tx===undefined||a.dead)continue;
+      const dx=a.tx-a.x,dy=a.ty-a.y;
+      if(dx*dx+dy*dy>8100){a.x=a.tx;a.y=a.ty;}else{a.x+=dx*k;a.y+=dy*k;}
+    }
   }
   // Decay local damage prediction timers
   for(const z of zombies){
@@ -2988,7 +3203,7 @@ function update(dt){
       if(z.dead) continue;
       z._hitCD = (z._hitCD||0) - dt;
       const dd=Math.hypot(z.x-P.x,z.y-P.y);
-      if(dd < (z.r||5)+P.r+6 && z._hitCD<=0){
+      if(dd < (z.r||5)+P.r+6 && z._hitCD<=0 && !wallBlocks(z.x,z.y,P.x,P.y)){
         const kind = z.kind||0;
         hurt(z.dmg||9, kind===2?.5:kind===3?.6:.25);
         z._hitCD = 1.1;
@@ -3122,7 +3337,7 @@ function updateHud(force){
   const stat=$('stat');if(stat){stat.textContent=st;stat.style.opacity=st?'1':'0';}
   let canInteract=false,btnText='PEGAR';
   if(nearestItem())canInteract=true;
-  if(pointInLake(P.x,P.y)&&(selectedMap==='forest'||selectedMap==='snow')){canInteract=true;btnText='PESCAR';}
+  if(pointInLake(P.x,P.y)&&mapHasLake()){canInteract=true;btnText='ÁGUA';}
   const cf=nearestCampfire();
   if(cf && (countInv('fish')>0 || countInv('meat')>0)){canInteract=true;btnText='ASSAR';}
   for(const v of vehicles){
@@ -3140,11 +3355,11 @@ function craft(r){
   if(!canCraft(r)){toast('Recursos insuficientes');beep(120,.1,'square',.05);return;}
   const out=r.out;
   // Não gasta recursos para fabricar uma arma que já está no arsenal
-  if(['pickaxe','stoneaxe','sword','spear','bat'].includes(out)&&((P.meleeWeapons||[]).includes(out)||P.melee===out)){
+  if(['pickaxe','stoneaxe','sword','spear','bat','fishingrod'].includes(out)&&((P.meleeWeapons||[]).includes(out)||P.melee===out)){
     toast('Você já tem: '+ITEMS[out].n);beep(120,.1,'square',.05);return;
   }
   if(out==='bow'&&P.firearms.bow){toast('Você já tem um arco');beep(120,.1,'square',.05);return;}
-  if(out!=='campfire'&&!['pickaxe','stoneaxe','sword','spear','bow','arrows','bat'].includes(out)&&P.inv.length>=MAX_SLOTS&&!P.inv.some(slot=>slot.t===out)){toast('Mochila cheia');beep(120,.1,'square',.05);return;}
+  if(out!=='campfire'&&!['pickaxe','stoneaxe','sword','spear','bow','arrows','bat','fishingrod'].includes(out)&&P.inv.length>=MAX_SLOTS&&!P.inv.some(slot=>slot.t===out)){toast('Mochila cheia');beep(120,.1,'square',.05);return;}
   for(const k in r.need)removeInv(k,r.need[k]);
   if(out==='campfire'){
     const fx=Math.cos(P.face),fy=Math.sin(P.face);
@@ -3160,9 +3375,9 @@ function craft(r){
     pushOut(P,P.r);
     toast('🔥 Fogueira acesa!');buildSound();boom(.3,.15,400);
     for(let i=0;i<15;i++)parts.push({x:cx,y:cy-4,vx:rnd(-30,30),vy:rnd(-70,-20),t:rnd(.5,1),c:'#ffb040'});
-  }else if(out==='pickaxe'||out==='stoneaxe'||out==='sword'||out==='spear'||out==='bat'){
+  }else if(out==='pickaxe'||out==='stoneaxe'||out==='sword'||out==='spear'||out==='bat'||out==='fishingrod'){
     addMeleeWeapon(out);P.weapon=out;updateWeaponHud();
-    toast('Fabricou: '+ITEMS[out].n+'! Arma adicionada ao arsenal.');buildSound();
+    toast(out==='fishingrod'?'Fabricou: Vara de Pesca! Mire no lago e use ATACAR.':'Fabricou: '+ITEMS[out].n+'! Arma adicionada ao arsenal.');buildSound();
   }else if(out==='bow'){
     if(P.firearms.bow){ toast('Você já tem um arco'); }
     else { P.firearms.bow=true; P.arrows=(P.arrows||0)+6; P.weapon='bow'; updateWeaponHud(); toast('Fabricou: Arco (+6 flechas)'); }
@@ -3182,13 +3397,14 @@ function refreshCraft(){
   const el=$('craftlist');if(!el)return;
   el.innerHTML='';
   for(const r of RECIPES){
+    if(r.lake&&!mapHasLake())continue;
     const isWeapon=['pickaxe','stoneaxe','sword','spear','bow','bat'].includes(r.out),category=isWeapon||r.out==='arrows'?'weapon':'utility';
     if(craftFilter!=='all'&&craftFilter!==category)continue;
     const ok=canCraft(r);
     const row=document.createElement('div');
     row.className='craft-row '+(ok?'can':'no');
     const cost=Object.entries(r.need).map(([k,v])=>((ITEMS[k]&&ITEMS[k].e)||'')+' '+v+' '+(ITEMS[k]?.n||k)).join(' · ');
-    const icon=isWeapon||r.out==='arrows'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'➳':'⚔️')):'🔥';
+    const icon=isWeapon||r.out==='arrows'||r.out==='fishingrod'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'➳':'⚔️')):'🔥';
     row.innerHTML='<div class="recipe-icon">'+icon+'</div><div class="info"><div class="name">'+r.label+'</div><div class="cost">'+r.desc+'</div><div class="cost">Custo: '+(cost||'—')+'</div><div class="status">'+(ok?'✓ Recursos suficientes':'Faltam recursos')+'</div></div>';
     const btn=document.createElement('button');
     btn.textContent='CRIAR';btn.disabled=!ok;
@@ -3203,6 +3419,11 @@ function sendEvt(kind, data){
   // Allow events during play AND craft (campfire is crafted in craft menu!)
   if(!MP.active || !MP.connected) return;
   if(state!=='play' && state!=='craft') return;
+  if(!MP.isHost && data){
+    const now=performance.now();
+    if(kind==='itemRemoved')recentRemoved.push({x:data.x,y:data.y,at:now});
+    else if(kind==='itemAdded')recentAdded.push({t:data.t,x:data.x,y:data.y,at:now});
+  }
   mpSend({type:'evt', kind:kind, data:data});
 }
 function handleEvt(kind, data){
@@ -3389,13 +3610,23 @@ function mpJoinStart(code){
       setStatus('joinStatus','Conectando à sala...');
       const conn=MP.peer.connect(MP.roomCode,{reliable:true,serialization:'json'});
       MP.conn=conn;
+      conn._joinTimer=setTimeout(()=>{
+        if(MP.connected||MP.conn!==conn)return;
+        setStatus('joinStatus','Tempo esgotado. Confira o código e se o Host ainda está na sala.',true);
+        try{conn.close();}catch(e){}
+        try{if(MP.peer)MP.peer.destroy();}catch(e){}
+        MP.peer=null;MP.conn=null;MP.active=false;MP.isHost=false;
+      },15000);
       setupConn(conn,false);
     });
     MP.peer.on('error',err=>{
       console.error('[PeerJS convidado]',err);
       let msg='Erro: '+((err&&err.type)||'conexão');
       if(err.type==='peer-unavailable')msg='Sala não encontrada. Verifique o código.';
+      else if(err.type==='network'||err.type==='server-error'||err.type==='socket-error'||err.type==='socket-closed')msg='Sem conexão com o servidor P2P. Tente de novo.';
+      else if(err.type==='webrtc')msg='Falha de WebRTC. Tente trocar de rede (Wi-Fi/4G).';
       setStatus('joinStatus',msg,true);
+      if(!MP.connected){ MP.active=false; MP.isHost=false; MP.conn=null; }
     });
   });
 }
@@ -3404,6 +3635,7 @@ function setupConn(conn,isHostSide){
   const onOpen=()=>{
     if(opened) return;
     opened=true;
+    if(conn._joinTimer){clearTimeout(conn._joinTimer);conn._joinTimer=null;}
     MP.connected=true;MP.lastRecv=performance.now();
     console.log('[MP] conn.on("open") disparado. Host?',isHostSide);
     if(isHostSide){
@@ -3594,7 +3826,19 @@ function handleNetData(data,isHostSide){
 function applySnapshot(snap){
   if(!snap || typeof snap !== 'object' || !MP.active) return;
   // Items: Host is authority — replace guest list (events give immediate feedback)
-  if(Array.isArray(snap.items)) items = snap.items;
+  if(Array.isArray(snap.items)){
+    let list = snap.items;
+    if(!MP.isHost){
+      const now=performance.now();
+      recentRemoved=recentRemoved.filter(r=>now-r.at<2500);
+      recentAdded=recentAdded.filter(r=>now-r.at<2500);
+      if(recentRemoved.length) list=list.filter(it=>!recentRemoved.some(r=>Math.abs(r.x-it.x)<5&&Math.abs(r.y-it.y)<5));
+      for(const a of recentAdded){
+        if(!list.some(it=>it.t===a.t&&Math.abs(it.x-a.x)<5&&Math.abs(it.y-a.y)<5))list.push({t:a.t,x:a.x,y:a.y});
+      }
+    }
+    items = list;
+  }
   // Campfires: merge (never wipe guest-only events that arrived slightly earlier)
   if(Array.isArray(snap.campfires)){
     const merged = snap.campfires.map(c=>({x:c.x,y:c.y,t:c.t||0,flicker:c.flicker||0}));
@@ -3630,7 +3874,7 @@ function applySnapshot(snap){
       const dd=dayDiff();
       next.push({
         netId: sz.netId || ('remote-z'+i),
-        x: sz.x, y: sz.y, kind: sz.kind,
+        x: prev&&Number.isFinite(prev.x)?prev.x:sz.x, y: prev&&Number.isFinite(prev.y)?prev.y:sz.y, kind: sz.kind,
         face: sz.face||0, anim: sz.anim||0, hp: hp,
         max: t.hp*dd.hp, r: t.r, dmg: Math.round(t.dmg*dd.dmg), spd: t.spd*dd.spd,
         moving: !!sz.moving, skin: t.color||'#7a9a5a', shirt: '#4a4a5a',
@@ -3678,17 +3922,43 @@ function applySnapshot(snap){
     if(P?.inVehicle && !vehicles.some(v=>v.id===P.inVehicle.id)) P.inVehicle=null;
   }
   if(Array.isArray(snap.animals)){
-    animals=snap.animals.filter(a=>a&&Number.isFinite(a.x)&&Number.isFinite(a.y)).map(a=>({
-      x:a.x,y:a.y,k:a.k||'rabbit',face:a.face||0,
-      hp:Number.isFinite(a.hp)?a.hp:4,max:a.max||8,
-      dead:false,flee:0,wt:1,tx:a.x,ty:a.y,atkCD:0
-    }));
+    const oldA=animals||[],usedA=new Set(),nextA=[];
+    for(const a of snap.animals){
+      if(!a||!Number.isFinite(a.x)||!Number.isFinite(a.y))continue;
+      const k=a.k||'rabbit';
+      // Acha o mesmo animal no snapshot anterior (sem id: mesmo tipo + mais próximo)
+      let prev=null,bd=70;
+      for(const o of oldA){
+        if(usedA.has(o)||o.k!==k)continue;
+        const d=Math.hypot((o.tx!==undefined?o.tx:o.x)-a.x,(o.ty!==undefined?o.ty:o.y)-a.y);
+        if(d<bd){bd=d;prev=o;}
+      }
+      if(prev)usedA.add(prev);
+      const pred=prev?(prev._predT||0):0;
+      if(prev&&prev.dead&&pred>0){nextA.push(prev);continue;} // já matamos: espera o host confirmar
+      let hp=Number.isFinite(a.hp)?a.hp:4;
+      if(prev&&pred>0&&Number.isFinite(prev.hp))hp=Math.min(hp,prev.hp);
+      nextA.push({
+        x:prev?prev.x:a.x,y:prev?prev.y:a.y,k:k,face:a.face||0,
+        hp:hp,max:a.max||(Number.isFinite(a.hp)?Math.max(a.hp,1):4),
+        dead:false,flee:0,wt:1,tx:a.x,ty:a.y,atkCD:0,
+        _predT:pred,_hitCD:prev?prev._hitCD:0
+      });
+    }
+    // Mortos por predição que o host ainda não confirmou continuam um instante
+    for(const o of oldA){if(o.dead&&(o._predT||0)>0&&!usedA.has(o)&&!nextA.includes(o))nextA.push(o);}
+    animals=nextA;
   }
   if(Number.isFinite(snap.day)) day=clamp(snap.day,1,9999);
   if(Number.isFinite(snap.dark)) dark=clamp(snap.dark,0,1);
   if(Number.isFinite(snap.T)) T=Math.max(0,snap.T);
   if(snap.weather==='none'||snap.weather==='rain'||snap.weather==='snow'){
-    if(weather!==snap.weather){weather=snap.weather;setRain(weather==='rain');}
+    if(weather!==snap.weather){
+      const prevW=weather;weather=snap.weather;setRain(weather==='rain');
+      if(weather==='rain') toast('Chuva: fogueiras apagam e stamina cai mais');
+      else if(weather==='snow') toast('Neve: movimento e recuperação mais lentos');
+      else if(prevW!=='none') toast('Clima limpo');
+    }
   }
   if(Number.isFinite(snap.weatherTimer)) weatherTimer=clamp(snap.weatherTimer,0,300);
   if(Number.isFinite(snap.kills)) kills = snap.kills;
@@ -3813,7 +4083,8 @@ function enterMultiplayerGame(isHost){
       campfires=[];
       animals=animals||[]; // mundo seed já gerou; host sobrescreve via snap
     }
-    T=0; kills=0; shake=0; flash=0; spawnTimer=3; dark=0; day=1;
+    T=0; kills=0; shake=0; flash=0; spawnTimer=3; dark=0; day=1; update._lastDay=1;
+    recentRemoved=[]; recentAdded=[];
     atkHeld=false; sprintHeld=false; touchGas=0; touchSteer=0; stepT=0;
     remotePlayers={}; MP.gameOver=false; MP.syncT=0;
     restoreWalkHUD();
@@ -3878,6 +4149,7 @@ function human(x,y,face,o){
     R(hx+px-1+Math.round(fx*l),hy+py-1+Math.round(fy*l),3,3,o.skin);
     R(hx-px-1+Math.round(fx*l),hy-py-1+Math.round(fy*l),3,3,o.skin);
     if(o.spitter)R(hx+fx*2,hy+fy*2-1,3,2,'#40ff40');
+    if(o.wind)R(hx+fx*2-2,hy+fy*2-3,6,5,'#b0ff80'); // pré-aviso do cuspe
     if(o.screamer){R(hx+fx*2,hy+fy*2-2,3,3,'#600');R(hx+fx*2,hy+fy*2-1,2,1,'#fff');}
     if(o.brute){R(hx+fx*3,hy+fy*3-2,8,3,'#e0a020');R(hx+fx*7,hy+fy*7-3,5,5,'#c02020');}
     if(o.boss){R(hx-3,hy-3,7,2,'#ffe040');R(hx-3,hy-5,2,2,'#ffe040');R(hx+2,hy-5,2,2,'#ffe040');R(hx,hy-6,2,3,'#ffe040');}
@@ -3908,6 +4180,7 @@ function human(x,y,face,o){
     else if(o.wpn==='stoneaxe'){for(let i=2;i<=8;i+=2)R(hx+wx*i,hy+wy*i-1,2,2,'#6a4a30');R(hx+wx*10-2,hy+wy*10-3,5,4,'#9a9aa0');}
     else if(o.wpn==='sword'){R(hx+wx*2,hy+wy*2-1,3,3,'#6a4a30');for(let i=4;i<=15;i+=1)R(hx+wx*i,hy+wy*i-1,2,2,i>13?'#e8e8f0':'#c0c8d4');}
     else if(o.wpn==='spear'){for(let i=2;i<=18;i+=2)R(hx+wx*i,hy+wy*i-1,2,2,'#8a6a3a');R(hx+wx*20-1,hy+wy*20-2,4,3,'#c0c8d4');}
+    else if(o.wpn==='fishingrod'){for(let i=2;i<=16;i+=2)R(hx+wx*i,hy+wy*i-1-(i>>2),1,2,i>12?'#c8a070':'#8a6a3a');R(hx+wx*3,hy+wy*3,2,2,'#c0c0c8');}
     else if(o.wpn==='bow'){
       // Arco + corda nas mãos
       const bx=hx+wx*4, by=hy+wy*4;
@@ -4466,6 +4739,7 @@ function drawItem(it,near){
     case'sword':R(x-5,y-3+b,2,2,'#6a4a30');for(let i=0;i<9;i++)R(x-3+i,y-3+b,1,2,i>6?'#e8e8f0':'#c0c8d4');break;
     case'spear':for(let i=0;i<11;i++)R(x-5+i,y-3+b,1,1,'#8a6a3a');R(x+6,y-4+b,3,3,'#c0c8d4');break;
     case'stoneaxe':R(x-5,y-3+b,7,2,'#6a4a30');R(x+1,y-6+b,4,4,'#9a9aa0');break;
+    case'fishingrod':for(let i=0;i<11;i++)R(x-5+i,y-2+b-(i>>2),1,1,'#8a6a3a');R(x-3,y-1+b,3,2,'#c0c0c8');R(x+5,y-5+b,1,3,'#e8e8e8');break;
     case'bow':R(x-4,y-7+b,2,10,'#8a5a2a');R(x-3,y-7+b,6,2,'#c0a070');R(x-3,y+1+b,6,2,'#c0a070');break;
     case'arrows':R(x-1,y-8+b,2,10,'#a08050');R(x-2,y-9+b,4,2,'#c0c0c8');break;
     default:R(x-3,y-3+b,6,6,'#888');break;
@@ -4531,8 +4805,13 @@ function render(){
     }
     human(P.x,P.y,P.face,{skin:'#e8b890',shirt:'#3a5a8a',pants:'#3a3a48',hair:'#3a2a1a',moving:P.moving,anim:P.walk,wpn:P.weapon,swing:P.swing,flash:P.flash});
     for(const z of zombies)if(!z.dead&&z.x>=b.x&&z.x<=b.x+b.w&&z.y>=b.y&&z.y<=b.y+b.h){
-      human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,bloater:z.bloater||z.kind===7});
+      human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,bloater:z.bloater||z.kind===7});
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
+    }
+    // Cuspe também aparece dentro de prédios (antes só causava dano invisível)
+    for(const s of spits){
+      ctx.fillStyle='rgba(120,230,80,.85)';ctx.beginPath();ctx.arc(s.x,s.y,4,0,6.283);ctx.fill();
+      ctx.fillStyle='rgba(180,255,120,.6)';ctx.beginPath();ctx.arc(s.x,s.y,2,0,6.283);ctx.fill();
     }
     // E3: tracers + particles inside buildings (were skipped by early return)
     if(CFG.tracers){
@@ -4724,7 +5003,7 @@ function render(){
     else if(e.k===7){ drawAnimal(e.o); }
     else if(e.k===1){
       const z=e.o;
-      human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,bloater:z.bloater||z.kind===7});
+      human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,bloater:z.bloater||z.kind===7});
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
     }else if(e.k===5){
       const rp=e.o;
@@ -4750,6 +5029,7 @@ function render(){
     ctx.fillStyle=weather==='rain'?'rgba(140,180,220,0.65)':'rgba(240,248,255,0.85)';
     for(const wp of weatherParticles)if(wp.x>=camX-10&&wp.x<=camX+W/Z+10&&wp.y>=camY-10&&wp.y<=camY+H/Z+10)R(wp.x,wp.y,wp.sz,weather==='rain'?wp.sz*5:wp.sz,ctx.fillStyle);
   }
+  drawFishing();
   if(CFG.tracers){
     for(const t of tracers){
       ctx.globalAlpha=Math.min(1,t.t*14);ctx.strokeStyle='#ffe27a';ctx.lineWidth=1;
@@ -4766,30 +5046,27 @@ function render(){
   }
   if(dark>.02){
     ctx.setTransform(1,0,0,1,0,0);
-    if(perf().simpleLight){
-      // Overlay barato (sem canvas offscreen nem gradients)
-      ctx.fillStyle='rgba(4,8,22,'+(.78*dark).toFixed(3)+')';
-      ctx.fillRect(0,0,W,H);
-    } else {
-      lctx.setTransform(1,0,0,1,0,0);
-      lctx.globalCompositeOperation='source-over';
-      lctx.clearRect(0,0,W,H);
-      lctx.fillStyle='rgba(4,8,22,'+(.86*dark).toFixed(3)+')';
-      lctx.fillRect(0,0,W,H);
-      lctx.globalCompositeOperation='destination-out';
-      const px=(P.x-camX)*Z+sx,py=(P.y-5-camY)*Z+sy,r=(P.inside?85:120)*Z;
-      const g=lctx.createRadialGradient(px,py,r*.15,px,py,r);
-      g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.55,'rgba(0,0,0,.75)');g.addColorStop(1,'rgba(0,0,0,0)');
-      lctx.fillStyle=g;lctx.beginPath();lctx.arc(px,py,r,0,6.283);lctx.fill();
-      for(const c of campfires){
-        const fx=(c.x-camX)*Z+sx,fy=(c.y-camY)*Z+sy,fr=(50+Math.sin(c.flicker||0)*8)*Z;
-        const fg=lctx.createRadialGradient(fx,fy,fr*.1,fx,fy,fr);
-        fg.addColorStop(0,'rgba(0,0,0,1)');fg.addColorStop(.6,'rgba(0,0,0,.7)');fg.addColorStop(1,'rgba(0,0,0,0)');
-        lctx.fillStyle=fg;lctx.beginPath();lctx.arc(fx,fy,fr,0,6.283);lctx.fill();
-      }
-      lctx.globalCompositeOperation='source-over';
-      ctx.drawImage(lightC,0,0);
+    // Mesma lógica nos dois modos (só as fogueiras abrem "buracos" na escuridão).
+    // No modo simples o buffer tem 1/4 do tamanho e usa sprites prontos, sem gradientes por quadro.
+    const LS=lightC.width>0?W/lightC.width:1;
+    lctx.setTransform(1,0,0,1,0,0);
+    lctx.imageSmoothingEnabled=true;
+    lctx.globalCompositeOperation='source-over';
+    lctx.clearRect(0,0,lightC.width,lightC.height);
+    lctx.fillStyle='rgba(4,8,22,'+(.86*dark).toFixed(3)+')';
+    lctx.fillRect(0,0,lightC.width,lightC.height);
+    lctx.globalCompositeOperation='destination-out';
+    const punch=(cx,cy,r)=>lctx.drawImage(lightSprite,(cx-r)/LS,(cy-r)/LS,2*r/LS,2*r/LS);
+    // Sem luz própria do jogador: só fogueiras iluminam a noite.
+    for(const c of campfires){
+      const fx=(c.x-camX)*Z+sx,fy=(c.y-camY)*Z+sy,fr=(80+Math.sin(c.flicker||0)*5)*Z;
+      if(fx<-fr||fy<-fr||fx>W+fr||fy>H+fr) continue;
+      punch(fx,fy,fr);
     }
+    lctx.globalCompositeOperation='source-over';
+    ctx.imageSmoothingEnabled=true; // suaviza o buffer reduzido ao ampliar
+    ctx.drawImage(lightC,0,0,lightC.width,lightC.height,0,0,W,H);
+    ctx.imageSmoothingEnabled=false;
   }
   ctx.setTransform(1,0,0,1,0,0);
   if(CFG.dmgflash&&flash>0){ctx.fillStyle='rgba(190,0,0,'+(flash*.7).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
