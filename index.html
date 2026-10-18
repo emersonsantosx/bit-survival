@@ -31,6 +31,13 @@ body.nomap #mm{display:none!important}
 .bar b{display:block;height:100%;width:100%}
 #stat{display:inline-block;margin-top:5px;padding:2px 7px;font-size:12px;font-weight:700;letter-spacing:.6px;line-height:15px;white-space:nowrap;color:#ff7a6a;background:rgba(0,0,0,.62);border:1px solid rgba(255,120,100,.45);border-radius:4px;text-shadow:1px 1px #000}
 #stat:empty{display:none}
+/* Cor do aviso = cor da barra do mesmo atributo */
+#stat.s-hp{color:#d33;border-color:#d33}
+#stat.s-food{color:#d9892b;border-color:#d9892b}
+#stat.s-water{color:#3a9be0;border-color:#3a9be0}
+#stat.s-stam{color:#e5d34a;border-color:#e5d34a}
+#stat.s-cold{color:#3f6fe0;border-color:#3f6fe0}
+#stat.s-hot{color:#e04030;border-color:#e04030}
 #top{position:absolute;right:8px;top:8px;text-align:right;font-size:11px;text-shadow:1px 1px #000}
 #mm{width:76px;height:76px;border:1px solid rgba(255,255,255,.45);background:#142014;display:block;margin-left:auto;image-rendering:pixelated}
 #top div{margin-top:2px}
@@ -1373,12 +1380,14 @@ function pointInLake(x,y){
 const TERR={
   road:  {id:'road', spd:1,   acc:1,   steer:1,   coast:.08},
   icy:   {id:'road', spd:.92, acc:.85, steer:.88, coast:.14},
-  lot:   {id:'lot',  spd:.74, acc:.8,  steer:.95, coast:.06, dust:'#8a8a82'},
-  grass: {id:'grass',spd:.78, acc:.8,  steer:.95, coast:.06, dust:'#7a6a4a'},
-  sand:  {id:'sand', spd:.62, acc:.65, steer:.85, coast:.035,dust:'#d2b87c'},
-  snow:  {id:'snow', spd:.6,  acc:.6,  steer:.78, coast:.16, dust:'#eef4fa'},
+  lot:   {id:'lot',  spd:.84, acc:.85, steer:.95, coast:.06, dust:'#8a8a82'},
+  grass: {id:'grass',spd:.86, acc:.85, steer:.95, coast:.06, dust:'#7a6a4a'},
+  sand:  {id:'sand', spd:.75, acc:.7,  steer:.85, coast:.035,dust:'#d2b87c'},
+  snow:  {id:'snow', spd:.72, acc:.65, steer:.78, coast:.16, dust:'#eef4fa'},
   water: {id:'water',spd:.3,  acc:.4,  steer:.7,  coast:.03, dust:'#8cc8f0'}
 };
+const CAR_TOP=96; // velocidade maxima do carro na estrada (px/s); o terreno multiplica
+function carTopAt(x,y){const wf=(weather==='rain'||weather==='sand')?.92:1;return CAR_TOP*terrainFor(x,y).spd*wf;}
 function terrainFor(x,y){
   if(pointInLake(x,y)) return TERR.water;
   if(onCityRoad(x,y,0)) return selectedMap==='snow'?TERR.icy:TERR.road;
@@ -2251,7 +2260,7 @@ function updateAnimals(dt){
       } else if(a.atkCD<=0 && !target._remote){
         // Ataca só o player local (guest aplica via proximidade no host... host ataca local; remote toma se perto no client deles)
         a.atkCD=1.1;
-        hurt(a.k==='boar'?12:(a.k==='wolf'?10:(a.k==='scorpion'?8:6)), 0.15);
+        animalHurt(a.k==='boar'?12:(a.k==='wolf'?10:(a.k==='scorpion'?8:6)), 0.15);
         a.lunge=0.12;
         beep(180,.08,'sawtooth',.04);
       }
@@ -2298,7 +2307,7 @@ function damageAnimal(a,dmg){
   if(!a||a.dead) return;
   a.hp-=dmg; a.flee=1.2;
   if(MP.active&&!MP.isHost)a._predT=0.8; // convidado: mantém o dano local até o host confirmar
-  for(let i=0;i<3;i++)parts.push({x:a.x,y:a.y-2,vx:rnd(-25,25),vy:rnd(-35,5),t:.3,c:'#a03030'});
+  for(let i=0;i<3;i++)parts.push({x:a.x,y:a.y-2,vx:rnd(-25,25),vy:rnd(-35,5),t:.3,c:'#a03030',g:1});
   addFloater(a.x,a.y-12, Math.round(dmg),'#ffb0a0');
   hitConfirm();
   animalGrowl(!!ANIMAL_AGGRO[a.k]);
@@ -2309,7 +2318,7 @@ function damageAnimal(a,dmg){
   if(a.hp<=0){
     a.dead=true;
     addFloater(a.x,a.y-18,'+carne','#ffa060');
-    for(let i=0;i<8;i++)parts.push({x:a.x,y:a.y,vx:rnd(-35,35),vy:rnd(-45,10),t:.45,c:'#a03030'});
+    for(let i=0;i<8;i++)parts.push({x:a.x,y:a.y,vx:rnd(-35,35),vy:rnd(-45,10),t:.45,c:'#a03030',g:1});
     if(!MP.active || MP.isHost){
       items.push({t:'meat',x:a.x,y:a.y});
       if(MP.active) sendEvt('itemAdded',{t:'meat',x:a.x,y:a.y});
@@ -2829,6 +2838,24 @@ function hurt(n,bleedChance){
   beep(120,.18,'sawtooth',.07,-60);
   if(P.hp<=0)die();
 }
+/* Dano de zumbi: dentro do carro o jogador fica protegido e o carro e quem sofre (20% do dano) */
+function carTakeHit(v,dmg){
+  if(!v||v.dying||v.destroyed)return;
+  if(v.hp===undefined){v.hp=100;v.maxHp=100;}
+  v.hp-=dmg;v.showHp=3;shake=Math.max(shake,2);
+  const now=performance.now();
+  if(now-(v._zFx||0)>350){v._zFx=now;beep(90,.08,'square',.05);addFloater(v.x,v.y-18,'-'+Math.max(1,Math.round(dmg)),'#ff8040');}
+  if(v.hp<=0&&!v.dying)startVehicleDeath(v);
+}
+function zombieHurt(n,bleedChance){
+  if(P&&P.inVehicle)carTakeHit(P.inVehicle,n*0.2);
+  else hurt(n,bleedChance);
+}
+/* Dano de animal agressivo: igual ao de zumbi — dentro do carro o jogador fica protegido e o carro sofre 20% do dano */
+function animalHurt(n,bleedChance){
+  if(P&&P.inVehicle)carTakeHit(P.inVehicle,n*0.2);
+  else hurt(n,bleedChance);
+}
 function isOtherPlayerAlive(){
   if(!MP.active || !MP.connected) return false;
   const keys=Object.keys(remotePlayers);
@@ -2933,7 +2960,7 @@ function damageZ(z,dmg,kx,ky,fromNet){
   if(z.dead)return;
   z.hit=.25;z.vx+=(kx||0);z.vy+=(ky||0);z.lock=5;z.alert=0;
   z._predT=0.5; // keep local prediction for 0.5s so snapshot doesn't erase guest damage
-  for(let i=0;i<7;i++)parts.push({x:z.x,y:z.y-7,vx:rnd(-50,50),vy:rnd(-60,10),t:rnd(.25,.55),c:'#a01818'});
+  for(let i=0;i<7;i++)parts.push({x:z.x,y:z.y-7,vx:rnd(-50,50),vy:rnd(-60,10),t:rnd(.25,.55),c:'#a01818',g:1});
   // Flash no zumbi + número de dano
   addFloater(z.x, z.y-14, Math.round(dmg*10)/10, dmg>=10?'#ff6060':'#ffe080');
   hitFlesh();
@@ -2951,14 +2978,14 @@ function damageZ(z,dmg,kx,ky,fromNet){
   if(z.hp<=0){
     z.dead=true;kills++;
     addFloater(z.x, z.y-20, 'KILL', '#ff4040');
-    decals.push({x:z.x,y:z.y});
-    if(decals.length>70)decals.shift();
-    for(let i=0;i<8;i++)parts.push({x:z.x,y:z.y-5,vx:rnd(-60,60),vy:rnd(-60,20),t:rnd(.3,.7),c:'#7a1010'});
+    // Manchas: no maximo 24 no mapa; ao passar disso a mais antiga some (como as marcas de tiro nos jogos de FPS)
+    decals.push({x:z.x,y:z.y});if(decals.length>24)decals.shift();
+    for(let i=0;i<8;i++)parts.push({x:z.x,y:z.y-5,vx:rnd(-60,60),vy:rnd(-60,20),t:rnd(.3,.7),c:'#7a1010',g:1});
     // Inchado: explosão tóxica ao morrer
     if(z.bloater || z.kind===7){
       for(let i=0;i<16;i++)parts.push({x:z.x,y:z.y-4,vx:rnd(-90,90),vy:rnd(-90,30),t:rnd(.4,.8),c:'#60c040'});
       if(P && !P.dead && Math.hypot(P.x-z.x,P.y-z.y)<55){
-        hurt(12,.2);
+        zombieHurt(12,.2);
         toast('Nuvem tóxica!');
       }
       // Dano ao parceiro no MP: cada client aplica se estiver perto
@@ -3296,7 +3323,7 @@ function survivalTick(dt){
   tempTick(dt);
   P.food=Math.max(0,P.food-.09*dt*(P.sprint?1.8:1)*(P._fm||1));
   P.water=Math.max(0,P.water-.13*dt*(P.sprint?2:1)*(P._wm||1));
-  if(P.bleed){P.hp-=1.1*dt;if(Math.random()<dt*4)parts.push({x:P.x,y:P.y-2,vx:0,vy:10,t:.5,c:'#a01818'});}
+  if(P.bleed){P.hp-=1.1*dt;if(Math.random()<dt*4)parts.push({x:P.x,y:P.y-2,vx:0,vy:10,t:.5,c:'#a01818',g:1});}
   if(P.food<=0)P.hp-=.7*dt;
   if(P.water<=0)P.hp-=1*dt;
   if(P._tdmg>0)P.hp-=P._tdmg*dt;     // congelando / insolação
@@ -3325,7 +3352,7 @@ function updateP(dt){
       return;
     }
     const tr=terrainFor(v.x,v.y), wf=(weather==='rain'||weather==='sand')?.92:1; // chuva/areia pioram um pouco
-    const maxSpd=72*tr.spd*wf, maxRev=-32*tr.spd*wf;
+    const maxSpd=CAR_TOP*tr.spd*wf, maxRev=-32*tr.spd*wf;
     if(touchGas>0)v.spd=Math.min(maxSpd,v.spd+48*tr.acc*dt);
     else if(touchGas<0)v.spd=Math.max(maxRev,v.spd-40*tr.acc*dt);
     else v.spd*=Math.pow(tr.coast,dt);
@@ -3431,10 +3458,6 @@ function updateP(dt){
         v.hp-=3;
         if(v.hp<=0){ startVehicleDeath(v); return; }
       }
-      if(Math.hypot(z.x-v.x,z.y-v.y)<18 && Math.abs(v.spd)<20 && (z._carHit=(z._carHit||0)-dt)<=0){
-        z._carHit=0.9; v.hp-=1;
-        if(v.hp<=0){ startVehicleDeath(v); return; }
-      }
     }
     return;
   }
@@ -3490,7 +3513,7 @@ function updateZ(z,dt){
     if(Math.abs(z.vy)<2)z.vy=0;
   }
   // Choose nearest living player (local or remote) so both players aggro zombies
-  let targetX=P.x, targetY=P.y, targetSprint=P.sprint&&P.moving, targetMoving=P.moving, targetDead=!!P.dead, targetIsLocal=true;
+  let targetX=P.x, targetY=P.y, targetSprint=P.sprint&&P.moving, targetMoving=P.moving, targetDead=!!P.dead, targetIsLocal=true, targetInCar=!!P.inVehicle;
   let bestD=P.dead?1e9:Math.hypot(P.x-z.x,P.y-z.y);
   if(MP.active && MP.isHost){
     for(const id in remotePlayers){
@@ -3500,7 +3523,7 @@ function updateZ(z,dt){
       if(dd<bestD){
         bestD=dd; targetX=rp.x; targetY=rp.y;
         targetSprint=!!(rp.sprint&&rp.moving); targetMoving=!!rp.moving;
-        targetDead=false; targetIsLocal=false;
+        targetDead=false; targetIsLocal=false; targetInCar=!!rp.inVehicle;
       }
     }
   }
@@ -3595,6 +3618,8 @@ function updateZ(z,dt){
     if(!z._wtriv){tx=z._wx;ty=z._wy;}
   }
   if(dark>.58 && sp>0) sp*=1+Math.min(.22,(dark-.58)*.55);
+  // Perseguindo alguem de carro: nenhum zumbi passa de 70% da velocidade maxima do carro no terreno em que ele esta
+  if(sp>0&&targetInCar&&mode!=='wander'){const cap=carTopAt(targetX,targetY)*0.7;if(sp>cap)sp=cap;}
   z.moving=sp>0;
   if(sp>0){
     let a=Math.atan2(ty-z.y,tx-z.x);
@@ -3624,7 +3649,15 @@ function updateZ(z,dt){
     }
   }
   // Melee hit: only damages the local player (remote damage is handled by their own client via proximity + snapshot)
-  if(!z.ranged&&targetIsLocal&&d<z.r+P.r+6&&z.cd<=0&&!P.dead&&!wallBlocks(z.x,z.y,P.x,P.y)){
+  if(!z.ranged&&targetIsLocal&&P.inVehicle&&!P.dead&&z.cd<=0){
+    // Jogador dentro do carro: o zumbi bate na lataria (o carro sofre o dano, o jogador fica protegido)
+    const v=P.inVehicle;vehHalf(v);
+    const ex=Math.max(0,Math.abs(z.x-v.x)-v._hx),ey=Math.max(0,Math.abs(z.y-v.y)-v._hy);
+    if(Math.hypot(ex,ey)<z.r+3){
+      carTakeHit(v,z.dmg*0.2);
+      z.cd=z.berserk||z.kind===8?0.75:1.1;z.lunge=.15;
+    }
+  } else if(!z.ranged&&targetIsLocal&&d<z.r+P.r+6&&z.cd<=0&&!P.dead&&!wallBlocks(z.x,z.y,P.x,P.y)){
     const knock=z.kind===2||z.kind===3||z.kind===7;
     hurt(z.dmg, z.kind===3?.65:z.kind===2||z.kind===7?.5:z.kind===8?.35:.25);
     z.cd=z.berserk||z.kind===8?0.75:1.1;z.lunge=.15;
@@ -3718,9 +3751,17 @@ function update(dt){
   for(const s of spits){
     s.x+=s.vx*dt;s.y+=s.vy*dt;s.t-=dt;
     if(P && !P.dead && Math.hypot(s.x-P.x,s.y-(P.y-6))<10){
-      hurt(8,.15);
+      zombieHurt(8,.15);
       for(let i=0;i<10;i++)parts.push({x:s.x,y:s.y,vx:rnd(-60,60),vy:rnd(-60,20),t:.5,c:'#80e060'});
       s.t=0;
+    }
+    if(s.t>0&&P&&P.inVehicle&&!P.dead){ // cuspe na lataria: o carro sofre, o jogador fica protegido
+      const v=P.inVehicle;vehHalf(v);
+      if(Math.abs(s.x-v.x)<=v._hx+1&&Math.abs(s.y-v.y)<=v._hy+1){
+        carTakeHit(v,8*0.2);
+        for(let i=0;i<8;i++)parts.push({x:s.x,y:s.y,vx:rnd(-50,50),vy:rnd(-50,20),t:.45,c:'#80e060'});
+        s.t=0;
+      }
     }
     if(pointSolid(s.x,s.y)){
       for(let i=0;i<6;i++)parts.push({x:s.x,y:s.y,vx:rnd(-40,40),vy:rnd(-40,20),t:.4,c:'#80e060'});
@@ -3843,11 +3884,16 @@ function update(dt){
       if(z.dead) continue;
       z._hitCD = (z._hitCD||0) - dt;
       const dd=Math.hypot(z.x-P.x,z.y-P.y);
-      if(dd < (z.r||5)+P.r+6 && z._hitCD<=0 && !wallBlocks(z.x,z.y,P.x,P.y)){
+      let reach=dd < (z.r||5)+P.r+6 && !wallBlocks(z.x,z.y,P.x,P.y);
+      if(P.inVehicle){ // dentro do carro: o alcance e medido ate a lataria
+        const v=P.inVehicle;vehHalf(v);
+        reach=Math.hypot(Math.max(0,Math.abs(z.x-v.x)-v._hx),Math.max(0,Math.abs(z.y-v.y)-v._hy))<(z.r||5)+3;
+      }
+      if(reach && z._hitCD<=0){
         const kind = z.kind||0;
-        hurt(z.dmg||9, kind===2?.5:kind===3?.6:.25);
+        zombieHurt(z.dmg||9, kind===2?.5:kind===3?.6:.25);
         z._hitCD = 1.1;
-        if(kind===2||kind===3){
+        if((kind===2||kind===3)&&!P.inVehicle){
           const a=Math.atan2(P.y-z.y,P.x-z.x);
           P.x+=Math.cos(a)*20;P.y+=Math.sin(a)*20;
         }
@@ -3885,7 +3931,7 @@ function update(dt){
       a._hitCD=(a._hitCD||0)-dt;
       if(Math.hypot(a.x-P.x,a.y-P.y)<30 && a._hitCD<=0 && !wallBlocks(a.x,a.y,P.x,P.y)){
         a._hitCD=1.1;
-        hurt(a.k==='boar'?12:(a.k==='wolf'?10:(a.k==='scorpion'?8:6)),0.15);
+        animalHurt(a.k==='boar'?12:(a.k==='wolf'?10:(a.k==='scorpion'?8:6)),0.15);
       }
     }
   }
@@ -3979,15 +4025,15 @@ function updateHud(force){
     else wpn.textContent='';
   }
   // Status do personagem PERMANENTE (importante)
-  let st='';
-  if(P.bleed)st='SANGRANDO';
-  else if(P.water<=0)st='SEDE';
-  else if(P.food<=0)st='FOME';
-  else if((P.temp||0)<-55)st='CONGELANDO';
-  else if((P.temp||0)>55)st='INSOLAÇÃO';
-  else if(P.exhausted)st='CANSADO';
+  let st='',stk='';
+  if(P.bleed){st='SANGRANDO';stk='hp';}
+  else if(P.water<=0){st='SEDE';stk='water';}
+  else if(P.food<=0){st='FOME';stk='food';}
+  else if((P.temp||0)<-55){st='CONGELANDO';stk='cold';}
+  else if((P.temp||0)>55){st='INSOLAÇÃO';stk='hot';}
+  else if(P.exhausted){st='CANSADO';stk='stam';}
   if(!st&&MP.active&&MP.isHost&&MP.guestAway)st='CONVIDADO OFFLINE';
-  const stat=$('stat');if(stat){stat.textContent=st;stat.style.opacity=st?'1':'0';}
+  const stat=$('stat');if(stat){stat.textContent=st;stat.style.opacity=st?'1':'0';stat.className=stk?'s-'+stk:'';} // a cor do aviso segue a cor da barra correspondente
   let canInteract=false,btnText='PEGAR';
   if(nearestItem())canInteract=true;
   if(pointInLake(P.x,P.y)&&mapHasLake()){canInteract=true;btnText='ÁGUA';}
@@ -5698,7 +5744,7 @@ function render(){
         ctx.beginPath();ctx.moveTo(t.x1,t.y1);ctx.lineTo(t.x2,t.y2);ctx.stroke();ctx.globalAlpha=1;
       }
     }
-    for(const p of parts)R(p.x,p.y,2,2,p.c);
+    for(const p of parts)if(!p.g)R(p.x,p.y,2,2,p.c);
     // Números de dano / feedback
     ctx.textAlign='center';ctx.font='bold 9px "Courier New",monospace';
     for(const f of floaters){
@@ -5784,12 +5830,14 @@ function render(){
       R(r.x,r.y,r.w,2,'#e8f0f8'); // snow piled on roadside
     }
   }
-  for(const v of vehicles)if(v.x+v.w>vx0&&v.x-v.w<vx1&&v.y+v.h>vy0&&v.y-v.h<vy1)drawVehicle(v);
-  if(plane&&plane.x+60>vx0&&plane.x-60<vx1&&plane.y+50>vy0&&plane.y-50<vy1)drawPlane(plane);
+  // Sangue no chao (manchas e respingos) fica ABAIXO dos veiculos; so itens e entidades aparecem por cima
   for(const d of decals){
     if(d.x<vx0||d.x>vx1||d.y<vy0||d.y>vy1)continue;
     R(d.x-6,d.y-2,12,6,'#5a1010');
   }
+  for(const p of parts)if(p.g)R(p.x,p.y,2,2,p.c);
+  for(const v of vehicles)if(v.x+v.w>vx0&&v.x-v.w<vx1&&v.y+v.h>vy0&&v.y-v.h<vy1)drawVehicle(v);
+  if(plane&&plane.x+60>vx0&&plane.x-60<vx1&&plane.y+50>vy0&&plane.y-50<vy1)drawPlane(plane);
   const vis=b=>b.x<vx1&&b.x+b.w>vx0&&b.y<vy1&&b.y+b.h>vy0;
   for(const b of blds){
     if(!vis(b))continue;
@@ -5917,7 +5965,7 @@ function render(){
       ctx.beginPath();ctx.moveTo(t.x1,t.y1);ctx.lineTo(t.x2,t.y2);ctx.stroke();ctx.globalAlpha=1;
     }
   }
-  for(const p of parts)R(p.x,p.y,2,2,p.c);
+  for(const p of parts)if(!p.g)R(p.x,p.y,2,2,p.c);
   ctx.textAlign='center';ctx.font='bold 9px "Courier New",monospace';
   for(const f of floaters){
     ctx.globalAlpha=Math.min(1,f.t*1.4);
@@ -5950,6 +5998,19 @@ function render(){
       if(lx<-lr||ly<-lr||lx>W+lr||ly>H+lr) continue;
       punch(lx,ly,lr);
     }
+    // Faróis: acendem só quando alguém está dentro do veículo (jogador local ou o outro jogador no multiplayer)
+    const headlit=[];
+    if(dark>.15){
+      for(const v of vehicles){
+        if(v.destroyed||v.dying) continue;
+        if(!((P&&P.inVehicle===v)||(v.driverId&&remotePlayers[v.driverId]))) continue;
+        const hx0=(v.x-camX)*Z+sx,hy0=(v.y-camY)*Z+sy;
+        if(hx0<-230*Z||hy0<-230*Z||hx0>W+230*Z||hy0>H+230*Z) continue;
+        headlit.push(v);
+        const cf=Math.cos(v.face||0),sf=Math.sin(v.face||0);
+        for(let k=0;k<5;k++){const dd=22+k*24;punch(hx0+cf*dd*Z,hy0+sf*dd*Z,(30+k*8)*Z);} // facho alongado à frente
+      }
+    }
     lctx.globalCompositeOperation='source-over';
     ctx.imageSmoothingEnabled=true; // suaviza o buffer reduzido ao ampliar
     ctx.drawImage(lightC,0,0,lightC.width,lightC.height,0,0,W,H);
@@ -5969,6 +6030,25 @@ function render(){
         const hx=(l.x-camX)*Z+sx,hy=(l.y-23-camY)*Z+sy;
         if(hx<-20||hy<-20||hx>W+20||hy>H+20) continue;
         ctx.fillRect(hx-2.5*Z,hy-1*Z,5*Z,2*Z);
+      }
+    }
+    // Brilho quente do facho + as duas luzes na frente do carro
+    if(headlit.length){
+      ctx.globalCompositeOperation='lighter';
+      ctx.globalAlpha=Math.min(1,dark*.9);
+      for(const v of headlit){
+        const cf=Math.cos(v.face||0),sf=Math.sin(v.face||0),hx0=(v.x-camX)*Z+sx,hy0=(v.y-camY)*Z+sy;
+        for(let k=0;k<4;k++){const dd=30+k*28,rr=(34+k*8)*Z;ctx.drawImage(lampSprite,hx0+cf*dd*Z-rr,hy0+sf*dd*Z-rr,2*rr,2*rr);}
+      }
+      ctx.globalAlpha=1;
+      ctx.globalCompositeOperation='source-over';
+      ctx.fillStyle='#fff6c0';
+      for(const v of headlit){
+        const cf=Math.cos(v.face||0),sf=Math.sin(v.face||0),hx0=(v.x-camX)*Z+sx,hy0=(v.y-camY)*Z+sy;
+        for(const sd of [-1,1]){
+          const lx=hx0+(cf*17-sf*6*sd)*Z,ly=hy0+(sf*17+cf*6*sd)*Z;
+          ctx.fillRect(lx-1.5*Z,ly-1*Z,3*Z,2*Z);
+        }
       }
     }
     ctx.imageSmoothingEnabled=false;
