@@ -4,8 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0b100b">
-<title>MINI SURVIVAL</title>
+<meta name="theme-color" content="#171A20">
+<meta name="application-name" content="Bit Survival">
+<meta name="apple-mobile-web-app-title" content="Bit Survival">
+<title>BIT SURVIVAL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;overscroll-behavior:none;touch-action:none;font-family:"Courier New",monospace;color:#eee9d0}
@@ -24,7 +29,8 @@ body.nomap #mm{display:none!important}
 .row i{font-style:normal;width:14px;text-align:center}
 .bar{flex:1;height:8px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.35)}
 .bar b{display:block;height:100%;width:100%}
-#stat{font-size:10px;color:#ff6a5a;height:12px;text-shadow:1px 1px #000}
+#stat{display:inline-block;margin-top:5px;padding:2px 7px;font-size:12px;font-weight:700;letter-spacing:.6px;line-height:15px;white-space:nowrap;color:#ff7a6a;background:rgba(0,0,0,.62);border:1px solid rgba(255,120,100,.45);border-radius:4px;text-shadow:1px 1px #000}
+#stat:empty{display:none}
 #top{position:absolute;right:8px;top:8px;text-align:right;font-size:11px;text-shadow:1px 1px #000}
 #mm{width:76px;height:76px;border:1px solid rgba(255,255,255,.45);background:#142014;display:block;margin-left:auto;image-rendering:pixelated}
 #top div{margin-top:2px}
@@ -155,6 +161,38 @@ body.nomap #mm{display:none!important}
 .mp-status{font-size:12px;color:#9fd68a;min-height:18px;margin:8px 0}
 .mp-status.err{color:#e05a4a}
 
+
+/* ===== Menu principal (Bit Survival): estilos restritos a #menu, nao afetam as outras telas ===== */
+#menu{background:#171A20;--c-bg:#171A20;--c-cream:#E8E0CC;--c-moss:#8DA568;--c-amber:#C79A54;--c-line:#2a2f38;--c-deep:#0c0e12;
+  --f-px:"Press Start 2P","Courier New",monospace}
+#menu .card{max-width:380px;align-items:center;justify-content:center;gap:0;font-family:var(--f-px);color:var(--c-cream)}
+#menu .logo-wrap{display:flex;justify-content:center;margin:0 0 10px}
+#menu canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+#menu .tagline{margin:0 0 14px;font:8px/1.6 var(--f-px);color:var(--c-cream);opacity:.75;letter-spacing:0;text-align:center}
+#menu .scene-wrap{display:flex;justify-content:center;margin:0 0 6px}
+#menu .menu-btns{width:100%;gap:12px;margin:14px 0 8px}
+#menu .menu-btn{background:var(--c-bg);color:var(--c-cream);border:3px solid var(--c-cream);border-radius:0;box-shadow:0 4px 0 var(--c-deep);
+  font:11px/1.4 var(--f-px);letter-spacing:1px;text-transform:uppercase;min-height:48px;padding:12px 16px;transition:none;position:relative;white-space:nowrap}
+#menu .menu-btn.mp,#menu .menu-btn.sec{background:var(--c-bg);border-color:var(--c-cream);color:var(--c-cream)}
+#menu .menu-btn.sec{border-color:#8a8672;color:#cfc8b2}
+#menu #btnPlay{background:var(--c-moss);border-color:var(--c-moss);color:var(--c-bg);min-height:54px;font-size:13px}
+#menu .menu-btn:hover,#menu .menu-btn:focus-visible{transform:none;box-shadow:0 4px 0 var(--c-deep);outline:none;border-color:var(--c-moss);color:var(--c-moss)}
+#menu #btnPlay:hover,#menu #btnPlay:focus-visible{background:#a3bd7f;border-color:#a3bd7f;color:var(--c-bg)}
+#menu .menu-btn:hover::before,#menu .menu-btn:focus-visible::before{content:'>';position:absolute;left:10px;color:var(--c-amber)}
+#menu #btnPlay:hover::before,#menu #btnPlay:focus-visible::before{color:var(--c-bg)}
+#menu .menu-btn:active{transform:translateY(4px);box-shadow:0 0 0 var(--c-deep)}
+#menu #bestline{font:8px/1.6 var(--f-px);color:var(--c-amber);margin:6px 0 0;min-height:13px;text-align:center}
+@media (orientation:landscape) and (max-height:520px){
+  #menu .card{max-width:760px;display:grid;grid-template-columns:1fr minmax(210px,290px);grid-template-areas:"logo btns" "tag btns" "scene btns" "best best";column-gap:28px;align-content:center;justify-items:center;padding:6px}
+  #menu .logo-wrap{grid-area:logo;margin:0 0 6px;align-self:end}
+  #menu .tagline{grid-area:tag;margin:0 0 8px;font-size:7px}
+  #menu .scene-wrap{grid-area:scene;margin:0;align-self:start}
+  #menu .menu-btns{grid-area:btns;margin:0;gap:10px;align-self:center}
+  #menu .menu-btn{min-height:44px;padding:10px 14px;font-size:10px}
+  #menu #btnPlay{min-height:50px;font-size:12px}
+  #menu #bestline{grid-area:best;margin:4px 0 0}
+}
+
 @media (orientation:landscape) and (max-height:520px){
   .card{max-width:920px;padding:8px}
   .card h1{font-size:22px;margin-bottom:2px}
@@ -190,10 +228,110 @@ body.nomap #mm{display:none!important}
   .room-input::placeholder{font-size:13px}
   .name-input{font-size:12px;padding:8px 12px;margin:6px auto 4px;width:200px}
 }
+
+/* ===== Tema Bit Survival para todas as telas (mapa, multiplayer, configuracoes, craft, pausa, morte) ===== */
+.screen{background:#171A20;color:#E8E0CC;--c-bg:#171A20;--c-panel:#1f242c;--c-cream:#E8E0CC;--c-moss:#8DA568;--c-amber:#C79A54;--c-line:#2e343e;--c-edge:#3f4652;--c-deep:#0c0e12;--c-red:#C0634A;--c-dim:#a9a493;
+  --f-px:"Press Start 2P","Courier New",monospace}
+.screen .card h1{font:16px/1.4 var(--f-px);color:var(--c-cream);text-shadow:2px 2px 0 var(--c-deep);letter-spacing:2px;margin:0 0 10px}
+.screen .card h2{font:13px/1.5 var(--f-px);color:var(--c-moss);text-shadow:2px 2px 0 var(--c-deep);letter-spacing:1px;margin:0 0 12px}
+.screen .card h2::after{content:'';display:block;width:36px;height:3px;background:var(--c-amber);margin:8px auto 0}
+.screen .card h3{font:9px/1.4 var(--f-px);color:var(--c-amber);letter-spacing:1px;border-bottom:2px solid var(--c-line);padding-bottom:5px;margin:12px 0 6px}
+.screen .card p{color:#cfc8b2}
+#deadscr h2{color:var(--c-red)}
+.screen .card .help{background:var(--c-panel);border:2px solid var(--c-line);border-left:4px solid var(--c-amber);border-radius:0;color:#cfc8b2}
+/* botoes */
+.screen .menu-btn,.screen .go,.screen .back{border-radius:0;font:11px/1.4 var(--f-px);letter-spacing:1px;text-transform:uppercase;min-height:46px;padding:12px 18px;transition:none;
+  background:var(--c-bg);color:var(--c-cream);border:3px solid var(--c-cream);box-shadow:0 4px 0 var(--c-deep);cursor:pointer}
+.screen .menu-btn.sec,.screen .back,.screen .go.sec{border-color:#8a8672;color:#cfc8b2}
+.screen .menu-btn:not(.sec):not(.mp):not(.danger),.screen .go:not(.danger):not(.sec){background:var(--c-moss);border-color:var(--c-moss);color:var(--c-bg)}
+.screen .danger{background:var(--c-bg);border-color:var(--c-red);color:var(--c-cream)}
+.screen .menu-btn:hover,.screen .go:hover,.screen .back:hover,.screen .menu-btn:focus-visible,.screen .go:focus-visible,.screen .back:focus-visible{transform:none;outline:none;box-shadow:0 4px 0 var(--c-deep);border-color:var(--c-moss);color:var(--c-moss)}
+.screen .menu-btn:not(.sec):not(.mp):not(.danger):hover,.screen .go:not(.danger):not(.sec):hover{background:#a3bd7f;border-color:#a3bd7f;color:var(--c-bg)}
+.screen .danger:hover{border-color:#e07a5e;color:#e07a5e}
+.screen .menu-btn:active,.screen .go:active,.screen .back:active{transform:translateY(4px);box-shadow:0 0 0 var(--c-deep)}
+/* escolha de mapa */
+.screen .map-opt{position:relative;background:var(--c-panel);border:3px solid var(--c-edge);border-radius:0;color:var(--c-cream);font:10px/1.4 var(--f-px);letter-spacing:1px;transition:none;box-shadow:0 3px 0 var(--c-deep);padding:12px 6px}
+.screen .map-opt .ic{display:flex;align-items:center;justify-content:center;height:36px;font-size:0}
+canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:crisp-edges}
+.screen .map-opt:hover{border-color:var(--c-moss)}
+.screen .map-opt.selected{background:#232b22;border-color:var(--c-moss);color:var(--c-moss);box-shadow:0 3px 0 var(--c-deep)}
+.screen .map-opt.selected::after{content:'';position:absolute;top:5px;right:5px;width:8px;height:8px;background:var(--c-amber)}
+.screen .map-desc{font:11px/1.3 "Courier New",monospace;color:var(--c-dim)}
+/* configuracoes */
+.screen .cfg-row,.screen .cfg-toggle{background:var(--c-panel);border:2px solid var(--c-line);border-radius:0}
+.screen .cfg-row label,.screen .cfg-toggle label{color:var(--c-cream)}
+.screen .cfg-row .val{color:var(--c-amber)}
+.screen .cfg-row input[type=range]{height:6px;background:var(--c-bg);border:2px solid var(--c-edge);border-radius:0}
+.screen .cfg-row input[type=range]::-webkit-slider-thumb{width:16px;height:16px;background:var(--c-moss);border:2px solid var(--c-deep);border-radius:0}
+.screen .cfg-row input[type=range]::-moz-range-thumb{width:16px;height:16px;background:var(--c-moss);border:2px solid var(--c-deep);border-radius:0}
+.screen .cfg-toggle .sw{background:var(--c-bg);border:2px solid var(--c-edge);border-radius:0;box-sizing:border-box;transition:none}
+.screen .cfg-toggle .sw::after{border-radius:0;background:#8a8672;transition:none;top:1px;left:1px}
+.screen .cfg-toggle.on .sw{background:var(--c-moss);border-color:var(--c-moss)}
+.screen .cfg-toggle.on .sw::after{background:var(--c-bg)}
+/* craft */
+.screen .craft-header{background:var(--c-panel);border:2px solid var(--c-line);border-radius:0}
+.screen .craft-header .res span{color:var(--c-amber)}
+.screen .craft-tab{background:var(--c-bg);border:2px solid var(--c-edge);color:#cfc8b2;border-radius:0;font:8px/1.4 var(--f-px);padding:8px 9px}
+.screen .craft-tab.active{background:var(--c-moss);border-color:var(--c-moss);color:var(--c-bg)}
+.screen .craft-row{background:var(--c-panel);border:2px solid var(--c-line);border-radius:0}
+.screen .craft-row.can{background:#20271d;border:2px solid var(--c-moss)}
+.screen .craft-row .name{color:var(--c-cream);font:9px/1.5 var(--f-px)}
+.screen .craft-row .cost{color:var(--c-dim)}
+.screen .craft-row .status{color:var(--c-red)}
+.screen .craft-row.can .status{color:var(--c-moss)}
+.screen .craft-row .recipe-icon{flex:0 0 36px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--c-bg);border:2px solid var(--c-edge);font-size:18px}
+.screen .craft-row button{background:var(--c-moss);border:2px solid var(--c-moss);color:var(--c-bg);border-radius:0;font:8px/1.4 var(--f-px);padding:9px 10px;box-shadow:0 3px 0 var(--c-deep)}
+.screen .craft-row button:active{transform:translateY(3px);box-shadow:none}
+.screen .craft-row button:disabled{background:var(--c-bg);border-color:var(--c-edge);color:#6b6858;box-shadow:none}
+/* multiplayer */
+.screen .room-code{font:22px/1.2 var(--f-px);letter-spacing:6px;color:var(--c-amber);background:var(--c-deep);border:3px solid var(--c-amber);border-radius:0;text-shadow:none;padding:14px 14px 14px 20px}
+.screen .room-input{font:16px var(--f-px);letter-spacing:4px;color:var(--c-amber);background:var(--c-deep);border:3px solid var(--c-amber);border-radius:0}
+.screen .room-input::placeholder{color:#5a5648;font-size:12px;letter-spacing:2px}
+.screen .name-input{font:11px var(--f-px);letter-spacing:1px;color:var(--c-cream);background:var(--c-deep);border:3px solid var(--c-moss);border-radius:0}
+.screen .name-input::placeholder{color:#5a5648;font-size:10px}
+.screen .mp-status{color:var(--c-moss);font-family:"Courier New",monospace}
+.screen .mp-status.err{color:var(--c-red)}
+@media (orientation:landscape) and (max-height:520px){
+  .screen .card h1{font-size:13px;margin-bottom:6px}
+  .screen .card h2{font-size:11px;margin-bottom:6px}
+  .screen .card h2::after{margin-top:5px;height:2px}
+  .screen .card h3{font-size:8px;margin:8px 0 4px}
+  .screen .menu-btn,.screen .go,.screen .back{font-size:9px;min-height:38px;padding:8px 14px;box-shadow:0 3px 0 var(--c-deep)}
+  .screen .map-opt{padding:8px 4px;font-size:9px}
+  .screen .map-opt .ic{height:28px}
+  canvas.ico{width:27px;height:27px}
+  .screen .map-desc{font-size:10px}
+  .screen .room-code{font-size:16px;padding:8px 10px 8px 16px;letter-spacing:4px}
+  .screen .room-input{font-size:13px}
+  .screen .name-input{font-size:10px}
+  .screen .craft-row .name{font-size:8px}
+  .screen .craft-tab{padding:6px 8px}
+  /* Escolha de mapa em celular deitado: 4 colunas e rolagem, para o botao INICIAR nunca ficar cortado */
+  #mapscreen .card{overflow-y:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start}
+  #mapscreen .map-grid{grid-template-columns:repeat(4,1fr)}
+  #mapscreen .map-opt{padding:8px 4px}
+  #mapscreen .card .help{font-size:10px;line-height:1.35;padding:5px 8px}
+}
+
+/* ===== Aviso "gire o celular" (so em telas de toque em retrato) ===== */
+#rotate{display:none;position:fixed;inset:0;z-index:10000;background:#171A20;color:#E8E0CC;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;font-family:"Press Start 2P","Courier New",monospace;touch-action:none}
+#rotate canvas{width:160px;height:96px;image-rendering:pixelated;image-rendering:crisp-edges}
+#rotate h2{margin:0;font:14px/1.5 "Press Start 2P","Courier New",monospace;color:#8DA568;text-shadow:2px 2px 0 #0c0e12}
+#rotate p{margin:0;font:12px/1.5 "Courier New",monospace;color:#cfc8b2;max-width:260px}
+#rotate button{background:#8DA568;color:#171A20;border:3px solid #8DA568;border-radius:0;box-shadow:0 4px 0 #0c0e12;font:10px/1.4 "Press Start 2P","Courier New",monospace;letter-spacing:1px;padding:14px 16px;min-height:48px;cursor:pointer}
+#rotate button:active{transform:translateY(4px);box-shadow:none}
+@media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
+
+<div id="rotate" role="alert">
+  <canvas id="rotateCv" width="40" height="24" aria-hidden="true"></canvas>
+  <h2>GIRE O CELULAR</h2>
+  <p>O Bit Survival é jogado na horizontal.</p>
+  <button type="button" id="rotateBtn">TRAVAR EM PAISAGEM</button>
+</div>
 
 <div id="hud" class="hide">
   <div id="bars">
@@ -246,14 +384,15 @@ body.nomap #mm{display:none!important}
 
 <div id="menu" class="screen">
   <div class="card">
-    <h1>MINI SURVIVAL</h1>
-    <p style="color:#9fd68a;letter-spacing:2px;font-size:11px;margin-top:0">SOBREVIVA O MÁXIMO QUE PUDER</p>
+    <div class="logo-wrap"><canvas id="logoCv" width="46" height="37" role="img" aria-label="BIT SURVIVAL"></canvas></div>
+    <p class="tagline">SOBREVIVA O MÁXIMO QUE PUDER</p>
+    <div class="scene-wrap"><canvas id="sceneCv" width="46" height="14" aria-hidden="true"></canvas></div>
     <div class="menu-btns">
-      <button class="menu-btn" id="btnPlay">▶ JOGAR</button>
-      <button class="menu-btn mp" id="btnMulti">👥 MULTIPLAYER</button>
-      <button class="menu-btn sec" id="btnConfig">⚙ CONFIGURAÇÕES</button>
+      <button class="menu-btn" id="btnPlay">JOGAR</button>
+      <button class="menu-btn mp" id="btnMulti">MULTIPLAYER</button>
+      <button class="menu-btn sec" id="btnConfig">CONFIGURAÇÕES</button>
     </div>
-    <p id="bestline" style="font-size:11px;color:#aaa"></p>
+    <p id="bestline"></p>
   </div>
 </div>
 
@@ -262,100 +401,101 @@ body.nomap #mm{display:none!important}
     <h2>ESCOLHA O MAPA</h2>
     <div class="map-grid">
       <button class="map-opt selected" data-map="forest">
-        <span class="ic">🌲</span><span>FLORESTA</span>
+        <span class="ic"><canvas class="ico" data-art="tree" width="9" height="9"></canvas></span><span>FLORESTA</span>
         <span class="map-desc">Bosques densos e um lago isolado — pesque e asse</span>
       </button>
       <button class="map-opt" data-map="desert">
-        <span class="ic">🏜</span><span>DESERTO</span>
+        <span class="ic"><canvas class="ico" data-art="cactus" width="9" height="9"></canvas></span><span>DESERTO</span>
         <span class="map-desc">Cactos, ossadas e pouca sombra — sem lago</span>
       </button>
       <button class="map-opt" data-map="snow">
-        <span class="ic">❄</span><span>NEVE</span>
+        <span class="ic"><canvas class="ico" data-art="pine" width="9" height="9"></canvas></span><span>NEVE</span>
         <span class="map-desc">Pinheiros, gelo e lago congelado p/ pescar</span>
       </button>
       <button class="map-opt" data-map="city">
-        <span class="ic">🏙</span><span>CIDADE</span>
+        <span class="ic"><canvas class="ico" data-art="city" width="9" height="9"></canvas></span><span>CIDADE</span>
         <span class="map-desc">Bairros densos, prédios, lojas, carros e hordas</span>
       </button>
     </div>
     <div class="help">
-      🎯 Sobreviva o máximo de tempo · 🛠 Craft (C) · ⏸ Pause<br>
-      🧟 9 tipos de zumbis — a horda fica pior a cada dia<br>
-      🔫 Pistola / SMG / Shotgun / Rifle (mesma munição)<br>
-      🌡️ Temperatura: Neve = frio (fogueira ou abrigo) · Deserto = calor de dia e frio à noite (sombra, água, oásis)<br>
-      🎣 Lago (Floresta/Neve) e oásis (Deserto): beba água à vontade · crie a Vara de Pesca e pesque → asse na fogueira<br>
-      🚗 Saqueie carros e dirija · 💬 Chat só no multiplayer
+      Sobreviva o máximo de tempo · Craft (C) · Pause<br>
+      9 tipos de zumbis — a horda fica pior a cada dia<br>
+      Pistola / SMG / Shotgun / Rifle (mesma munição)<br>
+      Temperatura: Neve = frio (fogueira ou abrigo) · Deserto = calor de dia e frio à noite (sombra, água, oásis)<br>
+      Lago (Floresta/Neve) e oásis (Deserto): beba água à vontade · crie a Vara de Pesca e pesque asse na fogueira<br>
+      Saqueie carros e dirija · Chat só no multiplayer
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
       <button class="go" id="btnStart" style="margin:0">INICIAR PARTIDA</button>
-      <button class="back" id="btnBackMap" style="margin:0">← VOLTAR</button>
+      <button class="back" id="btnBackMap" style="margin:0">VOLTAR</button>
     </div>
   </div>
 </div>
 
 <div id="mpscreen" class="screen hide">
   <div class="card">
-    <h2>👥 MULTIPLAYER</h2>
-    <p style="color:#9fd68a;font-size:11px;margin-top:0">Jogue com um amigo via conexão direta P2P</p>
+    <h2>MULTIPLAYER</h2>
+    <p style="font-size:11px;margin-top:0">Jogue com um amigo via conexão direta P2P</p>
     <div class="menu-btns">
-      <button class="menu-btn mp" id="btnMPHost">🏠 CRIAR SALA (Host)</button>
-      <button class="menu-btn mp" id="btnMPJoin">🔗 ENTRAR EM SALA</button>
-      <button class="menu-btn sec" id="btnMPBack">← VOLTAR</button>
+      <button class="menu-btn mp" id="btnMPHost">CRIAR SALA (Host)</button>
+      <button class="menu-btn mp" id="btnMPJoin">ENTRAR EM SALA</button>
+      <button class="menu-btn sec" id="btnMPBack">VOLTAR</button>
     </div>
     <div class="help" style="text-align:center;font-size:10px">
-      💡 Host cria a sala, escolhe o mapa e compartilha o código (6 caracteres).<br>
-      📋 Use COPIAR CÓDIGO e envie no WhatsApp. Convidado cola e conecta.<br>
-      📱 Tela cheia/paisagem no 1º toque após a partida começar.<br>
-      💬 Chat in-game (botão 💬). A partida só acaba quando os dois morrem.
+      Host cria a sala, escolhe o mapa e compartilha o código (6 caracteres).<br>
+      Use COPIAR CÓDIGO e envie no WhatsApp. Convidado cola e conecta.<br>
+      Tela cheia/paisagem no 1º toque após a partida começar.<br>
+      Chat in-game (botão de chat). A partida só acaba quando os dois morrem.
     </div>
   </div>
 </div>
 
 <div id="mphostscreen" class="screen hide">
   <div class="card">
-    <h2>🏠 CRIAR SALA</h2>
-    <p style="font-size:11px;color:#9fd68a">Digite seu nome, escolha o mapa e compartilhe o código</p>
+    <h2>CRIAR SALA</h2>
+    <p style="font-size:11px">Digite seu nome, escolha o mapa e compartilhe o código</p>
     <input type="text" id="hostName" class="name-input" placeholder="SEU NOME" maxlength="12" autocomplete="off">
     <div class="map-grid" style="margin:6px 0">
-      <button class="map-opt selected" data-mp-map="forest"><span class="ic">🌲</span><span>FLORESTA</span></button>
-      <button class="map-opt" data-mp-map="desert"><span class="ic">🏜</span><span>DESERTO</span></button>
-      <button class="map-opt" data-mp-map="snow"><span class="ic">❄</span><span>NEVE</span></button>
-      <button class="map-opt" data-mp-map="city"><span class="ic">🏙</span><span>CIDADE</span></button>
+      <button class="map-opt selected" data-mp-map="forest"><span class="ic"><canvas class="ico" data-art="tree" width="9" height="9"></canvas></span><span>FLORESTA</span></button>
+      <button class="map-opt" data-mp-map="desert"><span class="ic"><canvas class="ico" data-art="cactus" width="9" height="9"></canvas></span><span>DESERTO</span></button>
+      <button class="map-opt" data-mp-map="snow"><span class="ic"><canvas class="ico" data-art="pine" width="9" height="9"></canvas></span><span>NEVE</span></button>
+      <button class="map-opt" data-mp-map="city"><span class="ic"><canvas class="ico" data-art="city" width="9" height="9"></canvas></span><span>CIDADE</span></button>
     </div>
     <div id="hostCodeWrap" class="hide">
-      <p style="font-size:11px;color:#aaa">Compartilhe este código com seu amigo:</p>
+      <p style="font-size:11px">Compartilhe este código com seu amigo:</p>
       <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin:8px 0">
         <div class="room-code" id="hostCode">------</div>
-        <button class="menu-btn" id="btnCopyCode" style="padding:12px 22px;font-size:13px;width:auto;min-width:160px">📋 COPIAR CÓDIGO</button>
+        <button class="menu-btn" id="btnCopyCode" style="padding:12px 22px;font-size:13px;width:auto;min-width:160px">COPIAR CÓDIGO</button>
       </div>
       <div class="mp-status" id="hostStatus">Aguardando conexão...</div>
+      <p style="font-size:10px;margin:4px 0 0">Dica: deixe o jogo aberto (janela flutuante ou tela dividida) até seu amigo entrar.</p>
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
       <button class="go" id="btnHostCreate" style="margin:0">CRIAR SALA</button>
-      <button class="back" id="btnHostBack" style="margin:0">← VOLTAR</button>
+      <button class="back" id="btnHostBack" style="margin:0">VOLTAR</button>
     </div>
   </div>
 </div>
 
 <div id="mpjoinscreen" class="screen hide">
   <div class="card">
-    <h2>🔗 ENTRAR EM SALA</h2>
-    <p style="font-size:11px;color:#9fd68a">Digite seu nome e o código do Host</p>
+    <h2>ENTRAR EM SALA</h2>
+    <p style="font-size:11px">Digite seu nome e o código do Host</p>
     <input type="text" id="joinName" class="name-input" placeholder="SEU NOME" maxlength="12" autocomplete="off">
     <input type="text" id="joinCode" class="room-input" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters">
     <div class="mp-status" id="joinStatus"></div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
       <button class="go" id="btnJoinConnect" style="margin:0">CONECTAR</button>
-      <button class="back" id="btnJoinBack" style="margin:0">← VOLTAR</button>
+      <button class="back" id="btnJoinBack" style="margin:0">VOLTAR</button>
     </div>
   </div>
 </div>
 
 <div id="configscreen" class="screen hide">
   <div class="card">
-    <h2>⚙ CONFIGURAÇÕES</h2>
+    <h2>CONFIGURAÇÕES</h2>
     <div class="ui-scroll">
-      <h3>🔊 ÁUDIO</h3>
+      <h3>ÁUDIO</h3>
       <div class="cfg-grid">
         <div class="cfg-row"><label>Geral</label><input type="range" id="cfg_master" min="0" max="100" value="80"><span class="val" id="v_master">80%</span></div>
         <div class="cfg-row"><label>Efeitos</label><input type="range" id="cfg_sfx" min="0" max="100" value="100"><span class="val" id="v_sfx">100%</span></div>
@@ -363,42 +503,42 @@ body.nomap #mm{display:none!important}
         <div class="cfg-row"><label>Clima</label><input type="range" id="cfg_rain" min="0" max="100" value="70"><span class="val" id="v_rain">70%</span></div>
         <div class="cfg-row"><label>Passos</label><input type="range" id="cfg_step" min="0" max="100" value="80"><span class="val" id="v_step">80%</span></div>
       </div>
-      <h3>⚡ DESEMPENHO</h3>
-      <p style="font-size:10px;color:#9fd68a;margin:0 0 6px;text-align:left">No celular, “Economia” liga sozinho e reduz calor/bateria.</p>
+      <h3>DESEMPENHO</h3>
+      <p style="font-size:10px;margin:0 0 6px;text-align:left">No celular, “Economia” liga sozinho e reduz calor/bateria.</p>
       <div class="cfg-grid">
         <div class="cfg-toggle on" id="cfg_economy"><label>Modo economia (30 FPS, menos efeitos)</label><div class="sw"></div></div>
         <div class="cfg-toggle on" id="cfg_lowres"><label>Resolução reduzida</label><div class="sw"></div></div>
         <div class="cfg-toggle on" id="cfg_simplelight"><label>Iluminação simples (noite)</label><div class="sw"></div></div>
       </div>
-      <h3>🎮 JOGO</h3>
+      <h3>JOGO</h3>
       <div class="cfg-grid">
         <div class="cfg-toggle on" id="cfg_fullscreen"><label>Tela cheia ao iniciar partida</label><div class="sw"></div></div>
         <div class="cfg-toggle on" id="cfg_tracers"><label>Traçantes de tiro</label><div class="sw"></div></div>
         <div class="cfg-toggle on" id="cfg_dmgflash"><label>Flash ao levar dano</label><div class="sw"></div></div>
         <div class="cfg-toggle on" id="cfg_screenflash"><label>Vinheta com vida baixa</label><div class="sw"></div></div>
       </div>
-      <h3>👁 INTERFACE</h3>
-      <p style="font-size:10px;color:#9fd68a;margin:0 0 6px;text-align:left">Botões, inventário, pause ⏸ e craft 🛠 nunca são ocultados.</p>
+      <h3>INTERFACE</h3>
+      <p style="font-size:10px;margin:0 0 6px;text-align:left">Botões, inventário, pause e craft nunca são ocultados.</p>
       <div class="cfg-grid">
         <div class="cfg-toggle on" id="cfg_hud"><label>Barras e textos (vida, fome, relógio)</label><div class="sw"></div></div>
         <div class="cfg-toggle on" id="cfg_minimap"><label>Minimapa e relógio</label><div class="sw"></div></div>
       </div>
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">
-      <button class="go" id="btnReset" style="background:#8a3030;border-color:#d06060;margin:0">RESTAURAR</button>
-      <button class="back" id="btnBackCfg" style="margin:0">← VOLTAR</button>
+      <button class="go danger" id="btnReset" style="margin:0">RESTAURAR</button>
+      <button class="back" id="btnBackCfg" style="margin:0">VOLTAR</button>
     </div>
   </div>
 </div>
 
 <div id="craftscr" class="screen hide">
   <div class="card">
-    <h2>🛠 CRAFTING</h2>
+    <h2>CRAFTING</h2>
     <div class="craft-header">
-      <span style="color:#aaa">Recursos disponíveis:</span>
+      <span>Recursos disponíveis:</span>
       <div class="res">
-        <span>🪵 <b id="cw">0</b></span>
-        <span>🪨 <b id="cs">0</b></span>
+        <span>MADEIRA <b id="cw">0</b></span>
+        <span>PEDRA <b id="cs">0</b></span>
       </div>
     </div>
     <div class="craft-tabs" id="craft-tabs">
@@ -410,7 +550,7 @@ body.nomap #mm{display:none!important}
       <div id="craftlist" class="craft-grid"></div>
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">
-      <button class="back" id="craftclose" style="margin:0;background:#555;border-color:#999">FECHAR</button>
+      <button class="back" id="craftclose" style="margin:0">FECHAR</button>
     </div>
   </div>
 </div>
@@ -418,12 +558,12 @@ body.nomap #mm{display:none!important}
 <div id="pausescr" class="screen hide">
   <div class="card" style="max-width:420px">
     <h1 style="margin-bottom:12px">PAUSADO</h1>
-    <p style="font-size:11px;color:#9fd68a;margin:0 0 14px">Toque em uma opção abaixo</p>
+    <p style="font-size:11px;margin:0 0 14px">Toque em uma opção abaixo</p>
     <div class="menu-btns" style="gap:12px;margin:0">
-      <button class="menu-btn sec" id="pauseFS" style="padding:14px 22px">⛶ TELA CHEIA</button>
-      <button class="menu-btn sec" id="pauseCfg" style="padding:14px 22px">⚙ CONFIGURAÇÕES</button>
-      <button class="menu-btn" id="resume" style="padding:16px 22px;margin-top:8px">▶ CONTINUAR</button>
-      <button class="menu-btn danger" id="quitmenu" style="padding:14px 22px">✕ MENU PRINCIPAL</button>
+      <button class="menu-btn sec" id="pauseFS" style="padding:14px 22px">TELA CHEIA</button>
+      <button class="menu-btn sec" id="pauseCfg" style="padding:14px 22px">CONFIGURAÇÕES</button>
+      <button class="menu-btn" id="resume" style="padding:16px 22px;margin-top:8px">CONTINUAR</button>
+      <button class="menu-btn danger" id="quitmenu" style="padding:14px 22px">MENU PRINCIPAL</button>
     </div>
   </div>
 </div>
@@ -433,9 +573,9 @@ body.nomap #mm{display:none!important}
     <h2 id="deadtitle">VOCÊ MORREU</h2>
     <p id="deadtxt"></p>
     <div class="menu-btns" style="gap:12px">
-      <button class="menu-btn" id="btnRespawn" style="display:none;padding:16px 22px">↻ RESSUSCITAR</button>
-      <button class="menu-btn" id="again" style="padding:16px 22px">↻ TENTAR DE NOVO</button>
-      <button class="menu-btn sec" id="deadMenu" style="padding:14px 22px">✕ MENU PRINCIPAL</button>
+      <button class="menu-btn" id="btnRespawn" style="display:none;padding:16px 22px">RESSUSCITAR</button>
+      <button class="menu-btn" id="again" style="padding:16px 22px">TENTAR DE NOVO</button>
+      <button class="menu-btn sec" id="deadMenu" style="padding:14px 22px">MENU PRINCIPAL</button>
     </div>
   </div>
 </div>
@@ -671,10 +811,7 @@ function hitConfirm(){
   beep(880,.04,'square',.04, -200);
   beep(420,.06,'triangle',.035);
 }
-function bowRelease(){
-  beep(520,.07,'triangle',.05,-120);
-  boom(.08,.04,900);
-}
+function bowRelease(){ /* arco é silencioso: sem som de disparo */ }
 function cookSizzle(){
   boom(.25,.06,1200,'sfx');
   beep(200,.15,'sawtooth',.02);
@@ -682,11 +819,6 @@ function cookSizzle(){
 function animalGrowl(aggro){
   if(aggro) beep(90,.2,'sawtooth',.06,40);
   else beep(220,.12,'triangle',.03,-40);
-}
-function carEngineTick(spd){
-  if(Math.abs(spd)<8) return;
-  const f=80+Math.min(120,Math.abs(spd));
-  beep(f,.05,'sawtooth',.02);
 }
 function hitFlesh(){
   if(!AC||!nbuf)return;
@@ -742,28 +874,109 @@ function setAmbient(target){
     ambientGain.gain.linearRampToValueAtTime(final,AC.currentTime+1.2);
   }catch(e){}
 }
+/* ===== Chuva =====
+   Camadas: corpo (ruído rosa) + chiado agudo + rajadas lentas (LFO) + gotas esparsas com pan estéreo + trovão distante.
+   O som SEMPRE segue o clima atual (antes só ligava quando o clima mudava: chuva já ativa no início/convidado ficava muda).
+   Abafa dentro de prédios (gotas viram batidas no telhado) e no carro. */
+const rainSt={on:false,muff:0,vol:-1,thunderT:20,dropAcc:0};
 function startRain(){
   if(!AC||rainNoise)return;
   try{
-    const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
-    const n=Math.floor(AC.sampleRate*2);
-    const b=AC.createBuffer(1,n,AC.sampleRate);
-    const d=b.getChannelData(0);
-    for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
-    s.buffer=b;s.loop=true;
-    f.type='highpass';f.frequency.value=1200;
-    g.gain.value=0;
-    s.connect(f);f.connect(g);g.connect(AC.destination);
-    s.start();
-    rainNoise={src:s,gain:g};
+    const sr=AC.sampleRate,n=Math.floor(sr*5),xf=Math.floor(sr*.4);
+    const buf=AC.createBuffer(2,n,sr);
+    for(let ch=0;ch<2;ch++){
+      const d=buf.getChannelData(ch);
+      let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+      for(let i=0;i<n;i++){
+        const w=Math.random()*2-1;
+        b0=.99886*b0+w*.0555179;b1=.99332*b1+w*.0750759;b2=.969*b2+w*.153852;
+        b3=.8665*b3+w*.3104856;b4=.55*b4+w*.5329522;b5=-.7616*b5-w*.016898;
+        d[i]=(b0+b1+b2+b3+b4+b5+b6+w*.5362)*.11;b6=w*.115926;
+      }
+      for(let i=0;i<xf;i++){const k=i/xf;d[i]=d[i]*k+d[n-xf+i]*(1-k);}   // emenda sem estalo no loop
+    }
+    const loopEnd=(n-xf)/sr;
+    const master=AC.createGain();master.gain.value=0;
+    const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=7000;
+    lp.connect(master);master.connect(AC.destination);
+    // corpo da chuva
+    const s1=AC.createBufferSource();s1.buffer=buf;s1.loop=true;s1.loopEnd=loopEnd;
+    const hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=170;
+    const g1=AC.createGain();g1.gain.value=.85;
+    s1.connect(hp);hp.connect(g1);g1.connect(lp);
+    // chiado agudo
+    const s2=AC.createBufferSource();s2.buffer=buf;s2.loop=true;s2.loopEnd=loopEnd;
+    const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=4200;bp.Q.value=.6;
+    const g2=AC.createGain();g2.gain.value=.3;
+    s2.connect(bp);bp.connect(g2);g2.connect(lp);
+    // rajadas lentas
+    const lfo=AC.createOscillator(),lg=AC.createGain();
+    lfo.type='sine';lfo.frequency.value=.12;lg.gain.value=.14;
+    lfo.connect(lg);lg.connect(g1.gain);
+    s1.start(0,0);s2.start(0,Math.random()*3);lfo.start();
+    rainNoise={master:master,lp:lp,src:s1};
   }catch(e){}
 }
-function setRain(on){
-  if(!rainNoise||!AC)return;
+function setRainMode(on,muff){   // muff: 0 ao ar livre · 1 no carro · 2 dentro de prédio
+  if(!AC)return;
+  if(on&&!rainNoise)startRain();
+  if(!rainNoise){rainSt.on=false;return;}
+  const vol=volFor('rain');
+  const g=on?.2*vol*(muff===2?.5:(muff===1?.7:1)):0;
+  const f=muff===2?650:(muff===1?2400:7000);
+  const t=AC.currentTime;
   try{
-    const target=on?(0.07*volFor('rain')):0;
-    rainNoise.gain.gain.linearRampToValueAtTime(target,AC.currentTime+.8);
+    rainNoise.master.gain.cancelScheduledValues(t);rainNoise.master.gain.setTargetAtTime(g,t,.45);
+    rainNoise.lp.frequency.cancelScheduledValues(t);rainNoise.lp.frequency.setTargetAtTime(f,t,.3);
   }catch(e){}
+  rainSt.on=on;rainSt.muff=muff;rainSt.vol=vol;
+}
+function setRain(on){ setRainMode(on,rainSt.muff); }
+function rainDrop(){
+  const vol=volFor('rain');if(vol<=0||!nbuf)return;
+  try{
+    const t=AC.currentTime,m=rainSt.muff;
+    const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
+    s.buffer=nbuf;f.type='bandpass';f.Q.value=1.2;
+    f.frequency.value=m===2?rnd(350,900):(m===1?rnd(1200,3500):rnd(2200,7000));
+    const dur=m===2?.05:.025;
+    g.gain.setValueAtTime(rnd(.012,.04)*vol*(m===2?1.4:(m===1?.8:1)),t);
+    g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    s.connect(f);f.connect(g);
+    if(AC.createStereoPanner){const p=AC.createStereoPanner();p.pan.value=rnd(-.8,.8);g.connect(p);p.connect(AC.destination);}
+    else g.connect(AC.destination);
+    s.start(t,rnd(0,.2),dur+.01);
+  }catch(e){}
+}
+function rainThunder(){
+  const vol=volFor('rain');if(vol<=0||!nbuf)return;
+  try{
+    const t=AC.currentTime+rnd(0,.3),dur=rnd(2.2,3.6),m=rainSt.muff;
+    for(let k=0;k<2;k++){
+      const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+      s.buffer=nbuf;s.loop=true;f.type='lowpass';f.frequency.value=k?110:170;
+      const t0=t+k*rnd(.35,.8);
+      g.gain.setValueAtTime(.0001,t0);
+      g.gain.linearRampToValueAtTime((k?.1:.16)*vol*(m===2?.7:1),t0+.25);
+      g.gain.exponentialRampToValueAtTime(.0001,t0+dur*(k?1.2:1));
+      s.connect(f);f.connect(g);g.connect(AC.destination);
+      s.start(t0);s.stop(t0+dur*1.25+.1);
+    }
+  }catch(e){}
+}
+/* Chamada todo frame de jogo: liga/desliga conforme o clima e o abrigo, e agenda gotas e trovão */
+function syncRainAudio(dt){
+  if(!AC||!P)return;
+  const want=weather==='rain'&&state!=='menu';
+  const muff=P.inside?2:(P.inVehicle?1:0);
+  const vol=volFor('rain');
+  if(want!==rainSt.on||muff!==rainSt.muff||vol!==rainSt.vol) setRainMode(want,muff);
+  if(!rainSt.on||!rainNoise)return;
+  const d=Math.min(dt,.1);
+  rainSt.dropAcc+=d*(rainSt.muff===2?5:11);          // gotas por segundo
+  while(rainSt.dropAcc>=1){rainSt.dropAcc-=1;rainDrop();}
+  rainSt.thunderT-=d;
+  if(rainSt.thunderT<=0){rainSt.thunderT=rnd(28,75);rainThunder();}
 }
 function buildSound(){
   if(!AC)return;
@@ -809,7 +1022,6 @@ const ITEMS={
   pickaxe:{n:'Picareta',e:''},
   sword:{n:'Espada',e:''},
   spear:{n:'Lança',e:''},
-  stoneaxe:{n:'Machado de Pedra',e:''},
   bow:{n:'Arco',e:''},
   arrows:{n:'Flechas',e:''},
   fishingrod:{n:'Vara de Pesca',e:'🎣'}
@@ -817,9 +1029,8 @@ const ITEMS={
 const WEAPONS={
   fists:{n:'Mãos',dmg:1,range:18,cd:.5,kb:40,melee:true,chopRate:0.4},
   bat:{n:'Taco',dmg:2.5,range:24,cd:.55,kb:120,melee:true,chopRate:0.6},
-  axe:{n:'Machado',dmg:4,range:22,cd:.7,kb:90,melee:true,chopRate:1.0},
+  axe:{n:'Machado',dmg:5,range:24,cd:.65,kb:110,melee:true,chopRate:1.5},
   pickaxe:{n:'Picareta',dmg:3.5,range:20,cd:.6,kb:100,melee:true,chopRate:0.7,mines:true},
-  stoneaxe:{n:'Machado de Pedra',dmg:5,range:24,cd:.75,kb:110,melee:true,chopRate:1.5},
   sword:{n:'Espada',dmg:6,range:28,cd:.5,kb:130,melee:true,chopRate:0.9},
   spear:{n:'Lança',dmg:4.5,range:34,cd:.65,kb:80,melee:true,chopRate:0.7},
   bow:{n:'Arco',dmg:8,range:175,cd:.85,kb:70,firearm:true,bow:true,spread:.04},
@@ -831,7 +1042,7 @@ const WEAPONS={
 };
 const RECIPES=[
   {out:'pickaxe',  need:{wood:2,stone:2}, label:'Picareta',        desc:'Quebra pedras + arma (dano 3.5)' },
-  {out:'stoneaxe', need:{wood:3,stone:4}, label:'Machado de Pedra',desc:'Corta árvores rápido (dano 5, 2x madeira)' },
+  {out:'axe',      need:{wood:3,stone:4}, label:'Machado',         desc:'Corta árvores rápido (dano 5)' },
   {out:'sword',    need:{wood:2,stone:5}, label:'Espada',          desc:'Dano alto (6), alcance médio' },
   {out:'spear',    need:{wood:3,stone:2}, label:'Lança',           desc:'Maior alcance (34), dano 4.5' },
   {out:'bat',      need:{wood:3},         label:'Taco',            desc:'Arma branca básica (dano 2.5)' },
@@ -2311,7 +2522,7 @@ function cycleWeapon(){
   beep(300,.05,'square',.04);updateWeaponHud();
   toast('Arma: '+(WEAPONS[P.weapon]?.n||'Mãos'));
 }
-const WEAPON_ICON={fists:'👊',bat:'🏏',axe:'🪓',pickaxe:'⛏️',stoneaxe:'🪓',sword:'⚔️',spear:'🔱',bow:'🏹',pistol:'🔫',smg:'🔫',shotgun:'💥',rifle:'🎯',fishingrod:'🎣'};
+const WEAPON_ICON={fists:'👊',bat:'🏏',axe:'🪓',pickaxe:'⛏️',sword:'⚔️',spear:'🔱',bow:'🏹',pistol:'🔫',smg:'🔫',shotgun:'💥',rifle:'🎯',fishingrod:'🎣'};
 let weaponWheelOpen=false, weaponWheelOpenedAt=0;
 function updateWeaponHud(){const el=$('wpn');if(el)el.textContent=(WEAPONS[P.weapon]?.n||'Mãos');}
 function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
@@ -2584,7 +2795,7 @@ function pickup(){
     else { P.ammo+=8; P.weapon=t; toast('Pegou: '+ITEMS[t].n+' (+8 munição)'); }
     updateWeaponHud();
   }
-  else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='sword'||t==='spear'||t==='stoneaxe'||t==='fishingrod'){
+  else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='sword'||t==='spear'||t==='fishingrod'){
     if((P.meleeWeapons||[]).includes(t) || P.melee===t){
       toast('Você já tem '+ITEMS[t].n+' — deixe pro parceiro'); return;
     }
@@ -2899,11 +3110,12 @@ function attack(){
       shake=3;
       chopWood();
       for(let i=0;i<5;i++)parts.push({x:hitTree.x,y:hitTree.y-10,vx:rnd(-35,35),vy:rnd(-45,0),t:.4,c:'#8a5a2a'});
+      if(hitTree.hp>0) addFloater(hitTree.x,hitTree.y-26,(+hitTree.hp.toFixed(1))+'/3','#e0c080'); // vida restante da árvore
       if(MP.active) sendEvt('treeDmg', { x: hitTree.x, y: hitTree.y, dmg: w.chopRate || 0.5 });
       if(hitTree.hp <= 0){
         trees.splice(trees.indexOf(hitTree), 1);
         rebuildSolidGrid();
-        const n = (P.weapon === 'stoneaxe') ? 2 : 1;
+        const n = rint(2, 4);
         for(let i = 0; i < n; i++){
           if(!addItem('wood')){
             items.push({ t: 'wood', x: hitTree.x, y: hitTree.y });
@@ -2928,7 +3140,7 @@ function attack(){
       if(hitRock.hp<=0){
         rocks.splice(rocks.indexOf(hitRock),1);
         rebuildSolidGrid();
-        const n=rint(1,3);
+        const n=rint(2,4);
         for(let i=0;i<n;i++){
           if(!addItem('stone')){
             const sx=hitRock.x+rnd(-6,6), sy=hitRock.y+rnd(-6,6);
@@ -3196,8 +3408,6 @@ function updateP(dt){
     P.x=v.x;P.y=v.y;P.face=v.face;P.moving=Math.abs(v.spd)>8;
     if(Math.abs(v.spd)>15){
       makeNoise(v.x,v.y,90+Math.abs(v.spd)*0.6);
-      v._engT=(v._engT||0)-dt;
-      if(v._engT<=0){ v._engT=0.18; carEngineTick(v.spd); }
     }
     // Atropelar animais
     if(Math.abs(v.spd)>30){
@@ -3430,6 +3640,7 @@ function update(dt){
   const hr=START_HOUR+T/DAY_SECONDS*24;
   dark=darkness(hr%24);
   day=Math.floor(hr/24)+1;
+  syncRainAudio(dt);
   weatherTimer-=dt;
   if(weatherTimer<=0&&MP.active&&!MP.isHost)weatherTimer=30; // convidado: só o host sorteia (snapshot manda)
   if(weatherTimer<=0){
@@ -3797,11 +4008,11 @@ function craft(r){
   if(!canCraft(r)){toast('Recursos insuficientes');beep(120,.1,'square',.05);return;}
   const out=r.out;
   // Não gasta recursos para fabricar uma arma que já está no arsenal
-  if(['pickaxe','stoneaxe','sword','spear','bat','fishingrod'].includes(out)&&((P.meleeWeapons||[]).includes(out)||P.melee===out)){
+  if(['pickaxe','axe','sword','spear','bat','fishingrod'].includes(out)&&((P.meleeWeapons||[]).includes(out)||P.melee===out)){
     toast('Você já tem: '+ITEMS[out].n);beep(120,.1,'square',.05);return;
   }
   if(out==='bow'&&P.firearms.bow){toast('Você já tem um arco');beep(120,.1,'square',.05);return;}
-  if(out!=='campfire'&&!['pickaxe','stoneaxe','sword','spear','bow','arrows','bat','fishingrod'].includes(out)&&P.inv.length>=MAX_SLOTS&&!P.inv.some(slot=>slot.t===out)){toast('Mochila cheia');beep(120,.1,'square',.05);return;}
+  if(out!=='campfire'&&!['pickaxe','axe','sword','spear','bow','arrows','bat','fishingrod'].includes(out)&&P.inv.length>=MAX_SLOTS&&!P.inv.some(slot=>slot.t===out)){toast('Mochila cheia');beep(120,.1,'square',.05);return;}
   for(const k in r.need)removeInv(k,r.need[k]);
   if(out==='campfire'){
     const fx=Math.cos(P.face),fy=Math.sin(P.face);
@@ -3817,7 +4028,7 @@ function craft(r){
     pushOut(P,P.r);
     toast('🔥 Fogueira acesa!');buildSound();boom(.3,.15,400);
     for(let i=0;i<15;i++)parts.push({x:cx,y:cy-4,vx:rnd(-30,30),vy:rnd(-70,-20),t:rnd(.5,1),c:'#ffb040'});
-  }else if(out==='pickaxe'||out==='stoneaxe'||out==='sword'||out==='spear'||out==='bat'||out==='fishingrod'){
+  }else if(out==='pickaxe'||out==='axe'||out==='sword'||out==='spear'||out==='bat'||out==='fishingrod'){
     addMeleeWeapon(out);P.weapon=out;updateWeaponHud();
     toast(out==='fishingrod'?'Fabricou: Vara de Pesca! Mire no lago e use ATACAR.':'Fabricou: '+ITEMS[out].n+'! Arma adicionada ao arsenal.');buildSound();
   }else if(out==='bow'){
@@ -3831,6 +4042,7 @@ function craft(r){
     toast('Fabricou: '+ITEMS[out].n);buildSound();
   }
   refreshCraft();
+  closeCraft(); // fecha a tela para confirmar que o item foi fabricado
 }
 function openCraft(){if(state!=='play')return;state='craft';const e=$('craftscr');if(e)e.classList.remove('hide');refreshCraft();}
 function closeCraft(){if(state!=='craft')return;const e=$('craftscr');if(e)e.classList.add('hide');state='play';}
@@ -3840,7 +4052,7 @@ function refreshCraft(){
   el.innerHTML='';
   for(const r of RECIPES){
     if(r.lake&&!mapHasLake())continue;
-    const isWeapon=['pickaxe','stoneaxe','sword','spear','bow','bat'].includes(r.out),category=isWeapon||r.out==='arrows'?'weapon':'utility';
+    const isWeapon=['pickaxe','axe','sword','spear','bow','bat'].includes(r.out),category=isWeapon||r.out==='arrows'?'weapon':'utility';
     if(craftFilter!=='all'&&craftFilter!==category)continue;
     const ok=canCraft(r);
     const row=document.createElement('div');
@@ -3872,7 +4084,7 @@ function handleEvt(kind, data){
   if(!data || typeof data!=='object') return;
   if(kind==='treeDmg'){
     const t = trees.find(t => t.x===data.x && t.y===data.y);
-    if(t && Number.isFinite(data.dmg)){ t.hp -= clamp(data.dmg,0,10); if(t.hp<=0){ const i=trees.indexOf(t); if(i>=0){ trees.splice(i,1); rebuildSolidGrid(); } } }
+    if(t && Number.isFinite(data.dmg)){ t.hp -= clamp(data.dmg,0,10); if(t.hp<=0){ const i=trees.indexOf(t); if(i>=0){ trees.splice(i,1); rebuildSolidGrid(); } } else addFloater(t.x,t.y-26,(+t.hp.toFixed(1))+'/3','#e0c080'); }
   } else if(kind==='rockDmg'){
     const r = rocks.find(r => r.x===data.x && r.y===data.y);
     if(r && Number.isFinite(data.dmg)){ r.hp -= clamp(data.dmg,0,10); if(r.hp<=0){ const i=rocks.indexOf(r); if(i>=0){ rocks.splice(i,1); rebuildSolidGrid(); } } }
@@ -3962,7 +4174,7 @@ function handleEvt(kind, data){
       if(data.weapon) nearest.weapon=data.weapon;
     }
     // Quiet gunshot so both hear each other fire
-    try{ gunshot(!!(data.weapon==='rifle'||data.weapon==='shotgun')); }catch(e){}
+    if(data.weapon!=='bow'){ try{ gunshot(!!(data.weapon==='rifle'||data.weapon==='shotgun')); }catch(e){} }
   } else if(kind==='spit'){
     // Guest receives spitter projectile from host
     if(Number.isFinite(data.x)&&Number.isFinite(data.y)&&Number.isFinite(data.vx)&&Number.isFinite(data.vy)){
@@ -4009,33 +4221,70 @@ function mpHostStart(){
   setStatus('hostStatus','Carregando motor P2P...');
   loadPeerJS(err=>{
     if(err||typeof Peer==='undefined'){MP.active=false;MP.isHost=false;setStatus('hostStatus','Falha ao carregar P2P',true);return;}
-    const peerOpts={debug:1, config:PEER_ICE};
-    try{MP.peer=new Peer(MP.roomCode, peerOpts);}
-    catch(e){setStatus('hostStatus','Erro: '+e.message,true);return;}
-    MP.peer.on('open',id=>{MP.myId=id;setStatus('hostStatus','Sala criada! Aguardando jogador...');console.log('[Host] peer aberto:',id);});
-    MP.peer.on('connection',conn=>{
-      console.log('[Host] nova conexão recebida');
-      if(MP.conn&&MP.conn.open){
-        // Em partida: se a conexão antiga está muda há >4s, é o convidado voltando — a nova assume
-        const stale=MP.gameStarted&&(performance.now()-MP.lastRecv>4000);
-        if(!stale){try{conn.close();}catch(e){}return;}
-        const old=MP.conn;MP.conn=null;MP.connected=false;
-        try{old.close();}catch(e){}
-      }
-      MP.conn=conn;
-      setupConn(conn,true);
-    });
-    MP.peer.on('disconnected',()=>{ try{MP.peer.reconnect();}catch(e){} }); // caiu do servidor de sinalização: volta com o mesmo código
-    MP.peer.on('error',err=>{
-      console.error('[PeerJS host]',err);
-      if(MP.gameStarted)return; // em partida: erros de sinalização não derrubam o jogo
-      const msg=err&&err.type==='unavailable-id'
-        ?'Código de sala ocupado. Volte e crie outra sala.'
-        :('Falha de conexão: '+((err&&err.type)||'erro desconhecido'));
-      setStatus('hostStatus',msg,true);
-      if(!MP.connected){MP.active=false;MP.isHost=false;}
-    });
+    hostOpenPeer(false,0);
   });
+}
+/* Registra (ou registra de novo) o código da sala no servidor de sinalização.
+   recreate=true: refaz o peer com o MESMO código (ex.: o navegador ficou em segundo plano e a sala caiu). */
+let hostRetryTimer=null;
+function hostOpenPeer(recreate,tries){
+  const peerOpts={debug:1, config:PEER_ICE};
+  if(recreate&&MP.peer){try{MP.peer.destroy();}catch(e){}}
+  try{MP.peer=new Peer(MP.roomCode, peerOpts);}
+  catch(e){setStatus('hostStatus','Erro: '+e.message,true);return;}
+  const me=MP.peer;
+  me.on('open',id=>{MP.myId=id;setStatus('hostStatus','Sala criada! Aguardando jogador...');console.log('[Host] peer aberto:',id);});
+  me.on('connection',conn=>{
+    console.log('[Host] nova conexão recebida');
+    if(MP.conn&&MP.conn.open){
+      // Em partida: se a conexão antiga está muda há >4s, é o convidado voltando — a nova assume
+      const stale=MP.gameStarted&&(performance.now()-MP.lastRecv>4000);
+      if(!stale){try{conn.close();}catch(e){}return;}
+      const old=MP.conn;MP.conn=null;MP.connected=false;
+      try{old.close();}catch(e){}
+    }
+    MP.conn=conn;
+    setupConn(conn,true);
+  });
+  me.on('disconnected',()=>{ hostSignalRetry(0); }); // caiu do servidor de sinalização: volta com o mesmo código
+  me.on('error',err=>{
+    console.error('[PeerJS host]',err);
+    if(MP.peer!==me) return; // erro de um peer antigo, já substituído
+    if(MP.gameStarted)return; // em partida: erros de sinalização não derrubam o jogo
+    const t=err&&err.type;
+    // Sala ainda aguardando o amigo: falhas de rede/servidor (comuns com o navegador em segundo plano) não encerram a sala, só tentam de novo
+    if(t==='network'||t==='server-error'||t==='socket-error'||t==='socket-closed'){
+      setStatus('hostStatus','Reconectando a sala...');
+      hostSignalRetry(0);
+      return;
+    }
+    // Ao refazer a sala com o mesmo código, o servidor pode demorar a liberar o anterior: tenta algumas vezes
+    if(t==='unavailable-id'&&recreate&&tries<6){
+      setStatus('hostStatus','Reconectando a sala...');
+      clearTimeout(hostRetryTimer);hostRetryTimer=setTimeout(()=>{if(MP.isHost&&MP.active&&!MP.gameStarted&&!MP.connected)hostOpenPeer(true,tries+1);},2500);
+      return;
+    }
+    const msg=t==='unavailable-id'
+      ?'Código de sala ocupado. Volte e crie outra sala.'
+      :('Falha de conexão: '+(t||'erro desconhecido'));
+    setStatus('hostStatus',msg,true);
+    if(!MP.connected){MP.active=false;MP.isHost=false;}
+  });
+}
+/* Tenta voltar ao servidor de sinalização por até ~2 min, com o mesmo código */
+function hostSignalRetry(n){
+  const p=MP.peer;
+  if(!p||p.destroyed||!MP.isHost||!MP.active) return;
+  if(!p.disconnected) return;
+  try{p.reconnect();}catch(e){}
+  if(n<20){clearTimeout(hostRetryTimer);hostRetryTimer=setTimeout(()=>hostSignalRetry(n+1),Math.min(2000+n*1000,8000));}
+}
+/* Voltou do segundo plano com a sala ainda aguardando: confere se o código continua registrado */
+function hostCheckRoomAlive(){
+  if(!MP.active||!MP.isHost||MP.gameStarted||MP.connected||!MP.roomCode) return;
+  const p=MP.peer;
+  if(!p||p.destroyed){ hostOpenPeer(true,0); }
+  else if(p.disconnected){ hostSignalRetry(0); }
 }
 function mpJoinStart(code){
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
@@ -4208,7 +4457,7 @@ function setupConn(conn,isHostSide){
     }
     console.log('[MP] conn.on("open") disparado. Host?',isHostSide);
     if(isHostSide){
-      setStatus('hostStatus','✅ Jogador conectado! Gerando mundo...');
+      setStatus('hostStatus','Jogador conectado! Gerando mundo...');
       setTimeout(()=>{
         try{
           selectedMap = mpSelectedMap || 'forest';
@@ -4221,7 +4470,7 @@ function setupConn(conn,isHostSide){
             console.log('[Host] enviando seed+map...');
             MP.conn.send({type:'worldInit', seed: seed, map: selectedMap});
             MP.conn.send({type:'start', map: selectedMap});
-            setStatus('hostStatus','🎮 Partida iniciada!');
+            setStatus('hostStatus','Partida iniciada!');
           } else {
             setStatus('hostStatus','Conexão caiu antes do envio',true);
             return;
@@ -4239,7 +4488,7 @@ function setupConn(conn,isHostSide){
         }
       }, 50);
     }else{
-      setStatus('joinStatus','✅ Conectado! Aguardando Host...');
+      setStatus('joinStatus','Conectado! Aguardando Host...');
     }
   };
   conn.on('open',onOpen);
@@ -4774,7 +5023,6 @@ function human(x,y,face,o){
     }else if(o.wpn==='bat'){for(let i=2;i<=12;i+=2)R(hx+wx*i,hy+wy*i-1,2,2,i>8?'#c8924e':'#8a5a2a');}
     else if(o.wpn==='axe'){for(let i=2;i<=9;i+=2)R(hx+wx*i,hy+wy*i-1,2,2,'#7a5430');R(hx+wx*10-1,hy+wy*10-2,4,4,'#a8b8c4');}
     else if(o.wpn==='pickaxe'){for(let i=2;i<=10;i+=2)R(hx+wx*i,hy+wy*i-1,2,2,'#6a4a30');R(hx+wx*12-3,hy+wy*12-1,6,2,'#a8b8c4');}
-    else if(o.wpn==='stoneaxe'){for(let i=2;i<=8;i+=2)R(hx+wx*i,hy+wy*i-1,2,2,'#6a4a30');R(hx+wx*10-2,hy+wy*10-3,5,4,'#9a9aa0');}
     else if(o.wpn==='sword'){R(hx+wx*2,hy+wy*2-1,3,3,'#6a4a30');for(let i=4;i<=15;i+=1)R(hx+wx*i,hy+wy*i-1,2,2,i>13?'#e8e8f0':'#c0c8d4');}
     else if(o.wpn==='spear'){for(let i=2;i<=18;i+=2)R(hx+wx*i,hy+wy*i-1,2,2,'#8a6a3a');R(hx+wx*20-1,hy+wy*20-2,4,3,'#c0c8d4');}
     else if(o.wpn==='fishingrod'){for(let i=2;i<=16;i+=2)R(hx+wx*i,hy+wy*i-1-(i>>2),1,2,i>12?'#c8a070':'#8a6a3a');R(hx+wx*3,hy+wy*3,2,2,'#c0c0c8');}
@@ -5367,7 +5615,6 @@ function drawItem(it,near){
     case'pickaxe':R(x-5,y-3+b,9,2,'#6a4a30');R(x-4,y-7+b,8,3,'#a8b8c4');break;
     case'sword':R(x-5,y-3+b,2,2,'#6a4a30');for(let i=0;i<9;i++)R(x-3+i,y-3+b,1,2,i>6?'#e8e8f0':'#c0c8d4');break;
     case'spear':for(let i=0;i<11;i++)R(x-5+i,y-3+b,1,1,'#8a6a3a');R(x+6,y-4+b,3,3,'#c0c8d4');break;
-    case'stoneaxe':R(x-5,y-3+b,7,2,'#6a4a30');R(x+1,y-6+b,4,4,'#9a9aa0');break;
     case'fishingrod':for(let i=0;i<11;i++)R(x-5+i,y-2+b-(i>>2),1,1,'#8a6a3a');R(x-3,y-1+b,3,2,'#c0c0c8');R(x+5,y-5+b,1,3,'#e8e8e8');break;
     case'bow':R(x-4,y-7+b,2,10,'#8a5a2a');R(x-3,y-7+b,6,2,'#c0a070');R(x-3,y+1+b,6,2,'#c0a070');break;
     case'arrows':R(x-1,y-8+b,2,10,'#a08050');R(x-2,y-9+b,4,2,'#c0c0c8');break;
@@ -5847,7 +6094,7 @@ on('btnCopyCode','click',async e=>{
   }
   const btn=$('btnCopyCode');
   const ok=()=>{
-    if(btn){btn.textContent='✅ COPIADO!';setTimeout(()=>{if(btn)btn.textContent='📋 COPIAR CÓDIGO';},1800);}
+    if(btn){btn.textContent='COPIADO!';setTimeout(()=>{if(btn)btn.textContent='COPIAR CÓDIGO';},1800);}
     setStatus('hostStatus','Código '+code+' copiado! Cole no WhatsApp.');
     toast('Código copiado: '+code);
   };
@@ -5857,7 +6104,7 @@ on('btnCopyCode','click',async e=>{
       const range=document.createRange();range.selectNodeContents(codeEl);
       const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
     }catch(_){}
-    if(btn){btn.textContent='👆 SELECIONE E COPIE';setTimeout(()=>{if(btn)btn.textContent='📋 COPIAR CÓDIGO';},2500);}
+    if(btn){btn.textContent='SELECIONE E COPIE';setTimeout(()=>{if(btn)btn.textContent='COPIAR CÓDIGO';},2500);}
     setStatus('hostStatus','Selecione o código e copie (Ctrl+C / pressione e segure)');
   };
   try{
@@ -6042,7 +6289,7 @@ function isFullscreen(){
 function updatePauseFSButton(){
   const btn=$('pauseFS');
   if(!btn) return;
-  btn.textContent = (isFullscreen() || userWantsFS) ? '⛶ SAIR DA TELA CHEIA' : '⛶ TELA CHEIA';
+  btn.textContent = (isFullscreen() || userWantsFS) ? 'SAIR DA TELA CHEIA' : 'TELA CHEIA';
 }
 let pauseReadyAt=0; // ignore button presses for a short time after opening pause (mobile touch bleed)
 function pause(){
@@ -6076,13 +6323,17 @@ function quitToMenu(){
   // E1: clear vehicle state + restore on-foot HUD before leaving
   if(P){ P.inVehicle=null; }
   restoreWalkHUD();
-  userWantsFS=false;
-  try{
-    if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
-    else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
-    else if(document.msExitFullscreen) document.msExitFullscreen();
-    if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
-  }catch(e){}
+  if(matchMedia('(pointer:coarse)').matches && CFG.fullscreen){
+    userWantsFS=true; // celular: o jogo inteiro fica em paisagem, inclusive o menu
+  }else{
+    userWantsFS=false;
+    try{
+      if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if(document.msExitFullscreen) document.msExitFullscreen();
+      if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+    }catch(e){}
+  }
   showScreen('menu');$('hud').classList.add('hide');state='menu';
   setAmbient(0);setRain(false);document.body.classList.remove('nohud','nomap');
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
@@ -6144,7 +6395,7 @@ on('bcraft','pointerdown',e=>{e.preventDefault();aud();openCraft();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play'&&!MP.active)pause();});
 {
   const b=LSget();
-  if(b){const el=$('bestline');if(el)el.textContent='🏆 Recorde: '+fmt(+b);}
+  if(b){const el=$('bestline');if(el)el.textContent='RECORDE '+fmt(+b);}
   try{
     const savedName=localStorage.getItem('minisurv_name');
     if(savedName){
@@ -6181,11 +6432,123 @@ document.addEventListener('visibilitychange',()=>{
   } else {
     try{ if(AC && AC.state==='suspended') AC.resume(); }catch(e){}
     last=performance.now(); lastFrameTs=0;
+    try{ hostCheckRoomAlive(); }catch(e){}
     // Voltou de segundo plano: dá 4s de folga pro canal reagir; se a conexão já morreu, reconecta na hora
     if(MP.active&&MP.gameStarted&&!MP.reconnecting){ MP.lastRecv=performance.now(); if(!MP.conn||!MP.conn.open) mpConnectionLost(); }
   }
 });
 requestAnimationFrame(frame);
+</script>
+<script>
+/* Orientacao: o jogo e sempre em paisagem em celulares/tablets (telas de toque). */
+(function(){
+  try{
+    if(!matchMedia('(pointer:coarse)').matches)return;
+    // 1) Tenta travar ja na abertura (funciona em app instalado/tela cheia; navegadores comuns podem recusar).
+    try{ lockLandscape(); }catch(e){}
+    // 2) Icone pixel do aviso: celular em pe, seta, celular deitado
+    const cv=document.getElementById('rotateCv');
+    if(cv){const c=cv.getContext('2d');
+      const bx=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
+      bx(3,6,8,13,'#E8E0CC');bx(4,7,6,10,'#171A20');bx(6,18,2,1,'#171A20');
+      bx(15,12,9,2,'#C79A54');bx(22,10,1,6,'#C79A54');bx(23,11,1,4,'#C79A54');bx(24,12,1,2,'#C79A54');
+      bx(27,9,13,8,'#8DA568');bx(28,10,11,6,'#171A20');bx(38,12,1,2,'#8DA568');
+    }
+    // 3) Primeiro toque (em qualquer lugar) ou toque no aviso: tela cheia + trava em paisagem
+    const goLand=force=>{
+      try{
+        if((force||CFG.fullscreen)&&!isFullscreen()) requestFullscreenLandscape(true);
+        else lockLandscape();
+      }catch(e){}
+    };
+    const rot=document.getElementById('rotate'),btn=document.getElementById('rotateBtn');
+    if(rot)['pointerdown','pointerup','touchstart','touchend','click'].forEach(t=>rot.addEventListener(t,e=>e.stopPropagation()));
+    if(btn)btn.addEventListener('click',e=>{e.preventDefault();goLand(true);});
+    document.addEventListener('pointerdown',function once(){document.removeEventListener('pointerdown',once,true);goLand(false);},true);
+    // 4) Em retrato durante a partida solo: pausa, para o jogador nao ser atacado sem ver a tela
+    const portrait=matchMedia('(orientation:portrait)');
+    const onChange=()=>{try{if(portrait.matches&&state==='play'&&!MP.active)pause();}catch(e){}};
+    if(portrait.addEventListener)portrait.addEventListener('change',onChange);else if(portrait.addListener)portrait.addListener(onChange);
+  }catch(e){}
+})();
+</script>
+<script>
+/* Arte do menu principal (logotipo e cena em pixel art). Independente da logica do jogo. */
+(function(){
+  try{
+    const CREAM='#E8E0CC',MOSS='#8DA568',AMBER='#C79A54',BG='#171A20',LINE='#2a2f38',DEEP='#0c0e12',DMOSS='#5b6e43',BROWN='#7a5a30';
+    const GL={
+      B:['####.','#...#','#...#','####.','#...#','#...#','####.'],
+      I:['###','.#.','.#.','.#.','.#.','.#.','###'],
+      T:['#####','..#..','..#..','..#..','..#..','..#..','..#..'],
+      S:['.####','#....','#....','.###.','....#','....#','####.'],
+      U:['#...#','#...#','#...#','#...#','#...#','#...#','.###.'],
+      R:['####.','#...#','#...#','####.','#.#..','#..#.','#...#'],
+      V:['#...#','#...#','#...#','#...#','#...#','.#.#.','..#..'],
+      A:['.###.','#...#','#...#','#####','#...#','#...#','#...#'],
+      L:['#....','#....','#....','#....','#....','#....','#####']};
+    function word(c,txt,x,y,sc,col,sh){
+      let cx=x;
+      for(const ch of txt){const g=GL[ch];
+        for(let r=0;r<g.length;r++)for(let k=0;k<g[r].length;k++)if(g[r][k]==='#'){
+          if(sh){c.fillStyle=sh;c.fillRect(cx+k*sc+1,y+r*sc+1,sc,sc);}
+        }
+        cx+=(g[0].length+1)*sc;}
+      cx=x;
+      for(const ch of txt){const g=GL[ch];
+        c.fillStyle=col;
+        for(let r=0;r<g.length;r++)for(let k=0;k<g[r].length;k++)if(g[r][k]==='#')c.fillRect(cx+k*sc,y+r*sc,sc,sc);
+        cx+=(g[0].length+1)*sc;}
+    }
+    const wid=(txt,sc)=>{let w=0;for(const ch of txt)w+=(GL[ch][0].length+1)*sc;return w-sc;};
+    function drawLogo(){
+      const cv=document.getElementById('logoCv');if(!cv)return;const c=cv.getContext('2d');
+      c.clearRect(0,0,cv.width,cv.height);
+      // Tudo alinhado a esquerda em x=0 e com a mesma largura (45 colunas): BIT (3x), SURVIVAL (1x) e as duas barras.
+      const W=wid('SURVIVAL',1);
+      word(c,'BIT',Math.floor((W-wid('BIT',3))/2),0,3,MOSS,DEEP);
+      word(c,'SURVIVAL',0,24,1,CREAM,DEEP);
+      c.fillStyle=AMBER;c.fillRect(0,33,W,1);c.fillRect(0,35,W,1);
+    }
+    const SP={G:MOSS,D:DMOSS,B:BROWN,C:CREAM,A:AMBER,K:'#3a414d',W:'#e0b25a'};
+    const ART={
+      tree:['..GGG..','.GGGGG.','GGGDGGG','.GGGGG.','GGGGDGG','..GGG..','...B...','...B...'],
+      cactus:['..D..','D.D.D','D.D.D','DDDDD','..D..','..D..','..D..'],
+      pine:['..C..','.CGC.','..G..','.GGG.','GGGGG','.GGG.','GGGGG','..B..'],
+      city:['KKKKKKK','KWKKWKK','KKKKKKK','KKWKKWK','KKKKKKK','KWKKWKK','KKKKKKK','KKKDKKK'],
+      fire1:['..A..','.AAA.','AACAA','.AAA.','BBBBB'],
+      fire2:['.....','..A..','.AAA.','AACAA','BBBBB']};
+    function put(c,a,x,y){for(let r=0;r<a.length;r++)for(let k=0;k<a[r].length;k++){const ch=a[r][k];if(ch!=='.'){c.fillStyle=SP[ch];c.fillRect(x+k,y+r,1,1);}}}
+    let frame=0;
+    function drawScene(){
+      const cv=document.getElementById('sceneCv');if(!cv)return;const c=cv.getContext('2d');
+      c.clearRect(0,0,cv.width,cv.height);
+      c.fillStyle=LINE;c.fillRect(0,13,45,1); // mesma largura do logotipo (45 colunas)
+      put(c,ART.tree,1,5);put(c,ART.cactus,11,6);
+      put(c,frame?ART.fire2:ART.fire1,20,8);
+      put(c,ART.pine,29,5);put(c,ART.city,38,5);
+    }
+    function fit(){
+      const lg=document.getElementById('logoCv'),sc=document.getElementById('sceneCv'),card=document.querySelector('#menu .card');
+      if(!lg||!sc||!card)return;
+      const land=innerWidth>innerHeight&&innerHeight<=520;
+      const maxW=land?Math.min(innerWidth*.45,360):Math.min(innerWidth-40,340);
+      const maxH=land?innerHeight*.5:innerHeight*.3;
+      const sL=Math.max(2,Math.min(Math.floor(maxW/46),Math.floor(maxH/37),8));
+      lg.style.width=46*sL+'px';lg.style.height=37*sL+'px';
+      sc.style.width=46*sL+'px';sc.style.height=14*sL+'px'; // mesma grade de pixels do logotipo
+    }
+    function drawIcons(){
+      document.querySelectorAll('canvas.ico[data-art]').forEach(cv=>{
+        const a=ART[cv.dataset.art];if(!a)return;const c=cv.getContext('2d');c.clearRect(0,0,9,9);
+        put(c,a,Math.floor((9-a[0].length)/2),Math.floor((9-a.length)/2));});
+    }
+    drawLogo();drawScene();drawIcons();fit();
+    addEventListener('resize',fit);addEventListener('orientationchange',fit);
+    setInterval(()=>{const m=document.getElementById('menu');if(m&&!m.classList.contains('hide')){frame^=1;drawScene();}},500);
+    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
