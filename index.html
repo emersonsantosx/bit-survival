@@ -201,6 +201,7 @@ body.nomap #mm{display:none!important}
     <div class="row"><i>🍖</i><div class="bar"><b id="fdb" style="background:#d9892b"></b></div></div>
     <div class="row"><i>💧</i><div class="bar"><b id="wtb" style="background:#3a9be0"></b></div></div>
     <div class="row"><i>⚡</i><div class="bar"><b id="stb" style="background:#e5d34a"></b></div></div>
+    <div class="row"><i>🌡️</i><div class="bar"><b id="tpb" style="background:#6fcf6f"></b></div></div>
     <div id="stat"></div>
   </div>
   <div id="wpn">Mãos</div>
@@ -281,7 +282,8 @@ body.nomap #mm{display:none!important}
       🎯 Sobreviva o máximo de tempo · 🛠 Craft (C) · ⏸ Pause<br>
       🧟 9 tipos de zumbis — a horda fica pior a cada dia<br>
       🔫 Pistola / SMG / Shotgun / Rifle (mesma munição)<br>
-      🎣 Lago (Floresta/Neve): beba água à vontade · crie a Vara de Pesca e pesque → asse na fogueira<br>
+      🌡️ Temperatura: Neve = frio (fogueira ou abrigo) · Deserto = calor de dia e frio à noite (sombra, água, oásis)<br>
+      🎣 Lago (Floresta/Neve) e oásis (Deserto): beba água à vontade · crie a Vara de Pesca e pesque → asse na fogueira<br>
       🚗 Saqueie carros e dirija · 💬 Chat só no multiplayer
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
@@ -476,6 +478,7 @@ function makeLightSprite(stops){
   return c;
 }
 const lightSprite=makeLightSprite([[0,'rgba(0,0,0,1)'],[.55,'rgba(0,0,0,.75)'],[1,'rgba(0,0,0,0)']]);
+const lampSprite=makeLightSprite([[0,'rgba(255,228,150,.5)'],[.5,'rgba(255,214,120,.2)'],[1,'rgba(255,200,100,0)']]);
 const fireSprite=makeLightSprite([[0,'rgba(255,170,60,.65)'],[.5,'rgba(255,110,30,.25)'],[1,'rgba(255,80,20,0)']]);
 const mmC=$('mm'), mm=mmC.getContext('2d');
 const mmStatic=document.createElement('canvas'); mmStatic.width=76; mmStatic.height=76;
@@ -850,7 +853,14 @@ const LOOT={
   warehouse:{food:18,water:14,ammo:14,bandage:8,axe:6,bat:4,stone:10,medkit:3,arrows:5}
 };
 /* Mapas com lago (Floresta e Neve): só neles existe vara de pesca */
-function mapHasLake(){return selectedMap==='forest'||selectedMap==='snow';}
+function mapHasLake(){return selectedMap==='forest'||selectedMap==='snow'||selectedMap==='desert';} // desert = oásis
+/* Clima coerente com o mapa: deserto (tempestade de areia), neve (nevasca), floresta/cidade (chuva) */
+function pickWeather(rf){
+  const r=rf();
+  if(selectedMap==='desert') return r<.7?'none':'sand';
+  if(selectedMap==='snow') return r<.45?'none':'snow';
+  return r<.65?'none':'rain';
+}
 function lakeLoot(t){return mapHasLake()?Object.assign({fishingrod:1.5},t):t;}
 const OUT_LOOT={food:35,water:32,bandage:14,ammo:4,bat:3,axe:2,medkit:2,arrows:3,stone:8};
 
@@ -921,7 +931,7 @@ let mpSelectedMap='forest';
 let weather='none';
 let weatherTimer=120;
 let weatherParticles=[];
-let cityInter=[],cityCrash=null;
+let cityInter=[],cityCrash=null,lampList=[];
 let trees=[],rocks=[],blds=[],walls=[],items=[],zombies=[],roads=[],decals=[],parts=[],tracers=[],towns=[],lakes=[],vehicles=[],campfires=[],spits=[],decorations=[],animals=[];
 let remotePlayers={};
 let nextZombieNetId=1;
@@ -930,7 +940,7 @@ let P=null,T=0,kills=0,shake=0,flash=0,spawnTimer=3,dark=0,day=1,hudT=0;
 let atkHeld=false,sprintHeld=false,noiseT=0,tt=null;
 let recentRemoved=[],recentAdded=[]; // convidado: mudanças de itens ainda não confirmadas pelo host
 let touchGas=0,touchSteer=0,stepT=0;
-let MP={active:false,isHost:false,peer:null,conn:null,roomCode:'',connected:false,syncT:0,lastRecv:0,myId:null,scriptLoaded:false,playerName:'Jogador',gameOver:false,rtt:80,pingT:0,snapT:0.16,failCount:0};
+let MP={gameStarted:false,reconnecting:false,guestAway:false,seed:null,reconnStart:0,reconnTries:0,active:false,isHost:false,peer:null,conn:null,roomCode:'',connected:false,syncT:0,lastRecv:0,myId:null,scriptLoaded:false,playerName:'Jogador',gameOver:false,rtt:80,pingT:0,snapT:0.16,failCount:0};
 // STUN + TURN públicos (openrelay) — ajuda celular em 4G/CGNAT
 const PEER_ICE={iceServers:[
   {urls:'stun:stun.l.google.com:19302'},
@@ -1147,6 +1157,21 @@ function pointInLake(x,y){
   return false;
 }
 /* Meia-largura/altura do veículo alinhada aos eixos, considerando a rotação (carro de lado ocupa 20x36, não 36x20) */
+/* Terreno sob o carro: estrada = melhor aderência e velocidade; fora dela depende do mapa */
+const TERR={
+  road:  {id:'road', spd:1,   acc:1,   steer:1,   coast:.08},
+  icy:   {id:'road', spd:.92, acc:.85, steer:.88, coast:.14},
+  lot:   {id:'lot',  spd:.74, acc:.8,  steer:.95, coast:.06, dust:'#8a8a82'},
+  grass: {id:'grass',spd:.78, acc:.8,  steer:.95, coast:.06, dust:'#7a6a4a'},
+  sand:  {id:'sand', spd:.62, acc:.65, steer:.85, coast:.035,dust:'#d2b87c'},
+  snow:  {id:'snow', spd:.6,  acc:.6,  steer:.78, coast:.16, dust:'#eef4fa'},
+  water: {id:'water',spd:.3,  acc:.4,  steer:.7,  coast:.03, dust:'#8cc8f0'}
+};
+function terrainFor(x,y){
+  if(pointInLake(x,y)) return TERR.water;
+  if(onCityRoad(x,y,0)) return selectedMap==='snow'?TERR.icy:TERR.road;
+  return selectedMap==='city'?TERR.lot:(selectedMap==='desert'?TERR.sand:(selectedMap==='snow'?TERR.snow:TERR.grass));
+}
 function vehHalf(v){
   if(v._hf!==v.face||v._hw!==v.w){
     const f=v.face||0,c=Math.abs(Math.cos(f)),sn=Math.abs(Math.sin(f));
@@ -1499,6 +1524,18 @@ function cityFillBlock(bx,by,bw,bh,zone){
     y+=rowH+rint(46,58);
   }
 }
+/* Entulho/cascalho: pedras em lotes vazios e pátios industriais (fonte de pedra da cidade, longe de portas e passagens) */
+function cityRubble(b,n){
+  const x0=b.bx+18,y0=b.by+18,x1=b.bx+b.bw-18,y1=b.by+b.bh-18;
+  for(let i=0,g=0;i<n&&g<80;g++){
+    const x=rnd(x0,x1), y=rnd(y0,y1);
+    let bad=false;
+    for(const q of blds) if(x>q.x-34&&x<q.x+q.w+34&&y>q.y-34&&y<q.y+q.h+34){bad=true;break;}
+    if(bad) continue;
+    if(rocks.some(r=>Math.hypot(r.x-x,r.y-y)<22)) continue;
+    rocks.push({x:Math.round(x),y:Math.round(y),hp:4,k:rint(0,4),seed:_rng()}); i++;
+  }
+}
 function cityPark(bx,by,bw,bh,keepX,keepY,keepR){
   const x0=bx+16,y0=by+16,x1=bx+bw-16,y1=by+bh-16, pts=[];
   const n=Math.round(bw*bh/7000);
@@ -1514,6 +1551,12 @@ function cityPark(bx,by,bw,bh,keepX,keepY,keepR){
     if(keepR&&Math.hypot(x-keepX,y-keepY)<keepR) continue;
     if(pts.some(p=>Math.hypot(p.x-x,p.y-y)<24)) continue;
     decorations.push({x:Math.round(x),y:Math.round(y),type:'bench',solid:true,seed:_rng()});
+  }
+  for(let i=0,g=0;i<rint(2,3)&&g<30;g++){ // pedras só dentro de parques
+    const x=rnd(x0+10,x1-10), y=rnd(y0+10,y1-10);
+    if(keepR&&Math.hypot(x-keepX,y-keepY)<keepR) continue;
+    if(pts.some(p=>Math.hypot(p.x-x,p.y-y)<30)) continue;
+    rocks.push({x:Math.round(x),y:Math.round(y),hp:4,k:rint(0,4),seed:_rng()}); i++;
   }
 }
 function genCity(){
@@ -1552,7 +1595,8 @@ function genCity(){
   for(const b of blocks){
     if(b.zone==='crash') cityPark(b.bx,b.by,b.bw,b.bh,b.cx,b.cy,95);
     else if(b.zone==='park') cityPark(b.bx,b.by,b.bw,b.bh);
-    else if(b.zone!=='empty') cityFillBlock(b.bx,b.by,b.bw,b.bh,b.zone);
+    else if(b.zone==='empty') cityRubble(b,rint(5,8));                       // lote vazio com entulho
+    else { cityFillBlock(b.bx,b.by,b.bw,b.bh,b.zone); if(b.zone==='ind') cityRubble(b,rint(1,3)); } // pátio industrial
   }
   // bairros (usados para espalhar zumbis iniciais): longe do ponto de partida
   const cand=shuffle(blocks.filter(b=>b!==crash&&Math.hypot(b.cx-crash.cx,b.cy-crash.cy)>520&&b.zone!=='park'&&b.zone!=='empty'));
@@ -1596,178 +1640,232 @@ function cityLamps(){
     }
   }
 }
+
+/* ====================== VILAS (Floresta / Deserto / Neve) ======================
+   Cada vila é feita em fileiras de prédios com uma rua em frente às portas (que ficam no lado sul).
+   As ruas nascem junto com a vila e as estradas entre vilas só são traçadas por trajetos que não tocam
+   nenhum prédio — nada de estrada atravessando casa. */
+function bldSizeRural(type){
+  if(type==='mil') return [rint(95,145),rint(75,110)];
+  if(type==='barn') return [rint(85,130),rint(65,100)];
+  if(type==='shop') return [rint(50,100),rint(48,85)];
+  if(type==='cabin') return [rint(48,85),rint(45,75)];
+  return [rint(48,105),rint(48,95)];
+}
+function ruralPickType(mil){
+  if(mil&&_rng()<0.55) return 'mil';
+  const r=_rng();
+  if(selectedMap==='desert') return r<.25?'barn':(r<.5?'shop':'house');
+  return r<.3?'cabin':(r<.55?'shop':'house');
+}
+function genTown(cx,cy,mil){
+  const RD=34, FRONT=26, BACK=30, GAP0=44, MAXW=560;
+  const rows=mil?2:rint(1,3), data=[];
+  for(let r=0;r<rows;r++){
+    const list=[]; let x=0,hmax=0;
+    const target=mil?rint(2,3):rint(2,4);
+    for(let k=0;k<target*3&&list.length<target;k++){
+      const type=ruralPickType(mil), sz=bldSizeRural(type);
+      if(x+sz[0]>MAXW) break;
+      if(list.length>0&&_rng()<.12){ x+=Math.round(sz[0]*.5)+GAP0; continue; }   // lote vazio
+      list.push({type:type,w:sz[0],h:sz[1],x:x});
+      x+=sz[0]+rint(GAP0,GAP0+36);
+      if(sz[1]>hmax) hmax=sz[1];
+    }
+    if(!list.length){ const type=ruralPickType(mil), sz=bldSizeRural(type); list.push({type:type,w:sz[0],h:sz[1],x:0}); hmax=sz[1]; }
+    const last=list[list.length-1];
+    data.push({list:list,W:last.x+last.w,hmax:hmax});
+  }
+  let W=0,H=0;
+  for(const d of data){ if(d.W>W) W=d.W; H+=d.hmax+FRONT+RD+BACK; }
+  H-=BACK;
+  const ox=Math.round(cx-W/2), oy=Math.round(cy-H/2);
+  if(ox-60<40||oy-20<40||ox+W+60>WW-40||oy+H+20>WH-40) return null;
+  let y=oy; const hubs=[];
+  for(const d of data){
+    const off=Math.round((rint(0,1)?0:(W-d.W)/2));
+    for(const b of d.list) addBuilding(ox+off+Math.round(b.x), y+d.hmax-b.h, b.w, b.h, b.type); // alinhado embaixo: porta dá para o vão e a rua
+    const roadY=y+d.hmax+FRONT;
+    roads.push({x:ox-47,y:roadY,w:W+47+44,h:RD,vert:false});
+    hubs.push(roadY+RD/2);
+    y=roadY+RD+BACK;
+  }
+  roads.push({x:ox-47,y:Math.round(hubs[0]-RD/2),w:RD,h:Math.round(hubs[hubs.length-1]-hubs[0]+RD),vert:true});
+  return {x:cx,y:cy,mil:mil,hubx:ox-30,huby:Math.round(hubs[0])};
+}
+function genRural(){
+  const count=selectedMap==='desert'?4:6;
+  const spots=[]; let tries=0;
+  while(spots.length<count&&tries<2500){
+    tries++;
+    const x=rnd(450,WW-450), y=rnd(450,WH-450);
+    if(spots.every(t=>Math.hypot(t.x-x,t.y-y)>800)) spots.push({x:x,y:y});
+  }
+  // bases militares: as duas últimas vilas (quando há 3 ou mais)
+  spots.forEach((p,i)=>{ p.mil=spots.length>=3&&i>=spots.length-2; });
+  for(const p of spots){
+    let t=null;
+    for(let a=0;a<12&&!t;a++){
+      // se a vila não couber no mapa naquele ponto, desloca para dentro e tenta de novo
+      t=genTown(clamp(p.x+(a?rnd(-90,90):0),380,WW-380), clamp(p.y+(a?rnd(-90,90):0),380,WH-380), p.mil);
+    }
+    if(t) towns.push(t);
+  }
+  // estradas entre vilas: só trajetos livres de prédios
+  const HW=28, MARG=24;
+  const hit=r=>blds.some(b=>r.x<b.x+b.w+MARG&&r.x+r.w>b.x-MARG&&r.y<b.y+b.h+MARG&&r.y+r.h>b.y-MARG);
+  const H=(x1,x2,y)=>({x:Math.round(Math.min(x1,x2)-HW/2),y:Math.round(y-HW/2),w:Math.round(Math.abs(x2-x1)+HW),h:HW,vert:false});
+  const V=(x,y1,y2)=>({x:Math.round(x-HW/2),y:Math.round(Math.min(y1,y2)-HW/2),w:HW,h:Math.round(Math.abs(y2-y1)+HW),vert:true});
+  const routes=(A,B)=>{
+    const out=[
+      [H(A.hubx,B.hubx,A.huby),V(B.hubx,A.huby,B.huby)],
+      [V(A.hubx,A.huby,B.huby),H(A.hubx,B.hubx,B.huby)]
+    ];
+    for(const f of [.5,.3,.7,.15,.85]){      // H-V-H
+      const mx=A.hubx+(B.hubx-A.hubx)*f;
+      out.push([H(A.hubx,mx,A.huby),V(mx,A.huby,B.huby),H(mx,B.hubx,B.huby)]);
+    }
+    const mid=(A.huby+B.huby)/2, lo=Math.min(A.huby,B.huby), hi=Math.max(A.huby,B.huby);
+    for(const my of [mid,mid-120,mid+120,mid-250,mid+250,lo-130,hi+130]){   // V-H-V
+      if(my<80||my>WH-80) continue;
+      out.push([V(A.hubx,A.huby,my),H(A.hubx,B.hubx,my),V(B.hubx,my,B.huby)]);
+    }
+    return out;
+  };
+  const tryLink=(A,B)=>{
+    const ok=routes(A,B).find(o=>!o.some(hit));
+    if(ok){ for(const r of ok) roads.push(r); return true; }
+    return false;
+  };
+  // 1) cada vila liga à mais próxima já ligada; se não houver trajeto livre, tenta as outras por distância
+  for(let i=1;i<towns.length;i++){
+    const A=towns[i];
+    const order=towns.slice(0,i).sort((p,q)=>Math.hypot(p.hubx-A.hubx,p.huby-A.huby)-Math.hypot(q.hubx-A.hubx,q.huby-A.huby));
+    for(const B of order) if(tryLink(A,B)) break;
+  }
+  // 2) garante rede única: vilas isoladas tentam ligar com qualquer vila do grupo principal
+  const touch=(p,q)=>p.x<=q.x+q.w&&p.x+p.w>=q.x&&p.y<=q.y+q.h&&p.y+p.h>=q.y;
+  for(let pass=0;pass<3;pass++){
+    const comp=roads.map((_,i)=>i), find=i=>comp[i]===i?i:(comp[i]=find(comp[i]));
+    for(let i=0;i<roads.length;i++) for(let j=i+1;j<roads.length;j++) if(touch(roads[i],roads[j])) comp[find(i)]=find(j);
+    const grp=t=>find(roads.findIndex(r=>t.hubx>=r.x&&t.hubx<=r.x+r.w&&t.huby>=r.y&&t.huby<=r.y+r.h));
+    const g0=grp(towns[0]);
+    let linked=false;
+    for(const A of towns){
+      if(grp(A)===g0) continue;
+      const order=towns.filter(B=>grp(B)===g0).sort((p,q)=>Math.hypot(p.hubx-A.hubx,p.huby-A.huby)-Math.hypot(q.hubx-A.hubx,q.huby-A.huby));
+      for(const B of order) if(tryLink(A,B)){linked=true;break;}
+    }
+    if(!linked) break;
+  }
+}
+function ruralCarFree(x,y){
+  for(const b of blds) if(x+18>b.x-4&&x-18<b.x+b.w+4&&y+10>b.y-4&&y-10<b.y+b.h+4) return false;
+  for(const r of roads) if(x+18>r.x&&x-18<r.x+r.w&&y+10>r.y&&y-10<r.y+r.h) return false;
+  for(const v of vehicles) if(Math.abs(v.x-x)<44&&Math.abs(v.y-y)<26) return false;
+  return true;
+}
+function genRuralVehicles(vId,carCols){
+  const add=(x,y,face)=>{vehicles.push({id:vId++,x:Math.round(x),y:Math.round(y),w:36,h:20,col:pick(carCols),looted:false,spd:0,face:face,hp:100,maxHp:100});};
+  // nas ruas e estradas (faixa da direita), bem espaçados
+  for(const r of roads){
+    const len=r.vert?r.h:r.w;
+    if(len<160) continue;
+    const n=Math.max(1,Math.floor(len/520));
+    for(let k=0;k<n;k++){
+      if(_rng()>.7) continue;
+      let x,y,face;
+      if(!r.vert){ const south=_rng()<.5; x=r.x+70+_rng()*(len-140); y=r.y+r.h*(south?.72:.28); face=south?0:Math.PI; }
+      else{ const east=_rng()<.5; y=r.y+70+_rng()*(len-140); x=r.x+r.w*(east?.72:.28); face=east?-Math.PI/2:Math.PI/2; }
+      let clear=true;
+      for(const v of vehicles) if(Math.abs(v.x-x)<130&&Math.abs(v.y-y)<130){clear=false;break;}
+      if(clear) add(x,y,face);
+    }
+  }
+  // estacionados ao lado da porta (sem bloquear a entrada)
+  for(const b of blds){
+    if(b.type==='mil'||_rng()>.22) continue;
+    const cx=b.doorX+b.door+26, cy=b.y+b.h+14;
+    if(cx+18>b.x+b.w) continue;
+    if(ruralCarFree(cx,cy)) add(cx,cy,0);
+  }
+  return vId;
+}
 function genWorld(seed) {
   setRng(seed);
   try {
   trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];spits=[];decorations=[];animals=[];
-  cityInter=[];cityCrash=null;
+  cityInter=[];cityCrash=null;lampList=[];
   plane=null;
 
-  if(selectedMap==='city'){ genCity(); } else {
-  const townCount=selectedMap==='city'?13:selectedMap==='desert'?4:6;
-  const townMinDist=selectedMap==='city'?380:600;
-  let tries=0;
-  while(towns.length<townCount&&tries<1400){
-    tries++;
-    const x=rnd(420,WW-420),y=rnd(420,WH-420);
-    if(towns.every(t=>Math.hypot(t.x-x,t.y-y)>townMinDist))towns.push({x,y,mil:false});
-  }
-  if(towns.length>=3){towns[towns.length-1].mil=true;towns[towns.length-2].mil=true;}
-  if(selectedMap==='city' && towns.length>=5) towns[0].mil=true;
-  for(const t of towns){
-    const n=selectedMap==='city'?rint(14,22):(t.mil?5:rint(4,7));
-    const spread=selectedMap==='city'?320:260;
-    const pad=selectedMap==='city'?14:34;
-    let placed=0,guard=0;
-    while(placed<n&&guard<(selectedMap==='city'?500:300)){
-      guard++;
-      let type='house';
-      if(t.mil && _rng()<0.55) type='mil';
-      else if(selectedMap==='city') type = pickCityBuildingType(false);
-      else {
-        const r=_rng();
-        if(selectedMap==='desert') type = r<.25?'barn':(r<.5?'shop':'house');
-        else if(selectedMap==='snow') type = r<.3?'cabin':(r<.55?'shop':'house');
-        else type = r<.3?'cabin':(r<.55?'shop':'house');
-      }
-      const cx=t.x+rnd(-spread,spread), cy=t.y+rnd(-spread,spread);
-      if(tryPlaceBuilding(cx,cy,type,pad)) placed++;
-    }
-    // Cidade: quarteirão em grade perto do centro do bairro
-    if(selectedMap==='city'){
-      const cols=rint(2,4), rows=rint(2,3);
-      const ox=t.x-cols*55, oy=t.y-rows*60;
-      for(let row=0;row<rows;row++){
-        for(let col=0;col<cols;col++){
-          if(_rng()<0.15) continue;
-          const type=pickCityBuildingType(t.mil && row===0 && col===0);
-          tryPlaceBuilding(ox+col*110+rnd(-8,8), oy+row*120+rnd(-8,8), type, 12);
-        }
-      }
-    }
-  }
-  for(let i=1;i<towns.length;i++){
-    let bj=0,bd=1e9;
-    for(let j=0;j<i;j++){const d=Math.hypot(towns[i].x-towns[j].x,towns[i].y-towns[j].y);if(d<bd){bd=d;bj=j;}}
-    const a=towns[i],b=towns[bj];
-    const x1=Math.round(Math.min(a.x,b.x)),x2=Math.round(Math.max(a.x,b.x));
-    const y1=Math.round(Math.min(a.y,b.y)),y2=Math.round(Math.max(a.y,b.y));
-    roads.push({x:x1,y:Math.round(a.y)-7,w:x2-x1,h:14});
-    roads.push({x:Math.round(b.x)-7,y:y1,w:14,h:y2-y1});
-  }
-  // Cidade: prédios ao longo das ruas (preenche o “vazio” entre bairros)
-  if(selectedMap==='city'){
-    for(const r of roads){
-      if(r.w>=r.h && r.w>160){
-        for(let x=r.x+80;x<r.x+r.w-80;x+=rint(90,140)){
-          if(_rng()>0.62) continue;
-          const side=_rng()<0.5?-1:1;
-          const type=pickCityBuildingType(false);
-          tryPlaceBuilding(x, r.y+side*rint(55,95), type, 12);
-        }
-      } else if(r.h>160){
-        for(let y=r.y+80;y<r.y+r.h-80;y+=rint(90,140)){
-          if(_rng()>0.62) continue;
-          const side=_rng()<0.5?-1:1;
-          const type=pickCityBuildingType(false);
-          tryPlaceBuilding(r.x+side*rint(55,95), y, type, 12);
-        }
-      }
-    }
-    // Alguns prédios soltos no miolo urbano
-    let fill=0, fg=0;
-    while(fill<28 && fg<400){
-      fg++;
-      const x=rnd(200,WW-200), y=rnd(200,WH-200);
-      if(towns.every(t=>Math.hypot(t.x-x,t.y-y)>200)) continue;
-      if(tryPlaceBuilding(x,y,pickCityBuildingType(false),14)) fill++;
-    }
-  }
-  } // fim do gerador não-cidade
-  // Um único lago isolado — só Floresta e Neve (seed-determinístico = sync no multiplayer)
+  if(selectedMap==='city') genCity(); else genRural();
+  // Um único lago isolado — Floresta e Neve; no Deserto é um oásis menor (seed-determinístico = sync no multiplayer)
   lakes=[];
-  if(selectedMap==='forest' || selectedMap==='snow'){
+  if(mapHasLake()){
     let cx=0,cy=0,mainR=160,valid=false,lTries=0;
-    while(!valid && lTries<450){
+    for(const fm of [1,.6,.35,.15]){ if(valid)break; lTries=0;
+    while(!valid && lTries<300){
       lTries++;
-      cx=rnd(850,WW-850); cy=rnd(850,WH-850); mainR=rnd(130,175);
+      cx=rnd(850,WW-850); cy=rnd(850,WH-850); mainR=selectedMap==='desert'?rnd(62,82):rnd(130,175);
       let ok=true;
       for(const b of blds){
-        if(Math.hypot(b.x+b.w/2-cx, b.y+b.h/2-cy) < mainR+380){ ok=false; break; }
+        if(Math.hypot(b.x+b.w/2-cx, b.y+b.h/2-cy) < Math.max(mainR+380*fm,mainR+80)){ ok=false; break; }
       }
       if(!ok) continue;
       for(const r of roads){
         const rx=clamp(cx,r.x,r.x+r.w), ry=clamp(cy,r.y,r.y+r.h);
-        if(Math.hypot(cx-rx,cy-ry) < mainR+280){ ok=false; break; }
+        if(Math.hypot(cx-rx,cy-ry) < Math.max(mainR+280*fm,mainR+50)){ ok=false; break; }
       }
       if(!ok) continue;
       for(const t of towns){
-        if(Math.hypot(t.x-cx,t.y-cy) < mainR+450){ ok=false; break; }
+        if(Math.hypot(t.x-cx,t.y-cy) < Math.max(mainR+450*fm,mainR+120)){ ok=false; break; }
       }
       if(ok) valid=true;
     }
+    }
     if(valid){
       const blobs=[{x:cx,y:cy,r:mainR}];
-      const subCount=rint(8,14);
+      const subCount=selectedMap==='desert'?rint(5,8):rint(8,14);
       for(let j=0;j<subCount;j++){
         const ang=(j/subCount)*6.283+rnd(-0.2,0.2);
         const dist=mainR*rnd(0.5,0.82);
         blobs.push({x:cx+Math.cos(ang)*dist, y:cy+Math.sin(ang)*dist, r:rnd(mainR*0.4,mainR*0.65)});
       }
-      const islands=[], islCount=rint(1,3);
+      const islands=[], islCount=selectedMap==='desert'?0:rint(1,3);
       for(let j=0;j<islCount;j++){
         const ang=rnd(0,6.283), dist=rnd(0,mainR*0.5);
         islands.push({x:cx+Math.cos(ang)*dist, y:cy+Math.sin(ang)*dist, r:rnd(10,20)});
       }
-      const pads=[], padCount=selectedMap==='forest'?rint(12,20):rint(4,8);
+      const pads=[], padCount=selectedMap==='forest'?rint(12,20):(selectedMap==='desert'?0:rint(4,8));
       for(let j=0;j<padCount;j++){
         const ang=rnd(0,6.283), dist=rnd(mainR*0.35,mainR*0.92);
         pads.push({x:cx+Math.cos(ang)*dist, y:cy+Math.sin(ang)*dist, r:rnd(2,4)});
       }
       lakes.push({cx,cy,r:mainR,blobs,islands,pads,frozen:selectedMap==='snow'});
+      if(selectedMap==='desert'){ // palmeiras em volta do oásis
+        const pn=rint(7,10);
+        for(let j=0;j<pn;j++){
+          const ang=(j/pn)*6.283+rnd(-.25,.25), d=mainR*rnd(1.18,1.5);
+          const px=cx+Math.cos(ang)*d, py=cy+Math.sin(ang)*d;
+          if(onCityRoad(px,py,20)) continue;
+          trees.push({x:Math.round(px),y:Math.round(py),k:6,hp:3,seed:_rng()});
+        }
+      }
     }
   }
   let vId = 0;
   const carCols=['#7a3030','#30507a','#505050','#6a6a30','#8a7030','#4a6a8a','#2a5a3a','#6a3a5a','#3a3a3a','#8a5a20'];
-  if(selectedMap==='city'){ vId=genCityVehicles(vId,carCols); } else {
-  // More cars on city roads; still some on other maps
-  const roadCarChance = selectedMap==='city' ? 0.85 : 0.45;
-  for(const r of roads){
-    if(r.w>80 && _rng()<roadCarChance){
-      vehicles.push({id:vId++, x:r.x+r.w/2, y:r.y+7, w:36, h:20, col:pick(carCols), looted:false, spd:0, face:0, hp:100, maxHp:100});
-    }
-    // City: extra car further along long roads
-    if(selectedMap==='city' && r.w>220 && _rng()<0.7){
-      vehicles.push({id:vId++, x:r.x+r.w*0.25, y:r.y+7, w:36, h:20, col:pick(carCols), looted:false, spd:0, face:0, hp:100, maxHp:100});
-    }
-    if(selectedMap==='city' && r.h>220 && _rng()<0.7){
-      vehicles.push({id:vId++, x:r.x+7, y:r.y+r.h*0.5, w:36, h:20, col:pick(carCols), looted:false, spd:0, face:Math.PI/2, hp:100, maxHp:100});
-    }
-  }
-  // City: parked cars near buildings
-  if(selectedMap==='city'){
-    for(const b of blds){
-      if(_rng()>0.55) continue;
-      const side=_rng();
-      let cx,cy,face=0;
-      if(side<0.25){ cx=b.x-28; cy=b.y+b.h/2; face=Math.PI/2; }
-      else if(side<0.5){ cx=b.x+b.w+28; cy=b.y+b.h/2; face=Math.PI/2; }
-      else if(side<0.75){ cx=b.x+b.w/2; cy=b.y-24; face=0; }
-      else { cx=b.x+b.w/2; cy=b.y+b.h+24; face=0; }
-      if(cx<40||cy<40||cx>WW-40||cy>WH-40) continue;
-      if(solidPoint(cx,cy,20)) continue;
-      vehicles.push({id:vId++, x:cx, y:cy, w:36, h:20, col:pick(carCols), looted:false, spd:0, face:face, hp:100, maxHp:100});
-    }
-  }
-  }
+  if(selectedMap==='city'){ vId=genCityVehicles(vId,carCols); } else { vId=genRuralVehicles(vId,carCols); }
   let planeX=rnd(500,WW-500),planeY=rnd(500,WH-500),validPlane=false,pTries=0;
   if(selectedMap==='city'&&cityCrash){ planeX=cityCrash.x; planeY=cityCrash.y; validPlane=true; }
   while(!validPlane&&pTries<500){
     pTries++;
     planeX=rnd(500,WW-500);planeY=rnd(500,WH-500);
     if(pointInLake(planeX,planeY))continue;
+    if(onCityRoad(planeX,planeY,80))continue;
     let ok=true;
-    for(const b of blds)if(Math.hypot(b.x+b.w/2-planeX,b.y+b.h/2-planeY)<350){ok=false;break;}
+    const thr=pTries<350?350:220;
+    for(const b of blds)if(Math.hypot(b.x+b.w/2-planeX,b.y+b.h/2-planeY)<thr){ok=false;break;}
     if(ok)validPlane=true;
   }
   plane={x:planeX,y:planeY,w:70,h:46};
@@ -1782,8 +1880,8 @@ function genWorld(seed) {
     let x,y;
     if(_rng()<.8){const c=pick(centers),a=rnd(0,6.283),d=_rng()*c.r;x=c.x+Math.cos(a)*d;y=c.y+Math.sin(a)*d;}
     else{x=rnd(30,WW-30);y=rnd(30,WH-30);}
-    if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,selectedMap==='city'?30:16))continue;
-    if(selectedMap==='city'&&onCityRoad(x,y,14))continue;
+    if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,selectedMap==='city'?30:22))continue;
+    if(onCityRoad(x,y,14))continue;
     let nearLake=false;
     for(const l of lakes)if(Math.hypot(l.cx-x,l.cy-y)<l.r+25){nearLake=true;break;}
     if(nearLake)continue;
@@ -1796,15 +1894,15 @@ function genWorld(seed) {
     trees.push({x:Math.round(x),y:Math.round(y),k:k,hp:3,seed:_rng()});count++;
   }
 
-  const rockCount=selectedMap==='desert'?240:selectedMap==='snow'?260:selectedMap==='city'?110:320;
+  const rockCount=selectedMap==='desert'?240:selectedMap==='snow'?260:selectedMap==='city'?0:320;
   let rc=0,rg=0;
   while(rc<rockCount&&rg<12000){
     rg++;
     let x,y;
     if(_rng()<.7){const c=pick(centers),a=rnd(0,6.283),d=_rng()*c.r;x=c.x+Math.cos(a)*d;y=c.y+Math.sin(a)*d;}
     else{x=rnd(40,WW-40);y=rnd(40,WH-40);}
-    if(x<40||y<40||x>WW-40||y>WH-40||solidPoint(x,y,selectedMap==='city'?30:20))continue;
-    if(selectedMap==='city'&&onCityRoad(x,y,14))continue;
+    if(x<40||y<40||x>WW-40||y>WH-40||solidPoint(x,y,selectedMap==='city'?30:24))continue;
+    if(onCityRoad(x,y,14))continue;
     let nearLake=false;
     for(const l of lakes)if(Math.hypot(l.cx-x,l.cy-y)<l.r+30){nearLake=true;break;}
     if(nearLake)continue;
@@ -1818,8 +1916,8 @@ function genWorld(seed) {
   while(dc<decorCount&&dg<14000){
     dg++;
     const x=rnd(40,WW-40),y=rnd(40,WH-40);
-    if(solidPoint(x,y,selectedMap==='city'?22:10))continue;
-    if(selectedMap==='city'&&onCityRoad(x,y,8))continue;
+    if(solidPoint(x,y,selectedMap==='city'?22:16))continue;
+    if(onCityRoad(x,y,8))continue;
     let nearLake=false;
     for(const l of lakes)if(Math.hypot(l.cx-x,l.cy-y)<l.r+10){nearLake=true;break;}
     if(nearLake)continue;
@@ -1830,6 +1928,7 @@ function genWorld(seed) {
   }
 
   if(selectedMap==='city')cityLamps();
+  lampList=decorations.filter(d=>d.type==='lamp'); // postes: abrem luz na escuridão à noite
   let oc=0,og=0;
   while(oc<90&&og<700){
     og++;
@@ -1837,12 +1936,13 @@ function genWorld(seed) {
     if(solidPoint(x,y,14))continue;
     items.push({t:wpick(lakeLoot(OUT_LOOT)),x,y});oc++;
   }
-  for(let i=0;i<40;i++){
+  const stoneGround=selectedMap==='city'?70:40;   // cidade tem menos pedras: mais pedra solta no chão
+  for(let i=0;i<stoneGround;i++){
     const x=rnd(60,WW-60),y=rnd(60,WH-60);
     if(!solidPoint(x,y,14))items.push({t:'stone',x,y});
   }
 
-  weather=_rng()<.4?(_rng()<.5?'rain':'snow'):'none';
+  weather=pickWeather(_rng);
   weatherTimer=rnd(120,240);
   weatherParticles=[];
   // Animais por mapa (passivos, caça = comida)
@@ -2095,7 +2195,7 @@ function newGame(){
   try{
     genWorld();
     if(!plane){throw new Error('plane não gerado');}
-    P={x:plane.x+70,y:plane.y,r:5,hp:100,food:85,water:85,stam:100,
+    P={x:plane.x+70,y:plane.y,r:5,hp:100,food:85,water:85,stam:100,temp:0,
       face:Math.PI/2,moving:false,sprint:false,exhausted:false,cd:0,swing:0,flash:0,bleed:false,dead:false,
       weapon:'fists',melee:null,meleeWeapons:[],firearms:{},ammo:0,arrows:0,
       inv:[{t:'bandage',n:1},{t:'water',n:1}],
@@ -2176,12 +2276,12 @@ function useItem(i){
   let ok=false;
   if(it==='food'){if(P.food<95){P.food=Math.min(100,P.food+35);ok=true;toast('Você comeu');}}
   else if(it==='fish'){if(P.food<95){P.food=Math.min(100,P.food+30);P.water=Math.max(0,P.water-5);ok=true;toast('Peixe cru... melhor assar');}}
-  else if(it==='cookedfish'){if(P.food<95){P.food=Math.min(100,P.food+55);P.hp=Math.min(100,P.hp+5);ok=true;toast('Peixe assado! +5 HP');}}
+  else if(it==='cookedfish'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+10);P.food=Math.min(100,P.food+55);P.hp=Math.min(100,P.hp+5);ok=true;toast('Peixe assado! +5 HP');}}
   else if(it==='meat'){if(P.food<95){P.food=Math.min(100,P.food+25);ok=true;toast('Carne crua... melhor assar');}}
-  else if(it==='cookedmeat'){if(P.food<95){P.food=Math.min(100,P.food+60);P.hp=Math.min(100,P.hp+8);ok=true;toast('Carne assada! +8 HP');}}
+  else if(it==='cookedmeat'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+10);P.food=Math.min(100,P.food+60);P.hp=Math.min(100,P.hp+8);ok=true;toast('Carne assada! +8 HP');}}
   else if(it==='wood'){toast('Madeira é usada no crafting (tecla C)');}
   else if(it==='stone'){toast('Pedra é usada no crafting (tecla C)');}
-  else if(it==='water'){if(P.water<95){P.water=Math.min(100,P.water+40);ok=true;toast('Você bebeu água');}}
+  else if(it==='water'){if(P.water<95){P.water=Math.min(100,P.water+40);ok=true;toast('Você bebeu água');if(selectedMap==='snow'||selectedMap==='desert')P.temp=Math.max(-100,(P.temp||0)-6);}}
   else if(it==='bandage'){if(P.bleed||P.hp<95){P.bleed=false;P.hp=Math.min(100,P.hp+10);ok=true;toast('Bandagem usada');}}
   else if(it==='medkit'){if(P.bleed||P.hp<90){P.bleed=false;P.hp=Math.min(100,P.hp+50);ok=true;toast('Kit médico usado');}}
   if(!ok){toast('Não precisa agora');return;}
@@ -2418,12 +2518,13 @@ function pickup(){
   if(pointInLake(P.x,P.y) && mapHasLake()){
     if(P.water<97){
       P.water=Math.min(100,P.water+14);
-      toast(selectedMap==='snow'?'Você bebeu água gelada do lago 💧':'Você bebeu água do lago 💧');
+      toast(selectedMap==='snow'?'Você bebeu água gelada do lago 💧':(selectedMap==='desert'?'Você bebeu água do oásis 💧':'Você bebeu água do lago 💧'));
     } else {
       // Sede saciada: enche uma garrafa (empilha no inventário)
       if(!addItem('water')){ toast('Sede saciada · mochila cheia'); return; }
       toast('Garrafa enchida 💧');
     }
+    if(selectedMap==='snow'||selectedMap==='desert')P.temp=Math.max(-100,(P.temp||0)-6); // água gelada esfria / água fresca refresca
     beep(430,.1,'sine',.045);
     for(let i=0;i<5;i++)parts.push({x:P.x+rnd(-5,5),y:P.y,vx:rnd(-12,12),vy:rnd(-30,-10),t:.35,c:'#8cc8f0'});
     return;
@@ -2509,6 +2610,7 @@ function makeNoise(x,y,r){
 }
 function hurt(n,bleedChance){
   if(P.dead)return;
+  if(P._grace>0)return; // acabou de reconectar
   P.hp-=n;flash=.45;shake=4;
   if(P.fish)cancelFishing('A linha se soltou!');
   if(Math.random()<bleedChance&&!P.bleed){P.bleed=true;toast('Você está sangrando!');}
@@ -2600,7 +2702,7 @@ function respawnPlayer(){
   P.x=clamp(rx,20,WW-20); P.y=clamp(ry,20,WH-20);
   pushOut(P,P.r);
   P.hp=100; P.food=Math.max(P.food,55); P.water=Math.max(P.water,55);
-  P.stam=100; P.bleed=false; P.dead=false; P.exhausted=false;
+  P.stam=100; P.bleed=false; P.dead=false; P.exhausted=false; P.temp=0; P._tc=0;
   P.cd=0; P.swing=0; P.flash=0; P.inVehicle=null;
   state='play';
   const d=$('deadscr'); if(d) d.classList.add('hide');
@@ -2928,14 +3030,65 @@ function darkness(h){
   if(h>=21||h<4)return 1;
   return 1-(h-4)/3;
 }
+
+/* ===== Temperatura corporal (0 = confortável; negativo = frio; positivo = calor) =====
+   O ambiente puxa a temperatura do corpo para um alvo que depende do MAPA, da HORA, do CLIMA e do ABRIGO:
+   neve = frio constante (pior à noite) · deserto = calor de dia / frio à noite · floresta e cidade = amenos
+   (só chuva + noite incomodam). Prédios e carros isolam, fogueira esquenta, sombra e água refrescam. */
+const TEMP_MAP={ snow:{base:-42,amp:16}, desert:{base:12,amp:44}, forest:{base:-4,amp:12}, city:{base:0,amp:10} };
+function envTemp(){
+  const m=TEMP_MAP[selectedMap]||TEMP_MAP.forest;
+  const hod=(START_HOUR+T/DAY_SECONDS*24)%24;
+  let tg=m.base+m.amp*Math.sin((hod-8)/24*6.2832);       // máximo ~14h, mínimo ~2h
+  if(weather==='rain') tg-=14; else if(weather==='snow') tg-=8; else if(weather==='sand') tg+=8;
+  if(P.inVehicle) tg*=0.6;                                   // cabine do carro
+  else if(bldAt(P.x,P.y)) tg*=0.3;                           // abrigo isola do clima
+  else {
+    if(tg>10){ for(const n of querySolidNear(P.x,P.y,28)){ if(n.kind==='tree'){ tg-=22; break; } } } // sombra
+    if(selectedMap!=='snow'&&pointInLake(P.x,P.y)) tg-=(tg>0?40:18);                                  // na água: refresca / molha
+  }
+  for(const c of campfires){                                  // fogueira: esquenta no frio
+    const d=Math.hypot(c.x-P.x,c.y-P.y);
+    if(d<95){
+      const f=1-d/95;
+      // Fogueira aquece até o conforto (nunca causa insolação em clima ameno); com calor forte só piora um pouco
+      if(tg<22) tg=Math.max(tg,Math.min(tg+70*f,22));
+      else tg+=14*f;
+    }
+  }
+  if(P.sprint) tg+=10;                                        // correr gera calor
+  return clamp(tg,-100,100);
+}
+function tempTick(dt){
+  if(!Number.isFinite(P.temp)) P.temp=0;
+  P.temp+=(envTemp()-P.temp)*Math.min(1,dt/40);
+  const T=P.temp;
+  let fm=1,wm=1,spd=1,sr=1,sd=1,dmg=0,code=0;
+  if(T<-28){ code=-1; fm=1.25; sr=.7; spd=.95; }
+  if(T<-55){ code=-2; spd=.88; sd=1.2; dmg=.6+.9*clamp((-T-55)/25,0,1); }
+  if(T>28){ code=1; wm=1.5; sr=.75; }
+  if(T>55){ code=2; wm=2.0; spd=.92; dmg=.6+.9*clamp((T-55)/25,0,1); }
+  if(selectedMap==='desert') wm*=1.2;      // ar seco: mais sede
+  if(selectedMap==='snow') fm*=1.15;       // corpo queima mais calorias
+  P._fm=fm;P._wm=wm;P._tspd=spd;P._tsr=sr;P._tsd=sd;P._tdmg=dmg;
+  if(Math.abs(code)>Math.abs(P._tc||0)){
+    if(code===-1) toast('Você está com frio — abrigue-se ou chegue perto de uma fogueira');
+    else if(code===-2) toast('Você está congelando! Procure fogo ou um abrigo');
+    else if(code===1) toast('Calor forte — procure sombra, água ou abrigo');
+    else if(code===2) toast('Insolação! Saia do sol e beba água');
+  }
+  P._tc=code;
+}
 /* Desgaste de sobrevivência: vale a pé e dirigindo */
 function survivalTick(dt){
-  P.food=Math.max(0,P.food-.09*dt*(P.sprint?1.8:1));
-  P.water=Math.max(0,P.water-.13*dt*(P.sprint?2:1));
+  tempTick(dt);
+  P.food=Math.max(0,P.food-.09*dt*(P.sprint?1.8:1)*(P._fm||1));
+  P.water=Math.max(0,P.water-.13*dt*(P.sprint?2:1)*(P._wm||1));
   if(P.bleed){P.hp-=1.1*dt;if(Math.random()<dt*4)parts.push({x:P.x,y:P.y-2,vx:0,vy:10,t:.5,c:'#a01818'});}
   if(P.food<=0)P.hp-=.7*dt;
   if(P.water<=0)P.hp-=1*dt;
-  if(P.food>40&&P.water>40&&!P.bleed&&P.hp<100)P.hp=Math.min(100,P.hp+.5*dt);
+  if(P._tdmg>0)P.hp-=P._tdmg*dt;     // congelando / insolação
+  if(P.food>40&&P.water>40&&!P.bleed&&!(P._tdmg>0)&&P.hp<100)P.hp=Math.min(100,P.hp+.5*dt);
   if(P.hp<=0&&!P.dead)die();
   if(P.hp<30&&P.hp>0){heartbeatT-=dt;if(heartbeatT<=0){heartbeatT=.9;heartbeat();}}
 }
@@ -2959,15 +3112,27 @@ function updateP(dt){
       P.x=v.x;P.y=v.y;P.face=v.face;P.moving=false;
       return;
     }
-    const maxSpd=72, maxRev=-32;
-    if(touchGas>0)v.spd=Math.min(maxSpd,v.spd+48*dt);
-    else if(touchGas<0)v.spd=Math.max(maxRev,v.spd-40*dt);
-    else v.spd*=Math.pow(0.08,dt);
+    const tr=terrainFor(v.x,v.y), wf=(weather==='rain'||weather==='sand')?.92:1; // chuva/areia pioram um pouco
+    const maxSpd=72*tr.spd*wf, maxRev=-32*tr.spd*wf;
+    if(touchGas>0)v.spd=Math.min(maxSpd,v.spd+48*tr.acc*dt);
+    else if(touchGas<0)v.spd=Math.max(maxRev,v.spd-40*tr.acc*dt);
+    else v.spd*=Math.pow(tr.coast,dt);
+    // Entrou em terreno pior em alta velocidade: o terreno freia o carro aos poucos
+    if(v.spd>maxSpd) v.spd=Math.max(maxSpd,v.spd-120*dt);
+    else if(v.spd<maxRev) v.spd=Math.min(maxRev,v.spd+120*dt);
+    // Poeira / neve / respingos levantados fora da estrada
+    if(tr.dust&&Math.abs(v.spd)>22){
+      v._dustT=(v._dustT||0)-dt;
+      if(v._dustT<=0){
+        v._dustT=.07;
+        parts.push({x:v.x-Math.cos(v.face)*14+rnd(-3,3),y:v.y-Math.sin(v.face)*14+rnd(-2,4),vx:rnd(-18,18),vy:rnd(-32,-8),t:.45,c:tr.dust});
+      }
+    }
     const prevSpd=v.spd;
     const ox=v.x, oy=v.y, of=v.face;
     // Quantos pontos da carroceria já estão dentro de algo ANTES de mover (carro encostado/preso)
     const oldOverlap=vehicleOverlap(v);
-    if(touchSteer!==0&&Math.abs(v.spd)>4)v.face+=touchSteer*2.2*dt*(v.spd>0?1:-1);
+    if(touchSteer!==0&&Math.abs(v.spd)>4)v.face+=touchSteer*2.2*tr.steer*wf*dt*(v.spd>0?1:-1);
     const newFace=v.face;
     v.x+=Math.cos(v.face)*v.spd*dt;
     v.y+=Math.sin(v.face)*v.spd*dt;
@@ -3075,6 +3240,8 @@ function updateP(dt){
   // Clima com impacto: neve freia; chuva gasta mais stamina
   if(weather==='snow') sp*=0.82;
   else if(weather==='rain') sp*=0.94;
+  else if(weather==='sand') sp*=0.9;
+  sp*=(P._tspd||1);                 // frio/calor extremos desaceleram
   if(P.moving){
     P.x+=mx*sp*dt;P.y+=my*sp*dt;
     P.face=Math.atan2(my,mx);
@@ -3084,13 +3251,13 @@ function updateP(dt){
     if(stepT<=0){stepT=P.sprint?0.28:0.42;footstep(inWater);}
   }
   if(P.sprint){
-    const stamDrain=17*(weather==='rain'?1.35:weather==='snow'?1.2:1);
+    const stamDrain=17*(weather==='rain'?1.35:weather==='snow'?1.2:weather==='sand'?1.15:1)*(P._tsd||1);
     P.stam-=stamDrain*dt;if(P.stam<=0){P.stam=0;P.exhausted=true;}
     noiseT-=dt;
     if(noiseT<=0){makeNoise(P.x,P.y,70);noiseT=.6;}
   }else{
     // Recupera mais rápido parado (30/s) do que andando (20/s)
-    const stamRegen=(P.moving?20:30)*(weather==='snow'?0.8:1);
+    const stamRegen=(P.moving?20:30)*(weather==='snow'?0.8:1)*(P._tsr||1);
     P.stam=Math.min(100,P.stam+stamRegen*dt);
     if(P.exhausted&&P.stam>20)P.exhausted=false;
   }
@@ -3267,20 +3434,21 @@ function update(dt){
   if(weatherTimer<=0&&MP.active&&!MP.isHost)weatherTimer=30; // convidado: só o host sorteia (snapshot manda)
   if(weatherTimer<=0){
     weatherTimer=rnd(100,220);
-    const r=Math.random();
     const prev=weather;
-    weather=r<.35?'none':(r<.7?'rain':'snow');
+    weather=pickWeather(Math.random);
     if(prev!==weather){
       setRain(weather==='rain');
       if(weather==='rain') toast('Chuva: fogueiras apagam e stamina cai mais');
       else if(weather==='snow') toast('Neve: movimento e recuperação mais lentos');
+      else if(weather==='sand') toast('Tempestade de areia: visão e velocidade reduzidas');
       else if(prev!=='none') toast('Clima limpo');
     }
   }
   if(weather!=='none'){
     const pf=perf();
     if(weatherParticles.length<pf.weatherCap&&Math.random()<pf.weatherSpawn){
-      weatherParticles.push({
+      if(weather==='sand') weatherParticles.push({x:camX-20,y:camY+rnd(0,H/Z),vx:rnd(160,260),vy:rnd(-12,30),sz:rnd(1,2),t:rnd(.7,1.3)});
+      else weatherParticles.push({
         x:camX+rnd(-50,W/Z+50),y:camY-10,
         vx:weather==='rain'?rnd(-30,-10):rnd(-10,10),
         vy:weather==='rain'?rnd(350,500):rnd(60,120),
@@ -3311,7 +3479,7 @@ function update(dt){
     }
   }
   const nightMix=clamp((dark-.12)/.75,0,1);
-  const weatherMix=weather==='rain'?.018:(weather==='snow'?.008:0);
+  const weatherMix=weather==='rain'?.018:(weather==='snow'?.008:(weather==='sand'?.012:0));
   setAmbient(.018+nightMix*.075+weatherMix);
   updateP(dt);
   updateAnimals(dt);
@@ -3498,6 +3666,7 @@ function update(dt){
     if(Math.random()<smokeRate)parts.push({x:c.x+rnd(-3,3),y:c.y-14,vx:rnd(-8,8),vy:rnd(-30,-15),t:rnd(1,2),c:'rgba(80,80,80,.7)'});
   }
   flash=Math.max(0,flash-dt);shake=Math.max(0,shake-dt*12);
+  if(P&&P._grace>0)P._grace-=dt;
   // Guest: dano de animais agressivos por proximidade (host simula AI)
   if(MP.active && !MP.isHost && P && !P.dead){
     for(const a of animals){
@@ -3513,6 +3682,11 @@ function update(dt){
   // Limita partículas (economia / anti-GC)
   const pCap=perf().partsCap;
   if(parts.length>pCap) parts.splice(0, parts.length-pCap);
+  // Rede de segurança: conexão sumiu sem evento 'close' (acontece em redes móveis) → trata como queda após 3s
+  if(MP.active&&MP.gameStarted&&!MP.reconnecting&&!MP.guestAway&&(!MP.conn||!MP.conn.open)){
+    MP._deadT=(MP._deadT||0)+dt;
+    if(MP._deadT>3){MP._deadT=0;MP.connected=false;mpConnectionLost();}
+  } else MP._deadT=0;
   if(MP.active&&MP.connected&&MP.conn&&MP.conn.open && P){
     // Ping periódico pra medir pressão da rede
     MP.pingT=(MP.pingT||0)-dt;
@@ -3545,11 +3719,11 @@ function update(dt){
       }
     }
     // Timeout: sem pacote por 15s (mais tolerante em 4G)
-    if(MP.lastRecv && (performance.now()-MP.lastRecv)>15000){
-      MP.connected=false;
-      toast('Conexão perdida (sem resposta)');
-      const closedConn=MP.conn;
-      setTimeout(()=>{ if(MP.active && !MP.connected && (!MP.conn || MP.conn===closedConn)) quitToMenu(); }, 1500);
+    if(MP.lastRecv && (performance.now()-MP.lastRecv)>9000){
+      MP.lastRecv=performance.now();
+      const dead=MP.conn;MP.connected=false;MP.conn=null;
+      try{if(dead)dead.close();}catch(e){}
+      mpConnectionLost();
     }
   }
   for(const id in remotePlayers){
@@ -3577,8 +3751,10 @@ function updateHud(force){
   if(!P)return;
   const setW=(id,v)=>{const e=$(id);if(e)e.style.width=clamp(v,0,100)+'%';};
   setW('hpb',P.hp);setW('fdb',P.food);setW('wtb',P.water);setW('stb',P.stam);
+  const tpb=$('tpb');
+  if(tpb){const tv=P.temp||0;tpb.style.width=clamp(50+tv/2,2,100)+'%';tpb.style.background=tv<-55?'#3f6fe0':tv<-28?'#6ab0f0':tv>55?'#e04030':tv>28?'#e8863a':'#6fcf6f';}
   const hr=(START_HOUR+T/DAY_SECONDS*24)%24;
-  const weatherTxt=weather==='rain'?' 🌧':(weather==='snow'?' ❄':'');
+  const weatherTxt=weather==='rain'?' 🌧':(weather==='snow'?' ❄':(weather==='sand'?' 🌪':''));
   const mpTxt=MP.active?(MP.isHost?' ['+(MP.playerName||'HOST').toUpperCase().slice(0,8)+']':' [MP]'):'';
   const clk=$('clk');if(clk)clk.textContent='Dia '+day+' '+pad(Math.floor(hr))+':'+pad(Math.floor((hr%1)*60))+weatherTxt+mpTxt;
   const kl=$('kl');if(kl)kl.textContent='Zumbis: '+kills;
@@ -3596,7 +3772,10 @@ function updateHud(force){
   if(P.bleed)st='SANGRANDO';
   else if(P.water<=0)st='SEDE';
   else if(P.food<=0)st='FOME';
+  else if((P.temp||0)<-55)st='CONGELANDO';
+  else if((P.temp||0)>55)st='INSOLAÇÃO';
   else if(P.exhausted)st='CANSADO';
+  if(!st&&MP.active&&MP.isHost&&MP.guestAway)st='CONVIDADO OFFLINE';
   const stat=$('stat');if(stat){stat.textContent=st;stat.style.opacity=st?'1':'0';}
   let canInteract=false,btnText='PEGAR';
   if(nearestItem())canInteract=true;
@@ -3818,7 +3997,7 @@ function setStatus(id,msg,isErr){const e=$(id);if(!e)return;e.textContent=msg;e.
 function mpHostStart(){
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
   MP.peer=null; MP.conn=null; MP.connected=false; MP.myId=null;
-  remotePlayers={}; nextZombieNetId=1;
+  remotePlayers={}; nextZombieNetId=1; mpResetReconnect();
   const nameEl=$('hostName');
   MP.playerName=sanitizeName((nameEl&&nameEl.value)||'Host');
   if(nameEl) nameEl.value=MP.playerName;
@@ -3836,12 +4015,20 @@ function mpHostStart(){
     MP.peer.on('open',id=>{MP.myId=id;setStatus('hostStatus','Sala criada! Aguardando jogador...');console.log('[Host] peer aberto:',id);});
     MP.peer.on('connection',conn=>{
       console.log('[Host] nova conexão recebida');
-      if(MP.conn&&MP.conn.open){try{conn.close();}catch(e){}return;}
+      if(MP.conn&&MP.conn.open){
+        // Em partida: se a conexão antiga está muda há >4s, é o convidado voltando — a nova assume
+        const stale=MP.gameStarted&&(performance.now()-MP.lastRecv>4000);
+        if(!stale){try{conn.close();}catch(e){}return;}
+        const old=MP.conn;MP.conn=null;MP.connected=false;
+        try{old.close();}catch(e){}
+      }
       MP.conn=conn;
       setupConn(conn,true);
     });
+    MP.peer.on('disconnected',()=>{ try{MP.peer.reconnect();}catch(e){} }); // caiu do servidor de sinalização: volta com o mesmo código
     MP.peer.on('error',err=>{
       console.error('[PeerJS host]',err);
+      if(MP.gameStarted)return; // em partida: erros de sinalização não derrubam o jogo
       const msg=err&&err.type==='unavailable-id'
         ?'Código de sala ocupado. Volte e crie outra sala.'
         :('Falha de conexão: '+((err&&err.type)||'erro desconhecido'));
@@ -3853,7 +4040,7 @@ function mpHostStart(){
 function mpJoinStart(code){
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
   MP.peer=null; MP.conn=null; MP.connected=false; MP.myId=null;
-  remotePlayers={}; nextZombieNetId=1;
+  remotePlayers={}; nextZombieNetId=1; mpResetReconnect();
   const nameEl=$('joinName');
   MP.playerName=sanitizeName((nameEl&&nameEl.value)||'Convidado');
   if(nameEl) nameEl.value=MP.playerName;
@@ -3867,8 +4054,10 @@ function mpJoinStart(code){
     const peerOpts={debug:1, config:PEER_ICE};
     try{MP.peer=new Peer(peerOpts);}
     catch(e){setStatus('joinStatus','Erro: '+e.message,true);return;}
+    MP.peer.on('disconnected',()=>{ if(MP.active&&MP.gameStarted){try{MP.peer.reconnect();}catch(e){}} });
     MP.peer.on('open',id=>{
       MP.myId=id;
+      if(MP.gameStarted){ if(MP.reconnecting)mpGuestReconnectAttempt(); return; } // peer voltou ao servidor durante a partida
       console.log('[Guest] peer aberto, conectando em',MP.roomCode);
       setStatus('joinStatus','Conectando à sala...');
       const conn=MP.peer.connect(MP.roomCode,{reliable:true,serialization:'json'});
@@ -3884,6 +4073,7 @@ function mpJoinStart(code){
     });
     MP.peer.on('error',err=>{
       console.error('[PeerJS convidado]',err);
+      if(MP.gameStarted)return; // em partida: o laço de reconexão cuida disso
       let msg='Erro: '+((err&&err.type)||'conexão');
       if(err.type==='peer-unavailable')msg='Sala não encontrada. Verifique o código.';
       else if(err.type==='network'||err.type==='server-error'||err.type==='socket-error'||err.type==='socket-closed')msg='Sem conexão com o servidor P2P. Tente de novo.';
@@ -3893,13 +4083,129 @@ function mpJoinStart(code){
     });
   });
 }
+
+/* ================= RECONEXÃO =================
+   Host: a partida continua; o convidado que cai é removido do mundo e pode voltar (mesmo código de sala).
+   Convidado: congela o jogo, mostra aviso e tenta reconectar por até 90s, mantendo personagem/inventário.
+   Se voltar com o mesmo mundo (seed) retoma de onde parou; se for outro mundo, entra como novo. */
+const RECONN_MAX_MS=90000;
+function showReconnectUI(){
+  let el=document.getElementById('reconn');
+  if(!el){
+    el=document.createElement('div');el.id='reconn';
+    el.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(0,0,0,.62);color:#fff;font-family:inherit;text-align:center;padding:20px';
+    el.innerHTML='<div style="font-size:34px">📡</div><div style="font-size:16px;font-weight:700">Conexão perdida</div><div id="reconnMsg" style="font-size:13px;opacity:.85;max-width:260px"></div><button id="reconnQuit" style="margin-top:8px;padding:8px 18px;border-radius:8px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font-size:13px">Sair da partida</button>';
+    document.body.appendChild(el);
+    el.querySelector('#reconnQuit').addEventListener('click',()=>{MP.reconnecting=false;quitToMenu();});
+  }
+  el.style.display='flex';updateReconnectUI();
+}
+function updateReconnectUI(){
+  const m=document.getElementById('reconnMsg');if(!m)return;
+  const left=Math.max(0,Math.ceil((RECONN_MAX_MS-(performance.now()-MP.reconnStart))/1000));
+  m.textContent='Tentando reconectar… (tentativa '+MP.reconnTries+') — o jogo está pausado. Tempo restante: '+left+'s';
+}
+function hideReconnectUI(){const el=document.getElementById('reconn');if(el)el.style.display='none';}
+function mpResetReconnect(){
+  clearTimeout(MP._rcT);clearTimeout(MP._rsT);
+  MP.reconnecting=false;MP.guestAway=false;MP.gameStarted=false;MP.seed=null;MP._resumeSame=false;
+  hideReconnectUI();
+}
+function mpConnectionLost(){
+  if(!MP.active||!MP.gameStarted||state==='menu')return;
+  if(MP.isHost){
+    if(MP.guestAway)return;
+    MP.guestAway=true;
+    remotePlayers={};
+    toast('Convidado desconectou — aguardando reconexão…');
+  } else {
+    if(MP.reconnecting)return;
+    MP.reconnecting=true;MP.reconnStart=performance.now();MP.reconnTries=0;MP._resumeSame=false;
+    MP.connected=false;
+    showReconnectUI();
+    mpGuestReconnectAttempt();
+  }
+}
+function mpReconnectFail(){
+  clearTimeout(MP._rcT);clearTimeout(MP._rsT);
+  MP.reconnecting=false;hideReconnectUI();
+  toast('Não foi possível reconectar');
+  quitToMenu();
+}
+function mpGuestReconnectAttempt(){
+  if(!MP.reconnecting||MP.isHost||!MP.active)return;
+  clearTimeout(MP._rcT);
+  if(performance.now()-MP.reconnStart>RECONN_MAX_MS){mpReconnectFail();return;}
+  const next=ms=>{clearTimeout(MP._rcT);MP._rcT=setTimeout(mpGuestReconnectAttempt,ms||2500);};
+  updateReconnectUI();
+  if(MP.connected){return;} // já conectado: aguardando o host liberar a retomada
+  // tentativa anterior ainda pendente? espera
+  if(MP.conn&&!MP.conn.open&&MP._connAt&&performance.now()-MP._connAt<7000){next(1500);return;}
+  MP.reconnTries++;updateReconnectUI();
+  const connectNow=()=>{
+    if(MP.connected||!MP.reconnecting)return;
+    let conn;
+    try{conn=MP.peer.connect(MP.roomCode,{reliable:true,serialization:'json'});}
+    catch(e){next();return;}
+    MP.conn=conn;MP._connAt=performance.now();
+    conn._joinTimer=setTimeout(()=>{if(MP.conn===conn&&!MP.connected){try{conn.close();}catch(e){}}},7000);
+    setupConn(conn,false);
+    next();
+  };
+  const p=MP.peer;
+  if(p&&!p.destroyed&&!p.disconnected&&p.open){connectNow();}
+  else if(p&&!p.destroyed&&p.disconnected){
+    try{p.reconnect();}catch(e){}
+    setTimeout(()=>{if(MP.peer&&MP.peer.open&&!MP.peer.disconnected)connectNow();else next();},1500);
+  } else {
+    // Peer morreu: cria outro e conecta
+    let done=false;
+    try{if(p&&!p.destroyed)p.destroy();}catch(e){}
+    let np;
+    try{np=new Peer({debug:1,config:PEER_ICE});}catch(e){next();return;}
+    MP.peer=np;
+    np.on('open',id=>{if(done)return;done=true;MP.myId=id;connectNow();});
+    np.on('error',err=>{console.warn('[PeerJS reconexão]',err&&err.type);if(done)return;done=true;next();});
+    np.on('disconnected',()=>{try{np.reconnect();}catch(e){}});
+  }
+}
+function hostResumeGuest(){
+  MP.guestAway=false;
+  try{
+    if(MP.conn&&MP.conn.open){
+      MP.conn.send({type:'worldInit',seed:MP.seed,map:selectedMap});
+      MP.conn.send({type:'start',map:selectedMap,resume:true});
+    }
+  }catch(e){console.warn('[Host resume]',e);}
+  MP._vNext=0;
+  toast('Convidado conectado!');
+  const pushSnap=()=>{if(MP.conn&&MP.conn.open&&state!=='menu')mpSend(packSnapshot());};
+  setTimeout(pushSnap,150);setTimeout(pushSnap,500);setTimeout(pushSnap,1200);
+}
+function guestResumed(){
+  clearTimeout(MP._rcT);clearTimeout(MP._rsT);
+  MP.reconnecting=false;MP._resumeSame=false;
+  hideReconnectUI();
+  MP.lastRecv=performance.now();MP.failCount=0;MP.syncT=0;
+  if(P)P._grace=4;           // 4s sem dano ao voltar (o mundo andou enquanto você estava fora)
+  last=performance.now();lastFrameTs=0;
+  toast('Reconectado!');
+}
 function setupConn(conn,isHostSide){
   let opened=false;
   const onOpen=()=>{
     if(opened) return;
     opened=true;
+    if(MP.conn&&MP.conn!==conn){try{conn.close();}catch(e){}return;} // tentativa antiga que abriu tarde
     if(conn._joinTimer){clearTimeout(conn._joinTimer);conn._joinTimer=null;}
     MP.connected=true;MP.lastRecv=performance.now();
+    if(isHostSide&&MP.gameStarted&&state!=='menu'){ hostResumeGuest(); return; } // partida em andamento: NÃO regenera o mundo
+    if(!isHostSide&&MP.reconnecting){
+      // espera o host liberar a retomada; se não vier em 8s, derruba e tenta de novo
+      clearTimeout(MP._rsT);
+      MP._rsT=setTimeout(()=>{ if(MP.reconnecting){ MP.connected=false;MP.conn=null;try{conn.close();}catch(e){} mpGuestReconnectAttempt(); } },8000);
+      return;
+    }
     console.log('[MP] conn.on("open") disparado. Host?',isHostSide);
     if(isHostSide){
       setStatus('hostStatus','✅ Jogador conectado! Gerando mundo...');
@@ -3907,6 +4213,7 @@ function setupConn(conn,isHostSide){
         try{
           selectedMap = mpSelectedMap || 'forest';
           const seed = Math.floor(Math.random()*1e9) + 1;
+          MP.seed = seed;
           genWorld(seed);
           if(!plane) throw new Error('plane não gerado');
           console.log('[Host] genWorld OK (seed='+seed+'):',trees.length,'árvores,',rocks.length,'rochas');
@@ -3939,14 +4246,11 @@ function setupConn(conn,isHostSide){
   if(conn.open) setTimeout(onOpen,0);
   conn.on('data',data=>handleNetData(data,isHostSide));
   conn.on('close',()=>{
+    if(MP.conn&&MP.conn!==conn) return;            // conexão antiga já substituída
     MP.connected=false;
     if(MP.conn===conn) MP.conn=null;
+    if(MP.active&&MP.gameStarted&&state!=='menu'){ mpConnectionLost(); return; } // em partida: espera/tenta reconectar
     if(MP.active) setStatus(isHostSide?'hostStatus':'joinStatus','Conexão encerrada.',true);
-    if(state==='play' && MP.active){
-      toast('Conexão perdida');
-      const closedConn=conn;
-      setTimeout(()=>{if(MP.active && !MP.connected && (!MP.conn || MP.conn===closedConn)) quitToMenu();},1200);
-    }
   });
   conn.on('error',err=>console.error('[conn error]',err));
 }
@@ -3974,7 +4278,11 @@ function handleNetData(data,isHostSide){
   }
   try{
   if(data.type==='worldInit'){
-    if(!isHostSide && isFiniteNum(data.seed)){
+    if(!isHostSide && isFiniteNum(data.seed) && MP.reconnecting && MP.seed===data.seed){
+      MP._resumeSame=true; // mesmo mundo: mantém o personagem e só retoma
+    } else if(!isHostSide && isFiniteNum(data.seed)){
+      MP._resumeSame=false;
+      MP.seed=data.seed;
       const map=NET_OK_MAPS.has(data.map)?data.map:'forest';
       console.log('[Guest] worldInit recebido — seed='+data.seed+' map='+map);
       try{
@@ -3987,7 +4295,9 @@ function handleNetData(data,isHostSide){
       }
     }
   } else if(data.type==='start'){
+    if(!isHostSide&&MP.reconnecting&&MP._resumeSame){ guestResumed(); return; }
     if(!isHostSide){
+      if(MP.reconnecting){ clearTimeout(MP._rcT);clearTimeout(MP._rsT);MP.reconnecting=false;hideReconnectUI(); } // mundo diferente: entra como novo jogador
       if(data.map && NET_OK_MAPS.has(data.map)) selectedMap=data.map;
       console.log('[Guest] start recebido. plane?',!!plane);
       if(plane){
@@ -4226,11 +4536,12 @@ function applySnapshot(snap){
   if(Number.isFinite(snap.day)) day=clamp(snap.day,1,9999);
   if(Number.isFinite(snap.dark)) dark=clamp(snap.dark,0,1);
   if(Number.isFinite(snap.T)) T=Math.max(0,snap.T);
-  if(snap.weather==='none'||snap.weather==='rain'||snap.weather==='snow'){
+  if(snap.weather==='none'||snap.weather==='rain'||snap.weather==='snow'||snap.weather==='sand'){
     if(weather!==snap.weather){
       const prevW=weather;weather=snap.weather;setRain(weather==='rain');
       if(weather==='rain') toast('Chuva: fogueiras apagam e stamina cai mais');
       else if(weather==='snow') toast('Neve: movimento e recuperação mais lentos');
+      else if(weather==='sand') toast('Tempestade de areia: visão e velocidade reduzidas');
       else if(prevW!=='none') toast('Clima limpo');
     }
   }
@@ -4346,13 +4657,13 @@ function enterMultiplayerGame(isHost){
   // O primeiro toque em jogo chama tryFullscreenFromGesture().
   if(CFG.fullscreen) userWantsFS=true;
   else userWantsFS=false;
-  MP.isHost=isHost;
+  MP.isHost=isHost;MP.gameStarted=true;MP.reconnecting=false;MP.guestAway=false;
   try{
     if(!plane) throw new Error('mundo não carregado');
     const offX = isHost ? 0 : 40;
     const offY = isHost ? 0 : 40;
     // ⚠️ ORDEM CORRETA: cria P PRIMEIRO
-    P={x:plane.x+70+offX, y:plane.y+offY, r:5, hp:100, food:85, water:85, stam:100,
+    P={x:plane.x+70+offX, y:plane.y+offY, r:5, hp:100, food:85, water:85, stam:100, temp:0,
       face:Math.PI/2, moving:false, sprint:false, exhausted:false, cd:0, swing:0, flash:0, bleed:false, dead:false,
       weapon:'fists', melee:null, meleeWeapons:[], firearms:{}, ammo:0, arrows:0,
       inv:[{t:'bandage',n:1},{t:'water',n:1}],
@@ -4645,7 +4956,7 @@ function drawDecoration(d){
       shadow(x,y+2,3,3);
       R(x-1,y-22,3,22,'#3a3a3a');
       R(x-4,y-26,10,5,'#4a4a4a');
-      if(dark>.2){ctx.fillStyle='rgba(255,220,100,'+(0.4*dark).toFixed(2)+')';ctx.beginPath();ctx.arc(x,y-24,14,0,6.283);ctx.fill();}
+      R(x-2,y-22,5,2,dark>.2?'#fff0b0':'#6a6a62'); // lâmpada
       break;
     case'sign':
       shadow(x,y+2,3,3);
@@ -4946,7 +5257,7 @@ function drawLake(l){
   const frozen=!!l.frozen || selectedMap==='snow';
   const cx=l.cx, cy=l.cy, R0=l.r;
   // 1) Areia / lama da margem (anel externo)
-  ctx.fillStyle=frozen?'#b8c8d4':(selectedMap==='forest'?'#6a7a48':'#7a6a4a');
+  ctx.fillStyle=frozen?'#b8c8d4':(selectedMap==='forest'?'#6a7a48':(selectedMap==='desert'?'#d8c48e':'#7a6a4a'));
   lakeShorePath(l, 1.12);
   ctx.fill();
   // 2) Água principal com gradiente radial
@@ -4990,6 +5301,14 @@ function drawLake(l){
       R(isl.x-1,isl.y-isl.r-3,2,5,'#5a3d22');R(isl.x-4,isl.y-isl.r-7,8,4,'#2a6a2a');
     } else {
       ctx.fillStyle='#eef4f8';ctx.beginPath();ctx.ellipse(isl.x,isl.y-1,isl.r*0.5,isl.r*0.35,0,0,6.283);ctx.fill();
+    }
+  }
+  // 7a) Oásis: juncos na borda
+  if(!frozen && selectedMap==='desert'){
+    for(let i=0;i<14;i++){
+      const ang=(i/14)*6.283+(cx%7)*0.1, rr=R0*(0.98+0.05*Math.sin(i*2.3));
+      const px=cx+Math.cos(ang)*rr, py=cy+Math.sin(ang)*rr*0.92;
+      ctx.fillStyle='#5a8a3a';R(px-1,py-6,2,6);R(px+1,py-5,2,5);
     }
   }
   // 7) Vegetação na beira (juncos / pedras) — só floresta
@@ -5340,7 +5659,8 @@ function render(){
     ctx.fillStyle='rgba(180,255,120,.6)';ctx.beginPath();ctx.arc(s.x,s.y,2,0,6.283);ctx.fill();
   }
   if(weather!=='none'){
-    ctx.fillStyle=weather==='rain'?'rgba(140,180,220,0.65)':'rgba(240,248,255,0.85)';
+    if(weather==='sand'){ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='rgba(196,150,80,.2)';ctx.fillRect(0,0,W,H);ctx.restore();} // névoa de areia
+    ctx.fillStyle=weather==='rain'?'rgba(140,180,220,0.65)':(weather==='sand'?'rgba(214,178,110,0.8)':'rgba(240,248,255,0.85)');
     for(const wp of weatherParticles)if(wp.x>=camX-10&&wp.x<=camX+W/Z+10&&wp.y>=camY-10&&wp.y<=camY+H/Z+10)R(wp.x,wp.y,wp.sz,weather==='rain'?wp.sz*5:wp.sz,ctx.fillStyle);
   }
   drawFishing();
@@ -5377,9 +5697,33 @@ function render(){
       if(fx<-fr||fy<-fr||fx>W+fr||fy>H+fr) continue;
       punch(fx,fy,fr);
     }
+    // Postes de luz (mapa da cidade): poça de luz no chão ao redor do poste
+    for(const l of lampList){
+      const lx=(l.x-camX)*Z+sx,ly=(l.y-8-camY)*Z+sy,lr=74*Z;
+      if(lx<-lr||ly<-lr||lx>W+lr||ly>H+lr) continue;
+      punch(lx,ly,lr);
+    }
     lctx.globalCompositeOperation='source-over';
     ctx.imageSmoothingEnabled=true; // suaviza o buffer reduzido ao ampliar
     ctx.drawImage(lightC,0,0,lightC.width,lightC.height,0,0,W,H);
+    // Brilho quente dos postes por cima da escuridão + lâmpada acesa
+    if(lampList.length){
+      ctx.globalCompositeOperation='lighter';
+      ctx.globalAlpha=Math.min(1,dark*1.1);
+      for(const l of lampList){
+        const lx=(l.x-camX)*Z+sx,ly=(l.y-8-camY)*Z+sy,lr=64*Z;
+        if(lx<-lr||ly<-lr||lx>W+lr||ly>H+lr) continue;
+        ctx.drawImage(lampSprite,lx-lr,ly-lr,2*lr,2*lr);
+      }
+      ctx.globalAlpha=1;
+      ctx.globalCompositeOperation='source-over';
+      ctx.fillStyle='#fff6c0';
+      for(const l of lampList){
+        const hx=(l.x-camX)*Z+sx,hy=(l.y-23-camY)*Z+sy;
+        if(hx<-20||hy<-20||hx>W+20||hy>H+20) continue;
+        ctx.fillRect(hx-2.5*Z,hy-1*Z,5*Z,2*Z);
+      }
+    }
     ctx.imageSmoothingEnabled=false;
   }
   ctx.setTransform(1,0,0,1,0,0);
@@ -5743,6 +6087,7 @@ function quitToMenu(){
   setAmbient(0);setRain(false);document.body.classList.remove('nohud','nomap');
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
   MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;MP.isHost=false;MP.roomCode='';MP.myId=null;MP.syncT=0;
+  mpResetReconnect();
   remotePlayers={};nextZombieNetId=1;
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#0b100b';ctx.fillRect(0,0,W,H);
 }
@@ -5826,7 +6171,8 @@ function frame(ts){
   last=ts;
   lastFrameTs=ts;
   // E5: MP continua simulando em pause/craft/dead
-  if(state==='play' || (MP.active && !MP.gameOver && (state==='craft' || state==='dead' || state==='pause'))) update(dt);
+  if(MP.active&&MP.reconnecting){ /* pausado até reconectar */ }
+  else if(state==='play' || (MP.active && !MP.gameOver && (state==='craft' || state==='dead' || state==='pause'))) update(dt);
   render();
 }
 document.addEventListener('visibilitychange',()=>{
@@ -5835,6 +6181,8 @@ document.addEventListener('visibilitychange',()=>{
   } else {
     try{ if(AC && AC.state==='suspended') AC.resume(); }catch(e){}
     last=performance.now(); lastFrameTs=0;
+    // Voltou de segundo plano: dá 4s de folga pro canal reagir; se a conexão já morreu, reconecta na hora
+    if(MP.active&&MP.gameStarted&&!MP.reconnecting){ MP.lastRecv=performance.now(); if(!MP.conn||!MP.conn.open) mpConnectionLost(); }
   }
 });
 requestAnimationFrame(frame);
