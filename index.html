@@ -1243,27 +1243,28 @@ function pushOut(e,r){
 }
 /* Segmento (x1,y1)->(x2,y2) cruza algum retângulo de parede? Teste exato (as paredes têm só 6px,
    então amostrar de 8 em 8px deixava passar). Usado em tiros, golpes e ataques de zumbi. */
-function wallBlocks(x1,y1,x2,y2){
-  const minx=Math.min(x1,x2),maxx=Math.max(x1,x2),miny=Math.min(y1,y2),maxy=Math.max(y1,y2);
+/* Segmento x retângulo (slab) */
+function segRectHit(x1,y1,x2,y2,w){
   const dx=x2-x1,dy=y2-y1;
-  for(let i=0;i<walls.length;i++){
-    const w=walls[i];
-    if(maxx<w.x||minx>w.x+w.w||maxy<w.y||miny>w.y+w.h)continue;
-    let t0=0,t1=1;
-    if(Math.abs(dx)<1e-9){ if(x1<w.x||x1>w.x+w.w)continue; }
-    else{
-      let a=(w.x-x1)/dx,b=(w.x+w.w-x1)/dx; if(a>b){const q=a;a=b;b=q;}
-      t0=Math.max(t0,a);t1=Math.min(t1,b); if(t0>t1)continue;
-    }
-    if(Math.abs(dy)<1e-9){ if(y1<w.y||y1>w.y+w.h)continue; }
-    else{
-      let a=(w.y-y1)/dy,b=(w.y+w.h-y1)/dy; if(a>b){const q=a;a=b;b=q;}
-      t0=Math.max(t0,a);t1=Math.min(t1,b); if(t0>t1)continue;
-    }
-    return true;
-  }
-  return false;
+  let t0=0,t1=1;
+  if(Math.abs(dx)<1e-9){ if(x1<w.x||x1>w.x+w.w)return false; }
+  else{ let a=(w.x-x1)/dx,b=(w.x+w.w-x1)/dx; if(a>b){const q=a;a=b;b=q;} if(a>t0)t0=a; if(b<t1)t1=b; if(t0>t1)return false; }
+  if(Math.abs(dy)<1e-9){ if(y1<w.y||y1>w.y+w.h)return false; }
+  else{ let a=(w.y-y1)/dy,b=(w.y+w.h-y1)/dy; if(a>b){const q=a;a=b;b=q;} if(a>t0)t0=a; if(b<t1)t1=b; if(t0>t1)return false; }
+  return true;
 }
+/* Primeiro prédio cujas paredes cortam o segmento (ou null). Filtra por prédio antes de olhar as 5 paredes: bem mais leve que varrer todas. */
+function wallBlockerAt(x1,y1,x2,y2){
+  const minx=Math.min(x1,x2),maxx=Math.max(x1,x2),miny=Math.min(y1,y2),maxy=Math.max(y1,y2);
+  for(let i=0;i<blds.length;i++){
+    const b=blds[i];
+    if(maxx<b.x||minx>b.x+b.w||maxy<b.y||miny>b.y+b.h)continue;
+    const ws=b.walls;
+    for(let k=0;k<ws.length;k++) if(segRectHit(x1,y1,x2,y2,ws[k])) return b;
+  }
+  return null;
+}
+function wallBlocks(x1,y1,x2,y2){ return wallBlockerAt(x1,y1,x2,y2)!==null; }
 function castRay(x,y,ang,maxd){
   const cx=Math.cos(ang),cy=Math.sin(ang);
   // Finer step + larger hit radius so firearms reliably hit (esp. multiplayer guest)
@@ -1324,13 +1325,50 @@ function vehicleOverlap(v){
   return cnt;
 }
 function vehicleHitsEnv(v){return vehicleOverlap(v)>0;}
-function losClear(x1,y1,x2,y2){
-  const d=Math.hypot(x2-x1,y2-y1),n=Math.ceil(d/8);
-  for(let i=1;i<n;i++){
-    const f=i/n,px=x1+(x2-x1)*f,py=y1+(y2-y1)*f;
-    for(const w of walls){if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)return false;}
+function losClear(x1,y1,x2,y2){ return !wallBlocks(x1,y1,x2,y2); } // teste exato (antes amostrava de 8 em 8px e atravessava paredes de 6px)
+
+
+/* ===== Navegação: zumbi entra/sai de prédios pela PORTA e contorna quinas ===== */
+function bldAt(x,y){
+  for(let i=0;i<blds.length;i++){const b=blds[i];if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h)return b;}
+  return null;
+}
+/* devolve {x,y,t}: ponto para onde andar agora; t=true quando é o próprio alvo (sem desvio) */
+function zNav(z,gx,gy){
+  let ex=gx,ey=gy,triv=true;
+  const zb=bldAt(z.x,z.y), tb=bldAt(gx,gy);
+  if(zb!==tb){
+    triv=false;
+    if(zb){            // zumbi dentro de um prédio, alvo fora (ou em outro): sai pela porta
+      const cx=zb.doorX+zb.door/2, dy=zb.y+zb.h;
+      if(Math.abs(z.x-cx)<zb.door/2-3&&z.y>dy-28){ex=cx;ey=dy+24;} else {ex=cx;ey=dy-14;}
+    } else {           // zumbi fora, alvo dentro: vai até a frente da porta e entra reto
+      const cx=tb.doorX+tb.door/2, dy=tb.y+tb.h;
+      if(Math.abs(z.x-cx)<tb.door/2-3&&z.y>dy-30&&z.y<dy+50){ex=cx;ey=dy-20;} else {ex=cx;ey=dy+18;}
+    }
   }
-  return true;
+  // Obstáculo no caminho: contorna pela quina mais vantajosa (e se mantém nela até chegar)
+  const bo=wallBlockerAt(z.x,z.y,ex,ey);
+  if(bo&&bo!==zb){
+    let c=null;
+    if(z._cr&&z._cb===bo&&Math.hypot(z._cr[0]-z.x,z._cr[1]-z.y)>=12&&!wallBlocks(z.x,z.y,z._cr[0],z._cr[1])) c=z._cr; // histerese
+    if(!c){
+      const m=16, cs=[[bo.x-m,bo.y-m],[bo.x+bo.w+m,bo.y-m],[bo.x-m,bo.y+bo.h+m],[bo.x+bo.w+m,bo.y+bo.h+m]];
+      const pen=Math.max(bo.w,bo.h)*.8+40;
+      let best=null,bs=1e9,bestAny=null,bsAny=1e9;
+      for(const q of cs){
+        const dz=Math.hypot(q[0]-z.x,q[1]-z.y); if(dz<12) continue;     // já está nessa quina
+        let sc=dz+Math.hypot(ex-q[0],ey-q[1]);
+        if(wallBlocks(q[0],q[1],ex,ey)) sc+=pen;                        // dessa quina ainda não enxerga o destino
+        if(sc<bsAny){bsAny=sc;bestAny=q;}
+        if(sc<bs&&!wallBlocks(z.x,z.y,q[0],q[1])){bs=sc;best=q;}
+      }
+      c=best||bestAny;
+      z._cr=c;z._cb=bo;
+    }
+    if(c){ex=c[0];ey=c[1];triv=false;}
+  } else { z._cr=null; z._cb=null; }
+  return {x:ex,y:ey,t:triv};
 }
 
 /* ============ GERAÇÃO DE MUNDO ============ */
@@ -3169,13 +3207,32 @@ function updateZ(z,dt){
     if(Math.hypot(tx-z.x,ty-z.y)<6)sp=0;
   }
   if(z.windT>0) sp=0; // parado enquanto prepara o cuspe
+  // Rota: pela porta e contornando prédios (recalcula a cada ~0,2s)
+  if(mode!=='wander'&&sp>0&&!(z.ranged&&z._kite)){
+    z._wt=(z._wt||0)-dt;
+    if(z._wt<=0||z._wm!==mode){
+      z._wt=.2;z._wm=mode;
+      const nv=zNav(z,tx,ty);
+      z._wtriv=nv.t;z._wx=nv.x;z._wy=nv.y;
+    }
+    if(!z._wtriv){tx=z._wx;ty=z._wy;}
+  }
   if(dark>.58 && sp>0) sp*=1+Math.min(.22,(dark-.58)*.55);
   z.moving=sp>0;
   if(sp>0){
-    const a=Math.atan2(ty-z.y,tx-z.x);
+    let a=Math.atan2(ty-z.y,tx-z.x);
+    if(z._det>0){z._det-=dt;a+=z._ds*1.3;}      // desvio lateral quando travado
     z.face=a;z.x+=Math.cos(a)*sp*dt;z.y+=Math.sin(a)*sp*dt;
   }
   pushOut(z,z.r);
+  if(sp>0){
+    z._sk=(z._sk||0)+dt;
+    if(z._sk>=.5){
+      const mv=Math.hypot(z.x-(z._sx===undefined?z.x:z._sx),z.y-(z._sy===undefined?z.y:z._sy));
+      if(mv<sp*.5*.3&&Math.hypot(tx-z.x,ty-z.y)>26&&mode!=='wander'){z._det=.7;z._ds=Math.random()<.5?-1:1;}
+      z._sx=z.x;z._sy=z.y;z._sk=0;
+    }
+  }
   if(dark>.3){
     let nearFire=false;
     for(const c of campfires)if(Math.hypot(c.x-z.x,c.y-z.y)<70){nearFire=true;break;}
@@ -3385,6 +3442,16 @@ function update(dt){
       if(a.dead||a._nx===undefined)continue;
       const dx=a._nx-a.x,dy=a._ny-a.y;
       if(dx*dx+dy*dy>8100){a.x=a._nx;a.y=a._ny;}else{a.x+=dx*k;a.y+=dy*k;}
+    }
+  }
+  // Multiplayer: suaviza carros que outro jogador dirige / que vieram no snapshot
+  if(MP.active){
+    const kv=Math.min(1,dt*14);
+    for(const v of vehicles){
+      if(P&&P.inVehicle===v){ v._nx=undefined; continue; }
+      if(v._nx===undefined) continue;
+      v.x+=(v._nx-v.x)*kv; v.y+=(v._ny-v.y)*kv;
+      v.face+=wrap((v._nf||0)-(v.face||0))*kv;
     }
   }
   // Decay local damage prediction timers
@@ -3968,8 +4035,8 @@ function handleNetData(data,isHostSide){
       const v = vehicles.find(v => v.id === data.vehicleId);
       // Motorista remoto é autoridade — nunca sobrescreve o carro que NÓS dirigimos
       if(v && P.inVehicle !== v){
-        v.x = data.vehicleX; v.y = data.vehicleY;
-        v.face = data.vehicleFace || 0; v.spd = data.vehicleSpd || 0;
+        vehSetTarget(v, data.vehicleX, data.vehicleY, data.vehicleFace || 0); v._pT = performance.now();
+        v.spd = data.vehicleSpd || 0;
         v.looted = data.vehicleLooted || false;
         v.driverId = data.id || v.driverId || 'remote';
         if(Number.isFinite(data.vehicleHp)) v.hp = data.vehicleHp;
@@ -4019,6 +4086,11 @@ function handleNetData(data,isHostSide){
     }
   }
   }catch(err){ console.error('[handleNetData]', data&&data.type, err); }
+}
+/* Veículos que não dirigimos: guarda destino e interpola (antes pulavam a cada pacote e o snapshot desfazia a posição fresca do motorista) */
+function vehSetTarget(v,x,y,f){
+  if(v._nx===undefined||Math.hypot(x-v.x,y-v.y)>140){v.x=x;v.y=y;v.face=f;}
+  v._nx=x;v._ny=y;v._nf=f;
 }
 function applySnapshot(snap){
   if(!snap || typeof snap !== 'object' || !MP.active) return;
@@ -4104,7 +4176,8 @@ function applySnapshot(snap){
       const weDrive = (v === P?.inVehicle);
       // Motorista local é autoridade: snapshot NÃO sobrescreve pos/hp do carro que dirigimos
       if(!weDrive){
-        v.x=sv.x;v.y=sv.y;v.face=sv.face||0;v.spd=sv.spd||0;
+        if(!(v._pT&&performance.now()-v._pT<500)) vehSetTarget(v,sv.x,sv.y,sv.face||0); // motorista remoto manda posição mais fresca
+        v.spd=sv.spd||0;
         v.looted=!!sv.looted;v.col=sv.col;v.w=sv.w;v.h=sv.h;
         if(Number.isFinite(sv.hp)) v.hp=sv.hp;
         if(Number.isFinite(sv.maxHp)) v.maxHp=sv.maxHp;
