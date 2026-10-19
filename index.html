@@ -87,12 +87,28 @@ body.nomap #mm{display:none!important}
 .chat-bubble.me .cn{color:#9fd68a}
 .chat-bubble.sys{color:#aaa;font-style:italic;border-color:rgba(255,255,255,.1)}
 @keyframes chatIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-#chat-panel{position:fixed;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:rgba(6,10,8,.94);border-top:2px solid rgba(140,180,220,.5);display:none;pointer-events:auto;z-index:12;gap:8px;align-items:center}
+#bchat[data-n]::after{content:attr(data-n);position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;padding:0 3px;box-sizing:border-box;border-radius:8px;background:#ffd84a;color:#171A20;font:bold 10px/16px "Courier New",monospace;text-align:center}
+#bchat{position:fixed}
+body.chatopen #chat-msgs{display:none}
+/* Aba de chat: histórico + campo de texto. A posição e a altura seguem a área REALMENTE visível (com o teclado aberto) */
+#chat-panel{position:fixed;top:0;right:0;width:min(420px,100vw);height:100%;display:none;flex-direction:column;box-sizing:border-box;background:#171A20;border-left:3px solid #8DA568;color:#E8E0CC;pointer-events:auto;z-index:12;font-family:"Courier New",monospace;touch-action:manipulation;padding-right:env(safe-area-inset-right,0px)}
 #chat-panel.open{display:flex}
-#chat-input{flex:1;min-width:0;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;font:14px "Courier New",monospace;padding:10px 12px;outline:none}
-#chat-input:focus{border-color:#8ac4ff}
-#chat-send,#chat-close{background:rgba(40,60,90,.9);border:1px solid #8ac4ff;color:#fff;border-radius:8px;font:bold 12px "Courier New",monospace;padding:10px 12px;white-space:nowrap}
-#chat-close{background:rgba(60,30,30,.9);border-color:#d08080}
+.chat-head{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:2px solid #2e343e;flex:0 0 auto}
+.chat-head .ct{flex:1;font:bold 12px "Courier New",monospace;letter-spacing:2px;color:#8DA568}
+.chat-head .cc{font:10px "Courier New",monospace;color:#a9a493}
+#chat-hist{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:6px 8px;display:flex;flex-direction:column;gap:4px}
+#chat-hist .empty{margin:auto;color:#a9a493;font-size:11px;text-align:center}
+.cm{max-width:88%;padding:4px 8px;border:1px solid #3f4652;background:#1f242c;font-size:12px;line-height:1.3;word-wrap:break-word;overflow-wrap:anywhere}
+.cm .cn{display:block;font-size:10px;font-weight:bold;color:#C79A54;margin-bottom:1px}
+.cm .ctm{color:#7d7a6c;font-weight:normal;margin-left:6px}
+.cm.me{align-self:flex-end;background:#25301f;border-color:#8DA568}
+.cm.me .cn{color:#8DA568}
+.cm.sys{align-self:center;max-width:100%;border:0;background:transparent;color:#a9a493;font-style:italic;font-size:11px}
+.chat-row{display:flex;gap:6px;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));border-top:2px solid #2e343e;flex:0 0 auto}
+#chat-input{flex:1;min-width:0;background:#0c0e12;border:2px solid #3f4652;border-radius:0;color:#E8E0CC;font:16px "Courier New",monospace;padding:8px 10px;outline:none}
+#chat-input:focus{border-color:#8DA568}
+#chat-send,#chat-close{background:#8DA568;border:2px solid #8DA568;color:#171A20;border-radius:0;font:bold 12px "Courier New",monospace;padding:0 12px;min-height:40px;white-space:nowrap}
+#chat-close{background:#171A20;border-color:#8a8672;color:#E8E0CC;min-height:30px;min-width:34px;padding:0 8px}
 .veh-btn.on{background:rgba(255,255,255,.4);border-color:#ffd84a;color:#ffd84a}
 #v-up{right:20px;bottom:110px;width:72px;height:72px}
 #v-down{right:20px;bottom:24px;width:72px;height:72px}
@@ -137,6 +153,10 @@ body.nomap #mm{display:none!important}
 .cfg-row input[type=range]::-moz-range-thumb{width:16px;height:16px;background:#9fd68a;border:2px solid #3d7a2e;border-radius:50%;cursor:pointer}
 .cfg-row .val{flex:0 0 36px;text-align:right;color:#9fd68a;font-weight:bold;font-size:11px}
 
+.cfg-seg{display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(255,255,255,.05);padding:6px 10px;border-radius:7px;font-size:12px}
+.cfg-seg .opts{display:flex;gap:4px;flex-shrink:0}
+.cfg-seg button{background:#222;color:#cfc8b2;border:2px solid #555;padding:5px 8px;font:inherit;font-size:11px;cursor:pointer;border-radius:0}
+.cfg-seg button.sel{background:#8DA568;border-color:#8DA568;color:#171A20}
 .cfg-toggle{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.05);padding:6px 10px;border-radius:7px;font-size:12px;cursor:pointer}
 .cfg-toggle .sw{width:38px;height:20px;background:#333;border-radius:10px;position:relative;transition:background .15s;flex-shrink:0}
 .cfg-toggle .sw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#888;border-radius:50%;transition:transform .15s,background .15s}
@@ -183,11 +203,19 @@ body.nomap #mm{display:none!important}
   font:11px/1.4 var(--f-px);letter-spacing:1px;text-transform:uppercase;min-height:48px;padding:12px 16px;transition:none;position:relative;white-space:nowrap}
 #menu .menu-btn.mp,#menu .menu-btn.sec{background:var(--c-bg);border-color:var(--c-cream);color:var(--c-cream)}
 #menu .menu-btn.sec{border-color:#8a8672;color:#cfc8b2}
-#menu #btnPlay{background:var(--c-moss);border-color:var(--c-moss);color:var(--c-bg);min-height:54px;font-size:13px}
+#menu #btnPlay,#menu #btnContinue{background:var(--c-moss);border-color:var(--c-moss);color:var(--c-bg);min-height:54px;font-size:13px}
 #menu .menu-btn:hover,#menu .menu-btn:focus-visible{transform:none;box-shadow:0 4px 0 var(--c-deep);outline:none;border-color:var(--c-moss);color:var(--c-moss)}
-#menu #btnPlay:hover,#menu #btnPlay:focus-visible{background:#a3bd7f;border-color:#a3bd7f;color:var(--c-bg)}
+#menu #btnPlay:hover,#menu #btnPlay:focus-visible,#menu #btnContinue:hover,#menu #btnContinue:focus-visible{background:#a3bd7f;border-color:#a3bd7f;color:var(--c-bg)}
 #menu .menu-btn:hover::before,#menu .menu-btn:focus-visible::before{content:'>';position:absolute;left:10px;color:var(--c-amber)}
-#menu #btnPlay:hover::before,#menu #btnPlay:focus-visible::before{color:var(--c-bg)}
+#menu #btnPlay:hover::before,#menu #btnPlay:focus-visible::before,#menu #btnContinue:hover::before,#menu #btnContinue:focus-visible::before{color:var(--c-bg)}
+#menu #btnContinue{display:none}
+#menu.hasSave #btnContinue{display:block}
+#menu #btnContinue .sub{display:block;font-size:7px;letter-spacing:0;margin-top:4px;opacity:.8}
+/* Com jogo salvo: CONTINUAR é o botão principal e JOGAR vira contorno */
+#menu.hasSave #btnPlay{background:var(--c-bg);border-color:var(--c-cream);color:var(--c-cream);min-height:48px;font-size:11px}
+#menu.hasSave #btnPlay:hover,#menu.hasSave #btnPlay:focus-visible{background:var(--c-bg);border-color:var(--c-moss);color:var(--c-moss)}
+#menu.hasSave #btnPlay:hover::before,#menu.hasSave #btnPlay:focus-visible::before{color:var(--c-amber)}
+#saveWarn{font:8px/1.5 "Press Start 2P","Courier New",monospace;color:#C79A54;margin:0 0 8px}
 #menu .menu-btn:active{transform:translateY(4px);box-shadow:0 0 0 var(--c-deep)}
 #menu #bestline{font:8px/1.6 var(--f-px);color:var(--c-amber);margin:6px 0 0;min-height:13px;text-align:center}
 @media (orientation:landscape) and (max-height:520px){
@@ -197,7 +225,9 @@ body.nomap #mm{display:none!important}
   #menu .scene-wrap{grid-area:scene;margin:0;align-self:start}
   #menu .menu-btns{grid-area:btns;margin:0;gap:10px;align-self:center}
   #menu .menu-btn{min-height:44px;padding:10px 14px;font-size:10px}
-  #menu #btnPlay{min-height:50px;font-size:12px}
+  #menu #btnPlay,#menu #btnContinue{min-height:50px;font-size:12px}
+  #menu.hasSave #btnPlay{min-height:44px;font-size:10px}
+  #menu #btnContinue .sub{font-size:7px;margin-top:3px}
   #menu #bestline{grid-area:best;margin:4px 0 0}
 }
 
@@ -266,6 +296,10 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
 .screen .map-opt.selected::after{content:'';position:absolute;top:5px;right:5px;width:8px;height:8px;background:var(--c-amber)}
 .screen .map-desc{font:11px/1.3 "Courier New",monospace;color:var(--c-dim)}
 /* configuracoes */
+.screen .cfg-seg{background:var(--c-panel);border:2px solid var(--c-line);border-radius:0}
+.screen .cfg-seg label{color:var(--c-cream);font-size:11px;line-height:1.3;text-align:left}
+.screen .cfg-seg button{background:var(--c-bg);border:2px solid var(--c-edge);color:#cfc8b2;border-radius:0;font:8px/1.4 var(--f-px);padding:7px 8px;min-height:30px}
+.screen .cfg-seg button.sel{background:var(--c-moss);border-color:var(--c-moss);color:var(--c-bg)}
 .screen .cfg-row,.screen .cfg-toggle{background:var(--c-panel);border:2px solid var(--c-line);border-radius:0}
 .screen .cfg-row label,.screen .cfg-toggle label{color:var(--c-cream)}
 .screen .cfg-row .val{color:var(--c-amber)}
@@ -398,10 +432,13 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
   <button type="button" id="bchat" title="Chat">💬</button>
   <div id="chat-msgs"></div>
 </div>
-<div id="chat-panel">
-  <input type="text" id="chat-input" maxlength="60" placeholder="Mensagem (max 60)..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-  <button type="button" id="chat-send">ENVIAR</button>
-  <button type="button" id="chat-close">✕</button>
+<div id="chat-panel" role="dialog" aria-label="Chat">
+  <div class="chat-head"><span class="ct">CHAT</span><span class="cc" id="chat-count">0/60</span><button type="button" id="chat-close" aria-label="Fechar chat">✕</button></div>
+  <div id="chat-hist" aria-live="polite"></div>
+  <div class="chat-row">
+    <input type="text" id="chat-input" maxlength="60" placeholder="Digite uma mensagem..." autocomplete="off" autocapitalize="sentences" autocorrect="on" spellcheck="true" enterkeyhint="send">
+    <button type="button" id="chat-send">ENVIAR</button>
+  </div>
 </div>
 
 <div id="menu" class="screen">
@@ -410,6 +447,7 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
     <p class="tagline">SOBREVIVA O MÁXIMO QUE PUDER</p>
     <div class="scene-wrap"><canvas id="sceneCv" width="46" height="14" aria-hidden="true"></canvas></div>
     <div class="menu-btns">
+      <button class="menu-btn" id="btnContinue">CONTINUAR<span class="sub" id="contSub"></span></button>
       <button class="menu-btn" id="btnPlay">JOGAR</button>
       <button class="menu-btn mp" id="btnMulti">MULTIPLAYER</button>
       <button class="menu-btn sec" id="btnConfig">CONFIGURAÇÕES</button>
@@ -421,6 +459,7 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
 <div id="mapscreen" class="screen hide">
   <div class="card">
     <h2>ESCOLHA O MAPA</h2>
+    <p id="saveWarn" class="hide">Um novo jogo substitui o jogo salvo.</p>
     <div class="map-grid">
       <button class="map-opt selected" data-map="forest">
         <span class="ic"><canvas class="ico" data-art="tree" width="9" height="9"></canvas></span><span>FLORESTA</span>
@@ -512,18 +551,11 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
         <div class="cfg-row"><label>Passos</label><input type="range" id="cfg_step" min="0" max="100" value="80"><span class="val" id="v_step">80%</span></div>
       </div>
       <h3>DESEMPENHO</h3>
-      <p style="font-size:10px;margin:0 0 6px;text-align:left">No celular, “Economia” liga sozinho e reduz calor/bateria.</p>
+      <p style="font-size:10px;margin:0 0 6px;text-align:left">O jogo começa em qualidade Alta e 60 FPS. Com o ajuste automático ligado, ele só reduz os efeitos se o seu aparelho não aguentar.</p>
       <div class="cfg-grid">
-        <div class="cfg-toggle on" id="cfg_economy"><label>Modo economia (30 FPS, menos efeitos)</label><div class="sw"></div></div>
-        <div class="cfg-toggle on" id="cfg_lowres"><label>Resolução reduzida</label><div class="sw"></div></div>
-        <div class="cfg-toggle on" id="cfg_simplelight"><label>Iluminação simples (noite)</label><div class="sw"></div></div>
-      </div>
-      <h3>JOGO</h3>
-      <div class="cfg-grid">
-        <div class="cfg-toggle on" id="cfg_fullscreen"><label>Tela cheia ao iniciar partida</label><div class="sw"></div></div>
-        <div class="cfg-toggle on" id="cfg_tracers"><label>Traçantes de tiro</label><div class="sw"></div></div>
-        <div class="cfg-toggle on" id="cfg_dmgflash"><label>Flash ao levar dano</label><div class="sw"></div></div>
-        <div class="cfg-toggle on" id="cfg_screenflash"><label>Vinheta com vida baixa</label><div class="sw"></div></div>
+        <div class="cfg-seg" id="cfg_quality"><label>Qualidade dos efeitos</label><div class="opts"><button type="button" data-v="2">ECONOMIA</button><button type="button" data-v="1">MÉDIA</button><button type="button" data-v="0">ALTA</button></div></div>
+        <div class="cfg-seg" id="cfg_fps"><label>Limite de FPS</label><div class="opts"><button type="button" data-v="30">30</button><button type="button" data-v="60">60</button><button type="button" data-v="0">MÁXIMO</button></div></div>
+        <div class="cfg-toggle on" id="cfg_autoperf"><label>Ajuste automático de desempenho</label><div class="sw"></div></div>
       </div>
       <h3>INTERFACE</h3>
       <p style="font-size:10px;margin:0 0 6px;text-align:left">Botões, inventário, pause e craft nunca são ocultados.</p>
@@ -639,17 +671,24 @@ let W=0,H=0,dispW=0,dispH=0,Z=2,camX=0,camY=0;
 let JR=48,JK=22; // raio do joystick e do botão em px de canvas (resize() ajusta à escala)
 let mmDrawT=0;
 
+/* Qualidade: 0 = Alta, 1 = Equilibrada, 2 = Economia.
+   O jogo começa sempre na qualidade escolhida (padrão: Alta, 60 FPS). Com o "ajuste automático" ligado,
+   ele só reduz os efeitos sozinho se o aparelho não conseguir manter a taxa de quadros. */
+const PERF_TIERS=[
+  {weatherCap:160,weatherSpawn:.55,partsCap:180,fireRate:18,smokeRate:6, lightScale:2,hudInterval:.1, mmEvery:1},
+  {weatherCap:120,weatherSpawn:.45,partsCap:140,fireRate:14,smokeRate:5, lightScale:2,hudInterval:.1, mmEvery:1},
+  {weatherCap:85, weatherSpawn:.33,partsCap:100,fireRate:10,smokeRate:3.5,lightScale:4,hudInterval:.15,mmEvery:2}
+];
+function perfTotal(){ return Math.min(2,(CFG.quality|0)+(CFG.autoperf?(CFG.autolvl|0):0)); }
 function perf(){
-  const eco=!!CFG.economy;
+  const total=perfTotal(), t=PERF_TIERS[Math.min(2,total)];
+  const fps=+CFG.fps||0; // 0 = máximo (taxa da tela)
   return {
-    targetFps: eco?30:60,
-    maxCanvas: CFG.lowres?(IS_MOBILE?720:960):(IS_MOBILE?1080:1600),
-    weatherCap: eco?55:160,
-    weatherSpawn: eco?0.22:0.55,
-    partsCap: eco?70:180,
-    simpleLight: eco||!!CFG.simplelight,
-    hudInterval: eco?0.2:0.1,
-    lightEvery: eco?2:1 // frames
+    targetFps: fps>0?fps:240,
+    maxCanvas: IS_MOBILE?1080:1600,
+    weatherCap:t.weatherCap, weatherSpawn:t.weatherSpawn, partsCap:t.partsCap,
+    fireRate:t.fireRate, smokeRate:t.smokeRate, lightScale:t.lightScale,
+    hudInterval:t.hudInterval, mmEvery:t.mmEvery
   };
 }
 function resize(){
@@ -667,7 +706,7 @@ function resize(){
   if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
   // Luz full-res só se não estiver em modo simples
   // Buffer de luz: tamanho cheio no modo completo, 1/4 no modo simples (barato, suavizado ao ampliar)
-  const lsc=perf().simpleLight?4:1, lw=Math.ceil(W/lsc), lh=Math.ceil(H/lsc);
+  const lsc=perf().lightScale, lw=Math.ceil(W/lsc), lh=Math.ceil(H/lsc);
   if(lightC.width!==lw||lightC.height!==lh){ lightC.width=lw; lightC.height=lh; }
   ctx.imageSmoothingEnabled=false;
   if(lctx) lctx.imageSmoothingEnabled=false;
@@ -681,14 +720,22 @@ window.addEventListener('resize',resize);
 
 /* ============ CONFIG ============ */
 const CFG={master:0.8,sfx:1.0,amb:0.6,rain:0.7,step:0.8,hud:true,minimap:true,dmgflash:true,screenflash:true,fullscreen:true,tracers:true,
-  economy:IS_MOBILE, lowres:false, simplelight:IS_MOBILE};
+  quality:0, fps:60, autoperf:true, autolvl:0};
 try{const raw=localStorage.getItem('minisurv_cfg');if(raw)Object.assign(CFG,JSON.parse(raw));}catch(e){}
 if(CFG.minimap===undefined) CFG.minimap=true;
-if(CFG.economy===undefined) CFG.economy=IS_MOBILE;
-if(CFG.lowres===undefined) CFG.lowres=false;
-// Config salva por versões antigas ligava "resolução reduzida" sozinha no celular: desliga uma vez
-if(!CFG.cfgv||CFG.cfgv<2){ CFG.lowres=false; CFG.cfgv=2; try{localStorage.setItem('minisurv_cfg',JSON.stringify(CFG));}catch(e){} }
-if(CFG.simplelight===undefined) CFG.simplelight=IS_MOBILE;
+// Versão 3 das configurações: o "modo economia" antigo ligava sozinho no celular (30 FPS, poucos efeitos).
+// Agora todo mundo começa em Alta, 60 FPS e ajuste automático; as opções antigas deixam de existir.
+if(!CFG.cfgv||CFG.cfgv<3){
+  CFG.quality=0;CFG.fps=60;CFG.autoperf=true;CFG.autolvl=0;CFG.cfgv=3;
+  delete CFG.economy;delete CFG.simplelight;delete CFG.lowres;
+  try{localStorage.setItem('minisurv_cfg',JSON.stringify(CFG));}catch(e){}
+}
+if(![0,1,2].includes(CFG.quality)) CFG.quality=0;
+if(![0,30,60].includes(CFG.fps)) CFG.fps=60;
+delete CFG.lowres;
+CFG.autolvl=Math.max(0,Math.min(2,CFG.autolvl|0));
+// Estas opções não aparecem mais nas configurações: ficam sempre ligadas, mesmo que uma versão antiga tenha salvo desligado
+CFG.fullscreen=CFG.tracers=CFG.dmgflash=CFG.screenflash=true;
 function saveCfg(){try{localStorage.setItem('minisurv_cfg',JSON.stringify(CFG));}catch(e){}}
 function applyHudClasses(){
   document.body.classList.toggle('nohud', !CFG.hud);
@@ -1203,7 +1250,44 @@ function setChatButtonVisible(on){
   if(on) b.classList.add('show'); else b.classList.remove('show');
   if(!on) b.classList.remove('has-new');
 }
+let chatUnread=0;
+function chatTime(t){const d=new Date(t||Date.now());return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function chatAddHistory(e){
+  const box=$('chat-hist'); if(!box) return;
+  const empty=box.querySelector('.empty'); if(empty) empty.remove();
+  const stick=(box.scrollHeight-box.scrollTop-box.clientHeight)<40||chatOpen===false;
+  const el=document.createElement('div');
+  el.className='cm'+(e.me?' me':'')+(e.sys?' sys':'');
+  if(e.sys) el.textContent=e.text;
+  else {
+    const n=document.createElement('span'); n.className='cn'; n.textContent=e.me?'Você':(e.name||'?');
+    const tm=document.createElement('span'); tm.className='ctm'; tm.textContent=chatTime(e.t);
+    n.appendChild(tm); el.appendChild(n);
+    el.appendChild(document.createTextNode(e.text));
+  }
+  box.appendChild(el);
+  while(box.children.length>120) box.removeChild(box.firstChild);
+  if(stick||e.me) box.scrollTop=box.scrollHeight;
+}
+function chatShowEmpty(){
+  const box=$('chat-hist'); if(!box||box.children.length) return;
+  const d=document.createElement('div'); d.className='empty'; d.textContent='Nenhuma mensagem ainda.\nEscreva abaixo para falar com o seu parceiro.'; d.style.whiteSpace='pre-line'; box.appendChild(d);
+}
+function resetChatHistory(){
+  chatLog.length=0; chatUnread=0;
+  const box=$('chat-hist'); if(box) box.innerHTML='';
+  const b=$('bchat'); if(b){ b.removeAttribute('data-n'); b.classList.remove('has-new'); }
+}
 function pushChatBubble(name, text, me, sys){
+  // Histórico completo (aba do chat)
+  const entry={name,text,me:!!me,sys:!!sys,t:Date.now()};
+  chatLog.push(entry); if(chatLog.length>120) chatLog.shift();
+  chatAddHistory(entry);
+  if(!me&&!sys&&!chatOpen){
+    chatUnread++;
+    const b=$('bchat'); if(b){ b.setAttribute('data-n',chatUnread>9?'9+':String(chatUnread)); }
+  }
+  // Balão rápido no topo (some sozinho). Com a aba aberta ele fica escondido.
   const box=$('chat-msgs');
   if(!box) return;
   const el=document.createElement('div');
@@ -1219,21 +1303,43 @@ function pushChatBubble(name, text, me, sys){
   // Auto-fade after a few seconds
   setTimeout(()=>{ if(el.parentNode){ el.style.opacity='0'; el.style.transition='opacity .4s'; setTimeout(()=>{if(el.parentNode)el.remove();},450);} }, 8000);
 }
+/* Ajusta a aba à área visível: com o teclado do celular aberto ela fica inteira acima dele */
+function fitChatPanel(){
+  const p=$('chat-panel'); if(!p||!chatOpen) return;
+  const vv=window.visualViewport;
+  if(!vv){ return; }
+  const w=Math.min(420,vv.width);
+  p.style.top=vv.offsetTop+'px';
+  p.style.height=vv.height+'px';
+  p.style.width=w+'px';
+  p.style.left=(vv.offsetLeft+vv.width-w)+'px';
+  p.style.right='auto';
+  const h=$('chat-hist'); if(h) h.scrollTop=h.scrollHeight;
+}
 function openChat(){
   if(!MP.active) return;
   if(state!=='play' && state!=='craft') return;
   chatOpen=true;
+  document.body.classList.add('chatopen');
   const p=$('chat-panel'); if(p) p.classList.add('open');
-  const b=$('bchat'); if(b) b.classList.remove('has-new');
+  chatUnread=0; const b=$('bchat'); if(b){ b.classList.remove('has-new'); b.removeAttribute('data-n'); }
+  if(!$('chat-hist').children.length) chatShowEmpty();
+  fitChatPanel();
+  const h=$('chat-hist'); if(h) h.scrollTop=h.scrollHeight;
   const inp=$('chat-input');
-  if(inp){ inp.value=''; setTimeout(()=>{ try{inp.focus();}catch(e){} }, 50); }
+  if(inp){ inp.value=''; updateChatCount(); try{inp.focus({preventScroll:true});}catch(e){} setTimeout(()=>{ try{inp.focus({preventScroll:true});}catch(e){} fitChatPanel(); }, 120); }
   // Solta controles para não atacar enquanto digita
   atkHeld=false; sprintHeld=false; joy.id=null; joy.active=false; joy.x=joy.y=0;
 }
 function closeChat(){
   chatOpen=false;
-  const p=$('chat-panel'); if(p) p.classList.remove('open');
+  document.body.classList.remove('chatopen');
+  const p=$('chat-panel');
+  if(p){ p.classList.remove('open'); p.style.top=p.style.height=p.style.width=p.style.left=p.style.right=''; }
   const inp=$('chat-input'); if(inp){ try{inp.blur();}catch(e){} }
+}
+function updateChatCount(){
+  const inp=$('chat-input'), c=$('chat-count'); if(c&&inp) c.textContent=(inp.value||'').length+'/60';
 }
 function sendChatMessage(){
   if(!MP.active) return;
@@ -1249,8 +1355,8 @@ function sendChatMessage(){
     return false;
   };
   if(!trySend()){ setTimeout(trySend,120); setTimeout(trySend,400); }
-  if(inp) inp.value='';
-  closeChat();
+  // A aba continua aberta para a conversa seguir: limpa o campo e mantém o foco
+  if(inp){ inp.value=''; updateChatCount(); try{inp.focus({preventScroll:true});}catch(e){} }
 }
 function receiveChat(data){
   if(!data || typeof data.text!=='string') return;
@@ -2414,7 +2520,8 @@ function populate(){
 /* ============ JOGO ============ */
 function newGame(){
   try{
-    genWorld();
+    worldSeed=1+Math.floor(Math.random()*2147483000);
+    genWorld(worldSeed);
     if(!plane){throw new Error('plane não gerado');}
     P={x:plane.x+70,y:plane.y,r:5,hp:100,food:85,water:85,stam:100,temp:0,
       face:Math.PI/2,moving:false,sprint:false,exhausted:false,cd:0,swing:0,flash:0,bleed:false,dead:false,
@@ -2430,6 +2537,7 @@ function newGame(){
     applyHudClasses();
     buildInv();updateHud(true);
     state='play';
+    clearSave(); // um jogo novo substitui o jogo salvo
     toast('Sobreviva no mapa '+selectedMap.toUpperCase()+'!');
     startAmbient();startRain();
   }catch(err){
@@ -2438,6 +2546,137 @@ function newGame(){
     showScreen('menu');
     $('hud').classList.add('hide');
     alert('Erro ao gerar o mundo: '+err.message);
+  }
+}
+/* ============ CONTINUAR (somente jogo solo) ============
+   O mundo nasce de uma semente (a mesma técnica do multiplayer), então o save guarda a semente e só o que mudou:
+   jogador, tempo, árvores/pedras que restaram, itens no chão, veículos, animais, zumbis, fogueiras e manchas. */
+const SAVE_KEY='minisurv_save', SAVE_VER=1, SAVE_EVERY=20;
+let worldSeed=0, saveT=0;
+const MAP_NAMES={forest:'FLORESTA',desert:'DESERTO',snow:'NEVE',city:'CIDADE'};
+const _q=(v,d)=>{const m=d===1?10:100;return Math.round(v*m)/m;};
+function packObj(o){
+  const r={};
+  for(const k in o){
+    if(k[0]==='_') continue;
+    const v=o[k], t=typeof v;
+    if(t==='number') r[k]=_q(v,2); else if(t==='string'||t==='boolean') r[k]=v;
+  }
+  return r;
+}
+function canSave(){
+  return !!(P && worldSeed && !MP.active && !P.dead && (state==='play'||state==='pause'||state==='craft'));
+}
+function saveGame(){
+  if(!canSave()) return false;
+  try{
+    const ps=JSON.parse(JSON.stringify(P,(k,v)=>(k==='inside'||k==='inVehicle'||k==='fish'||k[0]==='_')?undefined:v));
+    const data={
+      v:SAVE_VER, at:Date.now(), map:selectedMap, seed:worldSeed,
+      T:_q(T,2), day, kills, weather, weatherTimer:_q(weatherTimer,1), spawnTimer:_q(spawnTimer,1),
+      P:ps, inVeh:P.inVehicle?vehicles.indexOf(P.inVehicle):-1,
+      trees:trees.map(t=>[t.x,t.y,_q(t.hp,2)]),
+      rocks:rocks.map(r=>[r.x,r.y,_q(r.hp,2)]),
+      items:items.map(i=>{const e=packObj(i);const t=e.t,x=e.x,y=e.y;delete e.t;delete e.x;delete e.y;const a=[t,_q(x,1),_q(y,1)];if(Object.keys(e).length)a.push(e);return a;}),
+      zombies:zombies.filter(z=>!z.dead).map(z=>[_q(z.x,1),_q(z.y,1),z.kind,_q(z.hp,1),_q(z.max,1),_q(z.spd,2),z.dmg,z.si]),
+      vehicles:vehicles.map(packObj), animals:animals.map(packObj), fires:campfires.map(packObj),
+      decals:decals.map(d=>[_q(d.x,1),_q(d.y,1)])
+    };
+    localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+    return true;
+  }catch(e){ console.warn('[save]',e); return false; }
+}
+function readSave(){
+  let d=null;
+  try{
+    const raw=localStorage.getItem(SAVE_KEY); if(!raw) return null;
+    d=JSON.parse(raw);
+    const ok=d && d.v===SAVE_VER && MAP_NAMES[d.map] && Number.isFinite(d.seed) && d.seed>0 && Number.isFinite(d.T) && d.P && Number.isFinite(d.P.hp) && d.P.hp>0
+      && Array.isArray(d.trees)&&Array.isArray(d.rocks)&&Array.isArray(d.items)&&Array.isArray(d.zombies)&&Array.isArray(d.vehicles)&&Array.isArray(d.animals)&&Array.isArray(d.fires);
+    if(!ok){ clearSave(); return null; }
+    return d;
+  }catch(e){ clearSave(); return null; }
+}
+function clearSave(){ try{localStorage.removeItem(SAVE_KEY);}catch(e){} refreshContinue(); }
+function refreshContinue(){
+  const d=readSave0();
+  const m=$('menu'); if(m) m.classList.toggle('hasSave',!!d);
+  const sub=$('contSub'); if(sub&&d) sub.textContent='DIA '+d.day+' · '+MAP_NAMES[d.map];
+  const w=$('saveWarn'); if(w) w.classList.toggle('hide',!d);
+}
+// leitura leve para o menu (não apaga nada se estiver inválido)
+function readSave0(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY); if(!raw) return null;
+    const d=JSON.parse(raw);
+    return (d&&d.v===SAVE_VER&&MAP_NAMES[d.map]&&Number.isFinite(d.seed)&&d.P&&d.P.hp>0)?d:null;
+  }catch(e){ return null; }
+}
+function continueGame(){
+  const d=readSave();
+  if(!d){ toast('Nenhum jogo salvo'); return; }
+  aud();
+  closeChat(); setChatButtonVisible(false);
+  const cm=$('chat-msgs'); if(cm) cm.innerHTML=''; resetChatHistory();
+  if(CFG.fullscreen){ userWantsFS=true; requestFullscreenLandscape(true); } else userWantsFS=false;
+  showScreen(null);
+  $('hud').classList.remove('hide');
+  restoreWalkHUD();
+  try{
+    selectedMap=d.map; worldSeed=d.seed;
+    genWorld(d.seed);
+    if(!plane) throw new Error('plane não gerado');
+    // Tempo e clima (antes dos zumbis: a dificuldade deles depende do dia)
+    T=d.T; day=Math.max(1,d.day|0); kills=d.kills|0; update._lastDay=day;
+    if(typeof d.weather==='string') weather=d.weather;
+    if(Number.isFinite(d.weatherTimer)) weatherTimer=d.weatherTimer;
+    spawnTimer=Number.isFinite(d.spawnTimer)?d.spawnTimer:3;
+    // Árvores e pedras: o mundo base volta da semente; o save diz quais restaram e com quanta vida
+    const keep=(base,saved)=>{
+      const m=new Map(base.map(o=>[o.x+','+o.y,o])), out=[];
+      for(const a of saved){ const o=m.get(a[0]+','+a[1]); if(o){ if(Number.isFinite(a[2])) o.hp=a[2]; out.push(o); } }
+      return out;
+    };
+    trees=keep(trees,d.trees); rocks=keep(rocks,d.rocks);
+    items=d.items.filter(a=>Array.isArray(a)&&typeof a[0]==='string'&&ITEMS[a[0]]&&Number.isFinite(a[1])&&Number.isFinite(a[2])).map(a=>Object.assign({t:a[0],x:a[1],y:a[2]},a[3]||{}));
+    vehicles=d.vehicles.filter(v=>v&&Number.isFinite(v.x)&&Number.isFinite(v.y)).map(v=>{v.driverId=null;v.spd=0;return v;});
+    animals=d.animals.filter(a=>a&&Number.isFinite(a.x)&&Number.isFinite(a.y));
+    campfires=d.fires.filter(c=>c&&Number.isFinite(c.x)&&Number.isFinite(c.y));
+    decals=(d.decals||[]).map(a=>({x:a[0],y:a[1]}));
+    rebuildSolidGrid();
+    // Jogador
+    P=Object.assign({x:plane.x+70,y:plane.y,r:5,hp:100,food:85,water:85,stam:100,temp:0,face:Math.PI/2,moving:false,sprint:false,exhausted:false,cd:0,swing:0,flash:0,bleed:false,dead:false,
+      weapon:'fists',melee:null,meleeWeapons:[],firearms:{},ammo:0,arrows:0,inv:[],walk:0},d.P,{inside:null,inVehicle:null,dead:false});
+    if(!Array.isArray(P.inv)) P.inv=[];
+    P.inv=P.inv.filter(sl=>sl&&ITEMS[sl.t]&&sl.n>0);
+    if(d.inVeh>=0&&vehicles[d.inVeh]){ const v=vehicles[d.inVeh]; P.x=v.x; P.y=v.y+28; } // volta ao lado do carro em que estava
+    pushOut(P,P.r);
+    // Zumbis
+    zombies=[];
+    for(const a of d.zombies){
+      if(!Array.isArray(a)||!Number.isFinite(a[0])||!Number.isFinite(a[1])) continue;
+      const z=spawnZ(a[0],a[1],a[2]);
+      if(Number.isFinite(a[3])) z.hp=a[3];
+      if(Number.isFinite(a[4])) z.max=a[4];
+      if(Number.isFinite(a[5])) z.spd=a[5];
+      if(Number.isFinite(a[6])) z.dmg=a[6];
+      if(Number.isFinite(a[7])){ z.si=a[7]|0; const lk=zombieLook(z.kind,z.si); z.skin=lk.skin; z.shirt=lk.shirt; }
+    }
+    shake=0;flash=0;dark=0;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;stepT=0;
+    MP.active=false;remotePlayers={};
+    applyHudClasses();
+    buildInv();updateHud(true);
+    state='play';
+    AUTO.warm=3;saveT=0;
+    toast('Jogo retomado: Dia '+day);
+    startAmbient();startRain();
+  }catch(err){
+    console.error('[continueGame]',err);
+    state='menu';
+    showScreen('menu');
+    $('hud').classList.add('hide');
+    clearSave();
+    toast('Não foi possível retomar o jogo salvo');
   }
 }
 function buildInv(){
@@ -2889,7 +3128,7 @@ function showDeathScreen(canRespawn){
 }
 function die(){
   if(!P || P.dead) return;
-  closeWeaponWheel();
+  closeWeaponWheel();closeChat();
   P.hp=0;P.dead=true;P.fish=null;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;
   if(P.inVehicle){ try{exitVehicle();}catch(e){} }
   restoreWalkHUD();
@@ -2914,7 +3153,8 @@ function die(){
     return;
   }
 
-  // Singleplayer
+  // Singleplayer: morreu, o jogo salvo deixa de existir
+  clearSave();
   state='dead';
   setAmbient(0);setRain(false);
   showDeathScreen(false);
@@ -2952,6 +3192,7 @@ function respawnPlayer(){
   try{ if(MP.conn&&MP.conn.open) MP.conn.send({type:'playerRespawned', id:myNetId(), hp:P.hp}); }catch(e){}
 }
 let floaters=[];
+let weatherAcc=0;
 function addFloater(x,y,txt,col){
   floaters.push({x,y,txt:String(txt),col:col||'#ffe0a0',t:0.9,vy:-28});
   if(floaters.length>24) floaters.shift();
@@ -3690,7 +3931,9 @@ function update(dt){
   }
   if(weather!=='none'){
     const pf=perf();
-    if(weatherParticles.length<pf.weatherCap&&Math.random()<pf.weatherSpawn){
+    // Densidade por segundo: igual em 30, 60 ou 120 FPS
+    weatherAcc=Math.min(8,weatherAcc+pf.weatherSpawn*dt*60);
+    while(weatherAcc>=1){ weatherAcc-=1; if(weatherParticles.length>=pf.weatherCap) continue;
       if(weather==='sand') weatherParticles.push({x:camX-20,y:camY+rnd(0,H/Z),vx:rnd(160,260),vy:rnd(-12,30),sz:rnd(1,2),t:rnd(.7,1.3)});
       else weatherParticles.push({
         x:camX+rnd(-50,W/Z+50),y:camY-10,
@@ -3917,8 +4160,8 @@ function update(dt){
   }
   for(const c of campfires){
     c.flicker=(c.flicker||0)+dt*8;
-    const fireRate=CFG.economy?dt*8:dt*18;
-    const smokeRate=CFG.economy?dt*3:dt*6;
+    const fireRate=dt*perf().fireRate;
+    const smokeRate=dt*perf().smokeRate;
     if(Math.random()<fireRate)parts.push({x:c.x+rnd(-4,4),y:c.y-8,vx:rnd(-6,6),vy:rnd(-40,-20),t:rnd(.5,1.2),c:Math.random()<.5?'#ffb040':'#ff7020'});
     if(Math.random()<smokeRate)parts.push({x:c.x+rnd(-3,3),y:c.y-14,vx:rnd(-8,8),vy:rnd(-30,-15),t:rnd(1,2),c:'rgba(80,80,80,.7)'});
   }
@@ -4509,6 +4752,7 @@ function setupConn(conn,isHostSide){
           selectedMap = mpSelectedMap || 'forest';
           const seed = Math.floor(Math.random()*1e9) + 1;
           MP.seed = seed;
+          worldSeed=0;
           genWorld(seed);
           if(!plane) throw new Error('plane não gerado');
           console.log('[Host] genWorld OK (seed='+seed+'):',trees.length,'árvores,',rocks.length,'rochas');
@@ -4582,6 +4826,7 @@ function handleNetData(data,isHostSide){
       console.log('[Guest] worldInit recebido — seed='+data.seed+' map='+map);
       try{
         selectedMap = map;
+        worldSeed=0;
         genWorld(data.seed);
         console.log('[Guest] mundo gerado:',trees.length,'árvores, plane?',!!plane);
       }catch(e){
@@ -4998,7 +5243,7 @@ function enterMultiplayerGame(isHost){
     }
     closeChat();
     setChatButtonVisible(true);
-    const cm=$('chat-msgs'); if(cm) cm.innerHTML='';
+    const cm=$('chat-msgs'); if(cm) cm.innerHTML=''; resetChatHistory();
     pushChatBubble('','Chat pronto: toque em 💬',false,true);
     console.log('[MP] jogo iniciado. Host?',isHost);
   }catch(err){
@@ -6032,17 +6277,10 @@ function render(){
         ctx.fillRect(hx-2.5*Z,hy-1*Z,5*Z,2*Z);
       }
     }
-    // Brilho quente do facho + as duas luzes na frente do carro
+    // As duas luzes brancas na frente do carro (sem brilho quente por cima)
     if(headlit.length){
-      ctx.globalCompositeOperation='lighter';
-      ctx.globalAlpha=Math.min(1,dark*.9);
-      for(const v of headlit){
-        const cf=Math.cos(v.face||0),sf=Math.sin(v.face||0),hx0=(v.x-camX)*Z+sx,hy0=(v.y-camY)*Z+sy;
-        for(let k=0;k<4;k++){const dd=30+k*28,rr=(34+k*8)*Z;ctx.drawImage(lampSprite,hx0+cf*dd*Z-rr,hy0+sf*dd*Z-rr,2*rr,2*rr);}
-      }
-      ctx.globalAlpha=1;
       ctx.globalCompositeOperation='source-over';
-      ctx.fillStyle='#fff6c0';
+      ctx.fillStyle='#ffffff';
       for(const v of headlit){
         const cf=Math.cos(v.face||0),sf=Math.sin(v.face||0),hx0=(v.x-camX)*Z+sx,hy0=(v.y-camY)*Z+sy;
         for(const sd of [-1,1]){
@@ -6063,7 +6301,7 @@ function render(){
   }
   // Minimapa: não redesenha todo frame em economia
   mmDrawT++;
-  if(!CFG.economy || (mmDrawT%3)===0){
+  if((mmDrawT%perf().mmEvery)===0){
     mm.clearRect(0,0,76,76);
     mm.drawImage(mmStatic,0,0);
     const mx=P.x/WW*76,my=P.y/WH*76;
@@ -6080,6 +6318,7 @@ function render(){
 
 /* ============ UI ============ */
 function showScreen(id){
+  if(id==='menu') try{refreshContinue();}catch(e){}
   const ids=['menu','mapscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
   for(const s of ids){const e=$(s);if(e)e.classList.add('hide');}
   if(id){const e=$(id);if(e)e.classList.remove('hide');}
@@ -6121,38 +6360,43 @@ bindSlider('cfg_rain','rain','v_rain');
 bindSlider('cfg_step','step','v_step');
 bindToggle('cfg_hud','hud');
 bindToggle('cfg_minimap','minimap');
-bindToggle('cfg_dmgflash','dmgflash');
-bindToggle('cfg_screenflash','screenflash');
-bindToggle('cfg_fullscreen','fullscreen');
-bindToggle('cfg_tracers','tracers');
-bindToggle('cfg_economy','economy');
-bindToggle('cfg_lowres','lowres');
-bindToggle('cfg_simplelight','simplelight');
+bindToggle('cfg_autoperf','autoperf');
+function bindSeg(id,key){
+  const el=$(id);if(!el)return;
+  const paint=()=>el.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',+b.dataset.v===+CFG[key]));
+  paint();
+  el.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    CFG[key]=+b.dataset.v;CFG.autolvl=0;AUTO.warm=3;AUTO.slowT=0;AUTO.fastT=0;saveCfg();paint();resize();
+  }));
+  el._paint=paint;
+}
+bindSeg('cfg_quality','quality');
+bindSeg('cfg_fps','fps');
 // Reaplica canvas ao mudar perf
-['cfg_economy','cfg_lowres','cfg_simplelight'].forEach(id=>{
+['cfg_autoperf'].forEach(id=>{
   const el=$(id); if(!el) return;
-  el.addEventListener('click',()=>{ resize(); });
+  el.addEventListener('click',()=>{ CFG.autolvl=0;AUTO.warm=3;AUTO.slowT=0;AUTO.fastT=0;saveCfg();resize(); });
 });
 
 on('btnReset','click',()=>{
   CFG.master=0.8;CFG.sfx=1.0;CFG.amb=0.6;CFG.rain=0.7;CFG.step=0.8;
   CFG.hud=true;CFG.minimap=true;CFG.dmgflash=true;CFG.screenflash=true;CFG.fullscreen=true;CFG.tracers=true;
-  CFG.economy=IS_MOBILE;CFG.lowres=false;CFG.simplelight=IS_MOBILE;
+  CFG.quality=0;CFG.fps=60;CFG.autoperf=true;CFG.autolvl=0;
   saveCfg();
   const vals={cfg_master:80,cfg_sfx:100,cfg_amb:60,cfg_rain:70,cfg_step:80};
   for(const id in vals){const e=$(id);if(e)e.value=vals[id];const lab=$('v_'+id.split('_')[1]);if(lab)lab.textContent=vals[id]+'%';}
   document.querySelectorAll('.cfg-toggle').forEach(t=>{
-    const on = !(t.id==='cfg_economy'||t.id==='cfg_lowres'||t.id==='cfg_simplelight') || IS_MOBILE;
-    // defaults: economy/lowres/simplelight only on for mobile
-    if(t.id==='cfg_economy'||t.id==='cfg_lowres'||t.id==='cfg_simplelight') t.classList.toggle('on', IS_MOBILE);
-    else t.classList.add('on');
+    t.classList.add('on');
   });
+  ['cfg_quality','cfg_fps'].forEach(id=>{const e=$(id);if(e&&e._paint)e._paint();});
   applyHudClasses();
   resize();
   toast('Configurações restauradas');
 });
 
 on('btnPlay','click',()=>{aud();showScreen('mapscreen');});
+on('btnContinue','click',()=>{continueGame();});
+window.addEventListener('pagehide',()=>{saveGame();});
 on('btnMulti','click',()=>{aud();showScreen('mpscreen');});
 on('btnConfig','click',()=>{aud();showScreen('configscreen');});
 on('btnBackMap','click',()=>showScreen('menu'));
@@ -6357,6 +6601,13 @@ on('bchat','pointerup',e=>{e.preventDefault();e.stopPropagation();aud(); if(chat
 on('bchat','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
 on('chat-send','click',e=>{e.preventDefault();sendChatMessage();});
 on('chat-close','click',e=>{e.preventDefault();closeChat();});
+on('chat-input','input',updateChatCount);
+{
+  const vv=window.visualViewport;
+  if(vv){ vv.addEventListener('resize',fitChatPanel); vv.addEventListener('scroll',fitChatPanel); }
+  window.addEventListener('resize',fitChatPanel);
+  window.addEventListener('orientationchange',()=>setTimeout(fitChatPanel,200));
+}
 on('chat-input','keydown',e=>{
   if(e.key==='Enter'){ e.preventDefault(); sendChatMessage(); }
   if(e.key==='Escape'){ e.preventDefault(); closeChat(); }
@@ -6377,6 +6628,7 @@ function pause(){
   closeWeaponWheel();
   closeChat();
   state='pause';atkHeld=false;sprintHeld=false;joy.id=null;joy.active=false;joy.x=joy.y=0;
+  saveGame();
   pauseReadyAt=performance.now()+450; // prevent the same touch from hitting CONTINUAR
   updatePauseFSButton();
   const e=$('pausescr');if(e)e.classList.remove('hide');
@@ -6396,10 +6648,11 @@ function exitFullscreen(){
   }catch(e){}
 }
 function quitToMenu(){
+  saveGame();
   closeWeaponWheel();
   closeChat();
   setChatButtonVisible(false);
-  const cm=$('chat-msgs'); if(cm) cm.innerHTML='';
+  const cm=$('chat-msgs'); if(cm) cm.innerHTML=''; resetChatHistory();
   // E1: clear vehicle state + restore on-foot HUD before leaving
   if(P){ P.inVehicle=null; }
   restoreWalkHUD();
@@ -6426,7 +6679,7 @@ function startGame(){
   aud();
   closeChat();
   setChatButtonVisible(false);
-  const cm=$('chat-msgs'); if(cm) cm.innerHTML='';
+  const cm=$('chat-msgs'); if(cm) cm.innerHTML=''; resetChatHistory();
   // E4: respect "Tela cheia ao jogar" config
   if(CFG.fullscreen){
     userWantsFS=true;
@@ -6474,6 +6727,7 @@ on('bpause','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
 on('bcraft','pointerdown',e=>{e.preventDefault();aud();openCraft();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play'&&!MP.active)pause();});
 {
+  try{refreshContinue();}catch(e){}
   const b=LSget();
   if(b){const el=$('bestline');if(el)el.textContent='RECORDE '+fmt(+b);}
   try{
@@ -6487,7 +6741,27 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='p
 
 /* ============ FRAME LOOP ============ */
 let last=0;
-let lastFrameTs=0;
+let lastFrameTs=0, rafPrev=0;
+/* Ajuste automático: acompanha o custo de cada quadro e só baixa a qualidade se o aparelho ficar devagar de forma contínua */
+const AUTO={work:0,intv:0,disp:33,warm:3,slowT:0,fastT:0};
+function perfMonitor(workMs,intervalMs){
+  if(!CFG.autoperf) return;
+  if(AUTO.warm>0){AUTO.warm-=intervalMs/1000;AUTO.work=workMs;AUTO.intv=intervalMs;return;}
+  if(intervalMs>160) return; // engasgo isolado (GC, troca de app): ignora
+  AUTO.work+=(workMs-AUTO.work)*.06; AUTO.intv+=(intervalMs-AUTO.intv)*.06;
+  const fps=+CFG.fps||0, expect=Math.max(fps>0?1000/fps:0, AUTO.disp);
+  const slow=AUTO.work>expect*.8 || AUTO.intv>expect*1.35;
+  const fast=AUTO.work<expect*.35 && AUTO.intv<expect*1.15;
+  const sec=intervalMs/1000;
+  AUTO.slowT=slow?AUTO.slowT+sec:Math.max(0,AUTO.slowT-sec*2);
+  AUTO.fastT=fast?AUTO.fastT+sec:0;
+  if(AUTO.slowT>4 && perfTotal()<2){
+    CFG.autolvl=(CFG.autolvl|0)+1;AUTO.slowT=0;AUTO.fastT=0;AUTO.warm=3;saveCfg();resize();
+    toast('Desempenho ajustado automaticamente');
+  } else if(AUTO.fastT>60 && (CFG.autolvl|0)>0){
+    CFG.autolvl=(CFG.autolvl|0)-1;AUTO.slowT=0;AUTO.fastT=0;AUTO.warm=3;saveCfg();resize();
+  }
+}
 function frame(ts){
   requestAnimationFrame(frame);
   // Aba/app em segundo plano: não gasta CPU
@@ -6495,16 +6769,22 @@ function frame(ts){
   // Menu / telas de UI: zero update/render do mundo
   const inGame=state==='play'||state==='craft'||state==='pause'||state==='dead';
   if(!inGame || !P){ last=ts; lastFrameTs=ts; return; }
-  // Cap de FPS (30 em economia, 60 normal)
+  // Limite de FPS escolhido nas configurações (30, 60 ou máximo = taxa da tela)
+  if(rafPrev){const d=ts-rafPrev; if(d>5&&d<60&&d<AUTO.disp) AUTO.disp=d;} // estima o intervalo da tela
+  rafPrev=ts;
   const minMs=1000/perf().targetFps;
-  if(lastFrameTs && (ts-lastFrameTs)<minMs-0.5) return;
+  if(lastFrameTs && (ts-lastFrameTs)<minMs*0.9) return;
   const dt=Math.min(.05,((ts-last)/1000)||0.016);
+  const intervalMs=lastFrameTs?(ts-lastFrameTs):1000/60;
+  const t0=performance.now();
   last=ts;
   lastFrameTs=ts;
   // E5: MP continua simulando em pause/craft/dead
   if(MP.active&&MP.reconnecting){ /* pausado até reconectar */ }
   else if(state==='play' || (MP.active && !MP.gameOver && (state==='craft' || state==='dead' || state==='pause'))) update(dt);
   render();
+  if(state==='play'&&!MP.active&&P&&!P.dead){ saveT+=dt; if(saveT>=SAVE_EVERY){ saveT=0; saveGame(); } }
+  if(state==='play') perfMonitor(performance.now()-t0,intervalMs); else AUTO.warm=Math.max(AUTO.warm,1.5);
 }
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){
