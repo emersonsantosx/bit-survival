@@ -319,6 +319,20 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
   #mapscreen .map-grid{grid-template-columns:repeat(4,1fr)}
   #mapscreen .map-opt{padding:8px 4px}
   #mapscreen .card .help{font-size:10px;line-height:1.35;padding:5px 8px}
+  /* Sala do host em celular deitado: compacta para o codigo, o status e os botoes caberem; rola se ainda faltar espaco */
+  #mphostscreen .card{overflow-y:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start;padding:6px 8px}
+  #mphostscreen .card h2{margin-bottom:4px}
+  #mphostscreen .card>p{margin:2px 0;font-size:9px}
+  #mphostscreen .name-input{padding:6px 8px;margin:2px 0}
+  #mphostscreen .map-grid{grid-template-columns:repeat(4,1fr);gap:4px;margin:4px 0!important}
+  #mphostscreen .map-opt{padding:4px 2px;font-size:8px}
+  #mphostscreen .map-opt .ic{height:20px}
+  #mphostscreen canvas.ico{width:20px;height:20px}
+  #hostCodeWrap>p{margin:2px 0;font-size:9px}
+  #hostCodeWrap>div[style*="flex-direction:column"]{flex-direction:row!important;gap:10px!important;margin:4px 0!important;justify-content:center}
+  #hostCodeWrap .mp-status{margin:3px 0;min-height:14px;font-size:11px}
+  #hostCodeWrap #btnCopyCode{flex:0 0 auto;width:auto!important;min-width:0!important;min-height:34px;padding:6px 12px!important;font-size:9px!important}
+  #mphostscreen .room-code{font-size:14px;padding:6px 8px 6px 12px}
 }
 
 /* ===== Aviso "gire o celular" (so em telas de toque em retrato) ===== */
@@ -410,11 +424,11 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
     <div class="map-grid">
       <button class="map-opt selected" data-map="forest">
         <span class="ic"><canvas class="ico" data-art="tree" width="9" height="9"></canvas></span><span>FLORESTA</span>
-        <span class="map-desc">Bosques densos e um lago isolado — pesque e asse</span>
+        <span class="map-desc">Bosques densos e um lago isolado: pesque e asse</span>
       </button>
       <button class="map-opt" data-map="desert">
         <span class="ic"><canvas class="ico" data-art="cactus" width="9" height="9"></canvas></span><span>DESERTO</span>
-        <span class="map-desc">Cactos, ossadas e pouca sombra — sem lago</span>
+        <span class="map-desc">Cactos, ossadas e pouca sombra, sem lago</span>
       </button>
       <button class="map-opt" data-map="snow">
         <span class="ic"><canvas class="ico" data-art="pine" width="9" height="9"></canvas></span><span>NEVE</span>
@@ -427,7 +441,7 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
     </div>
     <div class="help">
       Sobreviva o máximo de tempo · Craft (C) · Pause<br>
-      9 tipos de zumbis — a horda fica pior a cada dia<br>
+      9 tipos de zumbis: a horda fica pior a cada dia<br>
       Pistola / SMG / Shotgun / Rifle (mesma munição)<br>
       Temperatura: Neve = frio (fogueira ou abrigo) · Deserto = calor de dia e frio à noite (sombra, água, oásis)<br>
       Lago (Floresta/Neve) e oásis (Deserto): beba água à vontade · crie a Vara de Pesca e pesque asse na fogueira<br>
@@ -448,12 +462,6 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
       <button class="menu-btn mp" id="btnMPHost">CRIAR SALA (Host)</button>
       <button class="menu-btn mp" id="btnMPJoin">ENTRAR EM SALA</button>
       <button class="menu-btn sec" id="btnMPBack">VOLTAR</button>
-    </div>
-    <div class="help" style="text-align:center;font-size:10px">
-      Host cria a sala, escolhe o mapa e compartilha o código (6 caracteres).<br>
-      Use COPIAR CÓDIGO e envie no WhatsApp. Convidado cola e conecta.<br>
-      Tela cheia/paisagem no 1º toque após a partida começar.<br>
-      Chat in-game (botão de chat). A partida só acaba quando os dois morrem.
     </div>
   </div>
 </div>
@@ -2799,7 +2807,7 @@ function pickup(){
   }
   else if(t==='pistol'||t==='smg'||t==='shotgun'||t==='rifle'||t==='bow'){
     // Já tem essa arma? Deixa no chão pro outro player
-    if(P.firearms[t]){ toast('Você já tem '+ITEMS[t].n+' — deixe pro parceiro'); return; }
+    if(P.firearms[t]){ toast('Você já tem '+ITEMS[t].n+': deixe pro parceiro'); return; }
     P.firearms[t]=true;
     if(t==='bow'){ P.arrows=(P.arrows||0)+6; P.weapon='bow'; toast('Pegou: Arco (+6 flechas)'); }
     else { P.ammo+=8; P.weapon=t; toast('Pegou: '+ITEMS[t].n+' (+8 munição)'); }
@@ -2807,7 +2815,7 @@ function pickup(){
   }
   else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='sword'||t==='spear'||t==='fishingrod'){
     if((P.meleeWeapons||[]).includes(t) || P.melee===t){
-      toast('Você já tem '+ITEMS[t].n+' — deixe pro parceiro'); return;
+      toast('Você já tem '+ITEMS[t].n+': deixe pro parceiro'); return;
     }
     addMeleeWeapon(t);P.weapon=t;updateWeaponHud();toast('Pegou: '+ITEMS[t].n);
   }
@@ -3049,7 +3057,7 @@ function tickFishing(dt){
       toast(selectedMap==='snow'?'Pescou no lago gelado! 🐟':'Pescou um peixe! 🐟');
       beep(580,.15,'sine',.05);
       for(let i=0;i<8;i++)parts.push({x:f.x+rnd(-4,4),y:f.y,vx:rnd(-25,25),vy:rnd(-55,-20),t:.4,c:'#8cc8f0'});
-    } else toast('Mochila cheia — o peixe escapou');
+    } else toast('Mochila cheia: o peixe escapou');
   }
 }
 function drawFishLine(px,py,face,fx,fy,left){
@@ -3311,9 +3319,9 @@ function tempTick(dt){
   if(selectedMap==='snow') fm*=1.15;       // corpo queima mais calorias
   P._fm=fm;P._wm=wm;P._tspd=spd;P._tsr=sr;P._tsd=sd;P._tdmg=dmg;
   if(Math.abs(code)>Math.abs(P._tc||0)){
-    if(code===-1) toast('Você está com frio — abrigue-se ou chegue perto de uma fogueira');
+    if(code===-1) toast('Você está com frio: abrigue-se ou chegue perto de uma fogueira');
     else if(code===-2) toast('Você está congelando! Procure fogo ou um abrigo');
-    else if(code===1) toast('Calor forte — procure sombra, água ou abrigo');
+    else if(code===1) toast('Calor forte: procure sombra, água ou abrigo');
     else if(code===2) toast('Insolação! Saia do sol e beba água');
   }
   P._tc=code;
@@ -3831,7 +3839,7 @@ function update(dt){
     }
     // Anúncio de horda ao virar o dia
     if(typeof update._lastDay==='number' && day>update._lastDay){
-      toast('Dia '+day+' — a horda está pior!');
+      toast('Dia '+day+': a horda está pior!');
       // burst de spawn ao amanhecer do novo dia
       if(zombies.length<dd.cap){
         const burst=Math.min(4+day, dd.cap-zombies.length, 12);
@@ -3844,7 +3852,7 @@ function update(dt){
     }
     update._lastDay=day;
   } else {
-    if(typeof update._lastDay==='number'&&day>update._lastDay)toast('Dia '+day+' — a horda está pior!');
+    if(typeof update._lastDay==='number'&&day>update._lastDay)toast('Dia '+day+': a horda está pior!');
     update._lastDay=day;
   }
   // Convidado: suaviza zumbis/animais entre snapshots (antes davam “saltos” a cada ~0,16s)
@@ -4012,7 +4020,7 @@ function updateHud(force){
   if(tpb){const tv=P.temp||0;tpb.style.width=clamp(50+tv/2,2,100)+'%';tpb.style.background=tv<-55?'#3f6fe0':tv<-28?'#6ab0f0':tv>55?'#e04030':tv>28?'#e8863a':'#6fcf6f';}
   const hr=(START_HOUR+T/DAY_SECONDS*24)%24;
   const weatherTxt=weather==='rain'?' 🌧':(weather==='snow'?' ❄':(weather==='sand'?' 🌪':''));
-  const mpTxt=MP.active?(MP.isHost?' ['+(MP.playerName||'HOST').toUpperCase().slice(0,8)+']':' [MP]'):'';
+  const mpTxt=MP.active?(MP.isHost?' ['+(MP.playerName||'HOST').toUpperCase().slice(0,8)+']':' ['+(MP.playerName||'MP').toUpperCase().slice(0,8)+']'):'';
   const clk=$('clk');if(clk)clk.textContent='Dia '+day+' '+pad(Math.floor(hr))+':'+pad(Math.floor((hr%1)*60))+weatherTxt+mpTxt;
   const kl=$('kl');if(kl)kl.textContent='Zumbis: '+kills;
   const w=WEAPONS[P.weapon];
@@ -4105,7 +4113,7 @@ function refreshCraft(){
     row.className='craft-row '+(ok?'can':'no');
     const cost=Object.entries(r.need).map(([k,v])=>((ITEMS[k]&&ITEMS[k].e)||'')+' '+v+' '+(ITEMS[k]?.n||k)).join(' · ');
     const icon=isWeapon||r.out==='arrows'||r.out==='fishingrod'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'➳':'⚔️')):'🔥';
-    row.innerHTML='<div class="recipe-icon">'+icon+'</div><div class="info"><div class="name">'+r.label+'</div><div class="cost">'+r.desc+'</div><div class="cost">Custo: '+(cost||'—')+'</div><div class="status">'+(ok?'✓ Recursos suficientes':'Faltam recursos')+'</div></div>';
+    row.innerHTML='<div class="recipe-icon">'+icon+'</div><div class="info"><div class="name">'+r.label+'</div><div class="cost">'+r.desc+'</div><div class="cost">Custo: '+(cost||'nenhum')+'</div><div class="status">'+(ok?'✓ Recursos suficientes':'Faltam recursos')+'</div></div>';
     const btn=document.createElement('button');
     btn.textContent='CRIAR';btn.disabled=!ok;
     btn.onclick=()=>{aud();craft(r);};
@@ -4130,7 +4138,7 @@ function handleEvt(kind, data){
   if(!data || typeof data!=='object') return;
   if(kind==='treeDmg'){
     const t = trees.find(t => t.x===data.x && t.y===data.y);
-    if(t && Number.isFinite(data.dmg)){ t.hp -= clamp(data.dmg,0,10); if(t.hp<=0){ const i=trees.indexOf(t); if(i>=0){ trees.splice(i,1); rebuildSolidGrid(); } } else addFloater(t.x,t.y-26,(+t.hp.toFixed(1))+'/3','#e0c080'); }
+    if(t && Number.isFinite(data.dmg)){ t.hp -= clamp(data.dmg,0,10); if(t.hp<=0){ const i=trees.indexOf(t); if(i>=0){ trees.splice(i,1); rebuildSolidGrid(); } } }
   } else if(kind==='rockDmg'){
     const r = rocks.find(r => r.x===data.x && r.y===data.y);
     if(r && Number.isFinite(data.dmg)){ r.hp -= clamp(data.dmg,0,10); if(r.hp<=0){ const i=rocks.indexOf(r); if(i>=0){ rocks.splice(i,1); rebuildSolidGrid(); } } }
@@ -4398,7 +4406,7 @@ function showReconnectUI(){
 function updateReconnectUI(){
   const m=document.getElementById('reconnMsg');if(!m)return;
   const left=Math.max(0,Math.ceil((RECONN_MAX_MS-(performance.now()-MP.reconnStart))/1000));
-  m.textContent='Tentando reconectar… (tentativa '+MP.reconnTries+') — o jogo está pausado. Tempo restante: '+left+'s';
+  m.textContent='Tentando reconectar… (tentativa '+MP.reconnTries+'): o jogo está pausado. Tempo restante: '+left+'s';
 }
 function hideReconnectUI(){const el=document.getElementById('reconn');if(el)el.style.display='none';}
 function mpResetReconnect(){
@@ -4412,7 +4420,7 @@ function mpConnectionLost(){
     if(MP.guestAway)return;
     MP.guestAway=true;
     remotePlayers={};
-    toast('Convidado desconectou — aguardando reconexão…');
+    toast('Convidado desconectou: aguardando reconexão…');
   } else {
     if(MP.reconnecting)return;
     MP.reconnecting=true;MP.reconnStart=performance.now();MP.reconnTries=0;MP._resumeSame=false;
@@ -4999,7 +5007,7 @@ function enterMultiplayerGame(isHost){
     closeChat();
     setChatButtonVisible(true);
     const cm=$('chat-msgs'); if(cm) cm.innerHTML='';
-    pushChatBubble('','Chat pronto — toque em 💬',false,true);
+    pushChatBubble('','Chat pronto: toque em 💬',false,true);
     console.log('[MP] jogo iniciado. Host?',isHost);
   }catch(err){
     console.error('[enterMultiplayerGame]',err);
