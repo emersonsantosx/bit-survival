@@ -377,6 +377,15 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
 #rotate button{background:#8DA568;color:#171A20;border:3px solid #8DA568;border-radius:0;box-shadow:0 4px 0 #0c0e12;font:10px/1.4 "Press Start 2P","Courier New",monospace;letter-spacing:1px;padding:14px 16px;min-height:48px;cursor:pointer}
 #rotate button:active{transform:translateY(4px);box-shadow:none}
 @media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}
+/* ===== Tela de SKINS ===== */
+.skin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px auto;max-width:340px}
+.screen .skin-opt{padding:8px 4px;display:flex;align-items:center;justify-content:center;min-height:0}
+.skin-opt canvas{width:36px;height:66px;image-rendering:pixelated;display:block}
+@media (orientation:landscape) and (max-height:520px){
+  #skinscreen .card{overflow-y:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start}
+  #skinscreen .skin-grid{gap:6px;margin:6px auto}
+  .skin-opt canvas{width:30px;height:55px}
+}
 </style>
 </head>
 <body>
@@ -450,6 +459,7 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
       <button class="menu-btn" id="btnContinue">CONTINUAR<span class="sub" id="contSub"></span></button>
       <button class="menu-btn" id="btnPlay">JOGAR</button>
       <button class="menu-btn mp" id="btnMulti">MULTIPLAYER</button>
+      <button class="menu-btn sec" id="btnSkins">SKINS</button>
       <button class="menu-btn sec" id="btnConfig">CONFIGURAÇÕES</button>
     </div>
     <p id="bestline"></p>
@@ -481,6 +491,25 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
       <button class="go" id="btnStart" style="margin:0">INICIAR PARTIDA</button>
       <button class="back" id="btnBackMap" style="margin:0">VOLTAR</button>
+    </div>
+  </div>
+</div>
+
+<div id="skinscreen" class="screen hide">
+  <div class="card">
+    <h2>SKINS</h2>
+    <div class="skin-grid">
+      <button class="map-opt skin-opt selected" data-skin="0" aria-label="Skin 1"><canvas width="12" height="22"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="1" aria-label="Skin 2"><canvas width="12" height="22"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="2" aria-label="Skin 3"><canvas width="12" height="22"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="3" aria-label="Skin 4"><canvas width="12" height="22"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="4" aria-label="Skin 5"><canvas width="12" height="22"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="5" aria-label="Skin 6"><canvas width="12" height="22"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="6" aria-label="Skin 7"><canvas width="12" height="22"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="7" aria-label="Skin 8"><canvas width="12" height="22"></canvas></button>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
+      <button class="back" id="btnBackSkins" style="margin:0">VOLTAR</button>
     </div>
   </div>
 </div>
@@ -4909,6 +4938,7 @@ function handleNetData(data,isHostSide){
     const rp=remotePlayers[data.id]||{};
     const wasAlive=rp.alive!==false && rp.id;
     rp.id=data.id;rp.name=sanitizeName(data.name);
+    rp.skin=(Number.isInteger(data.skin)&&data.skin>=0&&data.skin<SKINS.length)?data.skin:0;
     rp.tx=pos.x;rp.ty=pos.y;
     if(rp.x===undefined){rp.x=pos.x;rp.y=pos.y;}
     rp.face=isFiniteNum(data.face)?data.face:rp.face;
@@ -5218,7 +5248,7 @@ function packMyPlayer(){
   const p = {type:'player',id:myNetId(),name:MP.playerName||'Jogador',
     x:Math.round(P.x),y:Math.round(P.y),face:+P.face.toFixed(2),
     moving:!!P.moving,sprint:!!P.sprint,weapon:P.weapon||'fists',swing:+(P.swing||0).toFixed(2),
-    hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle};
+    hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle,skin:SKIN_SEL};
   if(P.fish){p.fx=Math.round(P.fish.x);p.fy=Math.round(P.fish.y);p.fl=+Math.max(0,P.fish.wait-P.fish.t).toFixed(1);}
   if(P.inVehicle){
     const v=P.inVehicle;
@@ -5301,6 +5331,42 @@ function enterMultiplayerGame(isHost){
 /* ============ RENDER ============ */
 function R(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h);}
 function shadow(x,y,rx,ry){ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(Math.round(x),Math.round(y),rx,ry,0,0,6.283);ctx.fill();}
+/* ===== Skins: 4 masculinas (1ª é a padrão) e 4 femininas. alt = cor da roupa quando duas pessoas usam a mesma skin ===== */
+const SKINS=[
+  {skin:'#e8b890',hair:'#0c0a09',shirt:'#3a5a8a',alt:'#8a3a3a',pants:'#3a3a48',f:false},
+  {skin:'#b9855a',hair:'#2a1d14',shirt:'#5a7a4a',alt:'#c08a3a',pants:'#3a3a48',f:false},
+  {skin:'#f0c8a0',hair:'#e0c060',shirt:'#4a7a7a',alt:'#8a5a9a',pants:'#3a3a48',f:false},
+  {skin:'#6a4530',hair:'#1a1210',shirt:'#c9853a',alt:'#3a6a9a',pants:'#3a3a48',f:false},
+  {skin:'#f0c4a0',hair:'#0c0a09',shirt:'#a8486a',alt:'#4a8a9a',pants:'#3a3a58',f:true},
+  {skin:'#b9855a',hair:'#2a1d14',shirt:'#3a8a7a',alt:'#d0803a',pants:'#3a3a58',f:true},
+  {skin:'#f2cfae',hair:'#e6c66a',shirt:'#6a4aa0',alt:'#4a9a5a',pants:'#3a3a58',f:true},
+  {skin:'#6a4530',hair:'#1a1210',shirt:'#d4a24a',alt:'#c04a5a',pants:'#3a3a58',f:true}
+];
+let SKIN_SEL=0;
+try{const v=parseInt(localStorage.getItem('minisurv_skin'),10);if(v>=0&&v<SKINS.length)SKIN_SEL=v;}catch(e){}
+function skinLook(i,alt){
+  const s=SKINS[(i>=0&&i<SKINS.length)?i:0];
+  return {skin:s.skin,hair:s.hair,shirt:alt?s.alt:s.shirt,pants:s.pants,female:s.f};
+}
+/* Regra da skin repetida: quem entrou como CONVIDADO usa a cor alternativa (os dois lados calculam igual) */
+function myLook(){
+  let alt=false;
+  if(MP.active&&!MP.isHost){for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.skin===SKIN_SEL){alt=true;break;}}}
+  return skinLook(SKIN_SEL,alt);
+}
+function remoteLook(rp){
+  return skinLook(rp.skin|0,!rp.isHost&&(rp.skin|0)===SKIN_SEL);
+}
+function drawSkinPreview(cv,i){
+  const c=cv.getContext('2d'),o=skinLook(i,false);
+  c.clearRect(0,0,cv.width,cv.height);
+  const Rr=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x+6,y+17,w,h);};
+  Rr(-4,-2,3,5,o.pants);Rr(1,-2,3,5,o.pants);
+  Rr(-4,-9,8,8,o.shirt);
+  Rr(-3,-15,6,6,o.skin);Rr(-3,-15,6,2,o.hair);
+  if(o.female){Rr(-4,-15,1,7,o.hair);Rr(3,-15,1,7,o.hair);Rr(-3,-16,6,1,o.hair);}
+  Rr(-2,-12,1,1,'#111');Rr(1,-12,1,1,'#111');
+}
 function human(x,y,face,o){
   const fx=Math.cos(face),fy=Math.sin(face);
   ctx.save();
@@ -5324,6 +5390,7 @@ function human(x,y,face,o){
   R(-4,-9,8,8,o.shirt);
   R(-3,-15,6,6,o.skin);
   R(-3,-15,6,2,o.hair);
+  if(o.female){R(-4,-15,1,7,o.hair);R(3,-15,1,7,o.hair);R(-3,-16,6,1,o.hair);}
   if(fy>-.5){R(-2,-12,1,1,'#111');R(1,-12,1,1,'#111');}
   const hx=Math.round(fx*6),hy=Math.round(fy*4)-5;
   if(o.zombie){
@@ -6008,14 +6075,14 @@ function render(){
       const rp=remotePlayers[id];
       if(!rp || rp.alive===false || rp.inVehicle) continue;
       if(rp.x<b.x||rp.x>b.x+b.w||rp.y<b.y||rp.y>b.y+b.h) continue;
-      human(rp.x,rp.y,rp.face||0,{skin:'#e8b890',shirt:rp.isHost?'#8a3a3a':'#3a8a5a',pants:'#3a3a48',hair:'#3a2a1a',moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:rp.flash||0});
+      human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:rp.flash||0});
       const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
       ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
       ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
       if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
     }
     for(const an of animals)if(!an.dead&&an.x>=b.x&&an.x<=b.x+b.w&&an.y>=b.y&&an.y<=b.y+b.h)drawAnimal(an);
-    human(P.x,P.y,P.face,{skin:'#e8b890',shirt:'#3a5a8a',pants:'#3a3a48',hair:'#3a2a1a',moving:P.moving,anim:P.walk,wpn:P.weapon,swing:P.swing,flash:P.flash});
+    human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.weapon,swing:P.swing,flash:P.flash});
     for(const z of zombies)if(!z.dead&&z.x>=b.x&&z.x<=b.x+b.w&&z.y>=b.y&&z.y<=b.y+b.h){
       human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,bloater:z.bloater||z.kind===7});
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
@@ -6225,14 +6292,14 @@ function render(){
     }else if(e.k===5){
       const rp=e.o;
       if(rp.alive!==false){
-        human(rp.x,rp.y,rp.face||0,{skin:'#e8b890',shirt:rp.isHost?'#8a3a3a':'#3a8a5a',pants:'#3a3a48',hair:'#3a2a1a',moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:rp.flash||0});
+        human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:rp.flash||0});
         const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
         ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
         ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
         if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
       }
     }else{
-      human(P.x,P.y,P.face,{skin:'#e8b890',shirt:'#3a5a8a',pants:'#3a3a48',hair:'#3a2a1a',moving:P.moving,anim:P.walk,wpn:P.weapon,swing:P.swing,flash:P.flash});
+      human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.weapon,swing:P.swing,flash:P.flash});
     }
   }
   for(const b of blds)if(vis(b)&&b.roofA>.02)drawRoof(b);
@@ -6361,7 +6428,7 @@ function render(){
 /* ============ UI ============ */
 function showScreen(id){
   if(id==='menu') try{refreshContinue();}catch(e){}
-  const ids=['menu','mapscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
+  const ids=['menu','mapscreen','skinscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
   for(const s of ids){const e=$(s);if(e)e.classList.add('hide');}
   if(id){const e=$(id);if(e)e.classList.remove('hide');}
 }
@@ -6439,6 +6506,19 @@ on('btnPlay','click',()=>{aud();showScreen('mapscreen');});
 on('btnContinue','click',()=>{continueGame();});
 window.addEventListener('pagehide',()=>{saveGame();});
 on('btnMulti','click',()=>{aud();showScreen('mpscreen');});
+on('btnSkins','click',()=>{aud();showScreen('skinscreen');});
+on('btnBackSkins','click',()=>showScreen('menu'));
+document.querySelectorAll('.map-opt[data-skin]').forEach(btn=>{
+  const i=+btn.getAttribute('data-skin');
+  const cv=btn.querySelector('canvas');if(cv)drawSkinPreview(cv,i);
+  btn.classList.toggle('selected',i===SKIN_SEL);
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.map-opt[data-skin]').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    SKIN_SEL=i;
+    try{localStorage.setItem('minisurv_skin',String(i));}catch(e){}
+  });
+});
 on('btnConfig','click',()=>{aud();showScreen('configscreen');});
 on('btnBackMap','click',()=>showScreen('menu'));
 on('btnStart','click',()=>startGame());
