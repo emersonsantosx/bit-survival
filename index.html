@@ -29,16 +29,16 @@ body.nomap #mm{display:none!important}
 .row i{font-style:normal;width:14px;text-align:center}
 .bar{flex:1;height:8px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.35)}
 .bar b{display:block;height:100%;width:100%}
-#stat{display:inline-block;margin-top:5px;padding:2px 7px;font-size:12px;font-weight:700;letter-spacing:.6px;line-height:15px;white-space:nowrap;color:#ff7a6a;background:rgba(0,0,0,.62);border:1px solid rgba(255,120,100,.45);border-radius:4px;text-shadow:1px 1px #000}
+#stat{display:inline-block;margin-top:5px;padding:2px 7px;font-size:12px;font-weight:700;letter-spacing:.6px;line-height:15px;white-space:nowrap;color:#ff7a6a;background:rgba(0,0,0,.62);border:1px solid rgba(255,120,100,.45);border-radius:4px}
 #stat:empty{display:none}
 /* Cor do aviso = cor da barra do mesmo atributo */
 #stat.s-hp{color:#d33;border-color:#d33}
 #stat.s-food{color:#d9892b;border-color:#d9892b}
 #stat.s-water{color:#3a9be0;border-color:#3a9be0}
 #stat.s-stam{color:#e5d34a;border-color:#e5d34a}
-#stat.s-cold{color:#3f6fe0;border-color:#3f6fe0}
+#stat.s-cold{color:#8fd0ff;border-color:#8fd0ff}
 #stat.s-hot{color:#e04030;border-color:#e04030}
-#top{position:absolute;right:8px;top:8px;text-align:right;font-size:11px;text-shadow:1px 1px #000}
+#top{position:absolute;right:8px;top:8px;text-align:right;font-size:11px}
 #mm{width:76px;height:76px;border:1px solid rgba(255,255,255,.45);background:#142014;display:block;margin-left:auto;image-rendering:pixelated}
 #top div{margin-top:2px}
 .sm{background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:6px;font-size:14px;width:34px;height:30px;margin:4px 0 0 4px;padding:0}
@@ -49,7 +49,7 @@ body.nomap #mm{display:none!important}
 @media (max-height:340px){#inv{top:118px;gap:2px}#inv .slot{height:28px}}
 .slot{width:36px;height:33px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.4);border-radius:6px;font-size:17px;padding:0;color:#fff;position:relative}
 .slot:active{background:rgba(255,255,255,.25)}
-.slot .count{position:absolute;right:2px;bottom:1px;font:bold 11px "Courier New",monospace;color:#ffd84a;text-shadow:1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000;pointer-events:none;line-height:1}
+.slot .count{position:absolute;right:2px;bottom:1px;font:bold 11px "Courier New",monospace;color:#ffd84a;pointer-events:none;line-height:1}
 .btn{position:absolute;pointer-events:auto;border-radius:50%;border:2px solid rgba(255,255,255,.55);background:rgba(20,20,20,.55);color:#fff;font-family:inherit;font-weight:bold;font-size:11px;padding:0;line-height:1.05}
 .btn.on{background:rgba(255,255,255,.3)}
 .btn.hot{border-color:#ffd84a;box-shadow:0 0 10px #ffd84a;color:#ffd84a}
@@ -60,7 +60,7 @@ body.nomap #mm{display:none!important}
 #weapon-wheel{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(0,0,0,.72);touch-action:pan-y;pointer-events:auto;-webkit-overflow-scrolling:touch}
 #weapon-wheel.hide{display:none!important}
 .weapon-wheel-ring{position:relative;width:min(92vw,430px);max-height:min(78vh,520px);overflow-y:auto;overflow-x:hidden;border:2px solid rgba(159,214,138,.8);border-radius:16px;background:linear-gradient(160deg,rgba(27,38,25,.99),rgba(8,12,8,.99));box-shadow:0 0 36px #000; padding:52px 12px 12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-content:start;overscroll-behavior:contain}
-.weapon-wheel-title{position:absolute;left:12px;right:12px;top:10px;text-align:center;color:#d9e8b0;font-size:12px;line-height:1.4;pointer-events:none;text-shadow:1px 1px #000}
+.weapon-wheel-title{position:absolute;left:12px;right:12px;top:10px;text-align:center;color:#d9e8b0;font-size:12px;line-height:1.4;pointer-events:none}
 .weapon-option{position:relative;width:100%;min-height:62px;border:1px solid rgba(255,255,255,.3);border-radius:10px;background:rgba(15,22,14,.98);color:#eee9d0;font:bold 11px "Courier New",monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 4px;box-shadow:0 2px 8px #0008;touch-action:manipulation;cursor:pointer}
 .weapon-option .weapon-icon{font-size:22px;line-height:1.1}.weapon-option.selected{border:2px solid #ffd84a;background:rgba(75,82,35,.98);color:#ffe98a;box-shadow:0 0 15px rgba(255,216,74,.4)}
 #weapon-wheel-hint{grid-column:1/-1;text-align:center;color:#eee9d0;font-size:11px;background:rgba(0,0,0,.35);padding:8px;border-radius:8px;pointer-events:none}
@@ -82,7 +82,7 @@ body.nomap #mm{display:none!important}
 #bchat.show{display:flex}
 #bchat.has-new{border-color:#ffd84a;box-shadow:0 0 10px rgba(255,216,74,.5)}
 #chat-msgs{position:fixed;left:148px;top:8px;width:min(240px,42vw);max-height:120px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-start;gap:3px;pointer-events:none;z-index:8}
-.chat-bubble{background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:4px 8px;font:11px "Courier New",monospace;color:#e8e8d0;line-height:1.25;text-shadow:1px 1px #000;animation:chatIn .2s ease}
+.chat-bubble{background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:4px 8px;font:11px "Courier New",monospace;color:#e8e8d0;line-height:1.25;animation:chatIn .2s ease}
 .chat-bubble .cn{color:#8ac4ff;font-weight:bold}
 .chat-bubble.me .cn{color:#9fd68a}
 .chat-bubble.sys{color:#aaa;font-style:italic;border-color:rgba(255,255,255,.1)}
@@ -217,7 +217,7 @@ body.chatopen #chat-msgs{display:none}
 #menu.hasSave #btnPlay:hover::before,#menu.hasSave #btnPlay:focus-visible::before{color:var(--c-amber)}
 #saveWarn{font:8px/1.5 "Press Start 2P","Courier New",monospace;color:#C79A54;margin:0 0 8px}
 #menu .menu-btn:active{transform:translateY(4px);box-shadow:0 0 0 var(--c-deep)}
-#menu #bestline{font:8px/1.6 var(--f-px);color:var(--c-amber);margin:6px 0 0;min-height:13px;text-align:center}
+#menu #bestline{font:8px/1.6 var(--f-px);color:var(--c-amber);margin:20px 0 0;min-height:13px;text-align:center}
 @media (orientation:landscape) and (max-height:520px){
   #menu .card{max-width:760px;display:grid;grid-template-columns:1fr minmax(210px,290px);grid-template-areas:"logo btns" "tag btns" "scene btns" "best best";column-gap:28px;align-content:center;justify-items:center;padding:6px}
   #menu .logo-wrap{grid-area:logo;margin:0 0 6px;align-self:end}
@@ -228,7 +228,7 @@ body.chatopen #chat-msgs{display:none}
   #menu #btnPlay,#menu #btnContinue{min-height:50px;font-size:12px}
   #menu.hasSave #btnPlay{min-height:44px;font-size:10px}
   #menu #btnContinue .sub{font-size:7px;margin-top:3px}
-  #menu #bestline{grid-area:best;margin:4px 0 0}
+  #menu #bestline{grid-area:best;margin:14px 0 0}
 }
 
 @media (orientation:landscape) and (max-height:520px){
@@ -463,19 +463,19 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
     <div class="map-grid">
       <button class="map-opt selected" data-map="forest">
         <span class="ic"><canvas class="ico" data-art="tree" width="9" height="9"></canvas></span><span>FLORESTA</span>
-        <span class="map-desc">Bosques densos e um lago isolado: pesque e asse</span>
+        <span class="map-desc">Bosques densos e um lago</span>
       </button>
       <button class="map-opt" data-map="desert">
         <span class="ic"><canvas class="ico" data-art="cactus" width="9" height="9"></canvas></span><span>DESERTO</span>
-        <span class="map-desc">Cactos, ossadas e pouca sombra, sem lago</span>
+        <span class="map-desc">Cactos, ossadas e um pequeno oásis</span>
       </button>
       <button class="map-opt" data-map="snow">
         <span class="ic"><canvas class="ico" data-art="pine" width="9" height="9"></canvas></span><span>NEVE</span>
-        <span class="map-desc">Pinheiros, gelo e lago congelado p/ pescar</span>
+        <span class="map-desc">Pinheiros, gelo e um lago congelado</span>
       </button>
       <button class="map-opt" data-map="city">
         <span class="ic"><canvas class="ico" data-art="city" width="9" height="9"></canvas></span><span>CIDADE</span>
-        <span class="map-desc">Bairros densos, prédios, lojas, carros e hordas</span>
+        <span class="map-desc">Ruas, prédios, lojas e carros</span>
       </button>
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
@@ -782,6 +782,16 @@ function beep(f,d,type,v,slide,cat){
     o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d);
   }catch(e){}
 }
+/* Som de toque da interface: grave, curto e suave */
+function uiTap(){
+  aud();
+  beep(150,.09,'sine',.16,-55,'sfx');
+  beep(75,.07,'triangle',.08,-20,'sfx');
+}
+document.addEventListener('click',e=>{
+  const t=e.target&&e.target.closest?e.target.closest('.menu-btn,.go,.back,.map-opt,.cfg-seg button,.cfg-toggle,.craft-tab'):null;
+  if(t)uiTap();
+},true);
 function boom(d,v,low,cat){
   if(!AC||!nbuf)return;
   const vol=volFor(cat||'sfx');if(vol<=0)return;
@@ -808,23 +818,59 @@ function footstep(inWater){
     s.start();s.stop(AC.currentTime+dur+.01);
   }catch(e){}
 }
-function gunshot(heavy){
-  if(!AC)return;
-  const vol=volFor('sfx');if(vol<=0)return;
+/* Sons de armas de fogo: cada arma tem a sua assinatura.
+   pistola = estalo seco | SMG = estalinhos rápidos | shotgun = estrondo grave + bombeada | rifle = tiro forte com eco + ferrolho */
+function gunNoise(t0,dur,type,freq,q,v){
+  const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
+  s.buffer=nbuf;s.loop=true;f.type=type;f.frequency.value=freq;f.Q.value=q||.7;
+  g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  s.connect(f);f.connect(g);g.connect(AC.destination);s.start(t0);s.stop(t0+dur+.02);
+}
+function gunTone(t0,dur,type,f0,f1,v){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f0,t0);
+  o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t0+dur);
+  g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  o.connect(g);g.connect(AC.destination);o.start(t0);o.stop(t0+dur+.02);
+}
+function gunshot(kind,far){
+  if(!AC||!nbuf)return;
+  let vol=volFor('sfx');if(vol<=0)return;
+  if(far)vol*=.55;
+  if(kind===true)kind='rifle';else if(!kind)kind='pistol';
   try{
-    const o=AC.createOscillator(),g=AC.createGain();
-    o.type='square';
-    o.frequency.setValueAtTime(heavy?1400:1800,AC.currentTime);
-    o.frequency.exponentialRampToValueAtTime(heavy?100:150,AC.currentTime+.08);
-    g.gain.setValueAtTime((heavy?.22:.15)*vol,AC.currentTime);
-    g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.12);
-    o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+.14);
-    const s=AC.createBufferSource(),g2=AC.createGain(),f=AC.createBiquadFilter();
-    s.buffer=nbuf;f.type='lowpass';f.frequency.value=heavy?400:500;
-    g2.gain.setValueAtTime((heavy?.45:.3)*vol,AC.currentTime);
-    g2.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+(heavy?.5:.35));
-    s.connect(f);f.connect(g2);g2.connect(AC.destination);
-    s.start();s.stop(AC.currentTime+(heavy?.55:.4));
+    const t=AC.currentTime;
+    if(kind==='smg'){
+      gunNoise(t,.05,'highpass',1800,.6,.2*vol);
+      gunNoise(t,.07,'bandpass',900,.8,.14*vol);
+      gunTone(t,.06,'triangle',380,140,.12*vol);
+    }else if(kind==='shotgun'){
+      gunNoise(t,.05,'highpass',1500,.6,.3*vol);
+      gunNoise(t,.5,'lowpass',950,.7,.55*vol);
+      gunNoise(t+.03,.7,'lowpass',380,.7,.3*vol);
+      gunTone(t,.28,'sine',130,38,.4*vol);
+      // bombeada da shotgun (corrediça: toc-toc metálico)
+      gunTone(t+.42,.05,'square',520,260,.06*vol);
+      gunNoise(t+.42,.04,'bandpass',2200,3,.07*vol);
+      gunTone(t+.55,.06,'square',640,320,.06*vol);
+      gunNoise(t+.55,.04,'bandpass',2600,3,.07*vol);
+    }else if(kind==='rifle'){
+      gunNoise(t,.04,'highpass',2500,.6,.34*vol);
+      gunNoise(t,.22,'bandpass',1400,.7,.4*vol);
+      gunTone(t,.35,'sine',95,30,.5*vol);
+      // eco distante
+      gunNoise(t+.13,.7,'lowpass',420,.6,.18*vol);
+      gunNoise(t+.28,.6,'lowpass',300,.6,.1*vol);
+      // ferrolho
+      gunTone(t+.55,.05,'square',420,200,.06*vol);
+      gunNoise(t+.55,.04,'bandpass',1800,3,.07*vol);
+      gunTone(t+.68,.06,'square',560,300,.06*vol);
+    }else{ // pistola
+      gunNoise(t,.045,'highpass',2000,.6,.3*vol);
+      gunNoise(t,.12,'bandpass',1100,.9,.26*vol);
+      gunTone(t,.1,'triangle',260,90,.2*vol);
+      gunNoise(t+.05,.22,'lowpass',600,.7,.08*vol);
+    }
   }catch(e){}
 }
 function chopWood(){
@@ -2363,7 +2409,7 @@ function updateAnimals(dt){
         const spd=a.k==='wolf'||a.k==='dog'?48:(a.k==='boar'?38:(a.k==='scorpion'?42:36));
         a.x+=dx/d*spd*dt; a.y+=dy/d*spd*dt;
         a.face=Math.atan2(dy,dx);
-      } else if(a.atkCD<=0 && !target._remote){
+      } else if(a.atkCD<=0 && !target._remote && !wallBlocks(a.x,a.y,target.x,target.y)){
         // Ataca só o player local (guest aplica via proximidade no host... host ataca local; remote toma se perto no client deles)
         a.atkCD=1.1;
         animalHurt(a.k==='boar'?12:(a.k==='wolf'?10:(a.k==='scorpion'?8:6)), 0.15);
@@ -3475,7 +3521,7 @@ function attack(){
     // Arco quase silencioso
     makeNoise(P.x,P.y,w.bow?70:(w.heavy?700:420));
     if(w.bow){ bowRelease(); shake=Math.max(shake,1); }
-    else { gunshot(w.heavy);shake=Math.max(shake,w.heavy?4:2); }
+    else { gunshot(P.weapon);shake=Math.max(shake,w.heavy?4:(P.weapon==='shotgun'?3:2)); }
     if(MP.active){
       sendEvt('shot', {
         x:Math.round(P.x), y:Math.round(P.y),
@@ -4463,7 +4509,7 @@ function handleEvt(kind, data){
       if(data.weapon) nearest.weapon=data.weapon;
     }
     // Quiet gunshot so both hear each other fire
-    if(data.weapon!=='bow'){ try{ gunshot(!!(data.weapon==='rifle'||data.weapon==='shotgun')); }catch(e){} }
+    if(data.weapon!=='bow'){ try{ gunshot(data.weapon,true); }catch(e){} }
   } else if(kind==='spit'){
     // Guest receives spitter projectile from host
     if(Number.isFinite(data.x)&&Number.isFinite(data.y)&&Number.isFinite(data.vx)&&Number.isFinite(data.vy)){
@@ -5914,7 +5960,6 @@ function drawItem(it,near){
   if(near){
     ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
     const nm=ITEMS[it.t]?ITEMS[it.t].n:'Item';
-    ctx.fillStyle='#000';ctx.fillText(nm,x+1,y-12);
     ctx.fillStyle='#ffe27a';ctx.fillText(nm,x,y-13);
   }
 }
@@ -5966,10 +6011,10 @@ function render(){
       human(rp.x,rp.y,rp.face||0,{skin:'#e8b890',shirt:rp.isHost?'#8a3a3a':'#3a8a5a',pants:'#3a3a48',hair:'#3a2a1a',moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:rp.flash||0});
       const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
       ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
-      ctx.fillStyle='#000';ctx.fillText(label,rp.x+1,rp.y-20);
       ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
       if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
     }
+    for(const an of animals)if(!an.dead&&an.x>=b.x&&an.x<=b.x+b.w&&an.y>=b.y&&an.y<=b.y+b.h)drawAnimal(an);
     human(P.x,P.y,P.face,{skin:'#e8b890',shirt:'#3a5a8a',pants:'#3a3a48',hair:'#3a2a1a',moving:P.moving,anim:P.walk,wpn:P.weapon,swing:P.swing,flash:P.flash});
     for(const z of zombies)if(!z.dead&&z.x>=b.x&&z.x<=b.x+b.w&&z.y>=b.y&&z.y<=b.y+b.h){
       human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,bloater:z.bloater||z.kind===7});
@@ -5994,7 +6039,6 @@ function render(){
     ctx.textAlign='center';ctx.font='bold 9px "Courier New",monospace';
     for(const f of floaters){
       ctx.globalAlpha=Math.min(1,f.t*1.4);
-      ctx.fillStyle='#000';ctx.fillText(f.txt,f.x+1,f.y+1);
       ctx.fillStyle=f.col;ctx.fillText(f.txt,f.x,f.y);
       ctx.globalAlpha=1;
     }
@@ -6184,7 +6228,6 @@ function render(){
         human(rp.x,rp.y,rp.face||0,{skin:'#e8b890',shirt:rp.isHost?'#8a3a3a':'#3a8a5a',pants:'#3a3a48',hair:'#3a2a1a',moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:rp.flash||0});
         const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
         ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
-        ctx.fillStyle='#000';ctx.fillText(label,rp.x+1,rp.y-20);
         ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
         if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
       }
@@ -6214,7 +6257,6 @@ function render(){
   ctx.textAlign='center';ctx.font='bold 9px "Courier New",monospace';
   for(const f of floaters){
     ctx.globalAlpha=Math.min(1,f.t*1.4);
-    ctx.fillStyle='#000';ctx.fillText(f.txt,f.x+1,f.y+1);
     ctx.fillStyle=f.col;ctx.fillText(f.txt,f.x,f.y);
     ctx.globalAlpha=1;
   }
@@ -6342,7 +6384,6 @@ function bindSlider(id,key,labelId){
   el.value=Math.round(CFG[key]*100);lab.textContent=el.value+'%';
   el.addEventListener('input',()=>{
     CFG[key]=+el.value/100;lab.textContent=el.value+'%';saveCfg();aud();
-    if(id==='cfg_master')beep(440,.06,'square',.06);
   });
 }
 function bindToggle(id,key){
