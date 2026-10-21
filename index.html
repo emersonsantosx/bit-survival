@@ -19,7 +19,7 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
 #hud *{pointer-events:none}
 #hud button{pointer-events:auto}
 /* HUD oculta: esconde só as barras e textos. Botões de ação e inventário ficam SEMPRE visíveis (senão o celular fica injogável). */
-body.nohud #bars,body.nohud #wpn,body.nohud #clk,body.nohud #kl{display:none!important}
+body.nohud #bars,body.nohud #wpn,body.nohud #clk,body.nohud #kl,body.nohud #missions{display:none!important}
 body.nomap #mm{display:none!important}
 /* Pause e craft SEMPRE acessíveis */
 #bpause,#bcraft{display:inline-flex!important;align-items:center;justify-content:center}
@@ -387,6 +387,36 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
 .craft-row .cost-chip b{font:9px/1 var(--f-px,"Courier New",monospace)}
 .craft-row .cost-chip.lack,.craft-row .cost-chip.lack b{color:var(--c-red,#e5a39a)}
 .craft-row .cost-chip .pxi{margin:0}
+/* ===== Missoes (HUD) e Conquistas ===== */
+#missions{position:fixed;right:98px;top:10px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;pointer-events:none}
+#missions:empty{display:none}
+body.haschat #missions{right:166px}
+#missions .ms-row{font:9px/1.2 "Courier New",monospace;color:var(--c-cream,#eee9d0);background:rgba(23,26,32,.62);border-right:3px solid var(--c-amber,#C79A54);padding:2px 6px;white-space:nowrap;display:flex;align-items:center;gap:5px}
+#missions .ms-row b{color:var(--c-amber,#C79A54);font-weight:bold}
+#missions .ms-row.done{border-right-color:var(--c-moss,#8DA568);color:var(--c-moss,#8DA568)}
+#missions .ms-row.flash{background:rgba(141,165,104,.55)}
+#menu .menu-row{display:flex;gap:8px;width:100%}
+#menu .menu-row .menu-btn{flex:1;min-width:0;font-size:9px;letter-spacing:0;padding-left:6px;padding-right:6px}
+#menu .menu-row .menu-btn::before{display:none!important}
+.ach-sum{font:9px/1.4 var(--f-px,"Courier New",monospace);color:var(--c-amber,#C79A54);margin:0 0 6px}
+.ach-list{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;flex:1;text-align:left}
+@media (max-width:560px){.ach-list{grid-template-columns:1fr}}
+.ach-row{display:flex;align-items:center;gap:8px;background:var(--c-panel,#20242c);border:2px solid var(--c-line,#3a3f4a);padding:6px 8px}
+.ach-row.on{border-color:var(--c-amber,#C79A54);background:#2a261c}
+.ach-row .ic{flex:0 0 28px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--c-bg,#171A20);border:2px solid var(--c-edge,#555)}
+.ach-row .tx{flex:1;min-width:0}
+.ach-row .nm{font:8px/1.5 var(--f-px,"Courier New",monospace);color:var(--c-cream,#eee9d0)}
+.ach-row.on .nm{color:var(--c-amber,#C79A54)}
+.ach-row .ds{font:10px/1.3 "Courier New",monospace;color:var(--c-dim,#9a9684)}
+.ach-row .bar{height:5px;background:var(--c-bg,#171A20);border:1px solid var(--c-edge,#555);margin-top:4px}
+.ach-row .bar i{display:block;height:100%;background:var(--c-moss,#8DA568)}
+.ach-row .cnt{font:8px/1 var(--f-px,"Courier New",monospace);color:var(--c-amber,#C79A54);margin-top:3px}
+/* ===== Telas bem baixas (ate 350px de altura): coluna do canto menor para nao encostar no botao CORRER ===== */
+@media (orientation:landscape) and (max-height:350px){
+  #mm{width:60px;height:60px}
+  #top div{margin-top:1px}
+  #run{width:56px;height:56px;bottom:116px}
+}
 /* ===== Tela de SKINS ===== */
 .skin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px auto;max-width:340px}
 .screen .skin-opt{padding:8px 4px;display:flex;align-items:center;justify-content:center;min-height:0}
@@ -429,6 +459,7 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
     <canvas id="mm" width="76" height="76"></canvas>
     <div id="clk">Dia 1 09:00</div><div id="wthIc" style="display:flex;justify-content:flex-end"></div>
     <div id="kl">Zumbis: 0</div>
+    <div id="missions" aria-live="polite"></div>
     <div><button class="sm" id="bpause" data-px="pause" data-s="2" aria-label="Pausa"></button><button class="sm" id="bcraft" data-px="hammer" data-s="2" aria-label="Fabricar"></button></div>
   </div>
   <div id="inv"></div>
@@ -475,7 +506,7 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
       <button class="menu-btn" id="btnContinue">CONTINUAR<span class="sub" id="contSub"></span></button>
       <button class="menu-btn" id="btnPlay">JOGAR</button>
       <button class="menu-btn mp" id="btnMulti">MULTIPLAYER</button>
-      <button class="menu-btn sec" id="btnSkins">SKINS</button>
+      <div class="menu-row"><button class="menu-btn sec" id="btnSkins">SKINS</button><button class="menu-btn sec" id="btnAch">CONQUISTAS</button></div>
       <button class="menu-btn sec" id="btnConfig">CONFIGURAÇÕES</button>
     </div>
     <p id="bestline"></p>
@@ -526,6 +557,17 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
       <button class="back" id="btnBackSkins" style="margin:0">VOLTAR</button>
+    </div>
+  </div>
+</div>
+
+<div id="achscreen" class="screen hide">
+  <div class="card">
+    <h2>CONQUISTAS</h2>
+    <div class="ach-sum" id="achSum"></div>
+    <div class="ach-list" id="achList"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">
+      <button class="back" id="btnBackAch" style="margin:0">VOLTAR</button>
     </div>
   </div>
 </div>
@@ -1439,7 +1481,9 @@ const PXG={
   snow:['....b....','.b..b..b.','..b.b.b..','...bbb...','bbbbbbbbb','...bbb...','..b.b.b..','.b..b..b.','....b....'],
   wind:['.AAAAAA..','......AA.','.AAAAA.A.','.......A.','AAAAAAAA.','......AA.','..AAAAA..'],
   wifioff:['..WWWWWWW..','.WW.....WW.','W...WWW...W','..WW...WW..','.W..WWW..W.','....W.W....','.....W.....'],
-  check:['......G','.....GG','G...GG.','GG.GG..','.GGG...','..G....']
+  check:['......G','.....GG','G...GG.','GG.GG..','.GGG...','..G....'],
+  trophy:['YYYYYYYYY','YAYYYYYAY','YAYYYYYAY','.YAYYYAY.','..YYYYY..','...AYA...','....Y....','...AAA...','..YYYYY..'],
+  lock:['..sSSSs..','.sS...Ss.','.S.....S.','sSSSSSSSs','sSSSKSSSs','sSSSKSSSs','sSSSSSSSs','sSSSSSSSs']
 };
 /* ícones desenhados com linhas (armas brancas e flechas) */
 function pxLines(w,h,ops){
@@ -1458,7 +1502,7 @@ PXG.pickaxe=pxLines(11,11,[['l',2,10,8,4,'N',0],['r',2,1,7,2,'S'],['r',1,2,2,3,'
 PXG.sword=pxLines(11,11,[['l',4,7,10,1,'S',1],['l',4,6,9,1,'W',0],['l',2,5,7,10,'Y',0],['l',1,9,3,7,'N',0],['r',0,10,2,1,'Y']]);
 PXG.spear=pxLines(11,11,[['l',1,10,8,3,'N',0],['l',9,2,10,1,'S',1],['r',9,0,2,2,'S'],['r',8,1,1,2,'S']]);
 PXG.arrows=pxLines(11,11,[['l',1,9,9,1,'n',0],['l',8,0,10,2,'S',1],['r',9,0,2,3,'S'],['l',0,10,2,8,'W',1],['l',0,8,2,6,'W',0]]);
-PXG.rod=pxLines(11,11,[['l',0,10,8,2,'N',0],['l',9,2,9,8,'W',0],['r',8,9,2,1,'B']]);
+PXG.rod=pxLines(11,11,[['l',0,10,8,3,'N',0],['r',3,9,2,2,'s'],['r',9,2,1,1,'W']]);
 function pxRot(g){const h=g.length,w=g[0].length,o=[];for(let x=0;x<w;x++){let r='';for(let y=h-1;y>=0;y--)r+=g[y][x];o.push(r);}return o;}
 PXG.arrowright=pxRot(PXG.arrowup);PXG.arrowdown=pxRot(pxRot(PXG.arrowup));PXG.arrowleft=pxRot(pxRot(pxRot(PXG.arrowup)));
 const PXURL={};
@@ -1669,7 +1713,7 @@ function mpSend(data){
 /* Validação básica de pacotes / nomes (anti-lixo) */
 const NET_OK_TYPES=new Set(['worldInit','start','evt','player','snapshot','chat','gameOver','playerDied','playerRespawned','ping','pong']);
 const NET_OK_MAPS=new Set(['forest','desert','snow','city']);
-const NET_OK_EVT=new Set(['treeDmg','rockDmg','itemRemoved','itemAdded','vehicleEnter','vehicleExit','vehicleLooted','shot','spit','campfireAdded','campfireRemoved','zombieDmg','animalDmg','vehicleDying','vehicleExploded']);
+const NET_OK_EVT=new Set(['mission','treeDmg','rockDmg','itemRemoved','itemAdded','vehicleEnter','vehicleExit','vehicleLooted','shot','spit','campfireAdded','campfireRemoved','zombieDmg','animalDmg','vehicleDying','vehicleExploded']);
 const NET_OK_IDS=new Set(['host','guest']);
 function sanitizeName(n){
   if(typeof n!=='string') return 'Jogador';
@@ -1692,6 +1736,7 @@ function setChatButtonVisible(on){
   const b=$('bchat');
   if(!b) return;
   if(on) b.classList.add('show'); else b.classList.remove('show');
+  document.body.classList.toggle('haschat',!!on);
   if(!on) b.classList.remove('has-new');
 }
 let chatUnread=0;
@@ -1882,6 +1927,7 @@ document.addEventListener('webkitfullscreenchange', ()=>{
 /* ============ INVENTÁRIO ============ */
 function addItem(type, n){
   n = n || 1;
+  try{track('get_'+type,n);}catch(e){}
   for(const slot of P.inv){
     if(slot.t === type){ slot.n += n; buildInv(); return true; }
   }
@@ -2853,7 +2899,7 @@ function updateAnimals(dt){
   }
   animals=animals.filter(a=>!a.dead);
 }
-function damageAnimal(a,dmg){
+function damageAnimal(a,dmg,net){
   if(!a||a.dead) return;
   a.hp-=dmg; a.flee=1.2;
   if(MP.active&&!MP.isHost)a._predT=0.8; // convidado: mantém o dano local até o host confirmar
@@ -2867,6 +2913,7 @@ function damageAnimal(a,dmg){
   }
   if(a.hp<=0){
     a.dead=true;
+    if(!net)track('killAnimal');
     addFloater(a.x,a.y-18,'+carne','#ffa060');
     for(let i=0;i<8;i++)parts.push({x:a.x,y:a.y,vx:rnd(-35,35),vy:rnd(-45,10),t:.45,c:'#a03030',g:1});
     if(!MP.active || MP.isHost){
@@ -2977,6 +3024,7 @@ function newGame(){
     T=0;kills=0;shake=0;flash=0;spawnTimer=3;dark=0;day=1;update._lastDay=1;atkHeld=false;sprintHeld=false;
     touchGas=0;touchSteer=0;stepT=0;
     MP.active=false;remotePlayers={};
+    missionsInit();
     restoreWalkHUD(); // E1: always reset vehicle HUD when starting a match
     applyHudClasses();
     buildInv();updateHud(true);
@@ -3072,6 +3120,7 @@ function continueGame(){
     if(!plane) throw new Error('plane não gerado');
     // Tempo e clima (antes dos zumbis: a dificuldade deles depende do dia)
     T=d.T; day=Math.max(1,d.day|0); kills=d.kills|0; update._lastDay=day;
+    try{missionsInit();}catch(e){}
     if(typeof d.weather==='string') weather=d.weather;
     if(Number.isFinite(d.weatherTimer)) weatherTimer=d.weatherTimer;
     spawnTimer=Number.isFinite(d.spawnTimer)?d.spawnTimer:3;
@@ -3187,7 +3236,7 @@ function useItem(i){
   else if(it==='stone'){toast('Pedra é usada no crafting (tecla C)');}
   else if(it==='cloth'){toast('Tecido é usado no crafting (tecla C)');}
   else if(it==='water'){if(P.water<95){P.water=Math.min(100,P.water+40);ok=true;toast('Você bebeu água');if(selectedMap==='snow'||selectedMap==='desert')P.temp=Math.max(-100,(P.temp||0)-6);}}
-  else if(it==='bandage'){if(P.bleed||P.hp<95){P.bleed=false;P.hp=Math.min(100,P.hp+10);ok=true;toast('Bandagem usada');}}
+  else if(it==='bandage'){if(P.bleed||P.hp<95){P.bleed=false;P.hp=Math.min(100,P.hp+10);ok=true;toast('Bandagem usada');track('use_bandage');}}
   else if(it==='medkit'){if(P.bleed||P.hp<90){P.bleed=false;P.hp=Math.min(100,P.hp+50);ok=true;toast('Kit médico usado');}}
   if(!ok){toast('Não precisa agora');return;}
   slot.n--;
@@ -3402,6 +3451,7 @@ function pickup(){
       items.push({t:'cookedfish',x:P.x,y:P.y});
       if(MP.active) sendEvt('itemAdded', {t:'cookedfish', x:P.x, y:P.y});
     }
+    track('cook');
     toast('Peixe assado!');
     cookSizzle();
     for(let i=0;i<8;i++)parts.push({x:cf.x+rnd(-8,8),y:cf.y-6,vx:rnd(-20,20),vy:rnd(-60,-20),t:.6,c:'#ffd27a'});
@@ -3413,6 +3463,7 @@ function pickup(){
       items.push({t:'cookedmeat',x:P.x,y:P.y});
       if(MP.active) sendEvt('itemAdded', {t:'cookedmeat', x:P.x, y:P.y});
     }
+    track('cook');
     toast('Carne assada!');
     cookSizzle();
     for(let i=0;i<8;i++)parts.push({x:cf.x+rnd(-8,8),y:cf.y-6,vx:rnd(-20,20),vy:rnd(-60,-20),t:.6,c:'#ff9060'});
@@ -3663,6 +3714,7 @@ function damageZ(z,dmg,kx,ky,fromNet){
   z.hp-=dmg;
   if(z.hp<=0){
     z.dead=true;kills++;
+    if(!fromNet){track('kill');if(z.kind===3)achStat('boss',1);}
     try{zombieVoice(z,'death');}catch(e){}
     addFloater(z.x, z.y-20, 'KILL', '#ff4040');
     // Manchas: no maximo 24 no mapa; ao passar disso a mais antiga some (como as marcas de tiro nos jogos de FPS)
@@ -3723,6 +3775,7 @@ function tickFishing(dt){
   if(f.t>=f.wait){
     P.fish=null;
     if(addItem('fish')){
+      track('fish');
       toast(selectedMap==='snow'?'Pescou no lago gelado!':'Pescou um peixe!');
       beep(580,.15,'sine',.05);
       for(let i=0;i<8;i++)parts.push({x:f.x+rnd(-4,4),y:f.y,vx:rnd(-25,25),vy:rnd(-55,-20),t:.4,c:'#8cc8f0'});
@@ -3731,7 +3784,9 @@ function tickFishing(dt){
 }
 function drawFishLine(px,py,face,fx,fy,left){
   const bob=Math.sin(T*4)*0.8,dip=(left<1&&Math.sin(T*28)>0)?2:0;
-  const tx=px+Math.cos(face)*16,ty=py-9+Math.sin(face)*16;
+  // ponta real da vara na mao (mesma geometria de drawHeld: mao, rotacao a+45 graus, escala 1.3, ponta a (8,-7) do cabo)
+  const hxx=Math.round(Math.cos(face)*6),hyy=Math.round(Math.sin(face)*4)-5,rang=face+Math.PI/4,sc=HELD.fishingrod.s,vx=8*sc,vy=-7*sc;
+  const tx=Math.round(px)+hxx+vx*Math.cos(rang)-vy*Math.sin(rang),ty=Math.round(py)+hyy+vx*Math.sin(rang)+vy*Math.cos(rang);
   ctx.strokeStyle='rgba(235,235,235,.75)';ctx.lineWidth=.6;
   ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(fx,fy-1+bob+dip);ctx.stroke();
   ctx.strokeStyle='rgba(190,230,250,.5)';ctx.lineWidth=.7;
@@ -4524,9 +4579,10 @@ function update(dt){
         }
       }
     }
+    if(typeof update._lastDay==='number'&&day>update._lastDay)dayAdvanced(day-update._lastDay);
     update._lastDay=day;
   } else {
-    if(typeof update._lastDay==='number'&&day>update._lastDay)toast('Dia '+day+': a horda está pior!');
+    if(typeof update._lastDay==='number'&&day>update._lastDay){toast('Dia '+day+': a horda está pior!');dayAdvanced(day-update._lastDay);}
     update._lastDay=day;
   }
   // Convidado: suaviza zumbis/animais entre snapshots (antes davam “saltos” a cada ~0,16s)
@@ -4772,6 +4828,7 @@ function craft(r){
     if(!addItem(out)){toast('Mochila cheia');return;}
     toast('Fabricou: '+ITEMS[out].n);buildSound();
   }
+  track('craft');if(out==='bandage')achStat('craft_bandage',1);if(out==='campfire')track('campfire');
   refreshCraft();
   closeCraft(); // fecha a tela para confirmar que o item foi fabricado
 }
@@ -4913,6 +4970,8 @@ function handleEvt(kind, data){
       spits.push({x:data.x,y:data.y,vx:data.vx,vy:data.vy,t:Number.isFinite(data.t)?data.t:1.4});
       try{ beep(420,.12,'sawtooth',.04,-200); }catch(e){}
     }
+  } else if(kind==='mission'){
+    if(Number.isInteger(data.i)&&data.i>=0&&data.i<3&&Number.isInteger(data.k)&&data.k>=0&&Number.isFinite(data.n)&&data.n>0&&data.n<=50)msAdd(data.i,data.k,data.n|0);
   } else if(kind==='animalDmg'){
     // Host aplica dano de animal causado pelo guest
     if(!MP.isHost || !Number.isFinite(data.x)) return;
@@ -4922,7 +4981,7 @@ function handleEvt(kind, data){
       const d=Math.hypot(a.x-data.x,a.y-data.y);
       if(d<bd){bd=d;best=a;}
     }
-    if(best) damageAnimal(best, Number.isFinite(data.dmg)?data.dmg:3);
+    if(best) damageAnimal(best, Number.isFinite(data.dmg)?data.dmg:3, true);
   }
 }
 
@@ -5665,6 +5724,7 @@ function enterMultiplayerGame(isHost){
       animals=animals||[]; // mundo seed já gerou; host sobrescreve via snap
     }
     T=0; kills=0; shake=0; flash=0; spawnTimer=3; dark=0; day=1; update._lastDay=1; MP._vNext=0;
+    try{missionsInit();}catch(e){}
     recentRemoved=[]; recentAdded=[];
     atkHeld=false; sprintHeld=false; touchGas=0; touchSteer=0; stepT=0;
     remotePlayers={}; MP.gameOver=false; MP.syncT=0;
@@ -5740,7 +5800,7 @@ const HELD={
   pistol:{ax:3,ay:4,gun:1},smg:{ax:4,ay:3,gun:1},shotgun:{ax:7,ay:3,gun:1},rifle:{ax:6,ay:3,gun:1},
   bow:{ax:3,ay:5,off:3},
   bat:{ax:1,ay:9,rot:Math.PI/4},axe:{ax:2,ay:9,rot:Math.PI/4},pickaxe:{ax:2,ay:9,rot:Math.PI/4},
-  sword:{ax:1,ay:9,rot:Math.PI/4,s:1.2},spear:{ax:1,ay:9,rot:Math.PI/4,s:1.5},fishingrod:{ax:1,ay:9,rot:Math.PI/4,s:1.3,ic:'rod'}
+  sword:{ax:1,ay:9,rot:Math.PI/4,s:1.2},spear:{ax:1,ay:9,rot:Math.PI/4,s:1.5},fishingrod:{ax:1,ay:9,rot:Math.PI/4,s:1.3}
 };
 function drawHeld(wpn,hx,hy,a){
   const H=HELD[wpn];if(!H)return false;
@@ -6784,14 +6844,147 @@ function render(){
   }
 }
 
+/* ============ MISSOES (por partida, somadas entre os 2 jogadores) E CONQUISTAS (salvas no aparelho) ============ */
+const MS_GROUPS=[['kill','killAnimal'],['get_wood','get_stone','get_cloth','fish'],['craft','dayAdv','campfire','cook','use_bandage']];
+const MS_DEF={
+  kill:{t:[5,8,12,16],txt:n=>'Elimine '+n+' zumbis'},
+  killAnimal:{t:[2,3,4,5],txt:n=>'Cace '+n+' animais'},
+  get_wood:{t:[6,10,14,18],txt:n=>'Colete '+n+' madeiras'},
+  get_stone:{t:[4,6,9,12],txt:n=>'Colete '+n+' pedras'},
+  get_cloth:{t:[3,5,7,9],txt:n=>'Colete '+n+' tecidos'},
+  fish:{t:[2,3,4,5],txt:n=>'Pesque '+n+' peixes',ok:()=>mapHasLake()},
+  craft:{t:[2,3,4,5],txt:n=>'Fabrique '+n+' itens'},
+  dayAdv:{t:[1,1,2,2],txt:n=>'Sobreviva mais '+n+(n>1?' dias':' dia'),local:true},
+  campfire:{t:[1,1,2,2],txt:n=>'Acenda '+n+(n>1?' fogueiras':' fogueira')},
+  cook:{t:[2,3,4,5],txt:n=>'Cozinhe '+n+' alimentos'},
+  use_bandage:{t:[1,2,2,3],txt:n=>'Use '+n+(n>1?' bandagens':' bandagem')}
+};
+function msRng(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+let MS=null;
+/* Mesma semente nos dois aparelhos = mesma lista de missoes, sem precisar enviar a lista pela rede */
+function msDef(i,k){
+  const types=MS_GROUPS[i].filter(e=>!MS_DEF[e].ok||MS_DEF[e].ok());
+  const r=msRng((MS.seed*31+i*977)>>>0)();
+  const ev=types[(Math.floor(r*types.length)+k)%types.length],d=MS_DEF[ev];
+  const tier=Math.min(k,3);
+  let target=d.t[tier];if(k>3)target+=Math.ceil((k-3)*d.t[3]*.25);
+  return {ev,target,text:d.txt(target)};
+}
+function missionsInit(){
+  const seed=(MP.active&&Number.isFinite(MP.seed))?(MP.seed|0):((Math.random()*2147483647)|0);
+  MS={seed:seed,slots:[{k:0,prog:0,done:false},{k:0,prog:0,done:false},{k:0,prog:0,done:false}]};
+  achSet('maxDay',day||1);
+  msRender();
+}
+function msRender(flashI){
+  const el=document.getElementById('missions');if(!el)return;
+  if(!MS){el.innerHTML='';return;}
+  let h='';
+  for(let i=0;i<3;i++){
+    const s=MS.slots[i],d=msDef(i,s.k);
+    h+='<div class="ms-row'+(s.done?' done':'')+(flashI===i?' flash':'')+'">'+(s.done?pxIcon('check',1):'')+'<span>'+d.text+'</span><b>'+s.prog+'/'+d.target+'</b></div>';
+  }
+  el.innerHTML=h;
+  if(flashI!=null)setTimeout(()=>{const r=el.querySelectorAll('.ms-row')[flashI];if(r)r.classList.remove('flash');},350);
+}
+function msAdd(i,k,n){
+  if(!MS)return;
+  const s=MS.slots[i];if(!s||s.k!==k||s.done)return;
+  const d=msDef(i,k);
+  s.prog=Math.min(d.target,s.prog+n);
+  if(s.prog>=d.target){
+    s.done=true;
+    toast('Missão concluída: '+d.text);
+    achChime(true);
+    achStat('missionDone',1);
+    if(MP.active&&MP.connected)achStat('mpMission',1);
+    setTimeout(()=>{if(MS&&MS.slots[i].k===k){MS.slots[i]={k:k+1,prog:0,done:false};msRender();}},3500);
+  }
+  msRender(i);
+}
+/* registra um acontecimento: soma nas missoes ativas (e avisa o parceiro) e nas estatisticas das conquistas */
+function track(ev,n){
+  n=n||1;
+  try{achStat(ev,n);}catch(e){}
+  if(!MS)return;
+  for(let i=0;i<3;i++){
+    const s=MS.slots[i];if(s.done)continue;
+    const d=msDef(i,s.k);if(d.ev!==ev)continue;
+    msAdd(i,s.k,n);
+    if(MP.active&&MP.connected&&!MS_DEF[ev].local)sendEvt('mission',{i:i,k:s.k,n:n});
+  }
+}
+function dayAdvanced(n){track('dayAdv',n);achSet('maxDay',day);}
+
+/* ---- Conquistas ---- */
+const ACH=[
+  ['first_blood','Primeiro Sangue','Elimine um zumbi','kill',1],
+  ['hunter50','Caçador de Zumbis','Elimine 50 zumbis','kill',50],
+  ['hunter250','Exterminador','Elimine 250 zumbis','kill',250],
+  ['boss','Queda do Chefe','Derrote um zumbi Chefe','boss',1],
+  ['day3','Sobrevivente','Chegue ao dia 3','maxDay',3],
+  ['day7','Veterano','Chegue ao dia 7','maxDay',7],
+  ['day15','Lenda','Chegue ao dia 15','maxDay',15],
+  ['fish5','Pescador','Pesque 5 peixes','fish',5],
+  ['fish25','Mestre da Pesca','Pesque 25 peixes','fish',25],
+  ['hunt5','Caçador','Cace 5 animais','killAnimal',5],
+  ['wood50','Lenhador','Colete 50 madeiras','get_wood',50],
+  ['fire','Fogo Aceso','Acenda uma fogueira','campfire',1],
+  ['cook10','Chef de Sobrevivência','Cozinhe 10 alimentos','cook',10],
+  ['aid5','Primeiros Socorros','Fabrique 5 bandagens','craft_bandage',5],
+  ['craft20','Artesão','Fabrique 20 itens','craft',20],
+  ['mission5','Cumpridor','Complete 5 missões','missionDone',5],
+  ['mission25','Incansável','Complete 25 missões','missionDone',25],
+  ['duo','Dupla Perfeita','Complete 3 missões no multiplayer','mpMission',3]
+];
+let ACHD={u:{},s:{}};
+try{const raw=localStorage.getItem('minisurv_ach');if(raw){const o=JSON.parse(raw);if(o&&typeof o==='object'){ACHD.u=o.u&&typeof o.u==='object'?o.u:{};ACHD.s=o.s&&typeof o.s==='object'?o.s:{};}}}catch(e){}
+function achSave(){try{localStorage.setItem('minisurv_ach',JSON.stringify(ACHD));}catch(e){}}
+function achChime(small){
+  try{
+    aud();
+    const f=small?[392,523]:[392,494,587];
+    f.forEach((hz,i)=>setTimeout(()=>beep(hz,.22,'sine',.07),i*110));
+  }catch(e){}
+}
+function achCheck(stat){
+  for(const a of ACH){
+    if(a[3]!==stat||ACHD.u[a[0]])continue;
+    if((ACHD.s[stat]||0)>=a[4]){
+      ACHD.u[a[0]]=1;achSave();
+      setTimeout(()=>{toast('Conquista: '+a[1]);achChime(false);},400);
+    }
+  }
+}
+function achStat(stat,n){
+  ACHD.s[stat]=(ACHD.s[stat]||0)+(n||1);
+  achSave();achCheck(stat);
+}
+function achSet(stat,v){
+  if(!(v>(ACHD.s[stat]||0)))return;
+  ACHD.s[stat]=v;achSave();achCheck(stat);
+}
+function renderAch(){
+  const list=document.getElementById('achList'),sum=document.getElementById('achSum');if(!list)return;
+  let got=0,h='';
+  for(const a of ACH){
+    const on=!!ACHD.u[a[0]];if(on)got++;
+    const cur=Math.min(a[4],ACHD.s[a[3]]||0),pct=Math.round(cur/a[4]*100);
+    h+='<div class="ach-row'+(on?' on':'')+'"><div class="ic">'+pxIcon(on?'trophy':'lock',2)+'</div><div class="tx"><div class="nm">'+a[1]+'</div><div class="ds">'+a[2]+'</div>'+
+       (on?'<div class="cnt">CONCLUÍDA</div>':'<div class="bar"><i style="width:'+pct+'%"></i></div><div class="cnt">'+cur+'/'+a[4]+'</div>')+'</div></div>';
+  }
+  list.innerHTML=h;
+  if(sum)sum.textContent=got+' / '+ACH.length+' DESBLOQUEADAS';
+}
+
 /* ============ UI ============ */
 function showScreen(id){
   if(id==='menu') try{refreshContinue();}catch(e){}
-  const ids=['menu','mapscreen','skinscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
+  const ids=['menu','mapscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
   for(const s of ids){const e=$(s);if(e)e.classList.add('hide');}
   if(id){const e=$(id);if(e)e.classList.remove('hide');}
   try{
-    const wantMusic=['menu','mapscreen','skinscreen','mpscreen','mphostscreen','mpjoinscreen'].includes(id)||(id==='configscreen'&&state!=='pause');
+    const wantMusic=['menu','mapscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen'].includes(id)||(id==='configscreen'&&state!=='pause');
     if(wantMusic)musicStart();else musicStop();
   }catch(e){}
 }
@@ -6883,6 +7076,8 @@ document.querySelectorAll('.map-opt[data-skin]').forEach(btn=>{
     try{localStorage.setItem('minisurv_skin',String(i));}catch(e){}
   });
 });
+on('btnAch','click',()=>{aud();renderAch();showScreen('achscreen');});
+on('btnBackAch','click',()=>showScreen('menu'));
 on('btnConfig','click',()=>{aud();showScreen('configscreen');});
 on('btnBackMap','click',()=>showScreen('menu'));
 on('btnStart','click',()=>startGame());
