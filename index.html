@@ -78,7 +78,7 @@ body.nomap #mm{display:none!important}
 .veh-btn{position:absolute;pointer-events:auto;background:rgba(20,20,20,.75);border:2px solid rgba(255,255,255,.6);color:#fff;font-family:inherit;font-weight:bold;font-size:11px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 /* Multiplayer chat — camada própria, não mexe na HUD */
 #mpchat-layer{position:fixed;inset:0;pointer-events:none;z-index:8}
-#bchat{position:fixed;top:10px;right:118px;width:40px;height:40px;border-radius:10px;background:rgba(20,20,20,.75);border:2px solid rgba(140,180,220,.7);color:#fff;font-size:18px;pointer-events:auto;z-index:9;display:none;align-items:center;justify-content:center;padding:0;line-height:1}
+#bchat{position:fixed;top:10px;right:94px;width:40px;height:40px;border-radius:10px;background:rgba(20,20,20,.75);border:2px solid rgba(140,180,220,.7);color:#fff;font-size:18px;pointer-events:auto;z-index:9;display:none;align-items:center;justify-content:center;padding:0;line-height:1}
 #bchat.show{display:flex}
 #bchat.has-new{border-color:#ffd84a;box-shadow:0 0 10px rgba(255,216,74,.5)}
 #chat-msgs{position:fixed;left:148px;top:8px;width:min(240px,42vw);max-height:120px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-start;gap:3px;pointer-events:none;z-index:8}
@@ -388,9 +388,9 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
 .craft-row .cost-chip.lack,.craft-row .cost-chip.lack b{color:var(--c-red,#e5a39a)}
 .craft-row .cost-chip .pxi{margin:0}
 /* ===== Missoes (HUD) e Conquistas ===== */
-#missions{position:fixed;right:98px;top:10px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;pointer-events:none}
+#missions{position:fixed;right:90px;top:10px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;pointer-events:none}
 #missions:empty{display:none}
-body.haschat #missions{right:166px}
+body.haschat #missions{right:140px}
 #missions .ms-row{font:9px/1.2 "Courier New",monospace;color:var(--c-cream,#eee9d0);background:rgba(23,26,32,.62);border-right:3px solid var(--c-amber,#C79A54);padding:2px 6px;white-space:nowrap;display:flex;align-items:center;gap:5px}
 #missions .ms-row b{color:var(--c-amber,#C79A54);font-weight:bold}
 #missions .ms-row.done{border-right-color:var(--c-moss,#8DA568);color:var(--c-moss,#8DA568)}
@@ -413,7 +413,7 @@ body.haschat #missions{right:166px}
 .ach-row .cnt{font:8px/1 var(--f-px,"Courier New",monospace);color:var(--c-amber,#C79A54);margin-top:3px}
 /* ===== Telas bem baixas (ate 350px de altura): coluna do canto menor para nao encostar no botao CORRER ===== */
 @media (orientation:landscape) and (max-height:350px){
-  #mm{width:60px;height:60px}
+  #mm{width:60px;height:60px}#bchat{right:78px}#missions{right:74px}body.haschat #missions{right:124px}
   #top div{margin-top:1px}
   #run{width:56px;height:56px;bottom:116px}
 }
@@ -511,7 +511,6 @@ body.haschat #missions{right:166px}
       <div class="menu-row"><button class="menu-btn sec" id="btnSkins">SKINS</button><button class="menu-btn sec" id="btnAch">CONQUISTAS</button></div>
       <button class="menu-btn sec" id="btnConfig">CONFIGURAÇÕES</button>
     </div>
-    <p id="bestline"></p>
   </div>
 </div>
 
@@ -836,13 +835,20 @@ applyHudClasses();
 resize();
 
 /* ============ ÁUDIO ============ */
-let AC=null,muted=false,nbuf=null;
+let AC=null,muted=false,nbuf=null,AOUT=null;
+/* entrada suave: 4 ms de subida evita o estalo de um som que começa no volume cheio de uma vez */
+function gAtk(param,v,t){param.setValueAtTime(.0001,t);param.linearRampToValueAtTime(Math.max(.0002,v),t+.004);}
 let ambientSrc=null,ambientGain=null,rainNoise=null;
 let heartbeatT=0;
 function aud(){
   try{
     if(!AC){
       AC=new (window.AudioContext||window.webkitAudioContext)();
+      /* limitador geral: vários sons ao mesmo tempo somavam acima do máximo e estalavam (clipping) */
+      const lim=AC.createDynamicsCompressor();
+      lim.threshold.value=-14;lim.knee.value=10;lim.ratio.value=12;lim.attack.value=.002;lim.release.value=.18;
+      const mg=AC.createGain();mg.gain.value=.9;
+      lim.connect(mg);mg.connect(AC.destination);AOUT=lim;
       const n=Math.floor(AC.sampleRate*0.3);
       nbuf=AC.createBuffer(1,n,AC.sampleRate);
       const d=nbuf.getChannelData(0);
@@ -869,9 +875,9 @@ function beep(f,d,type,v,slide,cat){
     o.type=type||'square';
     o.frequency.setValueAtTime(f,AC.currentTime);
     if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),AC.currentTime+d);
-    g.gain.setValueAtTime((v||.05)*vol,AC.currentTime);
+    gAtk(g.gain,(v||.05)*vol,AC.currentTime);
     g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);
-    o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d);
+    o.connect(g);g.connect(AOUT);o.start();o.stop(AC.currentTime+d);
   }catch(e){}
 }
 /* Som de toque da interface: grave, curto e suave */
@@ -889,10 +895,10 @@ function boom(d,v,low,cat){
   const vol=volFor(cat||'sfx');if(vol<=0)return;
   try{
     const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
-    s.buffer=nbuf;f.type='lowpass';f.frequency.value=low||800;
-    g.gain.setValueAtTime(v*vol,AC.currentTime);
+    s.buffer=nbuf;s.loop=true;f.type='lowpass';f.frequency.value=low||800;
+    gAtk(g.gain,v*vol,AC.currentTime);
     g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);
-    s.connect(f);f.connect(g);g.connect(AC.destination);s.start();s.stop(AC.currentTime+d);
+    s.connect(f);f.connect(g);g.connect(AOUT);s.start();s.stop(AC.currentTime+d);
   }catch(e){}
 }
 function footstep(inWater,surf){
@@ -922,13 +928,13 @@ function footstep(inWater,surf){
       return;
     }
     const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
-    s.buffer=nbuf;
+    s.buffer=nbuf;s.loop=true;
     f.type=inWater?'lowpass':'bandpass';
     f.frequency.value=inWater?700:180;f.Q.value=inWater?0.8:1.2;
     const dur=inWater?.22:.11;
-    g.gain.setValueAtTime((inWater?.055:.025)*vol,t);
+    gAtk(g.gain,(inWater?.055:.025)*vol,t);
     g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-    s.connect(f);f.connect(g);g.connect(AC.destination);
+    s.connect(f);f.connect(g);g.connect(AOUT);
     s.start();s.stop(t+dur+.01);
   }catch(e){}
 }
@@ -937,15 +943,15 @@ function footstep(inWater,surf){
 function gunNoise(t0,dur,type,freq,q,v){
   const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
   s.buffer=nbuf;s.loop=true;f.type=type;f.frequency.value=freq;f.Q.value=q||.7;
-  g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
-  s.connect(f);f.connect(g);g.connect(AC.destination);s.start(t0);s.stop(t0+dur+.02);
+  gAtk(g.gain,v,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  s.connect(f);f.connect(g);g.connect(AOUT);s.start(t0);s.stop(t0+dur+.02);
 }
 function gunTone(t0,dur,type,f0,f1,v){
   const o=AC.createOscillator(),g=AC.createGain();
   o.type=type;o.frequency.setValueAtTime(f0,t0);
   o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t0+dur);
-  g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
-  o.connect(g);g.connect(AC.destination);o.start(t0);o.stop(t0+dur+.02);
+  gAtk(g.gain,v,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  o.connect(g);g.connect(AOUT);o.start(t0);o.stop(t0+dur+.02);
 }
 function gunshot(kind,far){
   if(!AC||!nbuf)return;
@@ -994,14 +1000,14 @@ function chopWood(){
     const o=AC.createOscillator(),g=AC.createGain();
     o.type='triangle';o.frequency.setValueAtTime(320,AC.currentTime);
     o.frequency.exponentialRampToValueAtTime(120,AC.currentTime+.12);
-    g.gain.setValueAtTime(.12*vol,AC.currentTime);
+    gAtk(g.gain,.12*vol,AC.currentTime);
     g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.16);
-    o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+.18);
+    o.connect(g);g.connect(AOUT);o.start();o.stop(AC.currentTime+.18);
     const o2=AC.createOscillator(),g2=AC.createGain();
     o2.type='square';o2.frequency.setValueAtTime(900,AC.currentTime);
-    g2.gain.setValueAtTime(.06*vol,AC.currentTime);
+    gAtk(g2.gain,.06*vol,AC.currentTime);
     g2.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.03);
-    o2.connect(g2);g2.connect(AC.destination);o2.start();o2.stop(AC.currentTime+.04);
+    o2.connect(g2);g2.connect(AOUT);o2.start();o2.stop(AC.currentTime+.04);
   }catch(e){}
 }
 function chopStone(){
@@ -1011,14 +1017,14 @@ function chopStone(){
     const o=AC.createOscillator(),g=AC.createGain();
     o.type='square';o.frequency.setValueAtTime(1200,AC.currentTime);
     o.frequency.exponentialRampToValueAtTime(400,AC.currentTime+.06);
-    g.gain.setValueAtTime(.1*vol,AC.currentTime);
+    gAtk(g.gain,.1*vol,AC.currentTime);
     g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.14);
-    o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+.16);
+    o.connect(g);g.connect(AOUT);o.start();o.stop(AC.currentTime+.16);
     const o2=AC.createOscillator(),g2=AC.createGain();
     o2.type='triangle';o2.frequency.setValueAtTime(2400,AC.currentTime);
-    g2.gain.setValueAtTime(.08*vol,AC.currentTime);
+    gAtk(g2.gain,.08*vol,AC.currentTime);
     g2.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.04);
-    o2.connect(g2);g2.connect(AC.destination);o2.start();o2.stop(AC.currentTime+.05);
+    o2.connect(g2);g2.connect(AOUT);o2.start();o2.stop(AC.currentTime+.05);
   }catch(e){}
 }
 function hitConfirm(){
@@ -1040,10 +1046,10 @@ function hitFlesh(){
   const vol=volFor('sfx');if(vol<=0)return;
   try{
     const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
-    s.buffer=nbuf;f.type='lowpass';f.frequency.value=600;
-    g.gain.setValueAtTime(.2*vol,AC.currentTime);
+    s.buffer=nbuf;s.loop=true;f.type='lowpass';f.frequency.value=600;
+    gAtk(g.gain,.2*vol,AC.currentTime);
     g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.12);
-    s.connect(f);f.connect(g);g.connect(AC.destination);
+    s.connect(f);f.connect(g);g.connect(AOUT);
     s.start();s.stop(AC.currentTime+.14);
   }catch(e){}
 }
@@ -1061,8 +1067,8 @@ function voice(o){
       out.gain.setValueAtTime(.0001,t0);
       out.gain.exponentialRampToValueAtTime(Math.max(.0003,o.v*vol),t0+(o.atk||.02));
       out.gain.exponentialRampToValueAtTime(.0001,t0+dur);
-      let dest=AC.destination;
-      if(AC.createStereoPanner&&o.pan){const pn=AC.createStereoPanner();pn.pan.value=Math.max(-1,Math.min(1,o.pan));pn.connect(AC.destination);dest=pn;}
+      let dest=AOUT;
+      if(AC.createStereoPanner&&o.pan){const pn=AC.createStereoPanner();pn.pan.value=Math.max(-1,Math.min(1,o.pan));pn.connect(AOUT);dest=pn;}
       out.connect(dest);
       let bus=out;
       if(o.am){
@@ -1213,6 +1219,7 @@ function ksBuf(freq,dur){
   let p=0,mx=0;
   for(let i=0;i<n;i++){const a=ring[p],b=ring[(p+1)%L];ring[p]=(a+b)*.5*.9968;d[i]=a;if(Math.abs(a)>mx)mx=Math.abs(a);p=(p+1)%L;}
   const sc=mx>0?.9/mx:1;for(let i=0;i<n;i++)d[i]*=sc;
+  const fo=Math.min(n,Math.floor(sr*.008));for(let i=0;i<fo;i++)d[n-1-i]*=i/fo;
   return MUSIC_CACHE[key]=buf;
 }
 /* acordes (grave, quinta, fundamental, terca, aguda) em Am, F, C, G */
@@ -1257,7 +1264,7 @@ function musicStart(){
       musicVerb=AC.createConvolver();musicVerb.buffer=ir;
     }
     const wet=AC.createGain();wet.gain.value=.55;
-    musicGain.connect(AC.destination);musicGain.connect(musicVerb);musicVerb.connect(wet);wet.connect(AC.destination);
+    musicGain.connect(AOUT);musicGain.connect(musicVerb);musicVerb.connect(wet);wet.connect(AOUT);
     musicOn=true;musicNext=AC.currentTime+.4;musicStepN=0;
     musicGain.gain.setTargetAtTime(volFor('music')*MUSIC_BASE,AC.currentTime,1.2);
     musicSchedule();musicTimer=setInterval(musicSchedule,400);
@@ -1287,13 +1294,13 @@ function heartbeat(){
     g.gain.setValueAtTime(.0001,AC.currentTime);
     g.gain.linearRampToValueAtTime(.14*vol,AC.currentTime+.02);
     g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.22);
-    o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+.25);
+    o.connect(g);g.connect(AOUT);o.start();o.stop(AC.currentTime+.25);
     const o2=AC.createOscillator(),g2=AC.createGain();
     o2.type='sine';o2.frequency.value=50;
     g2.gain.setValueAtTime(.0001,AC.currentTime+.16);
     g2.gain.linearRampToValueAtTime(.1*vol,AC.currentTime+.18);
     g2.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.4);
-    o2.connect(g2);g2.connect(AC.destination);o2.start();o2.stop(AC.currentTime+.42);
+    o2.connect(g2);g2.connect(AOUT);o2.start();o2.stop(AC.currentTime+.42);
   }catch(e){}
 }
 function startAmbient(){
@@ -1308,7 +1315,7 @@ function startAmbient(){
     s.buffer=b;s.loop=true;
     f.type='lowpass';f.frequency.value=350;f.Q.value=0.5;
     g.gain.value=0;
-    s.connect(f);f.connect(g);g.connect(AC.destination);
+    s.connect(f);f.connect(g);g.connect(AOUT);
     s.start();
     ambientSrc=s;ambientGain=g;
   }catch(e){}
@@ -1344,7 +1351,7 @@ function startRain(){
     const loopEnd=(n-xf)/sr;
     const master=AC.createGain();master.gain.value=0;
     const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=7000;
-    lp.connect(master);master.connect(AC.destination);
+    lp.connect(master);master.connect(AOUT);
     // corpo da chuva
     const s1=AC.createBufferSource();s1.buffer=buf;s1.loop=true;s1.loopEnd=loopEnd;
     const hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=170;
@@ -1383,14 +1390,14 @@ function rainDrop(){
   try{
     const t=AC.currentTime,m=rainSt.muff;
     const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
-    s.buffer=nbuf;f.type='bandpass';f.Q.value=1.2;
+    s.buffer=nbuf;s.loop=true;f.type='bandpass';f.Q.value=1.2;
     f.frequency.value=m===2?rnd(350,900):(m===1?rnd(1200,3500):rnd(2200,7000));
     const dur=m===2?.05:.025;
-    g.gain.setValueAtTime(rnd(.012,.04)*vol*(m===2?1.4:(m===1?.8:1)),t);
+    gAtk(g.gain,rnd(.012,.04)*vol*(m===2?1.4:(m===1?.8:1)),t);
     g.gain.exponentialRampToValueAtTime(.0001,t+dur);
     s.connect(f);f.connect(g);
-    if(AC.createStereoPanner){const p=AC.createStereoPanner();p.pan.value=rnd(-.8,.8);g.connect(p);p.connect(AC.destination);}
-    else g.connect(AC.destination);
+    if(AC.createStereoPanner){const p=AC.createStereoPanner();p.pan.value=rnd(-.8,.8);g.connect(p);p.connect(AOUT);}
+    else g.connect(AOUT);
     s.start(t,rnd(0,.2),dur+.01);
   }catch(e){}
 }
@@ -1405,7 +1412,7 @@ function rainThunder(){
       g.gain.setValueAtTime(.0001,t0);
       g.gain.linearRampToValueAtTime((k?.1:.16)*vol*(m===2?.7:1),t0+.25);
       g.gain.exponentialRampToValueAtTime(.0001,t0+dur*(k?1.2:1));
-      s.connect(f);f.connect(g);g.connect(AC.destination);
+      s.connect(f);f.connect(g);g.connect(AOUT);
       s.start(t0);s.stop(t0+dur*1.25+.1);
     }
   }catch(e){}
@@ -1434,9 +1441,9 @@ function buildSound(){
       const t=AC.currentTime+i*.08;
       o.frequency.setValueAtTime(200+i*80,t);
       o.frequency.exponentialRampToValueAtTime(400+i*100,t+.06);
-      g.gain.setValueAtTime(.08*vol,t);
+      gAtk(g.gain,.08*vol,t);
       g.gain.exponentialRampToValueAtTime(.0001,t+.1);
-      o.connect(g);g.connect(AC.destination);
+      o.connect(g);g.connect(AOUT);
       o.start(t);o.stop(t+.12);
     }
   }catch(e){}
@@ -1465,8 +1472,8 @@ const PXG={
   bottle:['...SSS...','...SSS...','..BBBBB..','.BBBBBBB.','.BWBBBBB.','.BWBBBBB.','.BBBBBBB.','.BBBBBBB.','..BBBBB..'],
   fish:['....BBB....','.SSSSSSS.S.','SSKSSSSSSSS','.SSSSSSS.S.','....SSS....'],
   cookedfish:['....NNN....','.OOOOOOO.O.','OOKOOOOOOOO','.OOOOOOO.O.','....OOO....'],
-  meat:['..RRRR...','.RRPPRR..','RRPPRRRR.','RRPRRRRR.','.RRRRRR..','..RRRW...','....WWW..','.....WWW.'],
-  cookedmeat:['..NNNN...','.NNnnNN..','NNnnNNNN.','NNnNNNNN.','.NNNNNN..','..NNNW...','....WWW..','.....WWW.'],
+  meat:['..rrrrr...', '.rRRRRRWr.', 'rRRPPRRRWr', 'rRRPRRPRRr', 'rRRRRPPRRr', '.rRRRRRRr.', '..rrrrrr..'],
+  cookedmeat:['..kkkkk...', '.kNNNNNnk.', 'kNNnnNNNnk', 'kNNnNNnNNk', 'kNNNNnnNNk', '.kNNkNNNk.', '..kkkkkk..'],
   wood:['..NNNNN..','.NnnnnnN.','NnNNNNNnN','NnNnnnNnN','NnNNNNNnN','.NnnnnnN.','..NNNNN..'],
   stone:['..sSSSs..','.sSSSSSs.','sSSSWSSSs','sSSSSSSSs','.sSSSSSs.','..sssss..'],
   bandage:['.nnnnnnn.','nnnWWWnnn','nnnWWWnnn','.nnnnnnn.'],
@@ -1500,17 +1507,17 @@ function pxLines(w,h,ops){
   return g.map(r=>r.join(''));
 }
 PXG.bat=pxLines(11,11,[['l',1,10,9,2,'n',1],['l',8,3,10,1,'n',1],['l',0,10,2,8,'K',0]]);
-PXG.axe=pxLines(11,11,[['l',2,10,9,3,'N',0],['r',6,0,4,4,'S'],['r',5,1,1,2,'S'],['r',6,0,1,4,'W']]);
-PXG.pickaxe=pxLines(11,11,[['l',2,10,8,4,'N',0],['r',2,1,7,2,'S'],['r',1,2,2,3,'S'],['r',8,2,2,3,'S'],['r',3,1,5,1,'W']]);
+PXG.axe=['.....SSSS..','....SWWSSS.','....SWSSSS.','....SSSSSS.','....SSSSS..','...NN.SS...','...NN......','..NN.......','..NN.......','.NN........','.NN........'];
+PXG.pickaxe=['..SSSSSSS..','.SWWWWWSSS.','SSS.NN..SSS','SS..NN...SS','S...NN....S','....NN.....','....NN.....','....NN.....','....NN.....','....NN.....','....NN.....'];
 PXG.sword=pxLines(11,11,[['l',4,7,10,1,'S',1],['l',4,6,9,1,'W',0],['l',2,5,7,10,'Y',0],['l',1,9,3,7,'N',0],['r',0,10,2,1,'Y']]);
-PXG.spear=pxLines(11,11,[['l',1,10,8,3,'N',0],['l',9,2,10,1,'S',1],['r',9,0,2,2,'S'],['r',8,1,1,2,'S']]);
+PXG.spear=pxLines(11,11,[['l',0,10,4,6,'N',1],['r',4,5,2,1,'R'],['r',4,3,2,1,'W'],['r',5,4,2,1,'S'],['r',6,5,2,1,'s'],['r',5,2,2,1,'W'],['r',6,3,2,1,'S'],['r',7,4,2,1,'s'],['r',6,1,2,1,'W'],['r',7,2,2,1,'S'],['r',8,3,2,1,'s'],['r',8,1,2,1,'S'],['r',9,0,2,1,'S']]);
 PXG.arrows=pxLines(11,11,[['l',1,9,9,1,'n',0],['l',8,0,10,2,'S',1],['r',9,0,2,3,'S'],['l',0,10,2,8,'W',1],['l',0,8,2,6,'W',0]]);
 PXG.rod=pxLines(11,11,[['l',0,10,8,3,'N',0],['r',3,9,2,2,'s'],['r',9,2,1,1,'W']]);
 function pxRot(g){const h=g.length,w=g[0].length,o=[];for(let x=0;x<w;x++){let r='';for(let y=h-1;y>=0;y--)r+=g[y][x];o.push(r);}return o;}
 /* ícones dos controles na tela */
-PXG.c_atk=pxLines(13,13,[['l',2,10,11,1,'S',1],['l',1,0,10,9,'S',1],['l',3,8,5,10,'Y',0],['l',2,9,0,12,'N',0],['l',7,8,9,10,'Y',0],['l',10,9,12,12,'N',0]]);
+PXG.c_atk=['.......W.......', '.......W.......', '.....WWWWW.....', '...WW..W..WW...', '...W...W...W...', '..W.........W..', '..W....R....W..', 'WWWWW.RRR.WWWWW', '..W....R....W..', '..W.........W..', '...W...W...W...', '...WW..W..WW...', '.....WWWWW.....', '.......W.......', '.......W.......'];
 PXG.c_run=['....WWWW....','....WBBW....','....WBBW....','.Y..WBBW....','....WBBBW...','YY..WBBBBWW.','....WBBBBBBW','.Y..WWWWWWWW'];
-PXG.c_hand=['..f.f.f....','..f.f.f.f..','.ff.f.f.ff.','.ffffffffff','.ffffffffff','..fffffffF.','..fffffffF.','...ffffFF..','....FFFF...'].map(r=>r);
+PXG.c_hand=['..kkkkkkkk..', '.kffffffffk.', 'kffffffffFFk', 'kffffffffFFk', 'kffkffkffFk.', 'kffkffkffFk.', '.kfkffkffk..', '..kkkkkkk...', '..SSSSSSS...', '.SSWSSSsS...', '..ssssss....'];
 PXG.c_swap=pxLines(11,10,[['l',1,2,9,2,'W',0],['l',7,0,9,2,'W',0],['l',7,4,9,2,'W',0],['l',1,7,9,7,'W',0],['l',3,5,1,7,'W',0],['l',3,9,1,7,'W',0]]);
 PXG.c_flame=['....R....','....RR...','...RRR...','..RRORR..','.RRROORR.','.RROYORR.','.RROYYOR.','..ROYYO..','...OOO...'];
 PXG.c_door=['.NNNNNN.','.NnnnnN.','.NnnnnN.','.NnnnnN.','.NnnYnN.','.NnnnnN.','.NnnnnN.','NNNNNNNN'];
@@ -1602,7 +1609,7 @@ const RECIPES=[
   {out:'bow',      need:{wood:4,stone:1}, label:'Arco',            desc:'Silencioso, usa flechas (dano 8)' },
   {out:'arrows',   need:{wood:2,stone:1}, label:'Flechas (x6)',    desc:'Munição do arco' },
   {out:'fishingrod',need:{wood:3,stone:1}, label:'Vara de Pesca',   desc:'Lance a isca no lago e pesque (só mapas com lago)', lake:true },
-  {out:'bandage',  need:{cloth:2},    label:'Bandagem',        desc:'Estanca sangramento e cura um pouco' },
+  {out:'bandage',  need:{cloth:3},    label:'Bandagem',        desc:'Estanca sangramento e cura um pouco' },
   {out:'campfire', need:{wood:5,stone:3}, label:'Fogueira',        desc:'Cozinha peixe e ilumina à noite' }
 ];
 const LOOT={
@@ -1641,45 +1648,52 @@ const ZTYPES=[
   {name:'Inchado',  hp:16, spd:18, dmg:18, r:7, color:'#5a8a4a', bloater:true},   // tank tóxico
   {name:'Berserker',hp:6,  spd:72, dmg:14, r:5, color:'#c05040', berserk:true}    // muito rápido
 ];
+/* ============ DIFICULDADE CRESCENTE ============
+   Curva suave que sobe a cada dia e se estabiliza (nada de salto de dificuldade).
+   Cada mapa tem um perfil: o clima de neve e deserto já cansa o jogador, então os zumbis ali crescem um pouco mais devagar;
+   a cidade tem muitos prédios, então começa com bem menos zumbis espalhados. */
+const MAPDIFF={
+  forest:{init:.50, base:95,  max:150, hp:1,   dmg:1},
+  desert:{init:.47, base:90,  max:140, hp:.95, dmg:.95},
+  snow:  {init:.44, base:85,  max:130, hp:.95, dmg:.95},
+  city:  {init:.13, base:100, max:160, hp:1,   dmg:1}
+};
+/* zumbis especiais liberados por dia: [tipo, dia, peso, nome no aviso] */
+const ZUNLOCK=[[5,2,3,'Rastejantes'],[4,2,3,'Cuspidores'],[2,3,3,'Brutamontes'],[6,4,2,'Gritadores'],[7,5,2,'Inchados'],[8,6,2,'Furiosos'],[3,8,.8,'Chefes']];
+function dangerName(d){return d<=2?'BAIXO':d<=4?'MÉDIO':d<=7?'ALTO':d<=11?'MUITO ALTO':'EXTREMO';}
 function dayDiff(){
   const d=Math.max(1, day|0);
+  const lv=d-1;
   const night=dark>0.55?1:0;
+  const mp=MAPDIFF[selectedMap]||MAPDIFF.forest;
+  const sat=k=>1-Math.exp(-lv/k);
   return {
     d,
-    hp:1+(d-1)*0.14,
-    spd:1+(d-1)*0.04,
-    dmg:1+(d-1)*0.07,
+    hp:(1+0.9*sat(9))*mp.hp,
+    spd:1+0.12*sat(8),
+    dmg:(1+0.6*sat(10))*mp.dmg,
     // intervalo entre spawns (menor = mais horda)
-    interval: Math.max(0.7, (night?1.35:2.4) - (d-1)*0.14),
+    interval: Math.max(1.5, (night?2.0:3.2) - lv*0.07),
     // teto de zumbis vivos
-    cap: Math.min(200, 48+(d-1)*14 + Math.round(dark*35) + (MP.active?18:0) + (selectedMap==='city'?20:0)),
+    cap: Math.min(mp.max, Math.round(mp.base*(0.55+0.06*lv)*(1+dark*0.2))) + (MP.active?14:0),
     // quantos nascem por tick de spawn
-    batch: Math.min(8, 1+Math.floor((d-1)/2) + night + (d>=5?1:0) + (d>=8?1:0)),
+    batch: Math.min(4, 1+Math.floor(lv/4)+night),
     // chance de especial sobe com o dia
-    special: clamp(0.18+(d-1)*0.055, 0.18, 0.72)
+    special: clamp(0.08+lv*0.04, 0.08, 0.50)
   };
 }
 function pickZombieKind(){
   const dd=dayDiff();
-  const r=Math.random();
-  // Dias 1–2: maioria comum/rápido
-  if(dd.d<=2){
-    if(r<0.55) return 0;
-    if(r<0.82) return 1;
-    if(r<0.90) return 5; // crawler
-    if(r<0.96) return 4; // spitter
-    return 2; // brute raro
+  if(Math.random()<dd.special){
+    const pool=ZUNLOCK.filter(u=>dd.d>=u[1]);
+    if(pool.length){
+      let tot=0;for(const u of pool)tot+=u[2];
+      let r=Math.random()*tot;
+      for(const u of pool){r-=u[2];if(r<=0)return u[0];}
+      return pool[pool.length-1][0];
+    }
   }
-  // Depois: mistura pesada
-  if(r > 1-dd.special*0.12) return 3; // chefe (mais frequente com o tempo)
-  if(r > 1-dd.special*0.28) return 2; // brute
-  if(r > 1-dd.special*0.42) return 7; // inchado
-  if(r > 1-dd.special*0.55) return 8; // berserker
-  if(r > 1-dd.special*0.68) return 4; // spitter
-  if(r > 1-dd.special*0.80) return 6; // screamer
-  if(r > 1-dd.special*0.90) return 5; // crawler
-  if(r<0.42) return 0;
-  return 1;
+  return Math.random()<0.58?0:1;
 }
 
 const DECOR_BY_MAP={
@@ -2995,22 +3009,24 @@ function populate(){
   if(!Array.isArray(blds) || !Array.isArray(towns)) return;
   // Mais zumbis iniciais na cidade
   const cityBonus=selectedMap==='city'?1.35:1;
+  const ini=(MAPDIFF[selectedMap]||MAPDIFF.forest).init;
   for(const b of blds){
     if(!b) continue;
     const n=rint(0, Math.round((b.type==='mil'?5:2)*cityBonus));
-    for(let i=0;i<n;i++)spawnZ(rnd(b.x+12,b.x+b.w-12),rnd(b.y+16,b.y+b.h-20));
+    for(let i=0;i<n;i++){if(Math.random()>ini)continue;spawnZ(rnd(b.x+12,b.x+b.w-12),rnd(b.y+16,b.y+b.h-20));}
   }
   for(const t of towns){
     if(!t) continue;
     const around=Math.round(6*cityBonus);
     for(let i=0;i<around;i++)for(let k=0;k<10;k++){
+      if(Math.random()>ini)break;
       const x=t.x+rnd(-280,280),y=t.y+rnd(-280,280);
       if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12))continue;
       spawnZ(x,y);break;
     }
   }
   let c=0,g=0;
-  const openCap=Math.round(40*cityBonus);
+  const openCap=Math.round(40*cityBonus*ini);
   while(c<openCap&&g<600){
     g++;
     const x=rnd(40,WW-40),y=rnd(40,WH-40);
@@ -4583,10 +4599,10 @@ function update(dt){
     }
     // Anúncio de horda ao virar o dia
     if(typeof update._lastDay==='number' && day>update._lastDay){
-      toast('Dia '+day+': a horda está pior!');
+      toast(dayToast());
       // burst de spawn ao amanhecer do novo dia
       if(zombies.length<dd.cap){
-        const burst=Math.min(4+day, dd.cap-zombies.length, 12);
+        const burst=Math.min(3+Math.floor(day/2), dd.cap-zombies.length, 8);
         for(let n=0;n<burst;n++){
           const a=rnd(0,6.283),dist=rnd(360,620);
           const x=P.x+Math.cos(a)*dist,y=P.y+Math.sin(a)*dist;
@@ -4597,7 +4613,7 @@ function update(dt){
     if(typeof update._lastDay==='number'&&day>update._lastDay)dayAdvanced(day-update._lastDay);
     update._lastDay=day;
   } else {
-    if(typeof update._lastDay==='number'&&day>update._lastDay){toast('Dia '+day+': a horda está pior!');dayAdvanced(day-update._lastDay);}
+    if(typeof update._lastDay==='number'&&day>update._lastDay){toast(dayToast());dayAdvanced(day-update._lastDay);}
     update._lastDay=day;
   }
   // Convidado: suaviza zumbis/animais entre snapshots (antes davam “saltos” a cada ~0,16s)
@@ -6932,6 +6948,10 @@ function track(ev,n){
     if(MP.active&&MP.connected&&!MS_DEF[ev].local)sendEvt('mission',{i:i,k:s.k,n:n});
   }
 }
+function dayToast(){
+  const nw=ZUNLOCK.filter(u=>u[1]===day).map(u=>u[3]);
+  return 'Dia '+day+': perigo '+dangerName(day)+(nw.length?'. Novo: '+nw.join(' e '):'');
+}
 function dayAdvanced(n){track('dayAdv',n);achSet('maxDay',day);}
 
 /* ---- Conquistas ---- */
@@ -7427,7 +7447,6 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='p
 {
   try{refreshContinue();}catch(e){}
   const b=LSget();
-  if(b){const el=$('bestline');if(el)el.textContent='RECORDE '+fmt(+b);}
   try{
     const savedName=localStorage.getItem('minisurv_name');
     if(savedName){
@@ -7568,14 +7587,14 @@ requestAnimationFrame(frame);
       word(c,'SURVIVAL',0,24,1,CREAM,DEEP);
       c.fillStyle=AMBER;c.fillRect(0,33,W,1);c.fillRect(0,35,W,1);
     }
-    const SP={G:MOSS,D:DMOSS,B:BROWN,C:CREAM,A:AMBER,K:'#3a414d',W:'#e0b25a'};
+    const SP={G:MOSS,D:DMOSS,B:BROWN,C:CREAM,A:AMBER,K:'#3a414d',W:'#e0b25a',R:'#c2452f'};
     const ART={
       tree:['..GGG..','.GGGGG.','GGGDGGG','.GGGGG.','GGGGDGG','..GGG..','...B...','...B...'],
       cactus:['..D..','D.D.D','D.D.D','DDDDD','..D..','..D..','..D..'],
       pine:['..C..','.CGC.','..G..','.GGG.','GGGGG','.GGG.','GGGGG','..B..'],
       city:['KKKKKKK','KWKKWKK','KKKKKKK','KKWKKWK','KKKKKKK','KWKKWKK','KKKKKKK','KKKDKKK'],
-      fire1:['..A..','.AAA.','AACAA','.AAA.','BBBBB'],
-      fire2:['.....','..A..','.AAA.','AACAA','BBBBB']};
+      fire1:['..R....','..RR...','.RRAR..','.RAAAR.','RAACAAR','RAAAAAR','BBBBBBB','.BB.BB.'],
+      fire2:['....R..','...RR..','..RARR.','.RAAAR.','RAACAAR','RAAAAAR','BBBBBBB','.BB.BB.']};
     function put(c,a,x,y){for(let r=0;r<a.length;r++)for(let k=0;k<a[r].length;k++){const ch=a[r][k];if(ch!=='.'){c.fillStyle=SP[ch];c.fillRect(x+k,y+r,1,1);}}}
     let frame=0;
     function drawScene(){
@@ -7583,7 +7602,7 @@ requestAnimationFrame(frame);
       c.clearRect(0,0,cv.width,cv.height);
       c.fillStyle=LINE;c.fillRect(0,13,45,1); // mesma largura do logotipo (45 colunas)
       put(c,ART.tree,1,5);put(c,ART.cactus,11,6);
-      put(c,frame?ART.fire2:ART.fire1,20,8);
+      put(c,frame?ART.fire2:ART.fire1,19,5);
       put(c,ART.pine,29,5);put(c,ART.city,38,5);
     }
     function fit(){
