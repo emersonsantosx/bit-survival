@@ -23,6 +23,52 @@ body.nohud #bars,body.nohud #wpn,body.nohud #clk,body.nohud #kl,body.nohud #miss
 body.nomap #mm{display:none!important}
 /* Pause e craft SEMPRE acessíveis */
 #bpause,#bcraft{display:inline-flex!important;align-items:center;justify-content:center}
+/* ===== botão da mochila e tela do inventário ===== */
+#bpack{position:absolute;left:8px;bottom:6px;width:46px;height:46px;background:rgba(23,26,32,.86);border:3px solid #E8E0CC;border-radius:0;box-shadow:0 3px 0 #0c0e12;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#C79A54;font-family:"Press Start 2P","Courier New",monospace;z-index:6}
+@media (max-height:380px){#bpack{left:52px;bottom:6px}}
+#bpack b{font:7px/1 "Press Start 2P","Courier New",monospace;color:#C79A54}
+#bpack.full b{color:#C0634A}
+#bpack:active{transform:translateY(2px);box-shadow:0 1px 0 #0c0e12}
+#bpack.nopack [data-px]{opacity:.75}
+.inv-card{max-width:640px;width:100%;align-items:center}
+.inv-wrap{display:flex;gap:12px;align-items:flex-start;justify-content:center;width:100%}
+.inv-left{flex:0 0 auto;display:flex;flex-direction:column;gap:6px}
+.inv-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font:8px/1.4 var(--f-px);color:var(--c-cream)}
+.inv-cap{display:inline-flex;align-items:center;gap:6px}
+.inv-cap b{color:var(--c-amber);font-weight:normal}
+.inv-tag{font:7px/1.4 var(--f-px);color:var(--c-moss);text-align:right}
+.inv-tag.no{color:var(--c-amber)}
+.inv-grid{display:grid;grid-template-columns:repeat(4,52px);gap:6px}
+.islot{position:relative;width:52px;height:52px;background:var(--c-panel);border:3px solid var(--c-edge);border-radius:0;box-shadow:0 3px 0 var(--c-deep);padding:0;display:flex;align-items:center;justify-content:center;color:var(--c-cream);cursor:pointer}
+.islot.qb{border-color:#5a6350}
+.islot.sel{border-color:var(--c-moss);background:#232b22}
+.islot.lock{border-style:dashed;border-color:#2e343e;background:#14171c;box-shadow:none;cursor:default}
+.islot.lock .pxi{opacity:.35}
+.islot .scnt{position:absolute;right:2px;bottom:2px;font:7px/1 var(--f-px);color:var(--c-amber);text-shadow:1px 1px 0 var(--c-deep)}
+.islot .snum{position:absolute;left:3px;top:2px;font:6px/1 var(--f-px);color:#6f7a64}
+.islot:active:not(.lock){transform:translateY(2px);box-shadow:0 1px 0 var(--c-deep)}
+.inv-eq{display:flex;align-items:center;gap:8px;background:var(--c-panel);border:3px solid var(--c-edge);padding:5px 8px;font:7px/1.5 var(--f-px);color:var(--c-cream);min-height:30px;box-sizing:border-box}
+.inv-eq b{color:var(--c-amber);font-weight:normal}
+.inv-hint{font:6px/1.5 var(--f-px);color:var(--c-dim);text-align:center}
+.inv-det{flex:1 1 200px;max-width:240px;min-width:170px;background:var(--c-panel);border:3px solid var(--c-edge);box-shadow:0 3px 0 var(--c-deep);padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;box-sizing:border-box;text-align:center}
+.inv-det .ico{width:64px;height:64px;background:#14171c;border:3px solid var(--c-line);display:flex;align-items:center;justify-content:center}
+.inv-det .nm{font:9px/1.4 var(--f-px);color:var(--c-moss)}
+.inv-det .qt{font:8px/1.4 var(--f-px);color:var(--c-amber)}
+.inv-det .ds{font:7px/1.7 var(--f-px);color:#cfc8b2;min-height:40px}
+.inv-det .empty{font:7px/1.8 var(--f-px);color:var(--c-dim);padding:22px 4px}
+.ibtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%}
+.ibtn{flex:1 1 auto;min-width:60px;background:var(--c-bg);border:3px solid var(--c-cream);color:var(--c-cream);border-radius:0;box-shadow:0 3px 0 var(--c-deep);font:7px/1 var(--f-px);padding:8px 6px;cursor:pointer}
+.ibtn.use{background:var(--c-moss);border-color:var(--c-moss);color:var(--c-bg)}
+.ibtn:disabled{opacity:.4;cursor:default}
+.ibtn:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 var(--c-deep)}
+@media (max-height:420px){
+  .inv-card h2{margin-bottom:6px}.inv-card h2::after{margin-top:5px}
+  .inv-grid{grid-template-columns:repeat(6,42px);gap:4px}.islot{width:42px;height:42px}
+  .inv-det{padding:6px;gap:4px;min-width:150px}.inv-det .ico{width:48px;height:48px}.inv-det .ds{min-height:0}
+  .inv-hint{display:none}
+}
+@media (max-height:420px) and (max-width:700px){.inv-det{flex-basis:150px}}
+
 .hide{display:none!important}
 #bars{position:absolute;left:8px;top:8px;width:132px}
 .row{display:flex;align-items:center;gap:4px;margin-bottom:3px;font-size:11px}
@@ -465,6 +511,7 @@ body.haschat #missions{right:140px}
     <div><button class="sm" id="bpause" data-px="pause" data-s="2" aria-label="Pausa"></button><button class="sm" id="bcraft" data-px="hammer" data-s="2" aria-label="Fabricar"></button></div>
   </div>
   <div id="inv"></div>
+  <button id="bpack" aria-label="Inventário"><span data-px="backpack" data-s="2"></span><b id="bpackn">0/6</b></button>
   <button class="btn" id="atk" aria-label="Atacar" data-px="c_atk" data-s="4"></button>
   <button class="btn" id="pick" aria-label="Pegar" data-px="c_hand" data-s="3"></button>
   <button class="btn" id="run" aria-label="Correr" data-px="c_run" data-s="3"></button>
@@ -657,6 +704,22 @@ body.haschat #missions{right:140px}
       <button class="go danger" id="btnReset" style="margin:0">RESTAURAR</button>
       <button class="back" id="btnBackCfg" style="margin:0">VOLTAR</button>
     </div>
+  </div>
+</div>
+
+<div id="invscr" class="screen hide">
+  <div class="card inv-card">
+    <h2>INVENTÁRIO</h2>
+    <div class="inv-wrap">
+      <div class="inv-left">
+        <div class="inv-top"><span class="inv-cap"><i data-px="backpack" data-s="2" aria-hidden="true"></i><b id="invcap">0/6</b></span><span class="inv-tag" id="invtag"></span></div>
+        <div id="invgrid" class="inv-grid"></div>
+        <div class="inv-eq" id="inveq"></div>
+        <div class="inv-hint">Os 6 primeiros ficam na barra rápida</div>
+      </div>
+      <div class="inv-det" id="invdet"></div>
+    </div>
+    <button class="back" id="invclose" style="margin:8px 0 0">FECHAR</button>
   </div>
 </div>
 
@@ -1452,11 +1515,12 @@ function buildSound(){
 /* ============ CONSTANTES ============ */
 const WW=3400, WH=3400;
 const DAY_SECONDS=480, START_HOUR=9, UPD=700;
-const MAX_SLOTS=6;
+const MAX_SLOTS=6, PACK_SLOTS=12;   // sem mochila: 6 itens diferentes; com mochila: 12
+function invCap(){return P&&P.pack?PACK_SLOTS:MAX_SLOTS;}
 
 /* ============ ÍCONES PIXEL ART (substituem os emojis do sistema) ============ */
 const PXPAL={R:'#d33',r:'#8a2020',O:'#d9892b',Y:'#ffd84a',B:'#3a9be0',b:'#8fd0ff',G:'#6fcf6f',g:'#3e7a2e',
-  W:'#f0ead8',S:'#c0c8d4',s:'#6a7280',N:'#8a5a2a',n:'#c8924e',P:'#e8a0a0',K:'#222831',M:'#8DA568',A:'#C79A54',f:'#e8b890',F:'#b98860',C:'#b8b090',c:'#8a8468',k:'#5a3a24'};
+  W:'#f0ead8',S:'#c0c8d4',s:'#6a7280',N:'#8a5a2a',n:'#c8924e',P:'#e8a0a0',K:'#222831',M:'#8DA568',A:'#C79A54',f:'#e8b890',F:'#b98860',C:'#b8b090',c:'#8a8468',k:'#5a3a24',d:'#6a7f4a'};
 const PXG={
   heart:['.RR...RR.','RWRR.RRRR','RRRRRRRRR','RRRRRRRRR','.RRRRRRR.','..RRRRR..','...RRR...','....R....'],
   drumstick:['..OOO....','.OWOOO...','OOOOOOO..','OOOOOOO..','.OOOOO...','..OOOW...','....WWW..','.....WWW.'],
@@ -1522,6 +1586,8 @@ PXG.c_swap=pxLines(11,10,[['l',1,2,9,2,'W',0],['l',7,0,9,2,'W',0],['l',7,4,9,2,'
 PXG.c_flame=['....R....','....RR...','...RRR...','..RRORR..','.RRROORR.','.RROYORR.','.RROYYOR.','..ROYYO..','...OOO...'];
 PXG.c_door=['.NNNNNN.','.NnnnnN.','.NnnnnN.','.NnnnnN.','.NnnYnN.','.NnnnnN.','.NnnnnN.','NNNNNNNN'];
 PXG.c_exit=['.NNNNNN......','.NnnnnN...Y..','.NnnnnN....Y.','.NnnnnNYYYYYY','.NnYnnN....Y.','.NnnnnN...Y..','.NnnnnN......','NNNNNNNN.....'];
+PXG.lock=['..kkkk..','.kAAAAk.','.kA..Ak.','.kA..Ak.','kkkkkkkk','kAAAAAAk','kAAkkAAk','kAAkkAAk','kAAAAAAk','kkkkkkkk'];
+PXG.backpack=['....kkkk....','...kA..Ak...','..kkkkkkkk..','.kMMMMMMMMk.','kMMMMMMMMMMk','kMMMMMMMMMMk','kMMddddddMMk','kkkkkkkkkkkk','kMMkAAAAkMMk','kMMkAYYAkMMk','kMMkAAAAkMMk','kMMMkkkkMMMk','.kMMMMMMMMk.','..kkkkkkkk..'];
 PXG.arrowright=pxRot(PXG.arrowup);PXG.arrowdown=pxRot(pxRot(PXG.arrowup));PXG.arrowleft=pxRot(pxRot(pxRot(PXG.arrowup)));
 const PXURL={};
 let PXWEATHER='';
@@ -1571,6 +1637,7 @@ const ITEMS={
   stone:{n:'Pedra',e:'stone'},
   bandage:{n:'Bandagem',e:'bandage'},
   cloth:{n:'Tecido',e:'cloth'},
+  backpack:{n:'Mochila',e:'backpack'},
   medkit:{n:'Kit médico',e:'medkit'},
   ammo:{n:'Munição',e:'ammo'},
   pistol:{n:'Pistola',e:'pistol'},
@@ -1610,22 +1677,23 @@ const RECIPES=[
   {out:'arrows',   need:{wood:2,stone:1}, label:'Flechas (x6)',    desc:'Munição do arco' },
   {out:'fishingrod',need:{wood:3,stone:1}, label:'Vara de Pesca',   desc:'Lance a isca no lago e pesque (só mapas com lago)', lake:true },
   {out:'bandage',  need:{cloth:3},    label:'Bandagem',        desc:'Estanca sangramento e cura um pouco' },
+  {out:'backpack', need:{cloth:8,wood:3}, label:'Mochila',        desc:'Carrega 12 itens diferentes em vez de 6', once:true },
   {out:'campfire', need:{wood:5,stone:3}, label:'Fogueira',        desc:'Cozinha peixe e ilumina à noite' }
 ];
 const LOOT={
-  house:{food:30,water:28,bandage:18,stone:8,wood:6,bat:4,ammo:3,axe:2,medkit:2,arrows:3},
-  shop:{food:40,water:35,bandage:12,medkit:4,bat:3,axe:2,arrows:4},
-  mil:{pistol:10,smg:8,shotgun:6,rifle:5,ammo:30,medkit:12,bandage:12,food:8,water:7,stone:4},
-  car:{food:20,water:18,ammo:15,bandage:12,medkit:4,pistol:3},
-  apartment:{food:22,water:20,bandage:14,ammo:6,bat:3,medkit:3,stone:4,arrows:3},
-  office:{food:18,water:22,bandage:10,ammo:5,bat:2,medkit:2},
-  garage:{ammo:22,food:12,water:12,bandage:8,pistol:4,bat:3,axe:3,arrows:4},
-  clinic:{medkit:28,bandage:30,food:12,water:14,ammo:3},
-  gas:{food:22,water:28,ammo:12,bandage:10,bat:3,medkit:3},
-  warehouse:{food:18,water:14,ammo:14,bandage:8,axe:6,bat:4,stone:10,medkit:3,arrows:5}
+  house:{food:12,water:28,bandage:18,stone:8,wood:6,bat:4,ammo:3,axe:2,medkit:2,arrows:3,backpack:2},
+  shop:{food:16,water:35,bandage:12,medkit:4,bat:3,axe:2,arrows:4,backpack:2},
+  mil:{pistol:10,smg:8,shotgun:6,rifle:5,ammo:30,medkit:12,bandage:12,food:4,water:7,stone:4,backpack:3},
+  car:{food:8,water:18,ammo:15,bandage:12,medkit:4,pistol:3},
+  apartment:{food:9,water:20,bandage:14,ammo:6,bat:3,medkit:3,stone:4,arrows:3,backpack:2},
+  office:{food:8,water:22,bandage:10,ammo:5,bat:2,medkit:2,backpack:2},
+  garage:{ammo:22,food:5,water:12,bandage:8,pistol:4,bat:3,axe:3,arrows:4,backpack:1},
+  clinic:{medkit:28,bandage:30,food:5,water:14,ammo:3},
+  gas:{food:9,water:28,ammo:12,bandage:10,bat:3,medkit:3},
+  warehouse:{food:7,water:14,ammo:14,bandage:8,axe:6,bat:4,stone:10,medkit:3,arrows:5,backpack:2}
 };
 /* Mapas com lago (Floresta e Neve): só neles existe vara de pesca */
-function mapHasLake(){return selectedMap==='forest'||selectedMap==='snow'||selectedMap==='desert';} // desert = oásis
+function mapHasLake(){return selectedMap==='forest'||selectedMap==='snow'||selectedMap==='desert'||selectedMap==='city';} // desert = oásis
 /* Clima coerente com o mapa: deserto (tempestade de areia), neve (nevasca), floresta/cidade (chuva) */
 function pickWeather(rf){
   const r=rf();
@@ -1634,7 +1702,8 @@ function pickWeather(rf){
   return r<.65?'none':'rain';
 }
 function lakeLoot(t){return mapHasLake()?Object.assign({fishingrod:1.5},t):t;}
-const OUT_LOOT={food:35,water:32,bandage:14,ammo:4,bat:3,axe:2,medkit:2,arrows:3,stone:8};
+/* fora dos prédios só existem pedra e taco; todo o resto (comida, água, armas, curativos) fica dentro das casas */
+const OUT_LOOT={stone:6,bat:.25};
 
 const ZTYPES=[
   {name:'Comum',    hp:5,  spd:34, dmg:9,  r:5, color:'#7a9a5a'},
@@ -1956,7 +2025,7 @@ function addItem(type, n){
   for(const slot of P.inv){
     if(slot.t === type){ slot.n += n; buildInv(); return true; }
   }
-  if(P.inv.length >= MAX_SLOTS) return false;
+  if(P.inv.length >= invCap()) return false;
   P.inv.push({t: type, n: n});
   buildInv();
   return true;
@@ -1983,9 +2052,14 @@ function removeInv(t, n){
 /* Contorno do lago: UMA função usada pelo desenho, pela colisão e pelo minimapa
    (antes a colisão usava círculos maiores que o lago desenhado). */
 function lakeWobble(l,ang){
+  if(l.fountain)return 1;
   if(l._seed===undefined) l._seed=(l.cx*12.9898+l.cy*78.233)%100;
   const s=l._seed;
   return 0.82+0.12*Math.sin(ang*2.3+s)+0.08*Math.cos(ang*4.1-s*0.5)+0.05*Math.sin(ang*7+s*1.3);
+}
+function nearFountain(x,y){
+  for(const l of lakes)if(l.fountain&&Math.hypot(x-l.cx,(y-l.cy)/.92)<l.r*1.6)return true;
+  return false;
 }
 function pointInLake(x,y){
   for(const l of lakes){
@@ -2466,7 +2540,7 @@ function placeBldLoot(b,n,lootKey){
     if(spots.length){
       const f=spots[Math.floor(_rng()*spots.length)];
       x=f.x+f.w/2+rnd(-3,3);y=f.y+f.h/2+rnd(-2,2);
-      if(f.k==='fridge')t=wpick({food:6,water:5});
+      if(f.k==='fridge')t=wpick({food:3,water:5});
       else if(f.k==='medcab')t=wpick({bandage:6,medkit:3});
       else if(f.k==='sink')t=wpick({bandage:5,water:5});
     }else{
@@ -2880,7 +2954,7 @@ function genWorld(seed) {
   if(selectedMap==='city') genCity(); else genRural();
   // Um único lago isolado — Floresta e Neve; no Deserto é um oásis menor (seed-determinístico = sync no multiplayer)
   lakes=[];
-  if(mapHasLake()){
+  if(mapHasLake()&&selectedMap!=='city'){
     let cx=0,cy=0,mainR=160,valid=false,lTries=0;
     for(const fm of [1,.6,.35,.15]){ if(valid)break; lTries=0;
     while(!valid && lTries<300){
@@ -2931,6 +3005,14 @@ function genWorld(seed) {
         }
       }
     }
+  }
+  if(selectedMap==='city'&&cityCrash){ // fonte na praça (ao lado da queda do helicóptero)
+    let fx=cityCrash.x+118,fy=cityCrash.y+4;
+    if(blds.some(b=>fx+40>b.x&&fx-40<b.x+b.w&&fy+40>b.y&&fy-40<b.y+b.h)||onCityRoad(fx,fy,38)){fx=cityCrash.x-118;}
+    if(blds.some(b=>fx+40>b.x&&fx-40<b.x+b.w&&fy+40>b.y&&fy-40<b.y+b.h)||onCityRoad(fx,fy,38)){fx=cityCrash.x;fy=cityCrash.y+118;}
+    lakes.push({cx:fx,cy:fy,r:26,blobs:[],islands:[],pads:[],frozen:false,fountain:true});
+    const clr=(a,m)=>{for(let i=a.length-1;i>=0;i--)if(Math.hypot(a[i].x-fx,a[i].y-fy)<m)a.splice(i,1);};
+    clr(trees,58);clr(rocks,58);clr(decorations,60);clr(items,60);
   }
   let vId = 0;
   const carCols=['#7a3030','#30507a','#505050','#6a6a30','#8a7030','#4a6a8a','#2a5a3a','#6a3a5a','#3a3a3a','#8a5a20'];
@@ -3009,11 +3091,11 @@ function genWorld(seed) {
   if(selectedMap==='city')cityLamps();
   lampList=decorations.filter(d=>d.type==='lamp'); // postes: abrem luz na escuridão à noite
   let oc=0,og=0;
-  while(oc<90&&og<700){
+  while(oc<26&&og<700){
     og++;
     const x=rnd(60,WW-60),y=rnd(60,WH-60);
-    if(solidPoint(x,y,14))continue;
-    items.push({t:wpick(lakeLoot(OUT_LOOT)),x,y});oc++;
+    if(solidPoint(x,y,14)||pointInLake(x,y))continue;
+    items.push({t:wpick(OUT_LOOT),x,y});oc++;
   }
   const stoneGround=selectedMap==='city'?70:40;   // cidade tem menos pedras: mais pedra solta no chão
   for(let i=0;i<stoneGround;i++){
@@ -3468,6 +3550,7 @@ function buildInv(){
     b.addEventListener('contextmenu',ev=>{ev.preventDefault();if(slot)discardItem(i);});
     el.appendChild(b);
   }
+  try{updatePackBadge();if(invIsOpen())refreshInvScr();}catch(e){}
 }
 function discardItem(i){
   const slot=P.inv[i];
@@ -3486,7 +3569,7 @@ function discardItem(i){
   for(let k=0;k<4;k++)parts.push({x:dx,y:dy,vx:rnd(-20,20),vy:rnd(-30,0),t:.4,c:'#a0a0a0'});
 }
 function useItem(i){
-  if(state!=='play')return;
+  if(state!=='play'&&!(state==='craft'&&invIsOpen()))return;
   const slot=P.inv[i];
   if(!slot)return;
   const it=slot.t;
@@ -3628,13 +3711,13 @@ function isVehicleOccupied(v){
 function restoreWalkHUD(){
   // Always restore on-foot controls (fixes quit while driving → broken next game)
   const vh=$('veh-hud'); if(vh) vh.classList.add('hide');
-  const show=['inv','atk','pick','run','swap'];
+  const show=['inv','atk','pick','run','swap','bpack'];
   for(const id of show){ const e=$(id); if(e) e.classList.remove('hide'); }
   touchGas=0; touchSteer=0;
 }
 function showVehicleHUD(){
   const vh=$('veh-hud'); if(vh) vh.classList.remove('hide');
-  const hide=['inv','atk','pick','run','swap'];
+  const hide=['inv','atk','pick','run','swap','bpack'];
   for(const id of hide){ const e=$(id); if(e) e.classList.add('hide'); }
 }
 function exitVehicle(){
@@ -3735,13 +3818,13 @@ function pickup(){
   }
 
   // Pesca no lago (só Floresta/Neve) — inventário local de cada player (sem sync de item no chão)
-  if(pointInLake(P.x,P.y) && mapHasLake()){
+  if((pointInLake(P.x,P.y)||nearFountain(P.x,P.y)) && mapHasLake()){
     if(P.water<97){
       P.water=Math.min(100,P.water+14);
-      toast(selectedMap==='snow'?'Você bebeu água gelada do lago':(selectedMap==='desert'?'Você bebeu água do oásis':'Você bebeu água do lago'));
+      toast(selectedMap==='city'?'Você bebeu água da fonte':selectedMap==='snow'?'Você bebeu água gelada do lago':(selectedMap==='desert'?'Você bebeu água do oásis':'Você bebeu água do lago'));
     } else {
       // Sede saciada: enche uma garrafa (empilha no inventário)
-      if(!addItem('water')){ toast('Sede saciada · mochila cheia'); return; }
+      if(!addItem('water')){ toast('Sede saciada · inventário cheio'); return; }
       toast('Garrafa enchida');
     }
     if(selectedMap==='snow'||selectedMap==='desert')P.temp=Math.max(-100,(P.temp||0)-6); // água gelada esfria / água fresca refresca
@@ -3769,7 +3852,7 @@ function pickup(){
         else{P.firearms.pistol=true;P.ammo+=6;P.weapon='pistol';updateWeaponHud();toast('Pegou: Pistola (+6 munição)');}
         nv.looted=true; if(MP.active) sendEvt('vehicleLooted', { id: nv.id });
       } else {
-        if(!addItem(found)){toast('Mochila cheia');beep(140,.08,'square',.05);return;}
+        if(!addItem(found)){toast('Inventário cheio');beep(140,.08,'square',.05);return;}
         toast('Achou: '+ITEMS[found].n);
         nv.looted=true; if(MP.active) sendEvt('vehicleLooted', { id: nv.id });
       }
@@ -3804,6 +3887,10 @@ function pickup(){
     else { P.ammo+=8; P.weapon=t; toast('Pegou: '+ITEMS[t].n+' (+8 munição)'); }
     updateWeaponHud();
   }
+  else if(t==='backpack'){
+    if(P.pack){toast('Você já tem uma mochila: deixe pro parceiro');return;}
+    P.pack=true;buildInv();toast('Mochila equipada! Agora você carrega 12 itens');
+  }
   else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='sword'||t==='spear'||t==='fishingrod'){
     if((P.meleeWeapons||[]).includes(t) || P.melee===t){
       toast('Você já tem '+ITEMS[t].n+': deixe pro parceiro'); return;
@@ -3811,7 +3898,7 @@ function pickup(){
     addMeleeWeapon(t);P.weapon=t;updateWeaponHud();toast('Pegou: '+ITEMS[t].n);
   }
   else {
-    if(!addItem(t)){toast('Mochila cheia');return;}
+    if(!addItem(t)){toast('Inventário cheio');return;}
     toast('Pegou: '+ITEMS[t].n);
   }
   items.splice(items.indexOf(it), 1);
@@ -4026,7 +4113,7 @@ function tryFish(){
   if(bx===null){
     // Sem água à frente: se há zumbi colado, deixa o golpe normal acontecer
     for(const z of zombies){if(!z.dead&&Math.hypot(z.x-P.x,z.y-P.y)<40)return false;}
-    P.cd=.5;toast('Mire no lago para lançar a isca');beep(140,.06,'square',.04);
+    P.cd=.5;toast(selectedMap==='city'?'Mire na fonte para lançar a isca':'Mire no lago para lançar a isca');beep(140,.06,'square',.04);
     return true;
   }
   P.fish={x:bx,y:by,t:0,wait:rnd(3,8)};
@@ -4049,7 +4136,7 @@ function tickFishing(dt){
       toast(selectedMap==='snow'?'Pescou no lago gelado!':'Pescou um peixe!');
       beep(580,.15,'sine',.05);
       for(let i=0;i<8;i++)parts.push({x:f.x+rnd(-4,4),y:f.y,vx:rnd(-25,25),vy:rnd(-55,-20),t:.4,c:'#8cc8f0'});
-    } else toast('Mochila cheia: o peixe escapou');
+    } else toast('Inventário cheio: o peixe escapou');
   }
 }
 function drawFishLine(px,py,face,fx,fy,left){
@@ -4837,7 +4924,6 @@ function update(dt){
     }
     // Anúncio de horda ao virar o dia
     if(typeof update._lastDay==='number' && day>update._lastDay){
-      toast(dayToast());
       // burst de spawn ao amanhecer do novo dia
       if(zombies.length<dd.cap){
         const burst=Math.min(3+Math.floor(day/2), dd.cap-zombies.length, 8);
@@ -4851,7 +4937,7 @@ function update(dt){
     if(typeof update._lastDay==='number'&&day>update._lastDay)dayAdvanced(day-update._lastDay);
     update._lastDay=day;
   } else {
-    if(typeof update._lastDay==='number'&&day>update._lastDay){toast(dayToast());dayAdvanced(day-update._lastDay);}
+    if(typeof update._lastDay==='number'&&day>update._lastDay){dayAdvanced(day-update._lastDay);}
     update._lastDay=day;
   }
   // Convidado: suaviza zumbis/animais entre snapshots (antes davam “saltos” a cada ~0,16s)
@@ -5048,7 +5134,7 @@ function updateHud(force){
   const PICK_ICON={PEGAR:'c_hand','ÁGUA':'drop',ASSAR:'c_flame',ENTRAR:'c_door'};
   let canInteract=false,btnText='PEGAR';
   if(nearestItem())canInteract=true;
-  if(pointInLake(P.x,P.y)&&mapHasLake()){canInteract=true;btnText='ÁGUA';}
+  if((pointInLake(P.x,P.y)||nearFountain(P.x,P.y))&&mapHasLake()){canInteract=true;btnText='ÁGUA';}
   const cf=nearestCampfire();
   if(cf && (countInv('fish')>0 || countInv('meat')>0)){canInteract=true;btnText='ASSAR';}
   for(const v of vehicles){
@@ -5071,7 +5157,8 @@ function craft(r){
     toast('Você já tem: '+ITEMS[out].n);beep(120,.1,'square',.05);return;
   }
   if(out==='bow'&&P.firearms.bow){toast('Você já tem um arco');beep(120,.1,'square',.05);return;}
-  if(out!=='campfire'&&!['pickaxe','axe','sword','spear','bow','arrows','bat','fishingrod'].includes(out)&&P.inv.length>=MAX_SLOTS&&!P.inv.some(slot=>slot.t===out)){toast('Mochila cheia');beep(120,.1,'square',.05);return;}
+  if(out==='backpack'&&P.pack){toast('Você já tem uma mochila');beep(120,.1,'square',.05);return;}
+  if(out!=='campfire'&&!['pickaxe','axe','sword','spear','bow','arrows','bat','fishingrod'].includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
   for(const k in r.need)removeInv(k,r.need[k]);
   if(out==='campfire'){
     const fx=Math.cos(P.face),fy=Math.sin(P.face);
@@ -5094,10 +5181,12 @@ function craft(r){
     if(P.firearms.bow){ toast('Você já tem um arco'); }
     else { P.firearms.bow=true; P.arrows=(P.arrows||0)+6; P.weapon='bow'; updateWeaponHud(); toast('Fabricou: Arco (+6 flechas)'); }
     buildSound();
+  }else if(out==='backpack'){
+    P.pack=true;buildInv();toast('Mochila equipada! Agora você carrega 12 itens');buildSound();
   }else if(out==='arrows'){
     P.arrows=(P.arrows||0)+6; toast('+6 flechas'); buildSound();
   }else{
-    if(!addItem(out)){toast('Mochila cheia');return;}
+    if(!addItem(out)){toast('Inventário cheio');return;}
     toast('Fabricou: '+ITEMS[out].n);buildSound();
   }
   track('craft');if(out==='bandage')achStat('craft_bandage',1);if(out==='campfire')track('campfire');
@@ -5106,20 +5195,21 @@ function craft(r){
 }
 let craftReadyAt=0; // ignora toques logo apos abrir o crafting (o mesmo toque do martelo nao pode acionar CRIAR)
 function openCraft(){if(state!=='play')return;state='craft';craftReadyAt=performance.now()+450;const e=$('craftscr');if(e)e.classList.remove('hide');refreshCraft();}
-function closeCraft(){if(state!=='craft')return;const e=$('craftscr');if(e)e.classList.add('hide');state='play';}
+function closeCraft(){if(state!=='craft')return;const e=$('craftscr');if(e)e.classList.add('hide');const iv=$('invscr');if(iv)iv.classList.add('hide');state='play';}
 function refreshCraft(){
   const cw=$('cw'),cs=$('cs'),cc=$('cc');if(cw)cw.textContent=countInv('wood');if(cs)cs.textContent=countInv('stone');if(cc)cc.textContent=countInv('cloth');
   const el=$('craftlist');if(!el)return;
   el.innerHTML='';
   for(const r of RECIPES){
     if(r.lake&&!mapHasLake())continue;
+    if(r.once&&r.out==='backpack'&&P.pack)continue;
     const isWeapon=['pickaxe','axe','sword','spear','bow','bat'].includes(r.out),category=isWeapon||r.out==='arrows'?'weapon':'utility';
     if(craftFilter!=='all'&&craftFilter!==category)continue;
     const ok=canCraft(r);
     const row=document.createElement('div');
     row.className='craft-row '+(ok?'can':'no');
     const cost=Object.entries(r.need).map(([k,v])=>'<span class="cost-chip'+(countInv(k)<v?' lack':'')+'" title="'+(ITEMS[k]?.n||k)+'">'+(ITEMS[k]&&ITEMS[k].e?pxFit(ITEMS[k].e,16,14):(ITEMS[k]?.n||k))+'<b>'+v+'</b></span>').join('');
-    const icon=pxFit(isWeapon||r.out==='arrows'||r.out==='fishingrod'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'arrows':'sword')):(r.out==='bandage'?'bandage':'fire'),30,24);
+    const icon=pxFit(isWeapon||r.out==='arrows'||r.out==='fishingrod'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'arrows':'sword')):(r.out==='bandage'?'bandage':(r.out==='backpack'?'backpack':'fire')),30,24);
     row.innerHTML='<div class="recipe-icon">'+icon+'</div><div class="info"><div class="name">'+r.label+'</div><div class="cost">'+r.desc+'</div><div class="cost">Custo: '+(cost||'nenhum')+'</div><div class="status">'+(ok?pxIcon('check',2)+' Recursos suficientes':'Faltam recursos')+'</div></div>';
     const btn=document.createElement('button');
     btn.textContent='CRIAR';btn.disabled=!ok;
@@ -6690,11 +6780,11 @@ function observerReset(){OBS.on=false;OBS.vis=false;OBS.alpha=1;OBS.glitch=0;OBS
 function updateObserver(dt){
   if(OBS._t>T+.5)observerReset();OBS._t=T;
   if(OBS.glitch>0)OBS.glitch=Math.max(0,OBS.glitch-dt);
-  if(!P||selectedMap!=='forest'||P.dead||state!=='play'){if(OBS.on){OBS.on=false;OBS.vis=false;obsStopDrone();}return;}
+  if(!P||P.dead||state!=='play'){if(OBS.on){OBS.on=false;OBS.vis=false;obsStopDrone();}return;}
   if(!OBS.on){
     OBS.cd-=dt;
     if(OBS.cd>0)return;
-    if(dark>.3&&!P.inside&&!P.inVehicle&&Math.random()<.5){
+    if(!P.inside&&!P.inVehicle&&Math.random()<.5){
       const sp=obsPickAhead();
       if(sp){OBS.on=true;OBS.vis=false;OBS.x=sp.x;OBS.y=sp.y;OBS.alpha=1;OBS.life=150+Math.random()*110;OBS.view=0;OBS.seenTot=0;OBS.look=10+Math.random()*6;return;}
     }
@@ -6716,7 +6806,7 @@ function updateObserver(dt){
     if(OBS.seenTot>55){obsVanish();return;}
   }else{
     if(OBS.vis){OBS.vis=false;obsStopDrone();}                  // saiu da tela: fica parado lá
-    if(dark<.2||OBS.life<=0){OBS.on=false;OBS.cd=260+Math.random()*260;return;}   // amanheceu ou ficou para trás: sai de cena sem ninguém ver
+    if(OBS.life<=0){OBS.on=false;OBS.cd=260+Math.random()*260;return;}   // ficou para trás: sai de cena sem ninguém ver
     if(OBS.dist>520){const sp=obsPickAhead();if(sp){OBS.x=sp.x;OBS.y=sp.y;}} // o jogador se afastou: ele reaparece à frente, fora da tela
   }
 }
@@ -6753,7 +6843,28 @@ function lakeShorePath(l, scale, c, sx, ox, oy){
   }
   c.closePath();
 }
+function drawFountain(l){
+  const cx=Math.round(l.cx),cy=Math.round(l.cy),r=l.r;
+  const E=(rx,ry,col)=>{ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,6.283);ctx.fill();};
+  ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(cx+2,cy+3,r*1.38,r*1.3*.92,0,0,6.283);ctx.fill();
+  E(r*1.32,r*1.32*.92,'#8a8c90');           // calçada de pedra
+  E(r*1.22,r*1.22*.92,'#6b6e74');
+  E(r*1.1,r*1.1*.92,'#b4b6ba');             // borda do tanque
+  E(r*.98,r*.98*.92,'#2a88b0');             // água
+  E(r*.8,r*.8*.92,'#4ab0d0');
+  ctx.strokeStyle='rgba(200,240,255,.35)';ctx.lineWidth=1;
+  for(let k=0;k<2;k++){ctx.beginPath();ctx.ellipse(cx,cy,r*(.5+.2*k)+Math.sin(T*2+k)*1.5,r*(.5+.2*k)*.92,0,0,6.283);ctx.stroke();}
+  for(let i=0;i<8;i++){const a=i*.785;R(cx+Math.cos(a)*r*1.16-1,cy+Math.sin(a)*r*1.16*.92-1,3,2,'#9a9ca0');}  // tijolos da borda
+  R(cx-5,cy-3,10,6,'#8e9096');R(cx-3,cy-9,6,8,'#a8aaae');R(cx-2,cy-12,4,4,'#c4c6ca');  // pedestal em camadas
+  for(let j=0;j<5;j++){                                                                // jatos de água
+    const t=(T*1.6+j*.2)%1,a=(j-2)*.45;
+    const px=cx+Math.sin(a)*t*16,py=cy-12-Math.sin(t*3.14)*13+t*t*6;
+    R(Math.round(px),Math.round(py),2,2,'#d8f2ff');
+  }
+  R(cx-1,cy-18,2,6,'#bfe8ff');
+}
 function drawLake(l){
+  if(l.fountain){drawFountain(l);return;}
   const frozen=!!l.frozen || selectedMap==='snow';
   const cx=l.cx, cy=l.cy, R0=l.r;
   // 1) Areia / lama da margem (anel externo)
@@ -7528,7 +7639,7 @@ function renderAch(){
 /* ============ UI ============ */
 function showScreen(id){
   if(id==='menu') try{refreshContinue();}catch(e){}
-  const ids=['menu','mapscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
+  const ids=['menu','invscr','mapscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
   for(const s of ids){const e=$(s);if(e)e.classList.add('hide');}
   if(id){const e=$(id);if(e)e.classList.remove('hide');}
   try{
@@ -7704,6 +7815,81 @@ on('pauseCfg','click',e=>{
 });
 on('deadMenu','click',()=>{ quitToMenu(); });
 on('craftclose','click',closeCraft);
+/* ============ TELA DO INVENTÁRIO ============ */
+let invSel=0;
+const IDESC={
+  food:'Feijão enlatado. Recupera 35 de fome.',water:'Garrafa de água. Recupera 40 de sede.',fish:'Peixe cru. Recupera 30 de fome, melhor assar na fogueira.',
+  cookedfish:'Peixe assado. Recupera 55 de fome e 5 de vida.',meat:'Carne crua. Recupera 25 de fome, melhor assar na fogueira.',cookedmeat:'Carne assada. Recupera 60 de fome e 8 de vida.',
+  wood:'Material de crafting. Abra o crafting para usar.',stone:'Material de crafting. Abra o crafting para usar.',cloth:'Tecido. Usado para fabricar bandagem e mochila.',
+  bandage:'Estanca sangramento e recupera 10 de vida.',medkit:'Kit médico. Recupera 50 de vida e estanca sangramento.'
+};
+function invIsOpen(){const e=$('invscr');return !!e&&!e.classList.contains('hide');}
+function updatePackBadge(){
+  if(!P)return;
+  const n=P.inv.length,cap=invCap(),b=$('bpackn'),bt=$('bpack');
+  if(b)b.textContent=n+'/'+cap;
+  if(bt){bt.classList.toggle('full',n>=cap);bt.classList.toggle('nopack',!P.pack);}
+}
+function openInv(){
+  if(state!=='play'||!P||P.dead)return;
+  state='craft';craftReadyAt=performance.now()+300;
+  const e=$('invscr');if(e)e.classList.remove('hide');
+  if(!P.inv[invSel])invSel=P.inv.length?0:-1;
+  refreshInvScr();
+}
+function refreshInvScr(){
+  if(!P)return;
+  const cap=invCap(),n=P.inv.length;
+  const capEl=$('invcap');if(capEl)capEl.textContent=n+'/'+cap;
+  const tag=$('invtag');if(tag){tag.textContent=P.pack?'MOCHILA EQUIPADA':'SEM MOCHILA';tag.classList.toggle('no',!P.pack);}
+  if(invSel>=n)invSel=n-1;
+  const g=$('invgrid');if(!g)return;g.innerHTML='';
+  for(let i=0;i<PACK_SLOTS;i++){
+    const b=document.createElement('button');b.className='islot';
+    if(i<MAX_SLOTS){b.classList.add('qb');}
+    const locked=i>=cap;
+    if(locked){b.classList.add('lock');b.innerHTML=pxIcon('lock',2);b.disabled=true;}
+    else{
+      const sl=P.inv[i];
+      if(i<MAX_SLOTS)b.insertAdjacentHTML('beforeend','<span class="snum">'+(i+1)+'</span>');
+      if(sl){
+        b.insertAdjacentHTML('beforeend',pxFit(ITEMS[sl.t].e,32,28));
+        if(sl.n>1)b.insertAdjacentHTML('beforeend','<span class="scnt">'+sl.n+'</span>');
+        b.setAttribute('aria-label',ITEMS[sl.t].n);
+      }
+      if(i===invSel)b.classList.add('sel');
+      b.addEventListener('click',()=>{aud();uiTap();invSel=sl?i:invSel;refreshInvScr();});
+    }
+    g.appendChild(b);
+  }
+  // arma e munição
+  const eq=$('inveq');
+  if(eq){
+    const wk=P.weapon,w=WEAPONS[wk];
+    const ammo=w&&w.bow?(P.arrows||0):(w&&w.firearm?P.ammo:null);
+    eq.innerHTML='<span>ARMA</span>'+(w?pxFit(WEAPON_ICON[wk]||wk,22,18):'')+'<b>'+(w?w.n:'Mãos')+'</b>'+(ammo!==null?'<span>'+(w&&w.bow?'FLECHAS':'MUNIÇÃO')+'</span><b>'+ammo+'</b>':'');
+  }
+  // detalhes
+  const d=$('invdet');if(!d)return;
+  const sl=P.inv[invSel];
+  if(!sl){
+    d.innerHTML='<div class="empty">'+(n?'Toque em um item para ver os detalhes.':'Nada por aqui ainda.')+'</div>'+
+      (P.pack?'':'<div class="ds">Ache uma mochila nas casas ou fabrique uma (8 tecidos e 3 madeiras) para carregar 12 itens.</div>');
+    return;
+  }
+  const it=ITEMS[sl.t];
+  const usable=['food','water','fish','cookedfish','meat','cookedmeat','bandage','medkit'].includes(sl.t);
+  d.innerHTML='<div class="ico">'+pxFit(it.e,48,44)+'</div><div class="nm">'+it.n.toUpperCase()+'</div><div class="qt">x'+sl.n+'</div><div class="ds">'+(IDESC[sl.t]||'')+'</div>'+
+    '<div class="ibtns"><button class="ibtn use" id="ibUse"'+(usable?'':' disabled')+'>USAR</button><button class="ibtn" id="ibDrop">SOLTAR</button>'+(sl.n>1?'<button class="ibtn" id="ibAll">TUDO</button>':'')+'</div>';
+  const ok=()=>performance.now()>=craftReadyAt;
+  const bu=$('ibUse'),bd=$('ibDrop'),ba=$('ibAll');
+  if(bu)bu.onclick=()=>{if(!ok())return;aud();useItem(invSel);};
+  if(bd)bd.onclick=()=>{if(!ok())return;aud();discardItem(invSel);};
+  if(ba)ba.onclick=()=>{if(!ok())return;aud();const k=invSel,c=P.inv[k]?P.inv[k].n:0;for(let q=0;q<c&&q<40;q++)discardItem(k);};
+}
+on('bpack','click',e=>{e.preventDefault();aud();uiTap();openInv();});
+on('invclose','click',()=>{uiTap();closeCraft();});
+
 
 /* ============ CONTROLES ============ */
 cv.addEventListener('pointerdown',e=>{
@@ -7809,7 +7995,7 @@ window.addEventListener('keydown',e=>{
     return;
   }
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD'].includes(e.code))e.preventDefault();
-  if(e.code==='KeyC'&&state==='craft'){closeCraft();return;}
+  if((e.code==='KeyC'||e.code==='KeyI')&&state==='craft'){closeCraft();return;}
   if(e.code==='Escape'){
     if(weaponWheelOpen){closeWeaponWheel();return;}
     if(state==='craft'){closeCraft();return;}
@@ -7821,6 +8007,7 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyE')pickup();
   if(e.code==='KeyQ')cycleWeapon();
   if(e.code==='KeyC')openCraft();
+  if(e.code==='KeyI')openInv();
   if(e.code==='KeyR'){if(P.inv.length>0)discardItem(P.inv.length-1);else toast('Inventário vazio');}
   if(e.code>='Digit1'&&e.code<='Digit6')useItem(+e.code.slice(5)-1);
   if(e.code==='KeyT'&&MP.active){ e.preventDefault(); openChat(); }
