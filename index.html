@@ -1586,6 +1586,8 @@ PXG.c_run=['....WWWW....','....WBBW....','....WBBW....','.Y..WBBW....','....WBBB
 PXG.c_hand=['..kkkkkkkk..', '.kffffffffk.', 'kffffffffFFk', 'kffffffffFFk', 'kffkffkffFk.', 'kffkffkffFk.', '.kfkffkffk..', '..kkkkkkk...', '..SSSSSSS...', '.SSWSSSsS...', '..ssssss....'];
 PXG.c_swap=pxLines(11,10,[['l',1,2,9,2,'W',0],['l',7,0,9,2,'W',0],['l',7,4,9,2,'W',0],['l',1,7,9,7,'W',0],['l',3,5,1,7,'W',0],['l',3,9,1,7,'W',0]]);
 PXG.c_flame=['....R....','....RR...','...RRR...','..RRORR..','.RRROORR.','.RROYORR.','.RROYYOR.','..ROYYO..','...OOO...'];
+PXG.c_bed=['NN.........','NN.........','NNWWWBBBBB.','NNWWWBBBBB.','NNNNNNNNNNN','NN.......NN','NN.......NN'];
+PXG.tent=['.....Y.....','....MMd....','...MMMdd...','..MMMKKdd..','.MMMKKKKdd.','MMMMKKKKddd','MMMMKKKKddd','kkkkkkkkkkk'];
 PXG.c_door=['.NNNNNN.','.NnnnnN.','.NnnnnN.','.NnnnnN.','.NnnYnN.','.NnnnnN.','.NnnnnN.','NNNNNNNN'];
 PXG.c_exit=['.NNNNNN......','.NnnnnN...Y..','.NnnnnN....Y.','.NnnnnNYYYYYY','.NnYnnN....Y.','.NnnnnN...Y..','.NnnnnN......','NNNNNNNN.....'];
 PXG.lock=['..kkkk..','.kAAAAk.','.kA..Ak.','.kA..Ak.','kkkkkkkk','kAAAAAAk','kAAkkAAk','kAAkkAAk','kAAAAAAk','kkkkkkkk'];
@@ -1722,6 +1724,7 @@ const RECIPES=[
   {out:'fishingrod',need:{wood:3,stone:1}, label:'Vara de Pesca',   desc:'Lance a isca no lago e pesque (só mapas com lago)', lake:true },
   {out:'bandage',  need:{cloth:3},    label:'Bandagem',        desc:'Estanca sangramento e cura um pouco' },
   {out:'backpack', need:{cloth:8,wood:3}, label:'Mochila',        desc:'Carrega 12 itens diferentes em vez de 6', once:true },
+  {out:'tent', need:{cloth:8,wood:5}, label:'Barraca', desc:'Dorme 2 pessoas (só à noite). Monte ao ar livre' },
   {out:'campfire', need:{wood:5,stone:3}, label:'Fogueira',        desc:'Cozinha peixe e ilumina à noite' }
 ];
 const LOOT={
@@ -1824,7 +1827,7 @@ let weather='none';
 let weatherTimer=120;
 let weatherParticles=[];
 let cityInter=[],cityCrash=null,lampList=[];
-let trees=[],rocks=[],blds=[],walls=[],items=[],zombies=[],roads=[],decals=[],parts=[],tracers=[],towns=[],lakes=[],vehicles=[],campfires=[],spits=[],decorations=[],animals=[];
+let trees=[],rocks=[],blds=[],walls=[],items=[],zombies=[],roads=[],decals=[],parts=[],tracers=[],towns=[],lakes=[],vehicles=[],campfires=[],tents=[],spits=[],decorations=[],animals=[];
 let remotePlayers={};
 let nextZombieNetId=1;
 let plane=null;
@@ -1851,7 +1854,7 @@ function mpSend(data){
 /* Validação básica de pacotes / nomes (anti-lixo) */
 const NET_OK_TYPES=new Set(['worldInit','start','evt','player','snapshot','chat','gameOver','playerDied','playerRespawned','ping','pong']);
 const NET_OK_MAPS=new Set(['forest','desert','snow','city']);
-const NET_OK_EVT=new Set(['mission','treeDmg','rockDmg','itemRemoved','itemAdded','vehicleEnter','vehicleExit','vehicleLooted','shot','spit','campfireAdded','campfireRemoved','zombieDmg','animalDmg','vehicleDying','vehicleExploded']);
+const NET_OK_EVT=new Set(['mission','treeDmg','rockDmg','itemRemoved','itemAdded','vehicleEnter','vehicleExit','vehicleLooted','shot','spit','campfireAdded','campfireRemoved','tentAdded','sleepSkip','zombieDmg','animalDmg','vehicleDying','vehicleExploded']);
 const NET_OK_IDS=new Set(['host','guest']);
 function sanitizeName(n){
   if(typeof n!=='string') return 'Jogador';
@@ -2173,6 +2176,7 @@ function rebuildSolidGrid(){
   for(const t of trees) put(t.x,t.y,'tree',t);
   for(const r of rocks) put(r.x,r.y,'rock',r);
   for(const d of decorations) if(d.solid) put(d.x,d.y,'decor',d);
+  for(const t of tents){put(t.x-12,t.y-6,'decor',t);put(t.x+12,t.y-6,'decor',t);put(t.x,t.y-10,'decor',t);}
 }
 function querySolidNear(x,y,pad){
   if(!solidGrid) return [];
@@ -2384,7 +2388,7 @@ function cityRoofColor(type){
 const WT=6, IWT=4, GAPW=26;
 /* [comprimento, espessura, modo, guarda loot]; modo: along = lado comprido junto da parede, perp = lado comprido para dentro, free = no meio do cômodo */
 const FURN={
-  couch:[26,11,'along',0], tv:[14,8,'along',0], table:[20,13,'along',1], bed:[27,15,'perp',0], wardrobe:[18,9,'along',1],
+  couch:[26,11,'along',0], tv:[14,8,'along',0], table:[20,13,'along',1], bed:[27,15,'perp',0], bed2:[27,28,'perp',0], wardrobe:[18,9,'along',1],
   nightstand:[9,9,'along',1], shelf:[24,8,'along',1], counter:[28,9,'along',1], fridge:[11,11,'along',1], stove:[11,11,'along',0],
   desk:[22,12,'along',1], locker:[16,8,'along',1], crate:[11,11,'along',1], barrel:[9,9,'along',0], bench:[24,8,'along',0],
   medbed:[26,14,'perp',0], medcab:[16,8,'along',1], bunk:[26,13,'perp',0], rack:[26,8,'along',1], workbench:[28,12,'along',1],
@@ -2520,8 +2524,9 @@ function genInterior(b){
     for(const e of list){
       const cnt=rint(e[1],e[2]);
       for(let n=0;n<cnt;n++){
-        const d=FURN[e[0]];
+        const dbl=e[0]==='bed'&&_rng()<.3;   // algumas camas são de casal
         for(let t=0;t<14;t++){
+          const kk=(dbl&&t<8)?'bed2':e[0],d=FURN[kk];
           let w,h,x,y,s;
           if(d[2]==='free'){
             w=d[0];h=d[1];if(_rng()<.5){const q=w;w=h;h=q;}
@@ -2535,7 +2540,7 @@ function genInterior(b){
             if(horiz){x=Math.round(rnd(r.x+1,r.x+r.w-1-w));y=s==='t'?r.y:r.y+r.h-h;}
             else{y=Math.round(rnd(r.y+1,r.y+r.h-1-h));x=s==='l'?r.x:r.x+r.w-w;}
           }
-          const f={x,y,w,h,k:e[0],s,loot:!!d[3],sd:Math.floor(_rng()*997),room:r};
+          const f={x,y,w,h,k:kk,s,loot:!!d[3],sd:Math.floor(_rng()*997),room:r};
           let bad=false;
           for(const z of zones)if(rectsHit(f,z,0)){bad=true;break;}
           if(!bad)for(const o of b.furn)if(rectsHit(f,o,2)){bad=true;break;}
@@ -2991,7 +2996,7 @@ function genRuralVehicles(vId,carCols){
 function genWorld(seed) {
   setRng(seed);
   try {
-  trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];spits=[];decorations=[];animals=[];
+  trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];tents=[];spits=[];decorations=[];animals=[];
   cityInter=[];cityCrash=null;lampList=[];
   plane=null;
 
@@ -3433,7 +3438,7 @@ function newGame(){
 /* ============ CONTINUAR (somente jogo solo) ============
    O mundo nasce de uma semente (a mesma técnica do multiplayer), então o save guarda a semente e só o que mudou:
    jogador, tempo, árvores/pedras que restaram, itens no chão, veículos, animais, zumbis, fogueiras e manchas. */
-const SAVE_KEY='minisurv_save', SAVE_VER=3, SAVE_EVERY=20;
+const SAVE_KEY='minisurv_save', SAVE_VER=4, SAVE_EVERY=20;
 let worldSeed=0, saveT=0;
 const MAP_NAMES={forest:'FLORESTA',desert:'DESERTO',snow:'NEVE',city:'CIDADE'};
 const _q=(v,d)=>{const m=d===1?10:100;return Math.round(v*m)/m;};
@@ -3452,7 +3457,7 @@ function canSave(){
 function saveGame(){
   if(!canSave()) return false;
   try{
-    const ps=JSON.parse(JSON.stringify(P,(k,v)=>(k==='inside'||k==='inVehicle'||k==='fish'||k[0]==='_')?undefined:v));
+    const ps=JSON.parse(JSON.stringify(P,(k,v)=>(k==='inside'||k==='inVehicle'||k==='fish'||k==='sleeping'||k[0]==='_')?undefined:v));
     const data={
       v:SAVE_VER, at:Date.now(), map:selectedMap, seed:worldSeed,
       T:_q(T,2), day, kills, weather, weatherTimer:_q(weatherTimer,1), spawnTimer:_q(spawnTimer,1),
@@ -3461,7 +3466,7 @@ function saveGame(){
       rocks:rocks.map(r=>[r.x,r.y,_q(r.hp,2)]),
       items:items.map(i=>{const e=packObj(i);const t=e.t,x=e.x,y=e.y;delete e.t;delete e.x;delete e.y;const a=[t,_q(x,1),_q(y,1)];if(Object.keys(e).length)a.push(e);return a;}),
       zombies:zombies.filter(z=>!z.dead).map(z=>[_q(z.x,1),_q(z.y,1),z.kind,_q(z.hp,1),_q(z.max,1),_q(z.spd,2),z.dmg,z.si]),
-      vehicles:vehicles.map(packObj), animals:animals.map(packObj), fires:campfires.map(packObj),
+      vehicles:vehicles.map(packObj), animals:animals.map(packObj), fires:campfires.map(packObj), tents:tents.map(t=>({x:Math.round(t.x),y:Math.round(t.y)})),
       decals:decals.map(d=>[_q(d.x,1),_q(d.y,1)])
     };
     localStorage.setItem(SAVE_KEY,JSON.stringify(data));
@@ -3525,6 +3530,7 @@ function continueGame(){
     vehicles=d.vehicles.filter(v=>v&&Number.isFinite(v.x)&&Number.isFinite(v.y)).map(v=>{v.driverId=null;v.spd=0;return v;});
     animals=d.animals.filter(a=>a&&Number.isFinite(a.x)&&Number.isFinite(a.y));
     campfires=d.fires.filter(c=>c&&Number.isFinite(c.x)&&Number.isFinite(c.y));
+    tents=Array.isArray(d.tents)?d.tents.filter(t=>t&&Number.isFinite(t.x)&&Number.isFinite(t.y)).map(t=>({x:t.x,y:t.y})):[];
     decals=(d.decals||[]).map(a=>({x:a[0],y:a[1]}));
     rebuildSolidGrid();
     // Jogador
@@ -3835,6 +3841,7 @@ function pickup(){
   if(state!=='play')return;
   if(P.inVehicle){exitVehicle();return;}
   if(P.fish){cancelFishing(P.fish.ph===2?'Você soltou a linha':'Você recolheu a linha');return;}
+  if(P.sleeping){wakeUp(false);return;}
 
   const cf=nearestCampfire();
   const rawFish=firstFishItem();
@@ -3864,6 +3871,7 @@ function pickup(){
     return;
   }
 
+  {const sp=findSleepSpot();if(sp&&!nearestItem()){trySleep(sp);return;}}
   // Pesca no lago (só Floresta/Neve) — inventário local de cada player (sem sync de item no chão)
   if((pointInLake(P.x,P.y)||nearFountain(P.x,P.y)) && mapHasLake()){
     if(P.water<97){
@@ -3965,6 +3973,7 @@ function makeNoise(x,y,r){
 function hurt(n,bleedChance){
   if(P.dead)return;
   if(P._grace>0)return; // acabou de reconectar
+  if(P.sleeping)wakeUp(true);
   P.hp-=n;flash=.45;shake=4;
   if(P.fish)cancelFishing('A linha se soltou!');
   if(Math.random()<bleedChance&&!P.bleed){P.bleed=true;toast('Você está sangrando!');}
@@ -4023,7 +4032,7 @@ function showDeathScreen(canRespawn){
 function die(){
   if(!P || P.dead) return;
   closeWeaponWheel();closeChat();
-  P.hp=0;P.dead=true;P.fish=null;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;
+  P.sleeping=null;SLP.fade=0;P.hp=0;P.dead=true;P.fish=null;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;
   if(P.inVehicle){ try{exitVehicle();}catch(e){} }
   restoreWalkHUD();
   beep(200,.6,'sawtooth',.08,-150);boom(.5,.3,200);
@@ -4330,6 +4339,7 @@ function autoSwitchMelee(){
 }
 function attack(){
   if(state!=='play'||P.cd>0||P.inVehicle)return;
+  if(P.sleeping){wakeUp(false);P.cd=.4;return;}
   const w=WEAPONS[P.weapon];
   if(!w)return;
   if(w.rod&&tryFish())return;
@@ -4526,6 +4536,7 @@ function envTemp(){
   if(weather==='rain') tg-=14; else if(weather==='snow') tg-=8; else if(weather==='sand') tg+=8;
   if(P.inVehicle) tg*=0.6;                                   // cabine do carro
   else if(bldAt(P.x,P.y)) tg*=0.3;                           // abrigo isola do clima
+  else if(nearTent(P.x,P.y,34)) tg*=0.55;                    // barraca protege um pouco
   else {
     if(tg>10){ for(const n of querySolidNear(P.x,P.y,28)){ if(n.kind==='tree'){ tg-=22; break; } } } // sombra
     if(selectedMap!=='snow'&&pointInLake(P.x,P.y)) tg-=(tg>0?40:18);                                  // na água: refresca / molha
@@ -4606,6 +4617,7 @@ function survivalTick(dt){
 function updateP(dt){
   if(P.dead) return;
   if(GH.on&&GH.kill>0){P.moving=false;return;}
+  if(P.sleeping){sleepTick(dt);return;}
   if(P.inVehicle){
     const v=P.inVehicle;
     if(P.fish)P.fish=null;
@@ -5006,6 +5018,7 @@ function update(dt){
   updateAnimals(dt);
   try{updateObserver(dt);}catch(e){}
   try{updateGhost(dt);}catch(e){}
+  try{sleepUpdate(dt);}catch(e){}
   if(fishPop&&fishPop.t>0)fishPop.t-=dt;
   updateVehicles(dt);
   P.cd=Math.max(0,P.cd-dt);P.swing=Math.max(0,P.swing-dt);P.flash=Math.max(0,P.flash-dt);
@@ -5321,7 +5334,7 @@ function updateHud(force){
   else if((P._scap||100)<65){st='FRACO';stk='stam';}
   if(!st&&MP.active&&MP.isHost&&MP.guestAway)st='CONVIDADO OFFLINE';
   const stat=$('stat');if(stat){stat.textContent=st;stat.style.opacity=st?'1':'0';stat.className=stk?'s-'+stk:'';} // a cor do aviso segue a cor da barra correspondente
-  const PICK_ICON={PEGAR:'c_hand','ÁGUA':'drop',ASSAR:'c_flame',ENTRAR:'c_door'};
+  const PICK_ICON={PEGAR:'c_hand','ÁGUA':'drop',ASSAR:'c_flame',ENTRAR:'c_door',DORMIR:'c_bed',LEVANTAR:'c_bed'};
   let canInteract=false,btnText='PEGAR';
   if(nearestItem())canInteract=true;
   if((pointInLake(P.x,P.y)||nearFountain(P.x,P.y))&&mapHasLake()){canInteract=true;btnText='ÁGUA';}
@@ -5331,8 +5344,10 @@ function updateHud(force){
     const d=Math.hypot(v.x-P.x,v.y-P.y);
     if(d<36){canInteract=true;if(v.looted&&btnText==='PEGAR')btnText='ENTRAR';}
   }
+  if(P.sleeping){canInteract=true;btnText='LEVANTAR';}
+  else if(!nearestItem()&&findSleepSpot()){canInteract=true;btnText='DORMIR';}
   const pick_=$('pick');
-  if(pick_){if(pick_.dataset.st!==btnText){pick_.dataset.st=btnText;pick_.setAttribute('aria-label',btnText==='ÁGUA'?'Beber água':btnText==='ASSAR'?'Assar':btnText==='ENTRAR'?'Entrar':'Pegar');pick_.innerHTML=pxIcon(PICK_ICON[btnText]||'c_hand',3);}
+  if(pick_){if(pick_.dataset.st!==btnText){pick_.dataset.st=btnText;pick_.setAttribute('aria-label',btnText==='ÁGUA'?'Beber água':btnText==='ASSAR'?'Assar':btnText==='ENTRAR'?'Entrar':btnText==='DORMIR'?'Dormir':btnText==='LEVANTAR'?'Levantar':'Pegar');pick_.innerHTML=pxIcon(PICK_ICON[btnText]||'c_hand',3);}
     pick_.classList.toggle('hot',canInteract);}
 }
 
@@ -5348,9 +5363,23 @@ function craft(r){
   }
   if(out==='bow'&&P.firearms.bow){toast('Você já tem um arco');beep(120,.1,'square',.05);return;}
   if(out==='backpack'&&P.pack){toast('Você já tem uma mochila');beep(120,.1,'square',.05);return;}
-  if(out!=='campfire'&&!['pickaxe','axe','sword','spear','bow','arrows','bat','fishingrod'].includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
+  if(out==='tent'){
+    const tp=tentSpot();
+    if(!tp){toast(P.inside?'Monte a barraca ao ar livre':'Sem espaço para a barraca aqui');beep(120,.1,'square',.05);return;}
+    P._tp=tp;
+  }
+  if(out!=='campfire'&&out!=='tent'&&!['pickaxe','axe','sword','spear','bow','arrows','bat','fishingrod'].includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
   for(const k in r.need)removeInv(k,r.need[k]);
-  if(out==='campfire'){
+  if(out==='tent'){
+    const tp=P._tp||tentSpot()||{x:P.x+40,y:P.y};P._tp=null;
+    tents.push({x:tp.x,y:tp.y});rebuildSolidGrid();
+    if(MP.active){
+      sendEvt('tentAdded',{x:tp.x,y:tp.y});
+      if(MP.isHost&&MP.conn&&MP.conn.open){try{MP.conn.send(packSnapshot());}catch(e){}}
+    }
+    toast('Barraca montada! Chegue perto e use DORMIR à noite');buildSound();
+    for(let i=0;i<10;i++)parts.push({x:tp.x+rnd(-14,14),y:tp.y,vx:rnd(-20,20),vy:rnd(-30,-8),t:.5,c:'#b8b090'});
+  }else if(out==='campfire'){
     const fx=Math.cos(P.face),fy=Math.sin(P.face);
     let cx=P.x+fx*22,cy=P.y+fy*22;
     if(solidPoint(cx,cy,4)){cx=P.x+10;cy=P.y+10;}
@@ -5399,7 +5428,7 @@ function refreshCraft(){
     const row=document.createElement('div');
     row.className='craft-row '+(ok?'can':'no');
     const cost=Object.entries(r.need).map(([k,v])=>'<span class="cost-chip'+(countInv(k)<v?' lack':'')+'" title="'+(ITEMS[k]?.n||k)+'">'+(ITEMS[k]&&ITEMS[k].e?pxFit(ITEMS[k].e,16,14):(ITEMS[k]?.n||k))+'<b>'+v+'</b></span>').join('');
-    const icon=pxFit(isWeapon||r.out==='arrows'||r.out==='fishingrod'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'arrows':'sword')):(r.out==='bandage'?'bandage':(r.out==='backpack'?'backpack':'fire')),30,24);
+    const icon=pxFit(isWeapon||r.out==='arrows'||r.out==='fishingrod'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'arrows':'sword')):(r.out==='bandage'?'bandage':(r.out==='backpack'?'backpack':(r.out==='tent'?'tent':'fire'))),30,24);
     row.innerHTML='<div class="recipe-icon">'+icon+'</div><div class="info"><div class="name">'+r.label+'</div><div class="cost">'+r.desc+'</div><div class="cost">Custo: '+(cost||'nenhum')+'</div><div class="status">'+(ok?pxIcon('check',2)+' Recursos suficientes':'Faltam recursos')+'</div></div>';
     const btn=document.createElement('button');
     btn.textContent='CRIAR';btn.disabled=!ok;
@@ -5443,6 +5472,12 @@ function handleEvt(kind, data){
         if(Math.abs(campfires[i].x-data.x)<10&&Math.abs(campfires[i].y-data.y)<10){campfires.splice(i,1);break;}
       }
     }
+  } else if(kind==='tentAdded'){
+    if(Number.isFinite(data.x)&&Number.isFinite(data.y)&&!tents.some(t=>Math.abs(t.x-data.x)<10&&Math.abs(t.y-data.y)<10)){
+      tents.push({x:data.x,y:data.y});rebuildSolidGrid();
+    }
+  } else if(kind==='sleepSkip'){
+    if(Number.isFinite(data.T)&&P&&P.sleeping)sleepSkipApply(clamp(data.T,0,1e7));
   } else if(kind==='campfireAdded'){
     if(Number.isFinite(data.x)&&Number.isFinite(data.y)&&!campfires.some(c=>Math.abs(c.x-data.x)<8&&Math.abs(c.y-data.y)<8)){
       campfires.push({x:data.x,y:data.y,t:0,flicker:0});
@@ -5926,6 +5961,10 @@ function handleNetData(data,isHostSide){
     rp.swing=isFiniteNum(data.swing)?data.swing:0;
     rp.hp=isFiniteNum(data.hp)?clamp(data.hp,0,100):rp.hp;
     rp.alive=data.alive!==false;rp.inVehicle=!!data.inVehicle;
+    if(Array.isArray(data.sl)&&data.sl.length>=4&&data.sl.every(isFiniteNum)){
+      if(!rp.sl){rp.slT=performance.now();if(P&&!P.sleeping&&!P.dead)toast(rp.name+' foi dormir. Deite-se também para passar a noite');}
+      rp.sl={s:SLI[data.sl[0]|0]||'t',hx:clamp(data.sl[1],-20,20),hy:clamp(data.sl[2],-20,20),tent:!!data.sl[3]};
+    }else rp.sl=null;
     if(isFiniteNum(data.fx)&&isFiniteNum(data.fy)){rp.fx=data.fx;rp.fy=data.fy;rp.fl=isFiniteNum(data.fl)?data.fl:3;}else{rp.fx=null;rp.fy=null;}
     rp.isHost=!isHostSide;rp.anim=(rp.anim||0)+(data.moving?0.25:0);
     remotePlayers[data.id]=rp;
@@ -6023,6 +6062,11 @@ function applySnapshot(snap){
       }
     }
     campfires = merged;
+  }
+  if(Array.isArray(snap.tents)){
+    let ch=false;
+    for(const a of snap.tents){if(Array.isArray(a)&&isFiniteNum(a[0])&&isFiniteNum(a[1])&&!tents.some(t=>Math.abs(t.x-a[0])<10&&Math.abs(t.y-a[1])<10)){tents.push({x:a[0],y:a[1]});ch=true;}}
+    if(ch)rebuildSolidGrid();
   }
   const zin = Array.isArray(snap.zs) ? snap.zs.map(a=>({netId:'z'+a[0],x:a[1],y:a[2],kind:a[3],face:a[4]/100,hp:a[5],moving:!!a[6],si:a[7],anim:a[8]/10})) : snap.zombies;
   if(Array.isArray(zin)){
@@ -6128,9 +6172,12 @@ function applySnapshot(snap){
     for(const o of oldA){if(o.dead&&(o._predT||0)>0&&!usedA.has(o)&&!nextA.includes(o))nextA.push(o);}
     animals=nextA;
   }
-  if(Number.isFinite(snap.day)) day=clamp(snap.day,1,9999);
-  if(Number.isFinite(snap.dark)) dark=clamp(snap.dark,0,1);
-  if(Number.isFinite(snap.T)) T=Math.max(0,snap.T);
+  const holdT=!!(P&&P.sleeping&&!MP.isHost&&Number.isFinite(snap.T)&&snap.T>T+30);   // convidado dormindo: o salto da noite chega pelo evento sleepSkip
+  if(!holdT){
+    if(Number.isFinite(snap.day)) day=clamp(snap.day,1,9999);
+    if(Number.isFinite(snap.dark)) dark=clamp(snap.dark,0,1);
+    if(Number.isFinite(snap.T)) T=Math.max(0,snap.T);
+  }
   if(snap.weather==='none'||snap.weather==='rain'||snap.weather==='snow'||snap.weather==='sand'){
     if(weather!==snap.weather){
       const prevW=weather;weather=snap.weather;setRain(weather==='rain');
@@ -6216,7 +6263,8 @@ function packSnapshot(){
     it:iPack,
     an:aPack,
     vehicles:vPack,vfull:fullV,
-    campfires:campfires.map(c=>({x:Math.round(c.x),y:Math.round(c.y),t:c.t||0,flicker:+(c.flicker||0).toFixed(2)}))
+    campfires:campfires.map(c=>({x:Math.round(c.x),y:Math.round(c.y),t:c.t||0,flicker:+(c.flicker||0).toFixed(2)})),
+    tents:tents.map(t=>[Math.round(t.x),Math.round(t.y)])
   };
 }
 function myNetId(){
@@ -6228,6 +6276,7 @@ function packMyPlayer(){
     x:Math.round(P.x),y:Math.round(P.y),face:+P.face.toFixed(2),
     moving:!!P.moving,sprint:!!P.sprint,weapon:P.weapon||'fists',swing:+(P.swing||0).toFixed(2),
     hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle,skin:SKIN_SEL};
+  if(P.sleeping){const sl=P.sleeping;p.sl=[SLC[sl.s]|0,sl.hx|0,sl.hy|0,sl.tent?1:0];}
   if(P.fish){p.fx=Math.round(P.fish.x);p.fy=Math.round(P.fish.y);p.fl=P.fish.ph?0:+Math.max(0,P.fish.wait-P.fish.t).toFixed(1);}
   if(P.inVehicle){
     const v=P.inVehicle;
@@ -7014,6 +7063,185 @@ function updateObserver(dt){
   }
 }
 
+
+/* ============ DORMIR (camas, camas de casal e barraca) ============
+   Só à noite (dark>=.5). Em dupla, a noite só passa quando TODOS os jogadores vivos estão deitados (o Host decide e avisa o convidado).
+   Ao amanhecer: vida e energia recuperam, fome e sede caem um pouco e o clima abre. Não dá para dormir sangrando, com fome/sede demais ou com zumbi por perto. */
+const SLC={t:0,b:1,l:2,r:3},SLI=['t','b','l','r'],SLEEP_BED={bed:1,bed2:2,bunk:1};
+const SLP={fade:0,total:1,asleep:1};
+function nearTent(x,y,r){for(const t of tents)if(Math.hypot(t.x-x,t.y-y)<r)return true;return false;}
+function tentSpot(){
+  if(P.inside||bldAt(P.x,P.y))return null;
+  for(const m of [22,14]){
+    for(const d of [40,52,64]){
+      for(const da of [0,.6,-.6,1.2,-1.2,1.9,-1.9,3.14]){
+        const a=(P.face||0)+da,x=Math.round(P.x+Math.cos(a)*d),y=Math.round(P.y+Math.sin(a)*d);
+        if(x<40||y<40||x>WW-40||y>WH-40)continue;
+        if(solidPoint(x,y,m)||pointInLake(x,y+12))continue;
+        if(selectedMap==='city'&&onCityRoad(x,y,24))continue;
+        if(tents.some(t=>Math.hypot(t.x-x,t.y-y)<56))continue;
+        return {x,y};
+      }
+    }
+  }
+  return null;
+}
+function tentSlots(t){return [{x:t.x-5,y:t.y-2,s:'t',hx:0,hy:-4,tent:1},{x:t.x+5,y:t.y-2,s:'t',hx:0,hy:-4,tent:1}];}
+function bedSlots(f){
+  const n=SLEEP_BED[f.k],out=[],horiz=(f.s==='t'||f.s==='b');
+  for(let i=0;i<n;i++){
+    const fr=n===1?.5:(i+.5)/n;let x,y,hx=0,hy=0;
+    if(horiz){x=f.x+f.w*fr;y=f.y+f.h/2;hy=f.s==='t'?-(f.h/2-4):(f.h/2-4);}
+    else{y=f.y+f.h*fr;x=f.x+f.w/2;hx=f.s==='l'?-(f.w/2-4):(f.w/2-4);}
+    out.push({x:Math.round(x),y:Math.round(y),s:f.s,hx:Math.round(hx),hy:Math.round(hy)});
+  }
+  return out;
+}
+function slotTaken(sl){
+  for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.sl&&rp.alive!==false&&Math.hypot(rp.x-sl.x,rp.y-sl.y)<7)return true;}
+  return false;
+}
+function findSleepSpot(){
+  if(!P||P.dead||P.inVehicle)return null;
+  let best=null,bd=1e9;
+  const b=P.inside;
+  if(b&&b.furn)for(const f of b.furn){
+    if(!SLEEP_BED[f.k])continue;
+    const dx=Math.max(f.x-P.x,0,P.x-f.x-f.w),dy=Math.max(f.y-P.y,0,P.y-f.y-f.h),d=Math.hypot(dx,dy);
+    if(d<22&&d<bd){bd=d;best={ref:f,slots:bedSlots(f)};}
+  }
+  for(const t of tents){const d=Math.hypot(t.x-P.x,t.y-P.y);if(d<40&&d<bd){bd=d;best={ref:t,slots:tentSlots(t),tent:true};}}
+  if(!best)return null;
+  const free=best.slots.filter(sl=>!slotTaken(sl));
+  if(!free.length){best.full=true;return best;}
+  free.sort((a,c)=>Math.hypot(a.x-P.x,a.y-P.y)-Math.hypot(c.x-P.x,c.y-P.y));
+  best.slot=free[0];
+  return best;
+}
+function sleepBlock(){
+  if(dark<.5)return 'Você só consegue dormir à noite';
+  if(P.bleed)return 'Estanque o sangramento antes de dormir';
+  if(P.food<15)return 'Fome demais para dormir';
+  if(P.water<15)return 'Sede demais para dormir';
+  for(const z of zombies)if(!z.dead&&Math.hypot(z.x-P.x,z.y-P.y)<150)return 'Há zumbis por perto';
+  if(GH.on)return 'Algo não está certo aqui...';
+  return null;
+}
+function trySleep(sp){
+  if(sp.full){toast('Esta cama já está ocupada');return;}
+  const why=sleepBlock();
+  if(why){toast(why);beep(150,.1,'square',.04);return;}
+  const sl=sp.slot;
+  if(P.fish)cancelFishing();
+  P.sleeping={s:sl.s,hx:sl.hx,hy:sl.hy,tent:!!sp.tent,ref:sp.ref,x:sl.x,y:sl.y,t:0};
+  P.x=sl.x;P.y=sl.y;P.moving=false;P.sprint=false;atkHeld=false;sprintHeld=false;
+  beep(300,.15,'sine',.03,-60);
+}
+function wakeSpotOk(x,y){
+  const b=P.inside;
+  if(b){
+    if(x<b.x+8||x>b.x+b.w-8||y<b.y+8||y>b.y+b.h-8)return false;
+    for(const f of b.furn)if(x>f.x-4&&x<f.x+f.w+4&&y>f.y-4&&y<f.y+f.h+4)return false;
+    for(const w of b.walls)if(x>w.x-4&&x<w.x+w.w+4&&y>w.y-4&&y<w.y+w.h+4)return false;
+    return true;
+  }
+  return !solidPoint(x,y,10);
+}
+function wakeUp(quiet){
+  const sl=P&&P.sleeping;if(!sl)return;
+  P.sleeping=null;
+  let c=[];
+  if(sl.tent){const t=sl.ref,sx=sl.x<t.x?-1:1;c=[[t.x+sx*10,t.y+22],[t.x+sx*10,t.y+32],[t.x+sx*32,t.y+8],[t.x-sx*10,t.y+24]];}
+  else{
+    const f=sl.ref,o=9,m={t:[sl.x,f.y+f.h+o],b:[sl.x,f.y-o],l:[f.x+f.w+o,sl.y],r:[f.x-o,sl.y]}[sl.s];
+    c=[m,[f.x+f.w+o,f.y+f.h/2],[f.x-o,f.y+f.h/2],[f.x+f.w/2,f.y+f.h+o],[f.x+f.w/2,f.y-o]];
+  }
+  for(const q of c)if(wakeSpotOk(q[0],q[1])){P.x=q[0];P.y=q[1];break;}
+  if(!quiet)beep(400,.08,'sine',.03,60);
+}
+function sleepTick(dt){
+  P.moving=false;P.sprint=false;
+  survivalTick(dt);
+  if(P.dead)return;
+  P.stam=Math.min(P._scap||100,P.stam+30*dt);
+  if(joy.active&&Math.hypot(joy.x,joy.y)>.45)wakeUp(false);
+}
+function sleepUpdate(dt){
+  if(!P||P.dead||!P.sleeping){SLP.fade=Math.max(0,SLP.fade-dt*1.5);return;}
+  const sl=P.sleeping;sl.t+=dt;SLP.fade=Math.min(1,sl.t/1.4);
+  if(dark<.45){wakeUp(true);toast('Amanheceu');return;}
+  let others=0,asleep=0,ready=true;
+  if(MP.active&&MP.conn&&MP.conn.open&&!(MP.isHost&&MP.guestAway)){
+    const now=performance.now();
+    for(const id in remotePlayers){
+      const rp=remotePlayers[id];if(!rp||rp.alive===false)continue;
+      others++;if(rp.sl){asleep++;if(now-(rp.slT||0)<1300)ready=false;}
+    }
+  }
+  SLP.total=others+1;SLP.asleep=asleep+1;
+  if(sl.t<1.5)return;
+  if(others===0){sleepDo();return;}
+  if(MP.isHost&&asleep===others&&ready)sleepDo();   // todos deitados: o Host passa a noite
+}
+function sleepDo(){
+  const hr=START_HOUR+T/DAY_SECONDS*24,h24=hr%24;
+  let target=Math.floor(hr/24)*24+6;if(h24>=6)target+=24;
+  const nT=(target-START_HOUR)/24*DAY_SECONDS;
+  weather='none';setRain(false);weatherTimer=rnd(120,240);
+  const who=[P];for(const id in remotePlayers){const r=remotePlayers[id];if(r&&r.alive!==false)who.push(r);}
+  zombies=zombies.filter(z=>z.dead||who.some(k=>Math.hypot(k.x-z.x,k.y-z.y)<380));   // os que estavam longe sumiram durante a noite
+  if(MP.active&&MP.isHost)sendEvt('sleepSkip',{T:nT});
+  sleepSkipApply(nT);
+  if(MP.active&&MP.isHost&&MP.conn&&MP.conn.open){try{MP.conn.send(packSnapshot());}catch(e){}}
+}
+function sleepSkipApply(nT){
+  const oldDay=day;
+  T=nT;
+  const hr=START_HOUR+T/DAY_SECONDS*24,nd=Math.floor(hr/24)+1;
+  day=nd;update._lastDay=nd;dark=darkness(hr%24);
+  if(nd>oldDay)dayAdvanced(nd-oldDay);
+  P.hp=Math.min(100,P.hp+22);P.food=Math.max(8,P.food-10);P.water=Math.max(8,P.water-14);
+  P.stam=100;P.exhausted=false;P.sick=0;P.temp=(P.temp||0)*.35;
+  wakeUp(true);SLP.fade=1;
+  toast('Você dormiu bem. Amanheceu!');
+  beep(520,.12,'sine',.04,80);setTimeout(()=>beep(700,.14,'sine',.04),120);
+}
+function drawSleeper(x,y,sl,look){
+  const hx=Math.round(x+sl.hx),hy=Math.round(y+sl.hy);
+  R(hx-3,hy-3,6,6,look.skin);R(hx-3,hy-3,6,2,look.hair);R(hx-2,hy+1,4,1,'rgba(30,20,20,.45)');
+  if(sl.s==='t')R(hx-4,hy+3,8,3,look.shirt);else if(sl.s==='b')R(hx-4,hy-6,8,3,look.shirt);
+  else if(sl.s==='l')R(hx+3,hy-4,3,8,look.shirt);else R(hx-6,hy-4,3,8,look.shirt);
+  ctx.save();ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
+  for(let i=0;i<3;i++){const ph=(T*.7+i*.33)%1;ctx.globalAlpha=Math.sin(ph*3.14)*.9;ctx.fillStyle='#e8e0cc';ctx.fillText('z',hx+6+ph*7,hy-5-ph*14);}
+  ctx.restore();
+}
+function drawTent(t){
+  const x=Math.round(t.x),y=Math.round(t.y);
+  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x,y+3,26,6,0,0,6.283);ctx.fill();
+  for(let r=0;r<22;r++){
+    const half=3+Math.round(r*.95),edge=r%7===6;
+    R(x-half,y-24+r,half,1,edge?'#4a6a3c':'#6d8f56');R(x,y-24+r,half,1,edge?'#33502c':'#4d7040');
+  }
+  R(x-1,y-26,2,3,'#a9c48a');
+  for(let r=8;r<22;r++){const dh=Math.round(1+(r-8)*.9);R(x-dh,y-24+r,dh*2,1,'#14181a');}          // entrada
+  R(x-8,y-9,6,6,'#8a3a3a');R(x-8,y-9,6,2,'#d6d2c4');R(x+2,y-9,6,6,'#3a5a8a');R(x+2,y-9,6,2,'#d6d2c4');  // dois sacos de dormir
+  R(x-25,y-1,2,3,'#5a3a24');R(x+23,y-1,2,3,'#5a3a24');
+  if(P.sleeping&&P.sleeping.ref===t)drawSleeper(P.x,P.y,P.sleeping,myLook());
+  for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.sl&&rp.sl.tent&&rp.alive!==false&&Math.hypot(rp.x-t.x,rp.y-t.y)<40)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));}
+}
+function sleepFx(){
+  if(!P||!(SLP.fade>.01))return;
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle='rgba(2,3,14,'+(.95*SLP.fade).toFixed(3)+')';ctx.fillRect(0,0,W,H);
+  if(P.sleeping&&SLP.fade>.55){
+    ctx.globalAlpha=Math.min(1,(SLP.fade-.55)*2.5);ctx.textAlign='center';
+    ctx.fillStyle='#E8E0CC';ctx.font='bold 20px "Courier New",monospace';ctx.fillText('Z z z',W/2,H/2-6+Math.sin(T*2)*3);
+    ctx.fillStyle='#8DA568';ctx.font='bold 10px "Courier New",monospace';
+    ctx.fillText(SLP.total>1?'Dormindo... '+SLP.asleep+'/'+SLP.total+(SLP.asleep<SLP.total?'  aguardando o parceiro':''):'Dormindo...',W/2,H/2+18);
+    ctx.fillStyle='rgba(232,224,204,.65)';ctx.font='8px "Courier New",monospace';ctx.fillText('Use LEVANTAR para acordar',W/2,H/2+34);
+  }
+  ctx.restore();
+}
 /* ============ ESPÍRITO (inspirado em Sadako) ============
    Só em algumas casas (sorteio fixo pela semente do mundo: os dois jogadores têm as mesmas casas assombradas).
    Ao pisar no cômodo assombrado: escuridão rápida, ruído e a aparição à frente (sem nada pular na tela), -25 de vida.
@@ -7355,6 +7583,11 @@ function furnDraw(c,f,ox,oy){
       else if(f.s==='b'){R(x+1,y+1,w-2,h-9,bc);R(x+2,y+h-7,w-4,5,'#f4f0e6');}
       else if(f.s==='l'){R(x+8,y+1,w-9,h-2,bc);R(x+2,y+2,5,h-4,'#f4f0e6');}
       else{R(x+1,y+1,w-9,h-2,bc);R(x+w-7,y+2,5,h-4,'#f4f0e6');}}break;
+    case 'bed2':R(x,y,w,h,'#4e3220');R(x+1,y+1,w-2,h-2,'#d6d2c4');{const bc=cols[sd%cols.length],hw=(w-6)>>1,hh=(h-6)>>1;
+      if(f.s==='t'){R(x+1,y+8,w-2,h-9,bc);R(x+2,y+2,hw,5,'#f4f0e6');R(x+w-2-hw,y+2,hw,5,'#f4f0e6');R(x+w/2,y+8,1,h-9,'rgba(0,0,0,.18)');}
+      else if(f.s==='b'){R(x+1,y+1,w-2,h-9,bc);R(x+2,y+h-7,hw,5,'#f4f0e6');R(x+w-2-hw,y+h-7,hw,5,'#f4f0e6');R(x+w/2,y+1,1,h-9,'rgba(0,0,0,.18)');}
+      else if(f.s==='l'){R(x+8,y+1,w-9,h-2,bc);R(x+2,y+2,5,hh,'#f4f0e6');R(x+2,y+h-2-hh,5,hh,'#f4f0e6');R(x+8,y+h/2,w-9,1,'rgba(0,0,0,.18)');}
+      else{R(x+1,y+1,w-9,h-2,bc);R(x+w-7,y+2,5,hh,'#f4f0e6');R(x+w-7,y+h-2-hh,5,hh,'#f4f0e6');R(x+1,y+h/2,w-9,1,'rgba(0,0,0,.18)');}}break;
     case 'wardrobe':R(x,y,w,h,'#5a3e26');R(x+1,y+1,w-2,h-2,'#7a583a');if(long){R(x+w/2,y+1,1,h-2,'#4a321e');R(x+w/2-2,y+h/2,1,2,'#d8b860');R(x+w/2+2,y+h/2,1,2,'#d8b860');}else{R(x+1,y+h/2,w-2,1,'#4a321e');}break;
     case 'nightstand':R(x,y,w,h,'#5a3e26');R(x+1,y+1,w-2,h-2,'#80603c');R(x+w/2-1,y+h/2-1,2,2,'#f0d070');break;
     case 'shelf':case 'aisle':{R(x,y,w,h,'#4e3622');R(x+1,y+1,w-2,h-2,'#6e4e30');
@@ -7489,14 +7722,14 @@ function render(){
       const rp=remotePlayers[id];
       if(!rp || rp.alive===false || rp.inVehicle) continue;
       if(rp.x<b.x||rp.x>b.x+b.w||rp.y<b.y||rp.y>b.y+b.h||!seeIn(b,rp.x,rp.y)) continue;
-      human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:rp.flash||0});
+      if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:rp.flash||0});
       const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
       ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
       ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
       if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
     }
     for(const an of animals)if(!an.dead&&an.x>=b.x&&an.x<=b.x+b.w&&an.y>=b.y&&an.y<=b.y+b.h&&seeIn(b,an.x,an.y))drawAnimal(an);
-    human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.weapon,swing:P.swing,flash:P.flash});
+    if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.weapon,swing:P.swing,flash:P.flash});
     for(const z of zombies)if(!z.dead&&z.x>=b.x&&z.x<=b.x+b.w&&z.y>=b.y&&z.y<=b.y+b.h&&seeIn(b,z.x,z.y)){
       human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,bloater:z.bloater||z.kind===7});
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
@@ -7527,7 +7760,7 @@ function render(){
     ctx.restore();
     // Screen overlays (flash, joystick, minimap) — shared with outdoor path
     ctx.setTransform(1,0,0,1,0,0);
-    ghostFx();
+    ghostFx();sleepFx();
     if(CFG.dmgflash&&flash>0){ctx.fillStyle='rgba(190,0,0,'+(flash*.7).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
     else if(CFG.screenflash&&P.hp<30&&!P.dead){ctx.fillStyle='rgba(120,0,0,'+(.1+.07*Math.sin(T*6)).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
     if(joy.active&&!P.inVehicle){
@@ -7540,7 +7773,7 @@ function render(){
     const mx=P.x/WW*76,my=P.y/WH*76;
     mm.fillStyle=Math.floor(T*2)%2?'#ffffff':'#4aa3ff';
     mm.fillRect(Math.round(mx)-2,Math.round(my)-2,4,4);
-    for(const c of campfires){mm.fillStyle='#ff8020';mm.fillRect(Math.round(c.x/WW*76)-1,Math.round(c.y/WH*76)-1,2,2);}
+    for(const c of campfires){mm.fillStyle='#ff8020';mm.fillRect(Math.round(c.x/WW*76)-1,Math.round(c.y/WH*76)-1,2,2);}for(const t of tents){mm.fillStyle='#8DA568';mm.fillRect(Math.round(t.x/WW*76)-1,Math.round(t.y/WH*76)-1,3,2);}
     for(const id in remotePlayers){
       const rp=remotePlayers[id];
       mm.fillStyle=rp.isHost?'#ff8080':'#80ffa0';
@@ -7685,21 +7918,24 @@ function render(){
   for(const d of decorations)if(d.x>vx0&&d.x<vx1&&d.y>vy0&&d.y<vy1+24)list.push({y:d.y,k:6,o:d});
   for(const r of rocks)if(r.x>vx0&&r.x<vx1&&r.y>vy0&&r.y<vy1+24)list.push({y:r.y,k:3,o:r});
   for(const c of campfires)if(c.x>vx0&&c.x<vx1&&c.y>vy0&&c.y<vy1)list.push({y:c.y,k:4,o:c});
+  for(const t of tents)if(t.x>vx0-30&&t.x<vx1+30&&t.y>vy0&&t.y<vy1+30)list.push({y:t.y,k:9,o:t});
   for(const z of zombies)if(!z.dead&&z.x>vx0&&z.x<vx1&&z.y>vy0&&z.y<vy1)list.push({y:z.y,k:1,o:z});
   for(const a of animals)if(!a.dead&&a.x>vx0&&a.x<vx1&&a.y>vy0&&a.y<vy1)list.push({y:a.y,k:7,o:a});
   for(const id in remotePlayers){
     const rp=remotePlayers[id];
     // Hide character sprite while remote is driving — only the car is shown
     if(rp.inVehicle) continue;
+    if(rp.sl&&rp.sl.tent) continue;
     if(rp.x>vx0&&rp.x<vx1&&rp.y>vy0&&rp.y<vy1)list.push({y:rp.y,k:5,o:rp});
   }
   if(OBS.on&&!P.inside)list.push({y:OBS.y,k:8,o:OBS});
-  if(!P.inVehicle)list.push({y:P.y,k:2,o:P});
+  if(!P.inVehicle&&!(P.sleeping&&P.sleeping.tent))list.push({y:P.y,k:2,o:P});
   list.sort((a,b)=>a.y-b.y);
   for(const e of list){
     if(e.k===0)drawTree(e.o);
     else if(e.k===3)drawRock(e.o);
     else if(e.k===4)drawCampfire(e.o);
+    else if(e.k===9)drawTent(e.o);
     else if(e.k===6)drawDecoration(e.o);
     else if(e.k===7){ drawAnimal(e.o); }
     else if(e.k===8){ drawObserver(e.o); }
@@ -7710,14 +7946,14 @@ function render(){
     }else if(e.k===5){
       const rp=e.o;
       if(rp.alive!==false){
-        human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:rp.flash||0});
+        if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,anim:rp.anim||0,wpn:rp.weapon||'fists',swing:rp.swing||0,flash:rp.flash||0});
         const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
         ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
         ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
         if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
       }
     }else{
-      human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.weapon,swing:P.swing,flash:P.flash});
+      if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.weapon,swing:P.swing,flash:P.flash});
     }
   }
   for(const b of blds)if(vis(b)&&b.roofA>.02)drawRoof(b);
@@ -7819,6 +8055,7 @@ function render(){
     ctx.imageSmoothingEnabled=false;
   }
   ctx.setTransform(1,0,0,1,0,0);
+  sleepFx();
   if(OBS.vis||OBS.glitch>0){
     if(OBS.vis){const va=.32*OBS.alpha,g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.65);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+va.toFixed(3)+')');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
     if(OBS.glitch>0){for(let i=0;i<9;i++){ctx.fillStyle=Math.random()<.5?'rgba(255,255,255,.12)':'rgba(0,0,0,.28)';ctx.fillRect(0,Math.random()*H,W,1+Math.random()*3*(OBS.glitch*4));}}
@@ -7839,7 +8076,7 @@ function render(){
     const mx=P.x/WW*76,my=P.y/WH*76;
     mm.fillStyle=Math.floor(T*2)%2?'#ffffff':'#4aa3ff';
     mm.fillRect(Math.round(mx)-2,Math.round(my)-2,4,4);
-    for(const c of campfires){mm.fillStyle='#ff8020';mm.fillRect(Math.round(c.x/WW*76)-1,Math.round(c.y/WH*76)-1,2,2);}
+    for(const c of campfires){mm.fillStyle='#ff8020';mm.fillRect(Math.round(c.x/WW*76)-1,Math.round(c.y/WH*76)-1,2,2);}for(const t of tents){mm.fillStyle='#8DA568';mm.fillRect(Math.round(t.x/WW*76)-1,Math.round(t.y/WH*76)-1,3,2);}
     for(const id in remotePlayers){
       const rp=remotePlayers[id];
       mm.fillStyle=rp.isHost?'#ff8080':'#80ffa0';
