@@ -1713,13 +1713,13 @@ function fishWeights(){
 }
 
 const WEAPONS={
-  fists:{n:'Mãos',dmg:1,range:18,cd:.5,kb:40,melee:true,chopRate:0.4},
-  bat:{n:'Taco',dmg:2.5,range:24,cd:.55,kb:120,melee:true,chopRate:0.6},
-  axe:{n:'Machado',dmg:5,range:24,cd:.65,kb:110,melee:true,chopRate:1.5},
-  pickaxe:{n:'Picareta',dmg:3.5,range:20,cd:.6,kb:100,melee:true,chopRate:0.7,mines:true},
-  sword:{n:'Espada',dmg:6,range:28,cd:.5,kb:130,melee:true,chopRate:0.9},
-  spear:{n:'Lança',dmg:4.5,range:34,cd:.65,kb:80,melee:true,chopRate:0.7},
-  bow:{n:'Arco',dmg:8,range:175,cd:.85,kb:70,firearm:true,bow:true,spread:.04},
+  fists:{n:'Mãos',dmg:1,range:18,cd:.5,kb:40,melee:true,chopRate:0.4,wood:[2,2]},
+  bat:{n:'Taco',dmg:2.5,range:24,cd:.5,kb:150,melee:true,chopRate:0.7,wood:[2,3],stun:.8,arc:1.2},
+  axe:{n:'Machado',dmg:5.5,range:26,cd:.85,kb:120,melee:true,chopRate:2,wood:[4,6],arc:2.0},
+  pickaxe:{n:'Picareta',dmg:3.5,range:20,cd:.6,kb:100,melee:true,chopRate:0.85,wood:[3,3],mines:true,pierce:true,arc:1.0},
+  sword:{n:'Espada',dmg:6,range:28,cd:.42,kb:90,melee:true,chopRate:1.4,wood:[3,4],arc:1.5,combo:true},
+  spear:{n:'Lança',dmg:4.5,range:40,cd:.7,kb:30,melee:true,chopRate:0.85,wood:[3,3],pierce:true,arc:.3},
+  bow:{n:'Arco',dmg:8,range:175,cd:.85,kb:70,firearm:true,bow:true,spread:.04,pierce:true},
   pistol:{n:'Pistola',dmg:4,range:190,cd:.4,kb:60,firearm:true,fireRate:1},
   smg:{n:'SMG',dmg:2.5,range:130,cd:.11,kb:40,firearm:true,auto:true,spread:.06},
   shotgun:{n:'Shotgun',dmg:6,range:110,cd:.85,kb:180,firearm:true,pellets:5,spread:.35},
@@ -1727,11 +1727,11 @@ const WEAPONS={
   fishingrod:{n:'Vara de Pesca',dmg:.5,range:20,cd:.5,kb:15,melee:true,chopRate:.2,rod:true}
 };
 const RECIPES=[
-  {out:'pickaxe',  need:{wood:2,stone:2}, label:'Picareta',        desc:'Quebra pedras + arma (dano 3.5)' },
-  {out:'axe',      need:{wood:3,stone:4}, label:'Machado',         desc:'Corta árvores rápido (dano 5)' },
-  {out:'sword',    need:{wood:2,stone:5}, label:'Espada',          desc:'Dano alto (6), alcance médio' },
-  {out:'spear',    need:{wood:3,stone:2}, label:'Lança',           desc:'Maior alcance (34), dano 4.5' },
-  {out:'bat',      need:{wood:3},         label:'Taco',            desc:'Arma branca básica (dano 2.5)' },
+  {out:'pickaxe',  need:{wood:2,stone:2}, label:'Picareta',        desc:'Única que quebra pedras (5 golpes). Fura armadura leve (dano 3.5)' },
+  {out:'axe',      need:{wood:3,stone:4}, label:'Machado',         desc:'Melhor para cortar árvores: 2 golpes, 4 a 6 madeiras. Arco acerta vários, lento (dano 5.5)' },
+  {out:'sword',    need:{wood:3,stone:6}, label:'Espada',          desc:'Rápida, combo a cada 3 golpes. Corta árvore em 3 golpes (dano 6)' },
+  {out:'spear',    need:{wood:4,stone:3}, label:'Lança',           desc:'Perfura em linha e ignora armadura (alcance 40)' },
+  {out:'bat',      need:{wood:3},         label:'Taco',            desc:'Atordoa o zumbi, mas fraca contra blindados (dano 2.5)' },
   {out:'bow',      need:{wood:4,stone:1}, label:'Arco',            desc:'Silencioso, usa flechas (dano 8)' },
   {out:'arrows',   need:{wood:2,stone:1}, label:'Flechas (x6)',    desc:'Munição do arco' },
   {out:'fishingrod',need:{wood:3,stone:1}, label:'Vara de Pesca',   desc:'Lance a isca no lago e pesque (só mapas com lago)', lake:true },
@@ -1766,17 +1766,17 @@ function lakeLoot(t){const o=mapHasLake()?Object.assign({fishingrod:1.5},t):t;re
 const OUT_LOOT={stone:6,bat:.25};
 
 const ZTYPES=[
-  {name:'Comum',    hp:5,  spd:34, dmg:9,  r:5, color:'#7a9a5a'},
-  {name:'Rápido',   hp:3,  spd:64, dmg:7,  r:5, color:'#a0b070'},
-  {name:'Brute',    hp:20, spd:22, dmg:24, r:7, color:'#8a5a4a'},
-  {name:'Chefe',    hp:34, spd:36, dmg:28, r:8, color:'#556b2f'},
-  {name:'Spitter',  hp:8,  spd:30, dmg:13, r:6, color:'#7ac070', ranged:true, range:190},
-  {name:'Crawler',  hp:4,  spd:50, dmg:12, r:5, color:'#6a8060', crawler:true},
-  {name:'Screamer', hp:9,  spd:40, dmg:9,  r:6, color:'#c0a0a0', screams:true},
+  {name:'Comum',    hp:8,  spd:34, dmg:9,  r:5, color:'#7a9a5a'},
+  {name:'Rápido',   hp:5,  spd:64, dmg:7,  r:5, color:'#a0b070'},
+  {name:'Brute',    hp:30, spd:22, dmg:24, r:7, color:'#8a5a4a'},
+  {name:'Chefe',    hp:46, spd:36, dmg:28, r:8, color:'#556b2f'},
+  {name:'Spitter',  hp:11,  spd:30, dmg:13, r:6, color:'#7ac070', ranged:true, range:190},
+  {name:'Crawler',  hp:6,  spd:50, dmg:12, r:5, color:'#6a8060', crawler:true},
+  {name:'Screamer', hp:12,  spd:40, dmg:9,  r:6, color:'#c0a0a0', screams:true},
   // Novos
-  {name:'Inchado',  hp:16, spd:18, dmg:18, r:7, color:'#5a8a4a', bloater:true},   // tank tóxico
-  {name:'Berserker',hp:6,  spd:72, dmg:14, r:5, color:'#c05040', berserk:true},   // muito rápido
-  {name:'Yeti',     hp:26, spd:46, dmg:26, r:8, color:'#dfe8f0', yeti:true}        // só aparece na nevasca do mapa de Neve
+  {name:'Inchado',  hp:22, spd:18, dmg:18, r:7, color:'#5a8a4a', bloater:true},   // tank tóxico
+  {name:'Berserker',hp:9,  spd:72, dmg:14, r:5, color:'#c05040', berserk:true},   // muito rápido
+  {name:'Yeti',     hp:34, spd:46, dmg:26, r:8, color:'#dfe8f0', yeti:true}        // só aparece na nevasca do mapa de Neve
 ];
 /* ============ DIFICULDADE CRESCENTE ============
    Curva suave que sobe a cada dia e se estabiliza (nada de salto de dificuldade).
@@ -2807,7 +2807,7 @@ function cityRubble(b,n){
     for(const q of blds) if(x>q.x-34&&x<q.x+q.w+34&&y>q.y-34&&y<q.y+q.h+34){bad=true;break;}
     if(bad) continue;
     if(rocks.some(r=>Math.hypot(r.x-x,r.y-y)<22)) continue;
-    rocks.push({x:Math.round(x),y:Math.round(y),hp:4,k:rint(0,4),seed:_rng()}); i++;
+    rocks.push({x:Math.round(x),y:Math.round(y),hp:5,k:rint(0,4),seed:_rng()}); i++;
   }
 }
 function cityPark(bx,by,bw,bh,keepX,keepY,keepR){
@@ -2818,7 +2818,7 @@ function cityPark(bx,by,bw,bh,keepX,keepY,keepR){
     if(keepR&&Math.hypot(x-keepX,y-keepY)<keepR) continue;
     if(pts.some(p=>Math.hypot(p.x-x,p.y-y)<34)) continue;
     pts.push({x,y}); i++;
-    trees.push({x:Math.round(x),y:Math.round(y),k:_rng()<.5?1:8,hp:3,seed:_rng()});
+    trees.push({x:Math.round(x),y:Math.round(y),k:_rng()<.5?1:8,hp:4,seed:_rng()});
   }
   for(let i=0;i<3;i++){
     const x=rnd(x0+10,x1-10), y=rnd(y0+10,y1-10);
@@ -2830,7 +2830,7 @@ function cityPark(bx,by,bw,bh,keepX,keepY,keepR){
     const x=rnd(x0+10,x1-10), y=rnd(y0+10,y1-10);
     if(keepR&&Math.hypot(x-keepX,y-keepY)<keepR) continue;
     if(pts.some(p=>Math.hypot(p.x-x,p.y-y)<30)) continue;
-    rocks.push({x:Math.round(x),y:Math.round(y),hp:4,k:rint(0,4),seed:_rng()}); i++;
+    rocks.push({x:Math.round(x),y:Math.round(y),hp:5,k:rint(0,4),seed:_rng()}); i++;
   }
 }
 function genCity(){
@@ -3512,7 +3512,7 @@ function genWorld(seed) {
           const ang=(j/pn)*6.283+rnd(-.25,.25), d=mainR*rnd(1.18,1.5);
           const px=cx+Math.cos(ang)*d, py=cy+Math.sin(ang)*d;
           if(onCityRoad(px,py,20)) continue;
-          trees.push({x:Math.round(px),y:Math.round(py),k:6,hp:3,seed:_rng()});
+          trees.push({x:Math.round(px),y:Math.round(py),k:6,hp:4,seed:_rng()});
         }
       }
     }
@@ -3571,7 +3571,7 @@ function genWorld(seed) {
     else if(selectedMap==='desert') k = _rng()<.55?3:(_rng()<.5?6:7); // dead / palm / scrub
     else if(selectedMap==='city') k = _rng()<.4?1:(_rng()<.5?0:8); // oak / bushy / street tree
     else k = _rng()<.35?0:(_rng()<.5?1:(_rng()<.6?9:10)); // pine-ish / oak / birch / big
-    trees.push({x:Math.round(x),y:Math.round(y),k:k,hp:3,seed:_rng()});count++;
+    trees.push({x:Math.round(x),y:Math.round(y),k:k,hp:4,seed:_rng()});count++;
   }
 
   const rockCount=selectedMap==='desert'?240:selectedMap==='snow'?260:selectedMap==='city'?0:320;
@@ -3586,7 +3586,7 @@ function genWorld(seed) {
     let nearLake=false;
     for(const l of lakes)if(Math.hypot(l.cx-x,l.cy-y)<l.r+30){nearLake=true;break;}
     if(nearLake)continue;
-    rocks.push({x:Math.round(x),y:Math.round(y),hp:4,k:rint(0,4),seed:_rng()});
+    rocks.push({x:Math.round(x),y:Math.round(y),hp:5,k:rint(0,4),seed:_rng()});
     rc++;
   }
 
@@ -4970,13 +4970,33 @@ function addFloater(x,y,txt,col){
   floaters.push({x,y,txt:String(txt),col:col||'#ffe0a0',t:0.9,vy:-28});
   if(floaters.length>24) floaters.shift();
 }
-function damageZ(z,dmg,kx,ky,fromNet){
+/* Armadura: Brute, Chefe, Yeti e Spitter (traje) resistem; capacete do operário e do soldado também. Lança, picareta e arco perfuram */
+function zArmor(z){
+  const k=z.kind|0;
+  if(k===3)return 2.5;
+  if(k===2||k===9)return 1.5;
+  if(k===4)return .8;
+  if(k===0){const v=(z.si|0)%5;return v===3?1:(v===0?.5:0);}
+  return 0;
+}
+/* Peso: quanto o zumbi resiste a empurrão e atordoamento */
+function zHeavy(z){const k=z.kind|0;return (k===2||k===3||k===7||k===9)?.3:(k===8?.6:1);}
+function damageZ(z,dmg,kx,ky,fromNet,wn){
   if(z.dead)return;
-  z.hit=.25;z.vx+=(kx||0);z.vy+=(ky||0);z.lock=5;z.alert=0;
+  const W=wn&&WEAPONS[wn]?WEAPONS[wn]:null;
+  let armored=false;
+  if(!fromNet){ // armadura é calculada em quem ataca; o valor final vai pela rede
+    const ar=zArmor(z);
+    if(ar>0){const eff=Math.max(dmg*.4,dmg-ar*((W&&W.pierce)?.3:1));armored=eff<dmg*.75;dmg=eff;}
+  }
+  const hv=zHeavy(z);
+  z.hit=.25;z.vx+=(kx||0)*hv;z.vy+=(ky||0)*hv;z.lock=5;z.alert=0;
+  if(W&&W.stun&&z.hp>0){z.stun=Math.max(z.stun||0,W.stun*hv);z.lunge=0;}
+  if(armored){for(let i=0;i<4;i++)parts.push({x:z.x,y:z.y-8,vx:rnd(-60,60),vy:rnd(-50,0),t:.25,c:'#d0d4dc'});try{beep(1100,.04,'square',.04,-300);}catch(e){}}
   z._predT=0.5; // keep local prediction for 0.5s so snapshot doesn't erase guest damage
   for(let i=0;i<7;i++)parts.push({x:z.x,y:z.y-7,vx:rnd(-50,50),vy:rnd(-60,10),t:rnd(.25,.55),c:'#a01818',g:1});
   // Flash no zumbi + número de dano
-  addFloater(z.x, z.y-14, Math.round(dmg*10)/10, dmg>=10?'#ff6060':'#ffe080');
+  addFloater(z.x, z.y-14, Math.round(dmg*10)/10, armored?'#aab4c4':(dmg>=10?'#ff6060':'#ffe080'));
   hitFlesh();
   if(!fromNet) hitConfirm();
   shake=Math.max(shake, dmg>=10?3:1.5);
@@ -4985,7 +5005,7 @@ function damageZ(z,dmg,kx,ky,fromNet){
     sendEvt('zombieDmg', {
       id:z.netId,
       x:Math.round(z.x), y:Math.round(z.y),
-      dmg:dmg, kind:z.kind
+      dmg:dmg, kind:z.kind, wp:wn||''
     });
   }
   z.hp-=dmg;
@@ -5215,6 +5235,16 @@ function autoSwitchMelee(){
   toast('Sem munição! Equipou: '+WEAPONS[best].n);
   beep(300,.06,'square',.045);
 }
+/* Espada: 3º golpe seguido (em até 1,3 s) é um combo com +60% de dano */
+function meleeDmg(w){
+  let d=w.dmg||8;
+  if(w.combo){
+    const now=performance.now();
+    P._cmb=(now-(P._cmbT||0)<1300)?(P._cmb||0)+1:1;P._cmbT=now;
+    if(P._cmb>=3){P._cmb=0;d*=1.6;try{addFloater(P.x,P.y-24,'COMBO','#ffb040');}catch(e){}}
+  }
+  return d;
+}
 function attack(){
   if(state!=='play'||P.cd>0||P.inVehicle)return;
   if(P.sleeping){wakeUp(false);P.cd=.4;return;}
@@ -5235,15 +5265,15 @@ function attack(){
       P.face=Math.atan2(zNear.y-P.y,zNear.x-P.x);
       P.cd=w.cd;P.swing=.18;
       const fx=Math.cos(P.face),fy=Math.sin(P.face);
-      let hit=0;
+      let hit=0;const md=meleeDmg(w);
       for(const z of zombies){
         if(z.dead)continue;
         const dx=z.x-P.x,dy=z.y-P.y,d=Math.hypot(dx,dy);
         if(d>w.range+z.r)continue;
         if(wallBlocks(P.x,P.y,z.x,z.y))continue;
-        if(Math.abs(wrap(Math.atan2(dy,dx)-P.face))<1.2){damageZ(z,w.dmg||8,fx*(w.kb||40),fy*(w.kb||40));hit++;}
+        if(Math.abs(wrap(Math.atan2(dy,dx)-P.face))<(w.arc||1.2)){damageZ(z,md,fx*(w.kb||40),fy*(w.kb||40),false,P.weapon);hit++;}
       }
-      if(!hit) damageZ(zNear,w.dmg||8,fx*(w.kb||40),fy*(w.kb||40));
+      if(!hit) damageZ(zNear,md,fx*(w.kb||40),fy*(w.kb||40),false,P.weapon);
       makeNoise(P.x,P.y,50);
       return;
     }
@@ -5267,7 +5297,7 @@ function attack(){
     }
     if(hitTree){
       P.cd=w.cd;P.swing=.18;
-      hitTree.hp=(hitTree.hp||3)-(w.chopRate||0.5);
+      hitTree.hp=(hitTree.hp||4)-(w.chopRate||0.5);
       shake=3;
       chopWood();
       for(let i=0;i<5;i++)parts.push({x:hitTree.x,y:hitTree.y-10,vx:rnd(-35,35),vy:rnd(-45,0),t:.4,c:'#8a5a2a'});
@@ -5275,7 +5305,7 @@ function attack(){
       if(hitTree.hp <= 0){
         trees.splice(trees.indexOf(hitTree), 1);
         rebuildSolidGrid();
-        const n = rint(2, 4);
+        const n = w.wood ? rint(w.wood[0], w.wood[1]) : 2;
         for(let i = 0; i < n; i++){
           if(!addItem('wood')){
             items.push({ t: 'wood', x: hitTree.x, y: hitTree.y });
@@ -5290,6 +5320,9 @@ function attack(){
     }
   }
 
+  if(!w.mines&&w.melee&&!w.rod&&(P._rockHintT||0)<performance.now()){
+    for(const r of rocks){if(Math.hypot(r.x-P.x,r.y-P.y)<26){P._rockHintT=performance.now()+4000;toast('Só a picareta quebra pedras');break;}}
+  }
   if(w.mines){
     let hitRock=null,td=34;
     for(const r of rocks){const d=Math.hypot(r.x-P.x,r.y-P.y);if(d<td){td=d;hitRock=r;}}
@@ -5334,7 +5367,7 @@ function attack(){
       const tr={x1:P.x+fx*9,y1:P.y-5+fy*9,x2:res.x,y2:res.y,t:w.bow?.14:(w.heavy?.12:.07)};
       tracers.push(tr);
       shotTracers.push({x1:Math.round(tr.x1),y1:Math.round(tr.y1),x2:Math.round(tr.x2),y2:Math.round(tr.y2)});
-      if(res.z){damageZ(res.z,w.dmg*(Math.random()<.15?2:1),fx*w.kb,fy*w.kb);hits++;}
+      if(res.z){damageZ(res.z,w.dmg*(Math.random()<.15?2:1),fx*w.kb,fy*w.kb,false,P.weapon);hits++;}
       else if(res.animal){ damageAnimal(res.animal,w.dmg); hits++; }
     }
     if(hits===0){
@@ -5348,7 +5381,7 @@ function attack(){
       }
       if(best){
         const fx=Math.cos(P.face),fy=Math.sin(P.face);
-        damageZ(best,w.dmg,fx*w.kb,fy*w.kb);
+        damageZ(best,w.dmg,fx*w.kb,fy*w.kb,false,P.weapon);
         hits++;
       } else {
         // Aim assist em animais (todas as armas de fogo)
@@ -5384,13 +5417,13 @@ function attack(){
     if(tgt)P.face=Math.atan2(tgt.y-P.y,tgt.x-P.x);
     P.cd=w.cd;P.swing=.18;
     const fx=Math.cos(P.face),fy=Math.sin(P.face);
-    let hit=0;
+    let hit=0;const md=meleeDmg(w);
     for(const z of zombies){
       if(z.dead)continue;
       const dx=z.x-P.x,dy=z.y-P.y,d=Math.hypot(dx,dy);
       if(d>w.range+z.r)continue;
       if(wallBlocks(P.x,P.y,z.x,z.y))continue;
-      if(Math.abs(wrap(Math.atan2(dy,dx)-P.face))<1.1){damageZ(z,w.dmg,fx*w.kb,fy*w.kb);hit++;}
+      if(Math.abs(wrap(Math.atan2(dy,dx)-P.face))<(w.arc||1.1)){damageZ(z,md,fx*w.kb,fy*w.kb,false,P.weapon);hit++;}
     }
     if(!hit)beep(180,.07,'triangle',.03,-60);
     makeNoise(P.x,P.y,50);
@@ -5690,6 +5723,7 @@ function updateZ(z,dt){
     if(Math.abs(z.vx)<2)z.vx=0;
     if(Math.abs(z.vy)<2)z.vy=0;
   }
+  if(z.stun>0){z.stun-=dt;z.moving=false;z.cd=Math.max(z.cd,.2);return;} // atordoado pelo taco: não anda nem ataca
   // Choose nearest living player (local or remote) so both players aggro zombies
   let targetX=P.x, targetY=P.y, targetSprint=P.sprint&&P.moving, targetMoving=P.moving, targetDead=!!P.dead, targetIsLocal=true, targetInCar=!!P.inVehicle;
   let bestD=P.dead?1e9:Math.hypot(P.x-z.x,P.y-z.y);
@@ -6453,7 +6487,7 @@ function handleEvt(kind, data){
       }
     }
     if(best && Number.isFinite(data.dmg)){
-      damageZ(best, clamp(data.dmg,0,100), 0, 0, true);
+      damageZ(best, clamp(data.dmg,0,100), 0, 0, true, (typeof data.wp==='string'&&WEAPONS[data.wp])?data.wp:null);
     }
   } else if(kind==='shot'){
     if(MP.isHost&&Number.isFinite(data.x)&&Number.isFinite(data.y))scareBirds(data.x,data.y,(WEAPONS[data.weapon]&&WEAPONS[data.weapon].heavy)?700:420); // tiro do convidado espanta as aves
@@ -7403,6 +7437,8 @@ function humanBody(R,o,face){
   const z=!!o.zombie,kind=o.kind|0,zv=o.zv|0;
   const S=z?zstyle(kind,zv):o;
   const back=fy<-.5,front=fy>.2,ex=fx>.45?1:(fx<-.45?-1:0);
+  const eL=ex>0?0:(ex<0?-3:-2),eR=ex>0?2:(ex<0?-1:1);
+  const sbn=h=>{if(ex>=0)R(-3,-13,1,h,hair);if(ex<=0)R(2,-13,1,h,hair);}; // costeleta só do lado de trás do rosto
   const step=o.moving?Math.sin(o.anim):0;
   const l1=step>.3?-1:0,l2=step<-.3?-1:0;
   const skin=o.skin,shirt=o.shirt,hair=S.hair||o.hair||'#222';
@@ -7500,20 +7536,20 @@ function humanBody(R,o,face){
     if(z){
       const ec=ZEYE[kind]||'#f0e060';
       if(hs==='mask'){/* viseira desenhada abaixo */}
-      else{R(-3+ex,-12,2,2,'#1a1410');R(1+ex,-12,2,2,'#1a1410');R(-2+ex,-12,1,1,ec);R(1+ex,-12,1,1,ec);
+      else{const so=ex>0?[-1,1]:(ex<0?[-3,-1]:[-3,1]);R(so[0],-12,2,2,'#1a1410');R(so[1],-12,2,2,'#1a1410');R(eL,-12,1,1,ec);R(eR,-12,1,1,ec);
         if(front&&kind!==4)R(-1,-10,2,1,kind===6?'#400':'#7a1010');}
     }else{
-      R(-2+ex,-12,1,1,'#111');R(1+ex,-12,1,1,'#111');
+      R(eL,-12,1,1,'#111');R(eR,-12,1,1,'#111');
       if(S.beard){R(-3,-11,6,2,hair);R(-1,-11,2,1,skin);}
     }
   }
   // cabelo / chapéu (camada da frente)
   switch(hs){
     case 'short':
-      if(back)R(-3,-15,6,5,hair);else{R(-3,-15,6,2,hair);R(-3,-13,1,1,hair);R(2,-13,1,1,hair);}break;
+      if(back)R(-3,-15,6,5,hair);else{R(-3,-15,6,2,hair);sbn(1);}break;
     case 'spiky':
       R(-3,-15,6,back?5:2,hair);R(-3,-17,1,2,hair);R(-1,-18,1,3,hair);R(1,-17,1,2,hair);R(2,-16,1,1,hair);
-      if(!back){R(-3,-13,1,1,hair);R(2,-13,1,1,hair);}break;
+      if(!back)sbn(1);break;
     case 'afro':
       if(back)R(-4,-17,8,8,hair);else{R(-4,-17,8,4,hair);R(-4,-13,1,2,hair);R(3,-13,1,2,hair);}
       R(-3,-18,6,1,hair);break;
@@ -7521,29 +7557,29 @@ function humanBody(R,o,face){
       const hat=S.hat||'#8a3a2a';
       R(-3,-16,6,3,hat);R(-3,-17,6,1,Sh(hat,.2));
       if(back)R(-3,-13,6,3,hair);
-      else{R(-3,-13,1,1,hair);R(2,-13,1,1,hair);const bx=Math.round(fx*3),by=Math.round(fy*2)-13;R(bx-2,by,4,1,Sh(hat,-.35));}
+      else{sbn(1);const bx=Math.round(fx*3),by=Math.round(fy*2)-13;R(bx-2,by,4,1,Sh(hat,-.35));}
       break;}
     case 'long':
       R(-3,-15,6,2,hair);break;
     case 'pony':
-      R(-3,-16,6,1,hair);R(-3,-15,6,back?5:2,hair);if(!back){R(-3,-13,1,2,hair);R(2,-13,1,2,hair);}break;
+      R(-3,-16,6,1,hair);R(-3,-15,6,back?5:2,hair);if(!back)sbn(1);break;
     case 'buns':
-      R(-3,-15,6,back?5:2,hair);R(-4,-17,2,2,hair);R(2,-17,2,2,hair);if(!back){R(-3,-13,1,2,hair);R(2,-13,1,2,hair);}break;
+      R(-3,-15,6,back?5:2,hair);R(-4,-17,2,2,hair);R(2,-17,2,2,hair);if(!back)sbn(1);break;
     case 'pig':
-      R(-3,-15,6,back?5:2,hair);if(!back){R(-3,-13,1,1,hair);R(2,-13,1,1,hair);}break;
+      R(-3,-15,6,back?5:2,hair);if(!back)sbn(1);break;
     case 'band':
       R(-3,-15,6,back?5:2,hair);break;
     case 'bald':
       if(z&&kind===0)R(-3,-15,6,1,hair);if(z&&kind===0){R(-2,-14,2,1,'#e8e4d8');R(0,-13,3,1,'#e8e4d8');} break;
     case 'hard':
       R(-4,-17,8,3,'#c8a820');R(-3,-18,6,1,'#d8b830');R(-4,-14,8,1,'#8a7018');R(-1,-17,2,3,'#a88a18');R(1,-16,1,2,'#3a2a08');
-      if(!back){R(-3,-13,1,1,hair);R(2,-13,1,1,hair);}break;
+      if(!back)sbn(1);break;
     case 'helm':
       R(-4,-17,8,4,'#4a5a3a');R(-3,-18,6,1,'#566a44');R(-4,-13,8,1,'#2a3a22');R(-2,-16,2,1,'#2a3a22');R(1,-15,2,1,'#6a7a54');
       if(!back){R(-4,-12,1,3,'#2a3a22');R(3,-12,1,3,'#2a3a22');}break;
     case 'hood':{
       const hc=Sh(shirt,-.1);
-      if(back)R(-4,-17,8,8,hc);else{R(-4,-17,8,2,hc);R(-4,-15,2,6,hc);R(2,-15,2,6,hc);R(-2,-15,4,2,Sh(skin,-.4));}
+      if(back)R(-4,-17,8,8,hc);else{R(-4,-17,8,2,hc);R(-4,-15,2,3,hc);R(-4,-12,1,3,hc);R(2,-15,2,3,hc);R(3,-12,1,3,hc);R(-2,-15,4,2,Sh(skin,-.4));}
       break;}
     case 'mohawk':
       R(-1,-19,2,5,hair);R(-1,-14,2,back?5:1,hair);R(0,-20,1,1,hair);if(!back){R(-3,-15,6,1,Sh(skin,-.25));}break;
@@ -7589,9 +7625,10 @@ function drawHeld(wpn,hx,hy,a){
   ctx.drawImage(cv,(H.off||0)/sc-H.ax,-H.ay);
   ctx.restore();return true;
 }
-/* braço: do ombro até a mão, manga da cor da roupa e antebraço de pele */
+/* braço de 2 px de largura, contínuo: manga da cor da roupa e antebraço de pele (coordenadas = canto superior esquerdo) */
 function armTo(sx,sy,ex,ey,sleeve,skin){
-  for(let i=0;i<=3;i++)R(Math.round(sx+(ex-sx)*i/3)-1,Math.round(sy+(ey-sy)*i/3)-1,2,2,i<2?sleeve:skin);
+  const n=Math.max(Math.abs(ex-sx),Math.abs(ey-sy),1);
+  for(let i=0;i<=n;i++){const t=i/n;R(Math.round(sx+(ex-sx)*t),Math.round(sy+(ey-sy)*t),2,2,t<.5?sleeve:skin);}
 }
 const TWO_HAND={rifle:1,shotgun:1,smg:1,spear:1,fishingrod:1,pickaxe:1,axe:1,sword:0,bow:1};
 function human(x,y,face,o){
@@ -7614,16 +7651,18 @@ function human(x,y,face,o){
   }
   shadow(0,2,6,3);
   humanBody(R,o,face);
-  const hx=Math.round(fx*6),hy=Math.round(fy*4)-5;
+  let hx=Math.round(fx*6),hy=Math.round(fy*4)-5;
   if(o.zombie){
     const px=Math.round(-fy*3),py=Math.round(fx*3);
     const l=o.lunge?3:0;
     const zs=zstyle(o.kind|0,o.zv|0),zsl=(zs.os==='bare'||zs.os==='tank'||zs.os==='dress'||zs.os==='gown')?o.skin:(zs.os==='fur'?'#f4f8fb':o.shirt);
-    const ax=hx+px+Math.round(fx*l),ay=hy+py+Math.round(fy*l),bx2=hx-px+Math.round(fx*l),by2=hy-py+Math.round(fy*l);
-    const aL=ax<bx2||(ax===bx2&&ay<by2);
-    armTo(aL?-4:4,-8,ax,ay,zsl,o.skin);armTo(aL?4:-4,-8,bx2,by2,zsl,o.skin);
-    R(ax-1,ay-1,3,3,o.skin);R(bx2-1,by2-1,3,3,o.skin);
-    R(ax,ay,1,1,Sh(o.skin,-.3));R(bx2,by2,1,1,Sh(o.skin,-.3));
+    const sv=Math.abs(fx)>.6,l2=(o.lunge?3:0);
+    const sLx=sv?(fx>0?2:-4):-5,sRx=sv?(fx>0?2:-4):4;
+    const aLx=sLx+Math.round(fx*(5+l2))+(sv?0:-1),aLy=-7+Math.round(fy*(3+l2))+(sv?-2:0);
+    const aRx=sRx+Math.round(fx*(5+l2))+(sv?0:1),aRy=-7+Math.round(fy*(3+l2))+(sv?2:0);
+    armTo(sLx,-9,aLx,aLy,zsl,o.skin);armTo(sRx,-9,aRx,aRy,zsl,o.skin);
+    R(aLx-.5,aLy-.5,3,3,o.skin);R(aRx-.5,aRy-.5,3,3,o.skin);
+    R(aLx+1,aLy+1,1,1,Sh(o.skin,-.3));R(aRx+1,aRy+1,1,1,Sh(o.skin,-.3));
     if(o.spitter)R(hx+fx*2,hy+fy*2-1,3,2,'#40ff40');
     if(o.wind)R(hx+fx*2-2,hy+fy*2-3,6,5,'#b0ff80'); // pré-aviso do cuspe
     if(o.screamer){R(hx+fx*2,hy+fy*2-2,3,3,'#600');R(hx+fx*2,hy+fy*2-1,2,1,'#fff');}
@@ -7645,17 +7684,16 @@ function human(x,y,face,o){
     if(o.boss){R(hx-3,hy-3,7,2,'#ffe040');R(hx-3,hy-5,2,2,'#ffe040');R(hx+2,hy-5,2,2,'#ffe040');R(hx,hy-6,2,3,'#ffe040');}
   }else{
     {
-      const sl=(o.os==='tank'||o.os==='bare')?o.skin:o.shirt,sgn=fx>=-.15?1:-1;
+      const sl=(o.os==='tank'||o.os==='bare')?o.skin:o.shirt,sgn=fx>=-.15?1:-1,sv=Math.abs(fx)>.6;
       const two=TWO_HAND[o.wpn]&&!o.hold,st=o.moving?Math.round(Math.sin(o.anim)*1.5):0;
-      // braço principal (lado da mira) e braço de apoio
-      armTo(4*sgn,-8,hx,hy,sl,o.skin);
-      let ox,oy;
-      if(two){ox=Math.round(hx+fx*4);oy=Math.round(hy+fy*3);}
-      else{ox=-5*sgn+Math.round(fx*-1);oy=-3-st;}
-      armTo(-4*sgn,-8,ox,oy,sl,o.skin);
-      R(ox-1,oy-1,3,3,o.skin);
+      const mSx=sv?(fx>0?2:-4):(sgn>0?4:-5),oSx=sv?mSx:(sgn>0?-5:4);
+      const mx=mSx+Math.round(fx*5)+(sv?0:sgn),my=-6+Math.round(fy*3);
+      // braço de apoio primeiro (fica atrás): junto da arma com armas de duas mãos, solto ao lado nas outras
+      if(two&&sv)armTo(oSx,-8,mx+Math.round(fx*4),my+Math.round(fy*2)+1,sl,o.skin);
+      else armTo(oSx,-9,oSx,-5+st,sl,o.skin);
+      armTo(mSx,-9,mx,my,sl,o.skin);
+      hx=mx+1;hy=my+1;
     }
-    R(hx-1,hy-1,3,3,o.skin);
     let a=face;
     if(o.swing>0)a=face+(o.swing/.18-.5)*2.2;
     const wx=Math.cos(a),wy=Math.sin(a);
