@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.bitsurvival.game" version="1.0.0" xmlns="http://www.w3.org/ns/widgets">
+    <name>Project: Bit Survival</name>
+    <description>Um jogo de sobrevivencia zumbi em pixel art.</description>
+    <author email="seu-email@example.com">Emerson</author>
+    <content src="index.html" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <platform name="android">
+        <allow-intent href="market:*" />
+    </platform>
+</widget>
