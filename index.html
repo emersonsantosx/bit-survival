@@ -470,11 +470,11 @@ body.haschat #missions{right:140px}
 /* ===== Tela de SKINS ===== */
 .skin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px auto;max-width:340px}
 .screen .skin-opt{padding:8px 4px;display:flex;align-items:center;justify-content:center;min-height:0}
-.skin-opt canvas{width:36px;height:66px;image-rendering:pixelated;display:block}
+.skin-opt canvas{width:40px;height:65px;image-rendering:pixelated;display:block}
 @media (orientation:landscape) and (max-height:520px){
   #skinscreen .card{overflow-y:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start}
   #skinscreen .skin-grid{gap:6px;margin:6px auto}
-  .skin-opt canvas{width:30px;height:55px}
+  .skin-opt canvas{width:33px;height:54px}
 }
 .pxi{image-rendering:pixelated;image-rendering:crisp-edges;display:inline-block;vertical-align:middle;flex:0 0 auto}
 .row i{display:flex;align-items:center;justify-content:center}
@@ -598,14 +598,14 @@ body.haschat #missions{right:140px}
   <div class="card">
     <h2>SKINS</h2>
     <div class="skin-grid">
-      <button class="map-opt skin-opt selected" data-skin="0" aria-label="Skin 1"><canvas width="12" height="22"></canvas></button>
-      <button class="map-opt skin-opt" data-skin="1" aria-label="Skin 2"><canvas width="12" height="22"></canvas></button>
-      <button class="map-opt skin-opt" data-skin="2" aria-label="Skin 3"><canvas width="12" height="22"></canvas></button>
-      <button class="map-opt skin-opt" data-skin="3" aria-label="Skin 4"><canvas width="12" height="22"></canvas></button>
-      <button class="map-opt skin-opt" data-skin="4" aria-label="Skin 5"><canvas width="12" height="22"></canvas></button>
-      <button class="map-opt skin-opt" data-skin="5" aria-label="Skin 6"><canvas width="12" height="22"></canvas></button>
-      <button class="map-opt skin-opt" data-skin="6" aria-label="Skin 7"><canvas width="12" height="22"></canvas></button>
-      <button class="map-opt skin-opt" data-skin="7" aria-label="Skin 8"><canvas width="12" height="22"></canvas></button>
+      <button class="map-opt skin-opt selected" data-skin="0" aria-label="Skin 1"><canvas width="16" height="26"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="1" aria-label="Skin 2"><canvas width="16" height="26"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="2" aria-label="Skin 3"><canvas width="16" height="26"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="3" aria-label="Skin 4"><canvas width="16" height="26"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="4" aria-label="Skin 5"><canvas width="16" height="26"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="5" aria-label="Skin 6"><canvas width="16" height="26"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="6" aria-label="Skin 7"><canvas width="16" height="26"></canvas></button>
+      <button class="map-opt skin-opt" data-skin="7" aria-label="Skin 8"><canvas width="16" height="26"></canvas></button>
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
       <button class="back" id="btnBackSkins" style="margin:0">VOLTAR</button>
@@ -4105,12 +4105,14 @@ function drawAnimal(a){
     R(x-bw/2,y-16,Math.max(1,bw*ratio),2,'#dd3333');
   }
 }
-const ZSHIRTS=['#6b4e3a','#4a4a5a','#7a3b3b','#3d5a4a','#58503a'];
+const ZSHIRTS=['#6b4e3a','#8a8a98','#8ab0c0','#3d5a4a','#58503a'];
+const ZFLESH=['#7a9a5a','#86a062','#6e9462','#8a9a6a','#789070'];
 /* Aparência do zumbi: mesma função no host (spawn) e no convidado (snapshot) */
 function zombieLook(kind,si){
   const t=ZTYPES[kind]||ZTYPES[0];
-  const skin=kind===9?'#d8e0ea':kind===3?'#556b2f':kind===2?'#8a5a4a':kind===4?'#7ac070':kind===5?'#6a8060':kind===6?'#c0a0a0':kind===7?'#4a7a38':kind===8?'#c05040':t.color;
-  const shirt=kind===9?'#f0f4f8':kind===3?'#b22222':kind===2?'#3a1a1a':kind===5?'#4a3a20':kind===6?'#7a4a7a':kind===7?'#2a4a20':kind===8?'#5a1010':ZSHIRTS[(si|0)%5];
+  const v=(si|0)%5;
+  const skin=kind===9?'#d8e0ea':kind===3?'#556b2f':kind===2?'#8a5a4a':kind===4?'#7ac070':kind===5?'#6a8060':kind===6?'#c0a0a0':kind===7?'#4a7a38':kind===8?'#c05040':kind===0?ZFLESH[v]:kind===1?'#a0b070':t.color;
+  const shirt=kind===9?'#f0f4f8':kind===3?'#b22222':kind===2?'#3a1a1a':kind===5?'#4a3a20':kind===6?'#7a4a7a':kind===7?'#5a4a30':kind===8?'#5a1010':kind===4?'#c8b830':kind===1?'#c0a050':ZSHIRTS[v];
   return {skin:skin,shirt:shirt};
 }
 /* true se o ponto aparece (ou está quase aparecendo) na tela de algum jogador: zumbi novo nunca nasce à vista */
@@ -7333,22 +7335,23 @@ function enterMultiplayerGame(isHost){
 
 /* ============ RENDER ============ */
 function R(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h);}
-/* ===== Skins: 4 masculinas (1ª é a padrão) e 4 femininas. alt = cor da roupa quando duas pessoas usam a mesma skin ===== */
+/* ===== Skins: 4 masculinas (1ª é a padrão) e 4 femininas. alt = cor da roupa quando duas pessoas usam a mesma skin =====
+   os = roupa, hs = cabelo/chapéu, hat/band = cor de boné, faixa ou presilha, acc = acessório, beard = barba */
 const SKINS=[
-  {skin:'#e8b890',hair:'#0c0a09',shirt:'#3a5a8a',alt:'#8a3a3a',pants:'#3a3a48',f:false},
-  {skin:'#b9855a',hair:'#2a1d14',shirt:'#5a7a4a',alt:'#c08a3a',pants:'#3a3a48',f:false},
-  {skin:'#f0c8a0',hair:'#e0c060',shirt:'#4a7a7a',alt:'#8a5a9a',pants:'#3a3a48',f:false},
-  {skin:'#6a4530',hair:'#1a1210',shirt:'#c9853a',alt:'#3a6a9a',pants:'#3a3a48',f:false},
-  {skin:'#f0c4a0',hair:'#0c0a09',shirt:'#a8486a',alt:'#4a8a9a',pants:'#3a3a58',f:true},
-  {skin:'#b9855a',hair:'#2a1d14',shirt:'#3a8a7a',alt:'#d0803a',pants:'#3a3a58',f:true},
-  {skin:'#f2cfae',hair:'#e6c66a',shirt:'#6a4aa0',alt:'#4a9a5a',pants:'#3a3a58',f:true},
-  {skin:'#6a4530',hair:'#1a1210',shirt:'#d4a24a',alt:'#c04a5a',pants:'#3a3a58',f:true}
+  {skin:'#e8b890',hair:'#0c0a09',shirt:'#3a5a8a',alt:'#8a3a3a',pants:'#3a3a48',f:false,os:'jacket',hs:'short',boot:'#241c16'},
+  {skin:'#b9855a',hair:'#2a1d14',shirt:'#5a7a4a',alt:'#c08a3a',pants:'#4a4a34',f:false,os:'hoodie',hs:'cap',hat:'#8a3a2a',acc:'pack',pack:'#6a5a3a',boot:'#2a2418'},
+  {skin:'#f0c8a0',hair:'#e0c060',shirt:'#4a7a7a',alt:'#8a5a9a',pants:'#3a4a6a',f:false,os:'tee',hs:'spiky',band:'#c04a3a',boot:'#e0dcd0'},
+  {skin:'#6a4530',hair:'#1a1210',shirt:'#c9853a',alt:'#3a6a9a',pants:'#34343a',f:false,os:'vest',under:'#d8d4c8',hs:'afro',beard:true,boot:'#2a2018'},
+  {skin:'#f0c4a0',hair:'#0c0a09',shirt:'#a8486a',alt:'#4a8a9a',pants:'#3a3a58',f:true,os:'tank',hs:'long',boot:'#2a2018'},
+  {skin:'#b9855a',hair:'#2a1d14',shirt:'#3a8a7a',alt:'#d0803a',pants:'#4a3a2a',f:true,os:'jacket',hs:'pony',acc:'pack',pack:'#5a4a3a',boot:'#241c16'},
+  {skin:'#f2cfae',hair:'#e6c66a',shirt:'#6a4aa0',alt:'#4a9a5a',pants:'#3a3a58',f:true,os:'dress',hs:'pig',hat:'#e8d0e0',boot:'#3a2a30'},
+  {skin:'#6a4530',hair:'#1a1210',shirt:'#d4a24a',alt:'#c04a5a',pants:'#2a2a30',f:true,os:'tee',hs:'buns',band:'#c04a5a',boot:'#e0dcd0'}
 ];
 let SKIN_SEL=0;
 try{const v=parseInt(localStorage.getItem('minisurv_skin'),10);if(v>=0&&v<SKINS.length)SKIN_SEL=v;}catch(e){}
 function skinLook(i,alt){
   const s=SKINS[(i>=0&&i<SKINS.length)?i:0];
-  return {skin:s.skin,hair:s.hair,shirt:alt?s.alt:s.shirt,pants:s.pants,female:s.f};
+  return {skin:s.skin,hair:s.hair,shirt:alt?s.alt:s.shirt,pants:s.pants,female:s.f,os:s.os,hs:s.hs,hat:s.hat,band:s.band,acc:s.acc,pack:s.pack,under:s.under,beard:s.beard,boot:s.boot};
 }
 /* Regra da skin repetida: quem entrou como CONVIDADO usa a cor alternativa (os dois lados calculam igual) */
 function myLook(){
@@ -7362,12 +7365,213 @@ function remoteLook(rp){
 function drawSkinPreview(cv,i){
   const c=cv.getContext('2d'),o=skinLook(i,false);
   c.clearRect(0,0,cv.width,cv.height);
-  const Rr=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x+6,y+17,w,h);};
-  Rr(-4,-2,3,5,o.pants);Rr(1,-2,3,5,o.pants);
-  Rr(-4,-9,8,8,o.shirt);
-  Rr(-3,-15,6,6,o.skin);Rr(-3,-15,6,2,o.hair);
-  if(o.female){Rr(-4,-15,1,7,o.hair);Rr(3,-15,1,7,o.hair);Rr(-3,-16,6,1,o.hair);}
-  Rr(-2,-12,1,1,'#111');Rr(1,-12,1,1,'#111');
+  const Rr=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x+8,y+21,w,h);};
+  humanBody(Rr,o,Math.PI/2);
+}
+/* clareia (k>0) ou escurece (k<0) uma cor #rrggbb, com cache */
+const _shc={};
+function Sh(c,k){
+  const key=c+k;let r=_shc[key];if(r)return r;
+  if(typeof c!=='string'||c.length!==7)return c;
+  const n=parseInt(c.slice(1),16),f=k>=0?(v=>Math.round(v+(255-v)*k)):(v=>Math.round(v*(1+k)));
+  return _shc[key]='#'+((1<<24)|(f(n>>16)<<16)|(f((n>>8)&255)<<8)|f(n&255)).toString(16).slice(1);
+}
+/* Estilo de cada zumbi (roupa, cabelo, calça). O comum tem 5 variantes pelo índice si, que já vai no snapshot */
+const ZS_COMMON=[
+  {os:'tee',hs:'hard',pants:'#3a3a2a',hair:'#2a2218',boot:'#2a2018'},      // operário com capacete rachado
+  {os:'suit',hs:'short',pants:'#2a2a3a',hair:'#3a3028',boot:'#16161a'},    // executivo de gravata
+  {os:'gown',hs:'bald',pants:null,hair:'#3a3a30',boot:null},               // paciente de avental, descalço
+  {os:'camo',hs:'helm',pants:'#3a4a30',hair:'#2a2218',boot:'#2a2418'},     // soldado
+  {os:'hoodie',hs:'hood',pants:'#34405a',hair:'#2a2218',boot:'#2a2a30'}    // capuz
+];
+const ZSTYLE={
+  1:{os:'tank',hs:'band',band:'#9a2a2a',pants:'#5a5a4a',shorts:true,hair:'#3a3028',boot:'#d0ccc0'},
+  2:{os:'brute',hs:'mask',pants:'#2a2a2e',hair:'#222',boot:'#18181a'},
+  3:{os:'coat',hs:'bald',pants:'#3a1a1a',hair:'#222',boot:'#1a1010'},
+  4:{os:'hazmat',hs:'hazhood',pants:'#c8b830',hair:'#222',boot:'#2a4a20'},
+  5:{os:'tee',hs:'short',pants:'#3a3a2a',hair:'#2a2218',boot:'#2a2018'},
+  6:{os:'dress',hs:'wild',pants:null,hair:'#d8d4cc',boot:null},
+  7:{os:'bloat',hs:'bald',pants:'#2a3a20',hair:'#222',boot:'#1a1a14'},
+  8:{os:'bare',hs:'mohawk',pants:'#4a1a1a',hair:'#a0201a',boot:'#1a1010'},
+  9:{os:'fur',hs:'bald',pants:'#e6edf3',hair:'#f4f8fb',boot:'#e6edf3'}
+};
+const ZEYE=[ '#f0e060','#f0e060',null,'#ff4040','#b0ff70','#f0e060','#ffffff','#d8e870','#ff3030','#ff3030' ];
+function zstyle(kind,zv){return kind===0?ZS_COMMON[zv%5]:(ZSTYLE[kind]||ZS_COMMON[0]);}
+/* Corpo inteiro SEM mãos e armas (R = função de retângulo; o menu de skins usa a mesma função) */
+function humanBody(R,o,face){
+  const fx=Math.cos(face),fy=Math.sin(face);
+  const z=!!o.zombie,kind=o.kind|0,zv=o.zv|0;
+  const S=z?zstyle(kind,zv):o;
+  const back=fy<-.5,front=fy>.2,ex=fx>.45?1:(fx<-.45?-1:0);
+  const step=o.moving?Math.sin(o.anim):0;
+  const l1=step>.3?-1:0,l2=step<-.3?-1:0;
+  const skin=o.skin,shirt=o.shirt,hair=S.hair||o.hair||'#222';
+  const pants=S.pants||skin,boot=S.boot===null?skin:(S.boot||'#241c16');
+  const os=S.os||'tee',hs=S.hs||'short';
+  const sd=Sh(shirt,-.25),sl=Sh(shirt,.25);
+  // pernas e botas
+  if(S.shorts){R(-4,-2+l1,3,2,pants);R(1,-2+l2,3,2,pants);R(-4,0+l1,3,3,skin);R(1,0+l2,3,3,skin);}
+  else if(os==='dress'||os==='gown'){R(-4,-2+l1,3,5,skin);R(1,-2+l2,3,5,skin);}
+  else{R(-4,-2+l1,3,5,pants);R(1,-2+l2,3,5,pants);}
+  R(-4,1+l1,3,2,boot);R(1,1+l2,3,2,boot);
+  if(z&&kind===0&&zv===2){R(-4,-1+l1,3,1,'#e8e4d8');}                 // bandagem na perna do paciente
+  // mochila (de lado/frente aparece atrás; de costas cobre as costas)
+  if(S.acc==='pack'&&!back){R(-5,-8,1,5,S.pack);R(4,-8,1,5,S.pack);}
+  // tronco
+  switch(os){
+    case 'jacket':
+      R(-4,-9,8,8,shirt);
+      if(back){R(-3,-8,6,1,sl);R(-4,-2,8,1,sd);}
+      else{R(0,-8,1,7,sd);R(-2,-9,4,1,sl);R(-3,-4,2,1,sd);R(1,-4,2,1,sd);R(-4,-2,8,1,sd);}
+      break;
+    case 'hoodie':
+      R(-4,-9,8,8,shirt);R(-3,-10,6,2,sd);
+      if(back)R(-3,-9,6,3,sd);else{R(-2,-4,4,2,sd);R(-1,-8,1,3,'#e8e4d8');R(1,-8,1,3,'#e8e4d8');}
+      break;
+    case 'vest':
+      R(-4,-9,8,8,S.under||'#d8d4c8');R(-4,-9,3,8,shirt);R(1,-9,3,8,shirt);R(-4,-5,8,1,'#e8e8a0');
+      if(back){R(-4,-9,8,8,shirt);R(-4,-5,8,1,'#e8e8a0');R(-1,-9,2,8,sd);}
+      break;
+    case 'tank':
+      R(-4,-9,8,8,shirt);R(-4,-9,2,2,skin);R(2,-9,2,2,skin);R(-1,-9,2,1,skin);R(-4,-3,8,1,sd);
+      break;
+    case 'dress':
+      R(-4,-9,8,8,shirt);R(-5,-3,10,4,shirt);R(-5,0,10,1,sd);R(-4,-4,8,1,sl);R(-1,-9,2,1,skin);
+      if(z){R(-4,-8,2,3,skin);R(2,-1,3,2,skin);R(-5,0,2,1,skin);}
+      break;
+    case 'suit':
+      R(-4,-9,8,8,shirt);R(-4,-9,2,8,sd);R(2,-9,2,8,sd);
+      if(!back){R(-1,-9,2,3,'#d8d8dc');R(0,-7,1,6,'#7a1a1a');R(-1,-7,1,1,'#7a1a1a');}
+      R(-4,-2,8,1,'#1a1a22');
+      break;
+    case 'gown':
+      R(-4,-9,8,9,shirt);R(-4,0,8,1,sd);
+      if(back){R(0,-9,1,9,sd);R(-1,-6,3,1,sl);}else{R(-1,-9,2,1,skin);R(-4,-9,1,2,sd);}
+      break;
+    case 'camo':
+      R(-4,-9,8,8,shirt);R(-3,-8,2,2,'#2a3a2a');R(1,-6,3,2,'#566a44');R(-4,-4,3,2,'#566a44');R(0,-3,3,2,'#2a3a2a');
+      if(!back){R(-4,-9,1,8,'#2a2a22');R(3,-9,1,8,'#2a2a22');R(-2,-5,2,2,'#4a4a3a');}
+      R(-4,-2,8,1,'#2a2418');
+      break;
+    case 'brute':
+      R(-4,-9,8,8,shirt);R(-5,-10,2,2,'#8a8a90');R(3,-10,2,2,'#8a8a90');R(-5,-11,1,1,'#b8b8c0');R(4,-11,1,1,'#b8b8c0');
+      R(-4,-5,8,2,'#5a3a20');R(-1,-5,2,2,'#c0b040');R(-4,-9,2,8,Sh(shirt,.15));
+      break;
+    case 'coat':
+      R(-4,-9,8,8,shirt);R(-5,-9,1,10,'#7a1010');R(4,-9,1,10,'#7a1010');R(-5,-10,2,2,'#ffe040');R(3,-10,2,2,'#ffe040');
+      if(!back){R(-3,-9,6,1,'#7a1010');R(-1,-8,1,7,'#7a1010');R(-3,-7,1,1,'#ffe040');R(2,-6,1,1,'#ffe040');R(-3,-5,1,1,'#ffe040');}
+      R(-4,-2,8,1,'#2a1010');
+      break;
+    case 'hazmat':
+      R(-4,-9,8,8,shirt);R(-4,-5,8,1,Sh(shirt,-.3));R(-3,-8,2,1,'#2a2a2a');
+      if(!back){R(0,-9,1,8,Sh(shirt,-.3));R(-2,-4,1,2,'#7aff50');R(2,-7,1,1,'#7aff50');}
+      R(-4,-1,8,1,'#8a7a20');
+      break;
+    case 'bloat':
+      R(-5,-10,10,10,shirt);R(-5,-4,10,2,Sh(shirt,-.3));
+      if(!back){R(-3,-5,6,3,'#5a8a40');R(-2,-4,2,1,'#2a4a20');R(1,-5,2,2,'#9ad060');R(-4,-8,2,2,'#9ad060');R(2,-9,2,1,'#9ad060');}
+      break;
+    case 'bare':
+      R(-4,-9,8,8,skin);R(-4,-6,8,2,'#d8d0b8');R(-4,-3,8,1,'#d8d0b8');R(-4,-8,1,3,Sh(skin,-.3));R(2,-7,1,2,Sh(skin,-.3));R(-4,-9,8,1,'#2a1a1a');
+      if(!back){R(-3,-9,1,1,'#aaa');R(2,-9,1,1,'#aaa');}
+      break;
+    case 'fur':
+      R(-4,-9,8,8,shirt);R(-5,-8,1,3,'#fff');R(4,-6,1,3,'#fff');R(-2,-3,4,2,'#cfdde8');
+      break;
+    default: // tee
+      R(-4,-9,8,8,shirt);R(-4,-6,8,1,sl);R(-1,-9,2,1,skin);R(-4,-2,8,1,'#2a2018');
+  }
+  // mochila de costas
+  if(S.acc==='pack'&&back){R(-3,-9,6,7,S.pack);R(-3,-9,6,1,Sh(S.pack,.25));R(-2,-4,4,2,Sh(S.pack,-.25));R(-4,-8,1,4,Sh(S.pack,-.3));R(3,-8,1,4,Sh(S.pack,-.3));}
+  else if(S.acc==='pack'){R(-3,-9,1,5,Sh(S.pack,-.2));R(2,-9,1,5,Sh(S.pack,-.2));}
+  // cabeça
+  R(-3,-15,6,6,skin);
+  if(z&&hs!=='mask'&&hs!=='hazhood'){R(-3,-10,6,1,Sh(skin,-.18));}
+  // cabelo / chapéu (parte de trás e de baixo, antes do rosto)
+  switch(hs){
+    case 'long':R(-4,-16,8,1,hair);R(-4,-15,1,7,hair);R(3,-15,1,7,hair);if(back)R(-4,-16,8,9,hair);break;
+    case 'wild':R(-4,-16,8,1,hair);R(-4,-15,1,8,hair);R(3,-15,1,9,hair);R(-5,-10,1,3,hair);R(4,-9,1,3,hair);R(-5,-14,1,2,hair);if(back)R(-4,-16,8,10,hair);break;
+    case 'pig':R(-5,-13,2,5,hair);R(3,-13,2,5,hair);R(-5,-13,2,1,S.hat||'#e8d0e0');R(3,-13,2,1,S.hat||'#e8d0e0');break;
+    case 'pony':
+      if(back)R(-1,-10,2,6,hair);else if(Math.abs(fx)>.5)R(Math.round(-fx*5)-1,-14,2,5,hair);else R(-4,-13,1,3,hair);break;
+  }
+  // rosto
+  if(!back){
+    if(z){
+      const ec=ZEYE[kind]||'#f0e060';
+      if(hs==='mask'){/* viseira desenhada abaixo */}
+      else{R(-3+ex,-12,2,2,'#1a1410');R(1+ex,-12,2,2,'#1a1410');R(-2+ex,-12,1,1,ec);R(1+ex,-12,1,1,ec);
+        if(front&&kind!==4)R(-1,-10,2,1,kind===6?'#400':'#7a1010');}
+    }else{
+      R(-2+ex,-12,1,1,'#111');R(1+ex,-12,1,1,'#111');
+      if(S.beard){R(-3,-11,6,2,hair);R(-1,-11,2,1,skin);}
+    }
+  }
+  // cabelo / chapéu (camada da frente)
+  switch(hs){
+    case 'short':
+      if(back)R(-3,-15,6,5,hair);else{R(-3,-15,6,2,hair);R(-3,-13,1,1,hair);R(2,-13,1,1,hair);}break;
+    case 'spiky':
+      R(-3,-15,6,back?5:2,hair);R(-3,-17,1,2,hair);R(-1,-18,1,3,hair);R(1,-17,1,2,hair);R(2,-16,1,1,hair);
+      if(!back){R(-3,-13,1,1,hair);R(2,-13,1,1,hair);}break;
+    case 'afro':
+      if(back)R(-4,-17,8,8,hair);else{R(-4,-17,8,4,hair);R(-4,-13,1,2,hair);R(3,-13,1,2,hair);}
+      R(-3,-18,6,1,hair);break;
+    case 'cap':{
+      const hat=S.hat||'#8a3a2a';
+      R(-3,-16,6,3,hat);R(-3,-17,6,1,Sh(hat,.2));
+      if(back)R(-3,-13,6,3,hair);
+      else{R(-3,-13,1,1,hair);R(2,-13,1,1,hair);const bx=Math.round(fx*3),by=Math.round(fy*2)-13;R(bx-2,by,4,1,Sh(hat,-.35));}
+      break;}
+    case 'long':
+      R(-3,-15,6,2,hair);break;
+    case 'pony':
+      R(-3,-16,6,1,hair);R(-3,-15,6,back?5:2,hair);if(!back){R(-3,-13,1,2,hair);R(2,-13,1,2,hair);}break;
+    case 'buns':
+      R(-3,-15,6,back?5:2,hair);R(-4,-17,2,2,hair);R(2,-17,2,2,hair);if(!back){R(-3,-13,1,2,hair);R(2,-13,1,2,hair);}break;
+    case 'pig':
+      R(-3,-15,6,back?5:2,hair);if(!back){R(-3,-13,1,1,hair);R(2,-13,1,1,hair);}break;
+    case 'band':
+      R(-3,-15,6,back?5:2,hair);break;
+    case 'bald':
+      if(z&&kind===0)R(-3,-15,6,1,hair);if(z&&kind===0){R(-2,-14,2,1,'#e8e4d8');R(0,-13,3,1,'#e8e4d8');} break;
+    case 'hard':
+      R(-4,-17,8,3,'#c8a820');R(-3,-18,6,1,'#d8b830');R(-4,-14,8,1,'#8a7018');R(-1,-17,2,3,'#a88a18');R(1,-16,1,2,'#3a2a08');
+      if(!back){R(-3,-13,1,1,hair);R(2,-13,1,1,hair);}break;
+    case 'helm':
+      R(-4,-17,8,4,'#4a5a3a');R(-3,-18,6,1,'#566a44');R(-4,-13,8,1,'#2a3a22');R(-2,-16,2,1,'#2a3a22');R(1,-15,2,1,'#6a7a54');
+      if(!back){R(-4,-12,1,3,'#2a3a22');R(3,-12,1,3,'#2a3a22');}break;
+    case 'hood':{
+      const hc=Sh(shirt,-.1);
+      if(back)R(-4,-17,8,8,hc);else{R(-4,-17,8,2,hc);R(-4,-15,2,6,hc);R(2,-15,2,6,hc);R(-2,-15,4,2,Sh(skin,-.4));}
+      break;}
+    case 'mohawk':
+      R(-1,-19,2,5,hair);R(-1,-14,2,back?5:1,hair);R(0,-20,1,1,hair);if(!back){R(-3,-15,6,1,Sh(skin,-.25));}break;
+    case 'mask':
+      R(-4,-16,8,7,back?'#3a3a40':'#4a4a50');R(-4,-16,8,1,'#6a6a70');
+      if(!back){R(-3,-13,6,2,'#1a1a1a');R(-3,-13,6,1,'#e07a20');R(-1,-12,2,1,'#ffc060');R(-4,-9,2,1,'#6a6a70');R(2,-9,2,1,'#6a6a70');}break;
+    case 'hazhood':
+      R(-4,-16,8,3,'#c8b830');R(-4,-13,1,5,'#c8b830');R(3,-13,1,5,'#c8b830');R(-3,-17,6,1,'#c8b830');
+      if(!back){R(-3,-12,2,2,'#1a1410');R(1,-12,2,2,'#1a1410');R(-2,-12,1,1,'#b0ff70');R(1,-12,1,1,'#b0ff70');R(-2,-10,4,2,'#2a2a2a');R(2,-10,2,2,'#555');R(-1,-10,1,1,'#7a7a7a');R(0,-14,1,1,'#b0ff70');R(-2,-13,1,1,'#7aff50');}
+      else R(-4,-16,8,7,'#c8b830');break;
+    case 'wild':
+      R(-4,-16,8,3,hair);R(-5,-15,1,1,hair);R(4,-14,1,1,hair);if(back)R(-4,-16,8,10,hair);break;
+  }
+  if(S.band&&hs!=='cap')R(-3,-14,6,1,S.band);
+  if(S.band&&hs==='band')R(3,-14,2,2,S.band);
+  // detalhes por tipo de zumbi
+  if(z){
+    if(kind===0||kind===1||kind===5){
+      const w=(kind===5?3:zv)|0;
+      R(-3+(w*2)%5,-8+(w%3)*2,2,2,'#5a1212');                     // ferida
+      if(kind!==1)R(-4+(w%2)*7,-3,1,2,skin);                      // rasgo na roupa
+      if(front)R(-2+(w%3),-9,1,2,'#7a1010');                      // sangue no queixo
+    }
+    if(kind===3){R(-4,-1,8,1,'#2a1010');R(-4,-6,1,3,Sh(skin,-.2));}
+    if(kind===6&&front){R(-1,-10,2,2,'#400');R(-1,-10,2,1,'#fff');}
+    if(kind===8&&!back){R(-3,-13,1,3,'#601010');R(2,-12,1,2,'#601010');}   // pintura de guerra
+    if(kind===9){R(-7,-6,2,3,'#f4f8fb');R(5,-7,2,3,'#f4f8fb');R(-3,-13,6,1,'#c8dcec');R(-5,-13,10,1,'#c8dcec');}
+  }
 }
 /* armas nas maos: usam os mesmos icones pixel art do inventario, giradas na direcao da mira */
 const HELD={
@@ -7385,6 +7589,11 @@ function drawHeld(wpn,hx,hy,a){
   ctx.drawImage(cv,(H.off||0)/sc-H.ax,-H.ay);
   ctx.restore();return true;
 }
+/* braço: do ombro até a mão, manga da cor da roupa e antebraço de pele */
+function armTo(sx,sy,ex,ey,sleeve,skin){
+  for(let i=0;i<=3;i++)R(Math.round(sx+(ex-sx)*i/3)-1,Math.round(sy+(ey-sy)*i/3)-1,2,2,i<2?sleeve:skin);
+}
+const TWO_HAND={rifle:1,shotgun:1,smg:1,spear:1,fishingrod:1,pickaxe:1,axe:1,sword:0,bow:1};
 function human(x,y,face,o){
   const fx=Math.cos(face),fy=Math.sin(face);
   ctx.save();
@@ -7396,26 +7605,25 @@ function human(x,y,face,o){
   ctx.translate(0,offsetY);
   if(o.crawler){
     shadow(0,2,8,3);
-    R(-7,-3,14,5,o.shirt);R(-2,-5,5,4,o.skin);R(-1,-5,2,1,o.hair);
-    const ca=Math.sin(o.anim*0.5);
-    R(-9+ca*2,-2,3,3,o.skin);R(6-ca*2,-2,3,3,o.skin);
+    const bx=fx>=0?-1:1,ca=Math.sin(o.anim*0.5);
+    R(bx*9,-2,3,3,'#5a1212');R(bx*11,-1,4,1,'#8a2a2a');R(bx*13,0,3,1,'#6a1a1a');           // tronco cortado e rastro
+    R(-7,-3,14,5,o.shirt);R(-7,-3,14,1,Sh(o.shirt,-.25));R(-3,-2,2,2,'#5a1212');R(2,0,1,2,o.skin);R(-1,-3,1,4,'#d8d0b8');
+    R(-2,-5,5,4,o.skin);R(-2,-5,5,1,o.hair);R(-2,-4,1,1,'#1a1410');R(1,-4,1,1,'#1a1410');R(-1,-2,2,1,'#7a1010');
+    R(-9+ca*2,-2,3,3,o.skin);R(6-ca*2,-2,3,3,o.skin);R(-10+ca*2,-1,1,1,'#d8d0b8');R(9-ca*2,-1,1,1,'#d8d0b8');
     ctx.restore();return;
   }
   shadow(0,2,6,3);
-  const step=o.moving?Math.sin(o.anim):0;
-  R(-4,-2+(step>.3?-1:0),3,5,o.pants);
-  R(1,-2+(step<-.3?-1:0),3,5,o.pants);
-  R(-4,-9,8,8,o.shirt);
-  R(-3,-15,6,6,o.skin);
-  R(-3,-15,6,2,o.hair);
-  if(o.female){R(-4,-15,1,7,o.hair);R(3,-15,1,7,o.hair);R(-3,-16,6,1,o.hair);}
-  if(fy>-.5){R(-2,-12,1,1,'#111');R(1,-12,1,1,'#111');}
+  humanBody(R,o,face);
   const hx=Math.round(fx*6),hy=Math.round(fy*4)-5;
   if(o.zombie){
     const px=Math.round(-fy*3),py=Math.round(fx*3);
     const l=o.lunge?3:0;
-    R(hx+px-1+Math.round(fx*l),hy+py-1+Math.round(fy*l),3,3,o.skin);
-    R(hx-px-1+Math.round(fx*l),hy-py-1+Math.round(fy*l),3,3,o.skin);
+    const zs=zstyle(o.kind|0,o.zv|0),zsl=(zs.os==='bare'||zs.os==='tank'||zs.os==='dress'||zs.os==='gown')?o.skin:(zs.os==='fur'?'#f4f8fb':o.shirt);
+    const ax=hx+px+Math.round(fx*l),ay=hy+py+Math.round(fy*l),bx2=hx-px+Math.round(fx*l),by2=hy-py+Math.round(fy*l);
+    const aL=ax<bx2||(ax===bx2&&ay<by2);
+    armTo(aL?-4:4,-8,ax,ay,zsl,o.skin);armTo(aL?4:-4,-8,bx2,by2,zsl,o.skin);
+    R(ax-1,ay-1,3,3,o.skin);R(bx2-1,by2-1,3,3,o.skin);
+    R(ax,ay,1,1,Sh(o.skin,-.3));R(bx2,by2,1,1,Sh(o.skin,-.3));
     if(o.spitter)R(hx+fx*2,hy+fy*2-1,3,2,'#40ff40');
     if(o.wind)R(hx+fx*2-2,hy+fy*2-3,6,5,'#b0ff80'); // pré-aviso do cuspe
     if(o.screamer){R(hx+fx*2,hy+fy*2-2,3,3,'#600');R(hx+fx*2,hy+fy*2-1,2,1,'#fff');}
@@ -7436,6 +7644,17 @@ function human(x,y,face,o){
     if(o.yeti){R(-6,-10,12,3,'#f4f8fb');R(-5,-15,10,3,'#f4f8fb');R(-4,-3,8,3,'#e6edf3');R(-2,-12,1,1,'#ff3030');R(1,-12,1,1,'#ff3030');R(-2,-10,1,2,'#fff');R(1,-10,1,2,'#fff');R(hx-3,hy+1,2,3,'#f4f8fb');R(hx+2,hy+1,2,3,'#f4f8fb');}
     if(o.boss){R(hx-3,hy-3,7,2,'#ffe040');R(hx-3,hy-5,2,2,'#ffe040');R(hx+2,hy-5,2,2,'#ffe040');R(hx,hy-6,2,3,'#ffe040');}
   }else{
+    {
+      const sl=(o.os==='tank'||o.os==='bare')?o.skin:o.shirt,sgn=fx>=-.15?1:-1;
+      const two=TWO_HAND[o.wpn]&&!o.hold,st=o.moving?Math.round(Math.sin(o.anim)*1.5):0;
+      // braço principal (lado da mira) e braço de apoio
+      armTo(4*sgn,-8,hx,hy,sl,o.skin);
+      let ox,oy;
+      if(two){ox=Math.round(hx+fx*4);oy=Math.round(hy+fy*3);}
+      else{ox=-5*sgn+Math.round(fx*-1);oy=-3-st;}
+      armTo(-4*sgn,-8,ox,oy,sl,o.skin);
+      R(ox-1,oy-1,3,3,o.skin);
+    }
     R(hx-1,hy-1,3,3,o.skin);
     let a=face;
     if(o.swing>0)a=face+(o.swing/.18-.5)*2.2;
@@ -9094,7 +9313,7 @@ function render(){
     for(const an of animals)if(!an.dead&&an.x>=b.x&&an.x<=b.x+b.w&&an.y>=b.y&&an.y<=b.y+b.h&&seeIn(b,an.x,an.y))drawAnimal(an);
     if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.hold?null:P.weapon,hold:P.hold||null,swing:P.swing,flash:P.flash});drawEatBar();
     for(const z of zombies)if(!z.dead&&z.x>=b.x&&z.x<=b.x+b.w&&z.y>=b.y&&z.y<=b.y+b.h&&seeIn(b,z.x,z.y)){
-      human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,yeti:z.kind===9,bloater:z.bloater||z.kind===7});
+      human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,zv:z.si|0,moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,yeti:z.kind===9,bloater:z.bloater||z.kind===7});
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
     }
     if(GH.on&&GH.b===b)drawGhost();
@@ -9320,7 +9539,7 @@ function render(){
     else if(e.k===12){ shadow(e.o.x,e.o.y,3*BIRD_SP[e.o.sp].sz,1.4); drawBirdBody(e.o,e.o.x,e.o.y,false); }
     else if(e.k===1){
       const z=e.o;
-      human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,yeti:z.kind===9,bloater:z.bloater||z.kind===7});
+      human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,zv:z.si|0,moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,yeti:z.kind===9,bloater:z.bloater||z.kind===7});
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
     }else if(e.k===5){
       const rp=e.o;
