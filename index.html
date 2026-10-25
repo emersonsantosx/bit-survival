@@ -1761,7 +1761,7 @@ function pickWeather(rf){
   if(selectedMap==='snow') return r<.45?'none':'snow';
   return r<.65?'none':'rain';
 }
-function lakeLoot(t){return mapHasLake()?Object.assign({fishingrod:1.5},t):t;}
+function lakeLoot(t){const o=mapHasLake()?Object.assign({fishingrod:1.5},t):t;return selectedMap==='snow'?Object.assign({parka:3},o):o;} // neve: casaco polar também aparece nas casas
 /* fora dos prédios só existem pedra e taco; todo o resto (comida, água, armas, curativos) fica dentro das casas */
 const OUT_LOOT={stone:6,bat:.25};
 
@@ -2166,6 +2166,7 @@ function solidPoint(x,y,m){
   for(const v of vehicles){vehHalf(v);if(x>v.x-v._hx-m&&x<v.x+v._hx+m&&y>v.y-v._hy-m&&y<v.y+v._hy+m)return true;}
   if(plane&&x>plane.x-38-m&&x<plane.x+38+m&&y>plane.y-18-m&&y<plane.y+18+m)return true;
   if(pointInLake(x,y))return true;
+  if(FIELD&&FIELD.fence)for(const w of FIELD.fence){if(x>w.x-m&&x<w.x+w.w+m&&y>w.y-m&&y<w.y+w.h+m)return true;}
   return false;
 }
 function pointSolid(px,py){
@@ -2233,12 +2234,18 @@ function pushOut(e,r){
     if(d<r){if(d>.001){e.x=cx+dx/d*r;e.y=cy+dy/d*r;}else{e.x+=r;}}
   }
   for(const w of walls)pushRect(e,r,w);
+  if(FIELD&&FIELD.fence)for(const w of FIELD.fence)pushRect(e,r,w);
   for(let i=0;i<blds.length;i++){      // móveis (só do prédio onde a pessoa está)
     const b=blds[i];
     if(e.x<b.x||e.x>b.x+b.w||e.y<b.y||e.y>b.y+b.h||!b.furn)continue;
     for(const f of b.furn)pushRect(e,r,f);
     break;
   }
+}
+/* anda em subpassos curtos, resolvendo a colisão a cada um: nada atravessa parede ou cerca fina, nem com FPS baixo */
+function stepMove(e,dx,dy,r){
+  const n=Math.max(1,Math.ceil(Math.hypot(dx,dy)/2.5)),sx=dx/n,sy=dy/n;
+  for(let i=0;i<n;i++){e.x+=sx;e.y+=sy;pushOut(e,r);}
 }
 function pushRect(e,r,w){
   if(e.x<w.x-r||e.x>w.x+w.w+r||e.y<w.y-r||e.y>w.y+w.h+r)return;
@@ -2299,40 +2306,45 @@ function castRay(x,y,ang,maxd){
   }
   return{x:x+cx*maxd,y:y+cy*maxd,z:null,animal:null};
 }
+/* ===== Colisão do veículo: retângulo ORIENTADO (carroceria inteira) contra paredes, cerca, prédios, árvores, pedras, outros veículos e avião ===== */
+function obbHitsRect(cx,cy,c,s,L,W,x0,y0,x1,y1){
+  const ex=Math.abs(c)*L+Math.abs(s)*W,ey=Math.abs(s)*L+Math.abs(c)*W;
+  if(cx+ex<x0||cx-ex>x1||cy+ey<y0||cy-ey>y1)return false;
+  const mx=(x0+x1)/2,my=(y0+y1)/2,hx=(x1-x0)/2,hy=(y1-y0)/2,dx=mx-cx,dy=my-cy;
+  if(Math.abs(dx*c+dy*s)>L+hx*Math.abs(c)+hy*Math.abs(s))return false;
+  if(Math.abs(-dx*s+dy*c)>W+hx*Math.abs(s)+hy*Math.abs(c))return false;
+  return true;
+}
+function obbHitsCircle(cx,cy,c,s,L,W,px,py,rad){
+  const dx=px-cx,dy=py-cy,lx=dx*c+dy*s,ly=-dx*s+dy*c;
+  const qx=clamp(lx,-L,L),qy=clamp(ly,-W,W);
+  return (lx-qx)*(lx-qx)+(ly-qy)*(ly-qy)<rad*rad;
+}
 function vehicleOverlap(v){
-  // Amostras densas na carroceria — parede, árvore, pedra, decoração (todos os mapas)
   if(!solidGrid) rebuildSolidGrid();
-  const cos=Math.cos(v.face||0), sin=Math.sin(v.face||0);
-  const L=(v.w||36)*0.5, W=(v.h||20)*0.45;
-  const pts=[
-    [v.x+cos*L, v.y+sin*L],
-    [v.x+cos*L*0.85, v.y+sin*L*0.85],
-    [v.x+cos*L*0.6-sin*W, v.y+sin*L*0.6+cos*W],
-    [v.x+cos*L*0.6+sin*W, v.y+sin*L*0.6-cos*W],
-    [v.x+cos*L*0.25-sin*W, v.y+sin*L*0.25+cos*W],
-    [v.x+cos*L*0.25+sin*W, v.y+sin*L*0.25-cos*W],
-    [v.x-sin*W, v.y+cos*W],
-    [v.x+sin*W, v.y-cos*W],
-    [v.x-cos*L*0.4, v.y-sin*L*0.4]
-  ];
+  const c=Math.cos(v.face||0),s=Math.sin(v.face||0);
+  const L=(v.w||36)*0.5,W=(v.h||20)*0.46;
+  const cx=v.x,cy=v.y,R=L+W+2;
   let cnt=0;
-  for(let i=0;i<pts.length;i++){
-    const px=pts[i][0], py=pts[i][1];
-    let hit=false;
-    for(let wi=0;wi<walls.length&&!hit;wi++){
-      const w=walls[wi];
-      if(px>=w.x-2&&px<=w.x+w.w+2&&py>=w.y-2&&py<=w.y+w.h+2) hit=true;
-    }
-    if(!hit){
-      const near=querySolidNear(px,py,22);
-      for(let j=0;j<near.length;j++){
-        const n=near[j];
-        const rad=n.kind==='tree'?12:(n.kind==='rock'?14:11);
-        if(Math.hypot(px-n.x,py-n.y)<rad){hit=true;break;}
-      }
-    }
-    if(hit)cnt++;
+  for(let i=0;i<walls.length;i++){
+    const w=walls[i];
+    if(w.x>cx+R||w.x+w.w<cx-R||w.y>cy+R||w.y+w.h<cy-R)continue;
+    if(obbHitsRect(cx,cy,c,s,L,W,w.x-1,w.y-1,w.x+w.w+1,w.y+w.h+1))cnt++;
   }
+  if(FIELD&&FIELD.fence)for(const w of FIELD.fence)if(obbHitsRect(cx,cy,c,s,L,W,w.x-1,w.y-1,w.x+w.w+1,w.y+w.h+1))cnt++;
+  for(let i=0;i<blds.length;i++){const b=blds[i];if(b.x>cx+R||b.x+b.w<cx-R||b.y>cy+R||b.y+b.h<cy-R)continue;if(obbHitsRect(cx,cy,c,s,L,W,b.x,b.y,b.x+b.w,b.y+b.h))cnt++;} // carro não entra em casa
+  const near=querySolidNear(cx,cy,R+14);
+  for(let i=0;i<near.length;i++){
+    const n=near[i],rad=n.kind==='tree'?9:(n.kind==='rock'?12:10);
+    if(obbHitsCircle(cx,cy,c,s,L,W,n.x,n.y,rad))cnt++;
+  }
+  for(const o of vehicles){ // outros veículos (parados ou destruídos) também são sólidos
+    if(o===v)continue;
+    if(Math.abs(o.x-cx)>R+30||Math.abs(o.y-cy)>R+30)continue;
+    vehHalf(o);
+    if(obbHitsRect(cx,cy,c,s,L,W,o.x-o._hx+2,o.y-o._hy+2,o.x+o._hx-2,o.y+o._hy-2))cnt++;
+  }
+  if(plane&&obbHitsRect(cx,cy,c,s,L,W,plane.x-35,plane.y-16,plane.x+35,plane.y+16))cnt++;
   return cnt;
 }
 function vehicleHitsEnv(v){return vehicleOverlap(v)>0;}
@@ -2463,6 +2475,46 @@ function intConnected(b,keys){
   for(const id of ids)if(!seen[id])return false;
   return true;
 }
+/* quantas células livres do piso NÃO dá pra alcançar a partir da porta (bolsões atrás de móveis) */
+function intUnreached(b,st0){
+  const gs=3,nx=Math.ceil(b.w/gs),ny=Math.ceil(b.h/gs);
+  const mark=(arr,r,pad)=>{
+    const x0=Math.max(0,Math.floor((r.x-pad-b.x)/gs)),x1=Math.min(nx-1,Math.floor((r.x+r.w+pad-b.x)/gs));
+    const y0=Math.max(0,Math.floor((r.y-pad-b.y)/gs)),y1=Math.min(ny-1,Math.floor((r.y+r.h+pad-b.y)/gs));
+    for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){
+      const px=b.x+cx*gs+gs/2,py=b.y+cy*gs+gs/2;
+      const dx=Math.max(r.x-px,0,px-(r.x+r.w)),dy=Math.max(r.y-py,0,py-(r.y+r.h));
+      if(dx*dx+dy*dy<pad*pad)arr[cy*nx+cx]=1;
+    }
+  };
+  if(!b._ig){const g={bl:new Uint8Array(nx*ny),b5:new Uint8Array(nx*ny)};for(const w of b.walls){mark(g.bl,w,6.2);mark(g.b5,w,5);}b._ig=g;} // bl: por onde dá pra passar com folga; b5: onde o jogador cabe
+  const bl=b._ig.bl.slice(),b5=b._ig.b5.slice();
+  for(const f of b.furn){mark(bl,f,6.2);mark(b5,f,5);}
+  const sx=Math.floor((st0.x-b.x)/gs),sy=Math.floor((st0.y-b.y)/gs);
+  if(sx<0||sy<0||sx>=nx||sy>=ny||bl[sy*nx+sx])return 0;
+  const seen=new Uint8Array(nx*ny),st=[sy*nx+sx];seen[st[0]]=1;
+  while(st.length){
+    const c=st.pop(),cx=c%nx,cy=(c/nx)|0;
+    if(cx>0&&!bl[c-1]&&!seen[c-1]){seen[c-1]=1;st.push(c-1);}
+    if(cx<nx-1&&!bl[c+1]&&!seen[c+1]){seen[c+1]=1;st.push(c+1);}
+    if(cy>0&&!bl[c-nx]&&!seen[c-nx]){seen[c-nx]=1;st.push(c-nx);}
+    if(cy<ny-1&&!bl[c+nx]&&!seen[c+nx]){seen[c+nx]=1;st.push(c+nx);}
+  }
+  // margem: células a até ~6px de um ponto alcançável (encostado no móvel) também contam como alcançáveis
+  let fr=[];for(let i=0;i<nx*ny;i++)if(seen[i])fr.push(i);
+  for(let d=0;d<3;d++){
+    const nf=[];
+    for(const c of fr){const cx=c%nx,cy=(c/nx)|0;
+      if(cx>0&&!b5[c-1]&&!seen[c-1]){seen[c-1]=1;nf.push(c-1);}
+      if(cx<nx-1&&!b5[c+1]&&!seen[c+1]){seen[c+1]=1;nf.push(c+1);}
+      if(cy>0&&!b5[c-nx]&&!seen[c-nx]){seen[c-nx]=1;nf.push(c-nx);}
+      if(cy<ny-1&&!b5[c+nx]&&!seen[c+nx]){seen[c+nx]=1;nf.push(c+nx);}}
+    fr=nf;
+  }
+  let n=0;const lim=Math.floor(b.h/gs);
+  for(let cy=0;cy<lim;cy++)for(let cx=0;cx<nx;cx++){const i=cy*nx+cx;if(!b5[i]&&!seen[i])n++;}
+  return n;
+}
 function genInterior(b){
   const ix=b.x+WT,iy=b.y+WT,iw=b.w-2*WT,ih=b.h-2*WT,bottom=iy+ih;
   b.iw=[];b.gaps=[];b.furn=[];b.rooms=[];b.gadj=[];
@@ -2534,6 +2586,7 @@ function genInterior(b){
   const doorZone={x:b.doorX-4,y:bottom-30,w:b.door+8,h:32};
   const zones=[doorZone];for(const g of G)zones.push({x:g.r.x-(g.v?14:0),y:g.r.y-(g.v?0:14),w:g.r.w+(g.v?28:0),h:g.r.h+(g.v?0:28)});
   const keys=[{x:b.doorX+b.door/2,y:bottom-8}];for(const g of G)keys.push({x:g.x,y:g.y});
+  const baseUn=intUnreached(b,keys[0]); // bolsões que já vêm das paredes; móveis não podem criar novos
   for(const r of rooms){
     const list=ROOMFURN[r.k]||[];
     for(const e of list){
@@ -2561,7 +2614,7 @@ function genInterior(b){
           if(!bad)for(const o of b.furn)if(rectsHit(f,o,2)){bad=true;break;}
           if(bad)continue;
           b.furn.push(f);
-          if(!intConnected(b,keys)){b.furn.pop();continue;}
+          if(!intConnected(b,keys)||intUnreached(b,keys[0])>baseUn){b.furn.pop();continue;}
           break;
         }
       }
@@ -2800,7 +2853,7 @@ function genCity(){
   // quarteirão da queda do avião: praça aberta no interior da cidade
   const inner=blocks.filter(b=>b.i>=1&&b.j>=1&&b.i<=xs.length-3&&b.j<=ys.length-3);
   const crash=pick(inner.length?inner:blocks);
-  crash.zone='crash'; cityCrash={x:crash.cx,y:crash.cy};
+  crash.zone='crash'; cityCrash={x:crash.cx,y:crash.cy,bx:crash.bx,by:crash.by,bw:crash.bw,bh:crash.bh};
   // bases militares longe do ponto de partida
   const far=shuffle(blocks.filter(b=>b!==crash&&Math.hypot(b.cx-crash.cx,b.cy-crash.cy)>800));
   for(let k=0;k<Math.min(3,far.length);k++) far[k].zone='mil';
@@ -3108,9 +3161,9 @@ function lmCurse(c){
   weather=isD?'sand':'snow';setRain(false);weatherTimer=100;weatherParticles=[];
   const kinds=isD?[0,0,1,5,6]:[0,0,2,1,5];
   kinds.forEach((k,i)=>{
-    for(let t=0;t<14;t++){
-      const a=rnd(0,6.283),d=rnd(110,170),x=c.x+Math.cos(a)*d,y=c.y+Math.sin(a)*d;
-      if(x<40||y<40||x>WW-40||y>WH-40||solidPoint(x,y,12))continue;
+    for(let t=0;t<40;t++){
+      const a=rnd(0,6.283),d=rnd(110,420),x=c.x+Math.cos(a)*d,y=c.y+Math.sin(a)*d;
+      if(x<40||y<40||x>WW-40||y>WH-40||solidPoint(x,y,12)||inAnyView(x,y,100))continue;
       spawnZ(x,y,k);const z=zombies[zombies.length-1];if(z){z.alert=9;z.tx=c.x;z.ty=c.y;}
       break;
     }
@@ -3251,6 +3304,13 @@ function genField(seed){
   }
   for(let x=F.x+20;x<F.x+F.w-16;x+=22)if(Math.abs(x-F.cx)>30)F.spots.push([Math.round(x),Math.round(F.cy)]);
   F.bales=[[F.x+8,F.y+F.h-8],[F.x+F.w-8,F.y+8]];
+  { // cerca sólida (com as 4 entradas de 32px) e fardos de feno
+    const g=16,fw=[];
+    for(const ey of [F.y,F.y+F.h]){fw.push({x:F.x-2,y:ey-2,w:F.w/2-g+2,h:4});fw.push({x:F.cx+g,y:ey-2,w:F.w/2-g+2,h:4});}
+    for(const ex of [F.x,F.x+F.w]){fw.push({x:ex-2,y:F.y-2,w:4,h:F.h/2-g+2});fw.push({x:ex-2,y:F.cy+g,w:4,h:F.h/2-g+2});}
+    for(const b of F.bales)fw.push({x:b[0]-6,y:b[1]-5,w:13,h:9});
+    F.fence=fw;
+  }
   FIELD=F;
   if(F.spots.length){for(let i=0;i<2;i++){const sp=F.spots[Math.floor(rr()*F.spots.length)];items.push({t:'corn',x:sp[0],y:sp[1]});}}
   SCW.on=rr()<.7;SCW.t=rnd(25,60);CORNT.t=rnd(40,70);
@@ -3274,7 +3334,7 @@ function updateYeti(dt){
   const a0=anchors[Math.floor(Math.random()*anchors.length)];
   for(let k=0;k<16;k++){
     const a=rnd(0,6.283),d=rnd(280,370),x=a0.x+Math.cos(a)*d,y=a0.y+Math.sin(a)*d;
-    if(x<60||y<60||x>WW-60||y>WH-60||solidPoint(x,y,14))continue;
+    if(x<60||y<60||x>WW-60||y>WH-60||solidPoint(x,y,24)||bldAt(x,y)||pointInLake(x,y)||inAnyView(x,y,100))continue;
     const z=spawnZ(x,y,9);z.alert=14;z.tx=a0.x;z.ty=a0.y;
     YT.cool=300;
     toast('Algo enorme se move na nevasca...');
@@ -3362,16 +3422,37 @@ function drawCornFlat(vx0,vx1,vy0,vy1){
 }
 function drawScarecrow(F){
   const x=F.sx,y=F.sy,sw=SCW.on?Math.round(Math.sin(T*1.3)):0;
-  R(x-5,y+1,11,2,'rgba(0,0,0,.25)');
-  R(x-1,y-34,3,36,'#6a4a2a');R(x-14,y-26,29,3,'#6a4a2a');
-  if(!SCW.on){R(x-12,y-24,2,2,'#d8b850');R(x+9,y-23,3,2,'#d8b850');R(x-5,y,2,1,'#d8b850');R(x+3,y+1,3,1,'#d8b850');return;}
-  R(x-6,y-26,12,13,'#a85a32');R(x-6,y-22,12,2,'#7a3a1c');R(x-6,y-17,12,2,'#7a3a1c');R(x-3,y-26,1,13,'#7a3a1c');R(x+2,y-26,1,13,'#7a3a1c');
-  R(x-16+sw,y-25,4,4,'#d8b850');R(x+13+sw,y-25,4,4,'#d8b850');R(x-14,y-27,3,6,'#a85a32');R(x+12,y-27,3,6,'#a85a32');
-  R(x-5,y-13,4,11,'#3a4a6a');R(x+1,y-13,4,11,'#3a4a6a');R(x-5,y-3,4,2,'#d8b850');R(x+1,y-3,4,2,'#d8b850');
-  R(x-5,y-36,10,10,'#c8b078');R(x-5,y-36,10,2,'#d8c088');
-  R(x-3,y-33,2,2,'#1a1a1a');R(x+1,y-33,2,2,'#1a1a1a');R(x-2,y-29,5,1,'#1a1a1a');R(x-2,y-30,1,1,'#1a1a1a');R(x+2,y-30,1,1,'#1a1a1a');
-  R(x-8,y-38,16,2,'#4a3a22');R(x-4,y-43,8,5,'#4a3a22');R(x-4,y-40,8,1,'#8a6a3a');
-  R(x-7,y-35,2,5,'#d8b850');R(x+5,y-35,2,5,'#d8b850');
+  R(x-6,y+1,13,2,'rgba(0,0,0,.3)');
+  R(x-1,y-34,3,36,'#4a3220');R(x-15,y-26,31,3,'#4a3220');           // poste e travessa de madeira escura
+  if(!SCW.on){R(x-12,y-24,2,2,'#b89c48');R(x+9,y-23,3,2,'#b89c48');R(x-5,y,2,1,'#b89c48');R(x+3,y+1,3,1,'#b89c48');return;}
+  const tw=Math.round(Math.sin(T*2.1+x)*1),pulse=.55+.45*Math.sin(T*5);
+  // casaco rasgado, apodrecido, com palha saindo pelos buracos
+  R(x-7,y-26,14,14,'#2e2218');R(x-7,y-22,14,2,'#1a120a');R(x-7,y-17,14,2,'#1a120a');
+  R(x-3,y-26,1,14,'#1a120a');R(x+3,y-26,1,14,'#1a120a');
+  R(x-5,y-12,2,3,'#2e2218');R(x-1,y-12,2,4,'#2e2218');R(x+3,y-12,3,3,'#2e2218');     // barra esfarrapada
+  R(x-4,y-20,3,2,'#6a2a22');R(x+2,y-16,2,3,'#6a2a22');                                // manchas escuras
+  R(x-8,y-19,2,2,'#b89c48');R(x+6,y-23,2,2,'#b89c48');R(x-2,y-13,2,2,'#b89c48');       // palha
+  // braços magros e compridos com dedos em garra
+  R(x-17+sw,y-26,5,2,'#3a2a1a');R(x+13+sw,y-26,5,2,'#3a2a1a');
+  R(x-15,y-28,2,5,'#3a2a1a');R(x+14,y-28,2,5,'#3a2a1a');
+  R(x-19+sw,y-25,1,5,'#a89a78');R(x-17+sw,y-24,1,6,'#a89a78');R(x-15+sw,y-24,1,5,'#a89a78');
+  R(x+17+sw,y-25,1,5,'#a89a78');R(x+15+sw,y-24,1,6,'#a89a78');R(x+13+sw,y-24,1,5,'#a89a78');
+  R(x-20+sw,y-21,2,1,'#b89c48');R(x+18+sw,y-21,2,1,'#b89c48');
+  // pernas de pano preto
+  R(x-5,y-12,4,11,'#1e1812');R(x+1,y-12,4,11,'#1e1812');R(x-6,y-3,5,2,'#3a2a1a');R(x+1,y-3,5,2,'#3a2a1a');
+  // cabeça de saco encardido, costurado
+  R(x-6,y-37,12,11,'#8a7a55');R(x-6,y-37,12,2,'#a09068');R(x+4,y-35,2,9,'#6a5a3a');
+  R(x-1,y-30,1,2,'#5a4a2e');R(x-4,y-27,1,2,'#5a4a2e');                                 // rugas e remendo
+  // olhos vazios com brilho vermelho pulsando
+  R(x-4,y-34,3,3,'#0a0606');R(x+1,y-34,3,3,'#0a0606');
+  ctx.globalAlpha=pulse;R(x-3,y-33,1,1,'#ff3a2a');R(x+2,y-33,1,1,'#ff3a2a');ctx.globalAlpha=pulse*.28;R(x-5,y-35,5,5,'#ff2a1a');R(x,y-35,5,5,'#ff2a1a');ctx.globalAlpha=1;
+  // boca costurada em zigue-zague
+  R(x-4,y-28,9,1,'#0a0606');for(let i=-4;i<=4;i+=2){R(x+i,y-30,1,5,'#0a0606');}
+  // chapéu de aba larga, rasgado e torto
+  R(x-10,y-39+tw,20,2,'#1a140e');R(x-5,y-45,10,6,'#241a10');R(x-5,y-41,10,1,'#4a3220');R(x-8,y-38,3,2,'#1a140e');
+  R(x+6,y-38,4,2,'#1a140e');R(x+8,y-37,2,1,'#0a0606');
+  // palha caindo do pescoço
+  R(x-7,y-27,2,4,'#b89c48');R(x+5,y-27,2,5,'#b89c48');R(x+6,y-23,1,2,'#b89c48');
 }
 function genWorld(seed) {
   setRng(seed);
@@ -3436,9 +3517,7 @@ function genWorld(seed) {
     }
   }
   if(selectedMap==='city'&&cityCrash){ // fonte na praça (ao lado da queda do helicóptero)
-    let fx=cityCrash.x+118,fy=cityCrash.y+4;
-    if(blds.some(b=>fx+40>b.x&&fx-40<b.x+b.w&&fy+40>b.y&&fy-40<b.y+b.h)||onCityRoad(fx,fy,38)){fx=cityCrash.x-118;}
-    if(blds.some(b=>fx+40>b.x&&fx-40<b.x+b.w&&fy+40>b.y&&fy-40<b.y+b.h)||onCityRoad(fx,fy,38)){fx=cityCrash.x;fy=cityCrash.y+118;}
+    const fx=cityCrash.x,fy=cityCrash.y; // fonte sempre no centro da praça
     lakes.push({cx:fx,cy:fy,r:26,blobs:[],islands:[],pads:[],frozen:false,fountain:true});
     const clr=(a,m)=>{for(let i=a.length-1;i>=0;i--)if(Math.hypot(a[i].x-fx,a[i].y-fy)<m)a.splice(i,1);};
     clr(trees,58);clr(rocks,58);clr(decorations,60);clr(items,60);
@@ -3447,7 +3526,17 @@ function genWorld(seed) {
   const carCols=['#7a3030','#30507a','#505050','#6a6a30','#8a7030','#4a6a8a','#2a5a3a','#6a3a5a','#3a3a3a','#8a5a20'];
   if(selectedMap==='city'){ vId=genCityVehicles(vId,carCols); } else { vId=genRuralVehicles(vId,carCols); }
   let planeX=rnd(500,WW-500),planeY=rnd(500,WH-500),validPlane=false,pTries=0;
-  if(selectedMap==='city'&&cityCrash){ planeX=cityCrash.x; planeY=cityCrash.y; validPlane=true; }
+  if(selectedMap==='city'&&cityCrash){ // destroços do avião ao lado da fonte (centro fica livre pra fonte)
+    let best=null;
+    for(const [ox,oy] of [[-150,-10],[150,-10],[0,-150],[0,150],[-130,-100],[130,100],[-130,100],[130,-100]]){
+      const qx=cityCrash.x+ox,qy=cityCrash.y+oy;
+      if(qx<cityCrash.bx+60||qx>cityCrash.bx+cityCrash.bw-60||qy<cityCrash.by+60||qy>cityCrash.by+cityCrash.bh-60)continue;
+      if(blds.some(b=>qx+60>b.x&&qx-60<b.x+b.w&&qy+60>b.y&&qy-60<b.y+b.h)||onCityRoad(qx,qy,50))continue;
+      best=[qx,qy];break;
+    }
+    if(!best)best=[cityCrash.x-150,cityCrash.y-10];
+    planeX=best[0]; planeY=best[1]; validPlane=true;
+  }
   while(!validPlane&&pTries<500){
     pTries++;
     planeX=rnd(500,WW-500);planeY=rnd(500,WH-500);
@@ -3536,12 +3625,12 @@ function genWorld(seed) {
   weatherTimer=rnd(120,240);
   weatherParticles=[];
   // Animais por mapa (passivos, caça = comida)
-  animals=[];
+  animals=[];birds=[];birdsReady=false;flockT=rnd(15,40);
   const animalPlan=
     selectedMap==='forest'?[{k:'deer',n:8},{k:'rabbit',n:12},{k:'boar',n:5}]:
     selectedMap==='snow'?[{k:'rabbit',n:10},{k:'wolf',n:6},{k:'deer',n:4}]:
-    selectedMap==='desert'?[{k:'camel',n:5},{k:'scorpion',n:8},{k:'vulture',n:6}]:
-    selectedMap==='city'?[{k:'rat',n:14},{k:'dog',n:6},{k:'crow',n:8}]:[];
+    selectedMap==='desert'?[{k:'camel',n:5},{k:'scorpion',n:8}]:
+    selectedMap==='city'?[{k:'rat',n:14},{k:'dog',n:6}]:[];
   for(const plan of animalPlan){
     let ac=0,ag=0;
     while(ac<plan.n&&ag<400){
@@ -3605,6 +3694,289 @@ function zombieScale(z){
 // Agressivos perseguem; caças fogem — zumbis ignoram animais
 const ANIMAL_AGGRO={wolf:1,boar:1,dog:1,scorpion:1,rat:1};
 const ANIMAL_PREY={deer:1,rabbit:1,camel:1,crow:1,vulture:1};
+
+/* ===== PÁSSAROS: cada mapa tem as suas espécies. Andam no chão, voam quando sentem alguém chegando e cruzam o céu em bandos ===== */
+const BIRD_SP={
+  sabia:     {n:'Sabiá',      body:'#7a5a3a',belly:'#d88a4a',wing:'#5e422a',beak:'#e0b040',sz:1,  cnt:9, snd:'chirp'},
+  bemtevi:   {n:'Bem-te-vi',  body:'#8a7a5a',belly:'#f0d040',wing:'#6a5a40',beak:'#2a2a2a',sz:1,  cnt:6, snd:'chirp'},
+  perdiz:    {n:'Perdiz-da-neve',body:'#e8eef4',belly:'#ffffff',wing:'#c0ccd8',beak:'#2a2a30',sz:1.25,cnt:8,snd:'cluck'},
+  pardalneve:{n:'Pardal-da-neve',body:'#f2f4f6',belly:'#ffffff',wing:'#2a2a32',beak:'#e0a030',sz:.9,cnt:7, snd:'chirp'},
+  calhandra: {n:'Calhandra',  body:'#b89a60',belly:'#e8d8a8',wing:'#8a6a38',beak:'#5a4a30',sz:1,  cnt:9, snd:'chirp'},
+  urubu:     {n:'Urubu',      body:'#2a2a2e',belly:'#3a3a40',wing:'#1e1e22',beak:'#c88050',sz:1.7,cnt:6, soar:true},
+  pombo:     {n:'Pombo',      body:'#8a8e98',belly:'#a8acb8',wing:'#6a6e78',beak:'#c0a090',sz:1.1,cnt:12,snd:'coo'},
+  corvo:     {n:'Corvo',      body:'#22222a',belly:'#2e2e38',wing:'#16161c',beak:'#3a3a44',sz:1.3,cnt:8, snd:'caw'}
+};
+const BIRD_MAP={forest:['sabia','bemtevi'],snow:['perdiz','pardalneve'],desert:['calhandra','urubu'],city:['pombo','corvo']};
+const BIRD_FLOCK={forest:['sabia','bemtevi'],snow:['pardalneve','perdiz'],desert:['calhandra'],city:['pombo','corvo']};
+let birds=[],birdsReady=false,flockT=25,birdChirpT=6,birdSeq=0;
+const BKEYS=Object.keys(BIRD_SP),BST=['ground','fly','land','soar'];
+function birdAnchors(){ // todos os jogadores vivos (anfitrião + convidado)
+  const a=[];if(P&&!P.dead)a.push({x:P.x,y:P.y});
+  if(MP.active)for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.alive!==false&&Number.isFinite(rp.x))a.push({x:rp.x,y:rp.y});}
+  if(!a.length&&P)a.push({x:P.x,y:P.y});
+  return a;
+}
+function birdOK(x,y){
+  if(x<50||y<50||x>WW-50||y>WH-50)return false;
+  if(pointInLake(x,y)||bldAt(x,y))return false;
+  return querySolidNear(x,y,9).length===0;
+}
+function birdSound(b){
+  const sp=BIRD_SP[b.sp];if(!sp||!sp.snd||!P)return;
+  if(Math.hypot(b.x-P.x,b.y-P.y)>230)return;
+  const f=rnd(0.9,1.15);
+  if(sp.snd==='chirp'){beep(2300*f,.05,'sine',.016,700);setTimeout(()=>beep(2900*f,.05,'sine',.014,-600),90);}
+  else if(sp.snd==='coo'){beep(420*f,.16,'sine',.02,-60);}
+  else if(sp.snd==='caw'){beep(760*f,.14,'sawtooth',.016,-260);}
+  else beep(900*f,.08,'triangle',.016,-250);
+}
+function newBird(spk,x,y,st){
+  return {id:++birdSeq,sp:spk,x:x,y:y,z:0,zt:0,st:st||'ground',face:Math.random()<.5?-1:1,vx:0,vy:0,t:0,wt:rnd(0,3),peck:0,ph:Math.random()*6.28,idle:rnd(30,100),tx:x,ty:y,mv:false,leave:false,gone:0,transit:false};
+}
+function initBirds(){
+  birds=[];birdsReady=true;
+  const list=BIRD_MAP[selectedMap]||[];
+  const night=dark>.66;
+  for(const spk of list){
+    const sp=BIRD_SP[spk];
+    if(sp.soar){ // urubus rodando no céu em 2 ou 3 grupos
+      const groups=Math.max(1,Math.round(sp.cnt/3));let made=0;
+      for(let g=0;g<groups;g++){
+        const cx=rnd(300,WW-300),cy=rnd(300,WH-300),rad=rnd(70,130),dir=Math.random()<.5?-1:1;
+        const n=g===groups-1?sp.cnt-made:Math.ceil(sp.cnt/groups);
+        for(let i=0;i<n;i++){
+          const b=newBird(spk,cx,cy,'soar');b.cx=cx;b.cy=cy;b.rad=rad*rnd(.85,1.15);b.ang=i/n*6.283+rnd(-.3,.3);b.w=dir*rnd(.28,.4);b.z=b.zt=rnd(44,58);
+          birds.push(b);made++;
+        }
+      }
+      continue;
+    }
+    for(let i=0,tries=0;i<sp.cnt&&tries<600;tries++){
+      const x=rnd(80,WW-80),y=rnd(80,WH-80);
+      if(!birdOK(x,y))continue;
+      if(Math.hypot(x-P.x,y-P.y)<90)continue;
+      const b=newBird(spk,x,y,'ground');
+      if(night){b.st='gone';b.gone=rnd(3,30);}
+      birds.push(b);i++;
+    }
+  }
+}
+function birdTakeoff(b,fx,fy,leave){
+  const sp=BIRD_SP[b.sp];
+  const a=(fx!==undefined)?Math.atan2(b.y-fy,b.x-fx)+rnd(-.7,.7):rnd(0,6.283);
+  const v=rnd(58,84)*(sp.sz>1.2?.9:1);
+  b.vx=Math.cos(a)*v;b.vy=Math.sin(a)*v*.8;b.st='fly';b.z=Math.max(b.z,1);b.zt=rnd(24,44);b.t=leave?99:rnd(2.4,5.5);b.leave=!!leave;b.face=b.vx>=0?1:-1;b.mv=false;
+  birdSound(b);
+}
+function scareBirds(x,y,r){ // barulho (tiro, explosão) espanta as aves do chão por perto
+  if(MP.active&&!MP.isHost)return;
+  for(const b of birds)if(b.st==='ground'&&Math.hypot(b.x-x,b.y-y)<r*.7)birdTakeoff(b,x,y);
+}
+function updateBirds(dt){
+  if(!P||!selectedMap)return;
+  if(MP.active&&!MP.isHost){updateBirdsGuest(dt);return;} // convidado só mostra o que o anfitrião simula
+  if(!birdsReady)initBirds();
+  const night=dark>.66,dawn=dark<.5;
+  const sc=[];
+  if(!P.dead)sc.push({x:P.x,y:P.y,r:P.inVehicle?(Math.abs(P.inVehicle.spd||0)>18?165:70):(P.sprint?105:(P.moving?58:22))});
+  if(MP.active)for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.alive!==false&&Number.isFinite(rp.x))sc.push({x:rp.x,y:rp.y,r:rp.inVehicle?120:(rp.sprint?105:(rp.moving?58:22))});}
+  for(const z of zombies)if(!z.dead&&Math.abs(z.x-P.x)<420&&Math.abs(z.y-P.y)<420)sc.push({x:z.x,y:z.y,r:30});
+  // sons ambiente de dia
+  if(!night){birdChirpT-=dt;if(birdChirpT<=0){birdChirpT=rnd(6,15);const g=birds.filter(b=>b.st==='ground'&&Math.hypot(b.x-P.x,b.y-P.y)<220);if(g.length)birdSound(g[Math.floor(Math.random()*g.length)]);}}
+  // bandos cruzando o céu (de dia, longe de onde ninguém vê, atravessando a tela)
+  if(!night){
+    flockT-=dt;
+    if(flockT<=0){
+      flockT=rnd(35,80);
+      const fl=BIRD_FLOCK[selectedMap]||[];
+      if(fl.length&&birds.filter(b=>b.transit).length<8){
+        const an=birdAnchors(),AP=an[Math.floor(Math.random()*an.length)];
+        const spk=fl[Math.floor(Math.random()*fl.length)],a=rnd(0,6.283),n=3+Math.floor(Math.random()*3);
+        const sx=AP.x+Math.cos(a)*640,sy=AP.y+Math.sin(a)*640,lat=rnd(-130,130);
+        const tx=AP.x-Math.cos(a)*640-Math.sin(a)*lat,ty=AP.y-Math.sin(a)*640+Math.cos(a)*lat;
+        const dx=tx-sx,dy=ty-sy,d=Math.hypot(dx,dy),v=rnd(54,72);
+        for(let i=0;i<n;i++){
+          const b=newBird(spk,sx+rnd(-30,30)-Math.sin(a)*i*14,sy+rnd(-30,30)+Math.cos(a)*i*14,'fly');
+          b.transit=true;b.vx=dx/d*v;b.vy=dy/d*v;b.z=b.zt=rnd(44,66);b.t=70;b.face=b.vx>=0?1:-1;b.ph=i*.7;
+          birds.push(b);
+        }
+      }
+    }
+  }
+  for(let i=birds.length-1;i>=0;i--){
+    const b=birds[i];
+    b.ph+=dt;
+    if(b.transit){
+      b.x+=b.vx*dt;b.y+=b.vy*dt;b.t-=dt;
+      if(b.t<=0||!birdAnchors().some(q=>Math.hypot(b.x-q.x,b.y-q.y)<=760)){birds.splice(i,1);}
+      continue;
+    }
+    if(b.st==='gone'){
+      if(!night){
+        b.gone-=dt;
+        if(b.gone<=0&&dawn){
+          let ok=false;
+          for(let k=0;k<30&&!ok;k++){
+            const an=birdAnchors(),AP=an[Math.floor(Math.random()*an.length)];
+            const a=rnd(0,6.283),d=rnd(380,900),x=AP.x+Math.cos(a)*d,y=AP.y+Math.sin(a)*d;
+            if(!birdOK(x,y)||inAnyView(x,y,120))continue;
+            b.x=x;b.y=y;ok=true;
+            if(BIRD_SP[b.sp].soar){b.st='soar';b.cx=x;b.cy=y;b.rad=rnd(70,130);b.ang=rnd(0,6.283);b.w=(Math.random()<.5?-1:1)*rnd(.28,.4);b.z=b.zt=rnd(44,58);}
+            else{b.st='ground';b.z=0;b.wt=rnd(0,2);}
+          }
+          if(!ok)b.gone=3;
+        }
+      }
+      continue;
+    }
+    if(night&&b.st!=='fly'&&b.st!=='land'){ // anoitece: as aves vão embora
+      if(!inAnyView(b.x,b.y,30)){b.st='gone';b.gone=rnd(5,40);continue;}
+      if(b.st==='soar'){b.st='fly';b.vx=Math.cos(b.ang+1.57*Math.sign(b.w))*70;b.vy=Math.sin(b.ang+1.57*Math.sign(b.w))*60;b.leave=true;b.t=99;continue;}
+      birdTakeoff(b,undefined,undefined,true);continue;
+    }
+    if(b.st==='soar'){
+      b.ang+=b.w*dt;
+      const nx=b.cx+Math.cos(b.ang)*b.rad,ny=b.cy+Math.sin(b.ang)*b.rad*.72;
+      const dx=nx-b.x;if(Math.abs(dx)>.02)b.face=dx>=0?1:-1;
+      b.x=nx;b.y=ny;b.z=b.zt+Math.sin(b.ph*.8)*3;
+      continue;
+    }
+    if(b.st==='ground'){
+      for(const s of sc){
+        const d=Math.hypot(b.x-s.x,b.y-s.y);
+        if(d<s.r){birdTakeoff(b,s.x,s.y);break;}
+      }
+      if(b.st!=='ground')continue;
+      b.idle-=dt;
+      if(b.idle<=0){b.idle=rnd(45,120);if(!night){birdTakeoff(b);continue;}}
+      if(b.peck>0){b.peck-=dt;}
+      else if(b.mv){
+        const dx=b.tx-b.x,dy=b.ty-b.y,d=Math.hypot(dx,dy);
+        if(d<2){b.mv=false;b.wt=rnd(1,3);}
+        else{
+          const sp=BIRD_SP[b.sp].sz>1.2?15:21,nx=b.x+dx/d*sp*dt,ny=b.y+dy/d*sp*dt;
+          if(querySolidNear(nx,ny,8).length||pointInLake(nx,ny)){b.mv=false;b.wt=.4;}
+          else{b.x=nx;b.y=ny;b.face=dx>=0?1:-1;}
+        }
+      }else{
+        b.wt-=dt;
+        if(b.wt<=0){
+          if(Math.random()<.55){b.peck=rnd(.8,2.2);b.wt=rnd(.5,1.5);}
+          else{
+            for(let k=0;k<6;k++){const a=rnd(0,6.283),d=rnd(14,50),x=b.x+Math.cos(a)*d,y=b.y+Math.sin(a)*d;if(birdOK(x,y)){b.tx=x;b.ty=y;b.mv=true;break;}}
+            if(!b.mv)b.wt=1;
+          }
+        }
+      }
+      continue;
+    }
+    if(b.st==='fly'){
+      b.t-=dt;
+      b.x+=b.vx*dt;b.y+=b.vy*dt;
+      if(b.x<70&&b.vx<0)b.vx=-b.vx;if(b.x>WW-70&&b.vx>0)b.vx=-b.vx;
+      if(b.y<70&&b.vy<0)b.vy=-b.vy;if(b.y>WH-70&&b.vy>0)b.vy=-b.vy;
+      b.face=b.vx>=0?1:-1;
+      b.z+=(b.zt-b.z)*Math.min(1,dt*2.2);
+      if(b.leave){
+        if(!inAnyView(b.x,b.y,50)&&night){b.st='gone';b.gone=rnd(5,40);b.z=0;}
+        else if(!night){b.leave=false;b.t=1;}
+      }else if(b.t<=0){
+        let ok=false;
+        for(let k=0;k<14&&!ok;k++){
+          const x=b.x+b.vx*rnd(.5,1.3)+rnd(-40,40),y=b.y+b.vy*rnd(.5,1.3)+rnd(-40,40);
+          if(birdOK(x,y)){b.tx=x;b.ty=y;ok=true;}
+        }
+        if(ok)b.st='land';else b.t=1.5;
+      }
+      continue;
+    }
+    if(b.st==='land'){
+      const dx=b.tx-b.x,dy=b.ty-b.y,d=Math.hypot(dx,dy),v=Math.min(60,Math.max(18,d*1.4));
+      if(d>1.5){b.x+=dx/d*v*dt;b.y+=dy/d*v*dt;b.face=dx>=0?1:-1;}
+      b.z=Math.min(b.z,Math.max(0,d*.55));
+      if(d<2.5||b.z<.4){b.st='ground';b.z=0;b.x=b.tx;b.y=b.ty;b.wt=rnd(.6,1.6);b.mv=false;}
+    }
+  }
+}
+
+/* Convidado: aves seguem o que o anfitrião mandou (posição suavizada); sons e animação são locais */
+function updateBirdsGuest(dt){
+  for(const b of birds){
+    b.ph+=dt;
+    const dx=(b._nx===undefined?b.x:b._nx)-b.x,dy=(b._ny===undefined?b.y:b._ny)-b.y;
+    if(Math.abs(dx)+Math.abs(dy)>160){b.x=b._nx;b.y=b._ny;}
+    else{const k=Math.min(1,dt*9);b.x+=dx*k;b.y+=dy*k;}
+    if(b._nz!==undefined)b.z+=(b._nz-b.z)*Math.min(1,dt*9);
+  }
+  if(dark<=.66){birdChirpT-=dt;if(birdChirpT<=0){birdChirpT=rnd(6,15);const g=birds.filter(b=>b.st==='ground'&&Math.hypot(b.x-P.x,b.y-P.y)<220);if(g.length)birdSound(g[Math.floor(Math.random()*g.length)]);}}
+}
+function packBirds(){
+  const an=birdAnchors(),out=[];
+  for(const b of birds){
+    if(b.st==='gone')continue;
+    let near=false;for(const q of an)if(Math.abs(b.x-q.x)<950&&Math.abs(b.y-q.y)<950){near=true;break;}
+    if(!near)continue;
+    out.push([b.id,BKEYS.indexOf(b.sp),Math.round(b.x),Math.round(b.y),Math.round(b.z),BST.indexOf(b.st),(b.face>0?1:0)|(b.peck>0?2:0)|(b.mv?4:0)|(b.transit?8:0),Math.round(b.vx||0),Math.round(b.vy||0)]);
+  }
+  return out;
+}
+function applyBirds(list){
+  if(!Array.isArray(list))return;
+  const byId=new Map();for(const b of birds)byId.set(b.id,b);
+  const next=[];
+  for(const a of list){
+    if(!Array.isArray(a)||a.length<9)continue;
+    const spk=BKEYS[a[1]];if(!spk||!Number.isFinite(a[2])||!Number.isFinite(a[3]))continue;
+    let b=byId.get(a[0]);
+    if(!b){b=newBird(spk,a[2],a[3],BST[a[5]]||'ground');b.id=a[0];b.z=a[4]||0;}
+    const prevSt=b.st;
+    b._nx=a[2];b._ny=a[3];b._nz=a[4]||0;b.st=BST[a[5]]||'ground';
+    b.face=(a[6]&1)?1:-1;b.peck=(a[6]&2)?1:0;b.mv=!!(a[6]&4);b.transit=!!(a[6]&8);b.vx=a[7];b.vy=a[8];
+    if(prevSt==='ground'&&b.st==='fly'&&!b.transit)birdSound(b);
+    next.push(b);
+  }
+  birds=next;
+}
+function drawBirdBody(b,x,y,air){
+  const sp=BIRD_SP[b.sp],s=sp.sz*1.35;
+  ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.scale(b.face*s,s);
+  if(!air){
+    const hop=b.mv?-Math.abs(Math.sin(b.ph*16))*1.2:0,pk=b.peck>0?(Math.sin(b.ph*18)>0?1:0):0;
+    R(-1,-2,1,2,'#7a5a3a');R(1,-2,1,2,'#7a5a3a');
+    R(-4,-6+hop+pk,8,4,sp.body);R(-3,-3+hop+pk,6,2,sp.belly);
+    R(-6,-6+hop+pk,3,2,sp.wing);R(-3,-6+hop+pk,5,2,sp.wing);
+    if(pk||b.peck>0&&!b.mv){R(3,-5+hop+pk*2,3,3,sp.body);R(6,-4+hop+pk*2,2,1,sp.beak);R(5,-5+hop+pk*2,1,1,'#111');}
+    else{R(3,-8+hop,3,3,sp.body);R(6,-7+hop,2,1,sp.beak);R(5,-7+hop,1,1,'#111');}
+  }else{
+    const soar=b.st==='soar';
+    const ph=Math.sin(T*(soar?0:22)+b.ph*3);
+    R(-3,-1,6,3,sp.body);R(-2,1,4,1,sp.belly);R(3,-2,3,3,sp.body);R(6,-1,2,1,sp.beak);R(5,-2,1,1,'#111');R(-6,0,3,2,sp.wing);
+    if(soar){R(-9,-2,18,2,sp.wing);R(-8,-3,16,1,sp.wing);R(-10,-1,2,1,sp.wing);R(8,-1,2,1,sp.wing);}
+    else if(ph>.33){R(-4,-7,5,6,sp.wing);R(-1,-6,2,5,sp.belly);}
+    else if(ph<-.33){R(-5,1,9,4,sp.wing);R(-7,3,3,2,sp.wing);}
+    else{R(-7,-2,13,2,sp.wing);}
+  }
+  ctx.restore();
+}
+function drawBirdsGround(vx0,vx1,vy0,vy1,list){
+  for(const b of birds){
+    if(b.st==='gone'||b.transit)continue;
+    if(!((b.st==='ground'||b.st==='land')&&b.z<2))continue;
+    if(b.x>vx0&&b.x<vx1&&b.y>vy0&&b.y<vy1)list.push({y:b.y,k:12,o:b});
+  }
+}
+function drawBirdsAir(vx0,vx1,vy0,vy1){
+  for(const b of birds){
+    if(b.st==='gone')continue;
+    if(!b.transit&&(b.st==='ground'||(b.st==='land'&&b.z<2)))continue;
+    if(b.x<vx0-20||b.x>vx1+20||b.y-b.z<vy0-20||b.y-b.z>vy1+20)continue;
+    const sp=BIRD_SP[b.sp];
+    ctx.globalAlpha=.22*Math.max(.3,1-b.z/110);
+    ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(Math.round(b.x+b.z*.25),Math.round(b.y+2),Math.max(2,4*sp.sz*(1-b.z/200)),Math.max(1,1.6*sp.sz*(1-b.z/200)),0,0,6.283);ctx.fill();
+    ctx.globalAlpha=1;
+    drawBirdBody(b,b.x,b.y-b.z,true);
+  }
+}
 function updateAnimals(dt){
   if(!animals||!animals.length) return;
   // No multiplayer só o host simula; guest recebe posições no snapshot
@@ -3612,6 +3984,7 @@ function updateAnimals(dt){
   for(const a of animals){
     if(a.dead) continue;
     a.atkCD=(a.atkCD||0)-dt;
+    const _ax0=a.x,_ay0=a.y;
     const aggressive=!!ANIMAL_AGGRO[a.k];
     const prey=!!ANIMAL_PREY[a.k] || !aggressive;
     // Alvo: player local + remote (host vê os dois)
@@ -3626,8 +3999,10 @@ function updateAnimals(dt){
       }
     }
     if(aggressive && target && tDist<160){
-      // Persegue até ~22px e para (não cola no player)
-      if(tDist>22){
+      // Persegue até ~22px e para (não cola no player). Se o alvo está dirigindo, o alcance conta a partir da lataria
+      let reach=tDist;
+      if(target===P&&P.inVehicle){const v=vehHalf(P.inVehicle);const ex=Math.max(0,Math.abs(a.x-v.x)-v._hx),ey=Math.max(0,Math.abs(a.y-v.y)-v._hy);reach=Math.hypot(ex,ey)+10;}
+      if(reach>22){
         const dx=target.x-a.x, dy=target.y-a.y, d=Math.hypot(dx,dy)||1;
         const spd=a.k==='wolf'||a.k==='dog'?48:(a.k==='boar'?38:(a.k==='scorpion'?42:36));
         a.x+=dx/d*spd*dt; a.y+=dy/d*spd*dt;
@@ -3660,9 +4035,10 @@ function updateAnimals(dt){
       if(d>4){ a.x+=dx/d*16*dt; a.y+=dy/d*16*dt; a.face=Math.atan2(dy,dx); }
     }
     a.x=clamp(a.x,20,WW-20); a.y=clamp(a.y,20,WH-20);
-    // Colisão com ambiente (árvores, pedras, paredes, veículos)
+    // Colisão com ambiente (árvores, pedras, paredes, veículos): anda em subpassos, sem atravessar
     const ar=a.k==='deer'||a.k==='camel'||a.k==='boar'?8:(a.k==='wolf'||a.k==='dog'?6:4);
-    pushOut(a, ar);
+    if(a.k==='crow'||a.k==='vulture'){pushOut(a,ar);}
+    else{const mdx=a.x-_ax0,mdy=a.y-_ay0;a.x=_ax0;a.y=_ay0;stepMove(a,mdx,mdy,ar);}
     // Evita lago (não-voadores)
     if(a.k!=='crow'&&a.k!=='vulture'&&pointInLake(a.x,a.y)){
       // empurra para fora do lago
@@ -3734,6 +4110,13 @@ function zombieLook(kind,si){
   const skin=kind===9?'#d8e0ea':kind===3?'#556b2f':kind===2?'#8a5a4a':kind===4?'#7ac070':kind===5?'#6a8060':kind===6?'#c0a0a0':kind===7?'#4a7a38':kind===8?'#c05040':t.color;
   const shirt=kind===9?'#f0f4f8':kind===3?'#b22222':kind===2?'#3a1a1a':kind===5?'#4a3a20':kind===6?'#7a4a7a':kind===7?'#2a4a20':kind===8?'#5a1010':ZSHIRTS[(si|0)%5];
   return {skin:skin,shirt:shirt};
+}
+/* true se o ponto aparece (ou está quase aparecendo) na tela de algum jogador: zumbi novo nunca nasce à vista */
+function inAnyView(x,y,m){
+  const vw=W/Z,vh=H/Z;
+  if(vw>0&&x>camX-m&&x<camX+vw+m&&y>camY-m&&y<camY+vh+m)return true;
+  if(MP.active){const r=Math.hypot(vw,vh)/2+m;for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.alive!==false&&Number.isFinite(rp.x)&&Math.hypot(rp.x-x,rp.y-y)<r)return true;}}
+  return false;
 }
 function spawnZ(x,y,kind){
   if(kind===undefined) kind=pickZombieKind();
@@ -4021,7 +4404,7 @@ function applyUse(it){
   else if(it==='cookedmeat'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+10);P.food=Math.min(100,P.food+60);P.hp=Math.min(100,P.hp+8);ok=true;toast('Carne assada! +8 HP');}}
   else if(it==='corn'){if(P.food<95){P.food=Math.min(100,P.food+14);ok=true;toast('Milho cru... melhor assar');}}
   else if(it==='cookedcorn'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+6);P.food=Math.min(100,P.food+32);P.hp=Math.min(100,P.hp+3);ok=true;toast('Milho assado! +3 HP');}}
-  else if(it==='water'){if(P.water<95){P.water=Math.min(100,P.water+40);ok=true;toast('Você bebeu água');if(selectedMap==='snow'||selectedMap==='desert')P.temp=Math.max(-100,(P.temp||0)-6);}}
+  else if(it==='water'){if(P.water<95){P.water=Math.min(100,P.water+40);ok=true;toast('Você bebeu água');}}
   else if(it==='bandage'){if(P.bleed||P.hp<95){P.bleed=false;P.hp=Math.min(100,P.hp+10);ok=true;toast('Bandagem usada');track('use_bandage');}}
   else if(it==='medkit'){if(P.bleed||P.hp<90||P.sick>0){P.bleed=false;P.sick=0;P.hp=Math.min(100,P.hp+50);ok=true;toast('Kit médico usado');}}
   return ok;
@@ -4229,7 +4612,25 @@ function exitVehicle(){
   const v=P.inVehicle;
   if(v.driverId===myNetId()) v.driverId=null;
   v.spd=0;
-  P.x=v.x+Math.cos(v.face+1.57)*25;P.y=v.y+Math.sin(v.face+1.57)*25;
+  { // procura um ponto livre ao redor do carro (nunca dentro de casa, parede, árvore, lago ou cerca)
+    const okAt=(x,y)=>{
+      for(const b of blds)if(x>b.x-9&&x<b.x+b.w+9&&y>b.y-9&&y<b.y+b.h+9)return false;
+      if(pointInLake(x,y)||nearFountain(x,y))return false;
+      if(x<20||y<20||x>WW-20||y>WH-20)return false;
+      const q={x:x,y:y};pushOut(q,6);
+      return Math.hypot(q.x-x,q.y-y)<.6;
+    };
+    let best=null;
+    const base=v.face+1.57;
+    outer:for(const d of [26,34,44,56,70]){
+      for(const a of [0,3.1416,.7,-.7,2.4,-2.4,1.57,-1.57,.35,-.35,2.8,-2.8]){
+        const x=v.x+Math.cos(base+a)*d,y=v.y+Math.sin(base+a)*d;
+        if(okAt(x,y)){best=[x,y];break outer;}
+      }
+    }
+    if(best){P.x=best[0];P.y=best[1];}
+    else{P.x=v.x+Math.cos(base)*25;P.y=v.y+Math.sin(base)*25;}
+  }
   P.inVehicle=null;
   restoreWalkHUD();
   if(MP.active) sendEvt('vehicleExit', {id:v.id});
@@ -4332,7 +4733,6 @@ function pickup(){
       if(!addItem('water')){ toast('Sede saciada · inventário cheio'); return; }
       toast('Garrafa enchida');
     }
-    if(selectedMap==='snow'||selectedMap==='desert')P.temp=Math.max(-100,(P.temp||0)-6); // água gelada esfria / água fresca refresca
     beep(430,.1,'sine',.045);
     for(let i=0;i<5;i++)parts.push({x:P.x+rnd(-5,5),y:P.y,vx:rnd(-12,12),vy:rnd(-30,-10),t:.35,c:'#8cc8f0'});
     return;
@@ -4425,6 +4825,7 @@ function pickup(){
   beep(660, .07, 'square', .04);
 }
 function makeNoise(x,y,r){
+  try{scareBirds(x,y,r);}catch(e){}
   for(const z of zombies){
     if(z.dead)continue;
     const d=Math.hypot(z.x-x,z.y-y);
@@ -4613,8 +5014,8 @@ function damageZ(z,dmg,kx,ky,fromNet){
         items.push({t:'cloth',x:z.x,y:z.y});
         if(MP.active) sendEvt('itemAdded', {t:'cloth', x:z.x, y:z.y});
       }
-      if((z.kind|0)===9){ // Yeti: casaco polar, tecido e carne
-        ['parka','cloth','cloth','cloth','meat','meat'].forEach((t,i)=>{
+      if((z.kind|0)===9){ // Yeti: kit médico, bandagem, tecido e carne (o casaco polar se acha pelo mapa)
+        ['medkit','bandage','cloth','cloth','meat','meat','meat'].forEach((t,i)=>{
           const a=i*1.05,x=z.x+Math.cos(a)*12,y=z.y+Math.sin(a)*10;
           items.push({t:t,x:x,y:y});
           if(MP.active) sendEvt('itemAdded',{t:t,x:x,y:y});
@@ -5014,8 +5415,8 @@ function envTemp(){
   else if(nearTent(P.x,P.y,34)) tg*=0.55;                    // barraca protege um pouco
   else {
     if(tg>10){ for(const n of querySolidNear(P.x,P.y,28)){ if(n.kind==='tree'){ tg-=22; break; } } } // sombra
-    if(selectedMap!=='snow'&&pointInLake(P.x,P.y)) tg-=(tg>0?40:18);                                  // na água: refresca / molha
   }
+  { const w=P.wet||0; if(w>0) tg-=w*(selectedMap==='snow'?42:(tg>0?40:18)); } // molhado: esfria aos poucos (mais na neve)
   for(const c of campfires){                                  // fogueira: esquenta no frio
     const d=Math.hypot(c.x-P.x,c.y-P.y);
     if(d<95){
@@ -5037,7 +5438,12 @@ function envTemp(){
 }
 function tempTick(dt){
   if(!Number.isFinite(P.temp)) P.temp=0;
-  P.temp+=(envTemp()-P.temp)*Math.min(1,dt/40);
+  { // água do lago/oásis: ficar dentro vai molhando e esfriando aos poucos; fora, seca devagar
+    const inW=!P.inVehicle&&pointInLake(P.x,P.y), snow=selectedMap==='snow';
+    P.wet=clamp((P.wet||0)+(inW?dt/(snow?16:26):-dt/(snow?55:30)),0,1);
+    P._inW=inW;
+  }
+  P.temp+=(envTemp()-P.temp)*Math.min(1,dt/((P._inW&&selectedMap==='snow')?14:40));
   const T=P.temp;
   let fm=1,wm=1,spd=1,sr=1,sd=1,dmg=0,code=0;
   if(T<-28){ code=-1; fm=1.25; sr=.7; spd=.95; }
@@ -5134,50 +5540,50 @@ function updateP(dt){
       }
     }
     const prevSpd=v.spd;
-    const ox=v.x, oy=v.y, of=v.face;
-    // Quantos pontos da carroceria já estão dentro de algo ANTES de mover (carro encostado/preso)
-    const oldOverlap=vehicleOverlap(v);
-    if(touchSteer!==0&&Math.abs(v.spd)>4)v.face+=touchSteer*2.2*tr.steer*wf*dt*(v.spd>0?1:-1);
-    const newFace=v.face;
-    v.x+=Math.cos(v.face)*v.spd*dt;
-    v.y+=Math.sin(v.face)*v.spd*dt;
-    // Colisão real com paredes/árvores/pedras (amostras na carroceria)
-    // Livre = sem colisão; se já estava encostado, aceita qualquer movimento que NÃO piore (permite dar ré)
-    const okMove=()=>{const c=vehicleOverlap(v);return oldOverlap>0?c<=oldOverlap:c===0;};
-    let hitEnv=!okMove();
-    if(hitEnv&&newFace!==of){
-      // Girar o volante contra a parede é o que trava o carro: tenta andar sem girar
-      v.face=of;
-      v.x=ox+Math.cos(of)*v.spd*dt;
-      v.y=oy+Math.sin(of)*v.spd*dt;
-      hitEnv=!okMove();
+    // Movimento em subpassos de até 2px: o carro nunca "pula" por cima de cerca ou parede fina, mesmo em alta velocidade
+    const oldOverlap=vehicleOverlap(v);   // já encostado antes de mover? (aceita qualquer movimento que NÃO piore)
+    const okNow=()=>{const c=vehicleOverlap(v);return oldOverlap>0?c<=oldOverlap:c===0;};
+    const steerR=(touchSteer!==0&&Math.abs(v.spd)>4)?touchSteer*2.2*tr.steer*wf*(v.spd>0?1:-1):0;
+    const dist=v.spd*dt,nSub=Math.max(1,Math.ceil(Math.abs(dist)/2));
+    let blocked=false,scraped=false;
+    for(let i=0;i<nSub;i++){
+      const sx0=v.x,sy0=v.y,sf0=v.face,df=steerR*dt/nSub,st=dist/nSub;
+      v.face=sf0+df;v.x=sx0+Math.cos(v.face)*st;v.y=sy0+Math.sin(v.face)*st;
+      if(okNow())continue;
+      if(df!==0){v.face=sf0;v.x=sx0+Math.cos(sf0)*st;v.y=sy0+Math.sin(sf0)*st;if(okNow())continue;} // girar contra a parede trava: tenta sem girar
+      // raspando: desliza ao longo da superfície (só se o movimento naquele eixo for relevante)
+      const mx=Math.cos(sf0)*st,my=Math.sin(sf0)*st,tot=Math.abs(st)||1;
+      const tries=Math.abs(mx)>=Math.abs(my)?[[mx,0,mx],[0,my,my]]:[[0,my,my],[mx,0,mx]];
+      let ok=false;
+      for(const [tx,ty,cmp] of tries){
+        if(Math.abs(cmp)<tot*.3)continue;
+        v.face=sf0;v.x=sx0+tx;v.y=sy0+ty;
+        if(okNow()){ok=true;scraped=true;break;}
+      }
+      if(ok)continue;
+      v.x=sx0;v.y=sy0;v.face=sf0;blocked=true;break;
     }
-    if(hitEnv){
-      // Reverte (posição e direção) e aplica dano proporcional à velocidade
-      v.x=ox; v.y=oy; v.face=of;
+    if(scraped&&!blocked){
+      v.spd*=Math.pow(.4,dt);    // atrito ao raspar
+      if(Math.abs(v.spd)>25&&Math.random()<dt*14)parts.push({x:v.x+Math.cos(v.face)*14,y:v.y+rnd(-8,8),vx:rnd(-30,30),vy:rnd(-40,-10),t:.25,c:'#ffd070'});
+    }
+    if(blocked){
       if(Math.abs(prevSpd)>10&&oldOverlap===0){
         const impact=Math.abs(prevSpd);
-        const dmg=Math.min(22, 2+impact*0.25);
+        const dmg=Math.min(22,2+impact*0.25);
         v.hp-=dmg;
-        v.spd*=0.15;
+        v.spd=-Math.sign(prevSpd)*Math.min(26,impact*.22);   // rebote
         v._envHitCD=(v._envHitCD||0);
         if(v._envHitCD<=0){
           v._envHitCD=0.25;
-          shake=Math.max(shake, 3+impact/25);
-          boom(0.14, 0.1+impact/180, 350);
+          shake=Math.max(shake,3+impact/25);
+          boom(0.14,0.1+impact/180,350);
           beep(70,.12,'sawtooth',.06);
-          addFloater(v.x,v.y-18, '-'+Math.round(dmg), '#ff8040');
+          addFloater(v.x,v.y-18,'-'+Math.round(dmg),'#ff8040');
+          for(let k=0;k<6;k++)parts.push({x:v.x+Math.cos(v.face)*(prevSpd>0?16:-16),y:v.y+rnd(-6,6),vx:rnd(-40,40),vy:rnd(-50,-10),t:.3,c:'#ffd070'});
         }
-        if(v.hp<=0){ startVehicleDeath(v); return; }
-      } else {
-        v.spd=0;
-      }
-    } else {
-      // Empurrão suave (só desliza em volta de objetos, sem dano e sem perder velocidade).
-      // O dano de batida vem apenas de vehicleHitsEnv (corpo realmente encostando).
-      const pbx=v.x,pby=v.y,pov=vehicleOverlap(v);
-      pushOut(v,14);
-      if(vehicleOverlap(v)>pov){v.x=pbx;v.y=pby;}
+        if(v.hp<=0){startVehicleDeath(v);return;}
+      }else v.spd=0;
     }
     // Anti-preso: se a carroceria ainda está dentro de algo, se desloca aos poucos para o lado livre
     // (testa 16 direções) mesmo sem o jogador acelerar. Garante que nunca fique travado de vez.
@@ -5244,7 +5650,7 @@ function updateP(dt){
   else if(weather==='sand') sp*=0.9;
   sp*=(P._tspd||1);                 // frio/calor extremos desaceleram
   if(P.moving){
-    P.x+=mx*sp*dt;P.y+=my*sp*dt;
+    stepMove(P,mx*sp*dt,my*sp*dt,P.r);
     P.face=Math.atan2(my,mx);
     P.walk+=dt*(P.sprint?14:9);
     if(inWater&&Math.random()<.2)parts.push({x:P.x+rnd(-6,6),y:P.y+rnd(-4,4),vx:rnd(-10,10),vy:rnd(-15,-5),t:.4,c:'#4aa3e8'});
@@ -5275,7 +5681,7 @@ function updateZ(z,dt){
   z.anim+=dt*(z.kind===1?10:6);
   z.cd=Math.max(0,z.cd-dt);z.hit=Math.max(0,z.hit-dt);z.alert=Math.max(0,z.alert-dt);z.lunge=Math.max(0,z.lunge-dt);
   if(z.vx||z.vy){
-    z.x+=z.vx*dt;z.y+=z.vy*dt;
+    stepMove(z,z.vx*dt,z.vy*dt,z.r);
     const f=Math.pow(.02,dt);z.vx*=f;z.vy*=f;
     if(Math.abs(z.vx)<2)z.vx=0;
     if(Math.abs(z.vy)<2)z.vy=0;
@@ -5341,8 +5747,11 @@ function updateZ(z,dt){
   if(z.lock>0&&d>det*2&&!z.lastSeen){z.lastSeen={x:targetX,y:targetY};z.searchT=3.2;}
   if(z.seen)z.lastSeen={x:targetX,y:targetY};
   if(FIELD&&!targetDead&&d>26&&inCorn(targetX,targetY)){z.seen=false;z.lock=0;z.lastSeen=null;z.searchT=0;} // milharal: quem persegue perde o alvo de vista
+  if(z.kind===9&&!targetDead&&d<560){ // Yeti: caçador implacável, não perde o alvo por ruído, escuridão ou linha de visão
+    z.seen=true;z.lock=Math.max(z.lock,4);z.lastSeen={x:targetX,y:targetY};z.alert=0;
+  }
   let mode='wander';
-  if(z.lock>0&&d<det*2)mode='chase';
+  if(z.lock>0&&(d<det*2||z.kind===9))mode='chase';
   else if(z.alert>0)mode='noise';
   else if(z.lastSeen&&z.searchT>0)mode='search';
   let tx,ty,sp;
@@ -5393,7 +5802,7 @@ function updateZ(z,dt){
   if(sp>0){
     let a=Math.atan2(ty-z.y,tx-z.x);
     if(z._det>0){z._det-=dt;a+=z._ds*1.3;}      // desvio lateral quando travado
-    z.face=a;z.x+=Math.cos(a)*sp*dt;z.y+=Math.sin(a)*sp*dt;
+    z.face=a;stepMove(z,Math.cos(a)*sp*dt,Math.sin(a)*sp*dt,z.r);
   }
   pushOut(z,z.r);
   if(sp>0){
@@ -5404,7 +5813,7 @@ function updateZ(z,dt){
       z._sx=z.x;z._sy=z.y;z._sk=0;
     }
   }
-  if(dark>.3){
+  if(dark>.3&&z.kind!==9){
     let nearFire=false;
     for(const c of campfires)if(Math.hypot(c.x-z.x,c.y-z.y)<70){nearFire=true;break;}
     if(nearFire){
@@ -5413,7 +5822,7 @@ function updateZ(z,dt){
       for(const c of campfires){const dd=Math.hypot(c.x-z.x,c.y-z.y);if(dd<cd){cd=dd;closest=c;}}
       if(closest&&cd<70){
         const a=Math.atan2(z.y-closest.y,z.x-closest.x);
-        z.x+=Math.cos(a)*40*dt;z.y+=Math.sin(a)*40*dt;
+        stepMove(z,Math.cos(a)*40*dt,Math.sin(a)*40*dt,z.r);
       }
     }
   }
@@ -5426,14 +5835,14 @@ function updateZ(z,dt){
       carTakeHit(v,z.dmg*0.2);
       z.cd=z.berserk||z.kind===8?0.75:1.1;z.lunge=.15;
     }
-  } else if(!z.ranged&&targetIsLocal&&d<z.r+P.r+6&&z.cd<=0&&!P.dead&&!wallBlocks(z.x,z.y,P.x,P.y)){
+  } else if(!z.ranged&&targetIsLocal&&d<z.r*(z.kind===9?1.45:1)+P.r+(z.kind===9?12:6)&&z.cd<=0&&!P.dead&&!wallBlocks(z.x,z.y,P.x,P.y)){
     const knock=z.kind===2||z.kind===3||z.kind===7;
     hurt(z.dmg, z.kind===3?.65:z.kind===2||z.kind===7?.5:z.kind===8?.35:.25);
     zombieVoice(z,'attack');
     z.cd=z.berserk||z.kind===8?0.75:1.1;z.lunge=.15;
     if(knock){
       const a=Math.atan2(P.y-z.y,P.x-z.x);
-      P.x+=Math.cos(a)*22;P.y+=Math.sin(a)*22;
+      stepMove(P,Math.cos(a)*22,Math.sin(a)*22,P.r);
     }
   }
 }
@@ -5503,6 +5912,7 @@ function update(dt){
   try{updateGhost(dt);}catch(e){}
   try{updateCornfield(dt);}catch(e){}
   try{updateYeti(dt);}catch(e){}
+  try{updateBirds(dt);}catch(e){}
   try{updateLighting(dt);}catch(e){}
   try{updateLM(dt);}catch(e){}
   try{sleepUpdate(dt);}catch(e){}
@@ -5592,10 +6002,10 @@ function update(dt){
         const toSpawn=Math.min(dd.batch, dd.cap-zombies.length);
         let spawned=0;
         for(let n=0;n<toSpawn;n++){
-          for(let k=0;k<14;k++){
-            const a=rnd(0,6.283),dist=rnd(320,580);
+          for(let k=0;k<30;k++){
+            const a=rnd(0,6.283),dist=rnd(320,640);
             const x=sx+Math.cos(a)*dist,y=sy+Math.sin(a)*dist;
-            if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12))continue;
+            if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12)||inAnyView(x,y,140))continue;
             spawnZ(x,y);
             spawned++;
             break;
@@ -5606,7 +6016,7 @@ function update(dt){
           for(let n=0;n<Math.min(3,dd.cap-zombies.length);n++){
             const a=rnd(0,6.283),dist=rnd(280,480);
             const x=sx+Math.cos(a)*dist,y=sy+Math.sin(a)*dist;
-            if(x>40&&y>40&&x<WW-40&&y<WH-40&&!solidPoint(x,y,12)) spawnZ(x,y);
+            if(x>40&&y>40&&x<WW-40&&y<WH-40&&!solidPoint(x,y,12)&&!inAnyView(x,y,140)) spawnZ(x,y);
           }
         }
       }
@@ -5619,7 +6029,7 @@ function update(dt){
         for(let n=0;n<burst;n++){
           const a=rnd(0,6.283),dist=rnd(360,620);
           const x=P.x+Math.cos(a)*dist,y=P.y+Math.sin(a)*dist;
-          if(x>40&&y>40&&x<WW-40&&y<WH-40&&!solidPoint(x,y,12)) spawnZ(x,y, pickZombieKind());
+          if(x>40&&y>40&&x<WW-40&&y<WH-40&&!solidPoint(x,y,12)&&!inAnyView(x,y,140)) spawnZ(x,y, pickZombieKind());
         }
       }
     }
@@ -6026,6 +6436,7 @@ function handleEvt(kind, data){
       damageZ(best, clamp(data.dmg,0,100), 0, 0, true);
     }
   } else if(kind==='shot'){
+    if(MP.isHost&&Number.isFinite(data.x)&&Number.isFinite(data.y))scareBirds(data.x,data.y,(WEAPONS[data.weapon]&&WEAPONS[data.weapon].heavy)?700:420); // tiro do convidado espanta as aves
     // Show remote player's gunfire tracers + muzzle flash
     if(Array.isArray(data.tracers)){
       for(const t of data.tracers){
@@ -6538,6 +6949,7 @@ function vehSetTarget(v,x,y,f){
 function applySnapshot(snap){
   if(!snap || typeof snap !== 'object' || !MP.active) return;
   if(!MP.isHost&&Array.isArray(snap.ch))snap.ch.forEach((v,i)=>{if(chestList[i]&&v===1)chestList[i].open=true;});
+  if(!MP.isHost&&Array.isArray(snap.bd))applyBirds(snap.bd); // aves: estado vem do anfitrião
   if(!MP.isHost&&(snap.sc===0||snap.sc===1))SCW.on=snap.sc===1; // espantalho: o estado vem do anfitrião, igual para todos
   // Items: Host is authority — replace guest list (events give immediate feedback)
   const itemsIn = Array.isArray(snap.it) ? snap.it.map(a=>({t:a[0],x:a[1],y:a[2]})) : snap.items;
@@ -6767,6 +7179,7 @@ function packSnapshot(){
     campfires:campfires.map(c=>({x:Math.round(c.x),y:Math.round(c.y),t:c.t||0,flicker:+(c.flicker||0).toFixed(2)})),
     tents:tents.map(t=>[Math.round(t.x),Math.round(t.y)]),
     sc:SCW.on?1:0,
+    bd:packBirds(),
     ch:chestList.map(c=>c.open?1:0)
   };
 }
@@ -8730,6 +9143,9 @@ function render(){
   }
   ctx.globalAlpha=1;
   for(const p of parts)if(p.g)R(p.x,p.y,2,2,p.c);
+  drawCornFlat(vx0,vx1,vy0,vy1);   // terreno dos marcos/milharal ANTES dos veículos (carro nunca some embaixo)
+  drawLMFlat(vx0,vx1,vy0,vy1);
+  drawPrints(vx0,vx1,vy0,vy1);
   for(const v of vehicles)if(v.x+v.w>vx0&&v.x-v.w<vx1&&v.y+v.h>vy0&&v.y-v.h<vy1)drawVehicle(v);
   if(plane&&plane.x+60>vx0&&plane.x-60<vx1&&plane.y+50>vy0&&plane.y-50<vy1)drawPlane(plane);
   const vis=b=>b.x<vx1&&b.x+b.w>vx0&&b.y<vy1&&b.y+b.h>vy0;
@@ -8788,9 +9204,6 @@ function render(){
     R(b.doorX,b.y+b.h-6,b.door,6,'#3a2a1c');
     R(b.doorX+2,b.y+b.h-5,3,2,'#5a4a30');
   }
-  drawCornFlat(vx0,vx1,vy0,vy1);
-  drawLMFlat(vx0,vx1,vy0,vy1);
-  drawPrints(vx0,vx1,vy0,vy1);
   let nearIt=null,nd=24;
   for(const it of items){
     if(it.x<vx0||it.x>vx1||it.y<vy0||it.y>vy1)continue;
@@ -8814,6 +9227,7 @@ function render(){
   for(const t of tents)if(t.x>vx0-30&&t.x<vx1+30&&t.y>vy0&&t.y<vy1+30)list.push({y:t.y,k:9,o:t});
   for(const z of zombies)if(!z.dead&&z.x>vx0&&z.x<vx1&&z.y>vy0&&z.y<vy1)list.push({y:z.y,k:1,o:z});
   for(const a of animals)if(!a.dead&&a.x>vx0&&a.x<vx1&&a.y>vy0&&a.y<vy1)list.push({y:a.y,k:7,o:a});
+  drawBirdsGround(vx0,vx1,vy0,vy1,list);
   for(const id in remotePlayers){
     const rp=remotePlayers[id];
     // Hide character sprite while remote is driving — only the car is shown
@@ -8838,6 +9252,7 @@ function render(){
     else if(e.k===8){ drawObserver(e.o); }
     else if(e.k===10){ drawScarecrow(e.o); }
     else if(e.k===11){ drawStalk(e.o); }
+    else if(e.k===12){ shadow(e.o.x,e.o.y,3*BIRD_SP[e.o.sp].sz,1.4); drawBirdBody(e.o,e.o.x,e.o.y,false); }
     else if(e.k===1){
       const z=e.o;
       human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,pants:'#2e2e36',hair:'#2a2218',moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,yeti:z.kind===9,bloater:z.bloater||z.kind===7});
@@ -8856,6 +9271,7 @@ function render(){
     }
   }
   for(const b of blds)if(vis(b)&&b.roofA>.02)drawRoof(b);
+  drawBirdsAir(vx0,vx1,vy0,vy1);
   for(const s of spits){
     if(s.x<vx0||s.x>vx1||s.y<vy0||s.y>vy1)continue;
     ctx.fillStyle='rgba(120,230,80,.85)';ctx.beginPath();ctx.arc(s.x,s.y,4,0,6.283);ctx.fill();
@@ -8882,7 +9298,6 @@ function render(){
   }
   drawLighting(sx,sy);
   ctx.setTransform(1,0,0,1,0,0);
-  drawAurora();
   sleepFx();
   if(OBS.vis||OBS.glitch>0){
     if(OBS.vis){const va=.32*OBS.alpha,g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.65);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+va.toFixed(3)+')');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
