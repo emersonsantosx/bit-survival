@@ -4,6 +4,10 @@
     <description>Um jogo de sobrevivencia zumbi em pixel art.</description>
     <author email="seu-email@example.com">Emerson</author>
     <content src="index.html" />
+    
+    <!-- Ícone principal do jogo -->
+    <icon src="icon.png" />
+
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
     <platform name="android">
