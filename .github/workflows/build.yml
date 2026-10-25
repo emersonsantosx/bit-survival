@@ -1,0 +1,47 @@
+name: Compilar APK
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar codigo do repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Instalar Cordova
+        run: npm install -g cordova
+
+      - name: Criar e preparar o projeto
+        run: |
+          cordova create projeto com.bitsurvival.game "Project: Bit Survival"
+          cd projeto
+          rm -rf www/*
+          cp -r ../index.html www/
+          cp ../config.xml .
+          cordova platform add android
+
+      - name: Compilar APK de Debug
+        run: |
+          cd projeto
+          cordova build android --debug
+
+      - name: Salvar APK gerado
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-bit-survival-v1.0
+          path: projeto/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          
