@@ -426,8 +426,7 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
 #rotate p{margin:0;font:12px/1.5 "Courier New",monospace;color:#cfc8b2;max-width:260px}
 #rotate button{background:#8DA568;color:#171A20;border:3px solid #8DA568;border-radius:0;box-shadow:0 4px 0 #0c0e12;font:10px/1.4 "Press Start 2P","Courier New",monospace;letter-spacing:1px;padding:14px 16px;min-height:48px;cursor:pointer}
 #rotate button:active{transform:translateY(4px);box-shadow:none}
-#rotate button.alt{background:transparent;color:#8DA568}
-@media (orientation:portrait) and (pointer:coarse){html:not(.portok) #rotate{display:flex}}
+@media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}
 /* ===== Crafting: recursos com ícones ===== */
 .screen .craft-header{padding:8px 10px}
 .craft-header .res-label{font:8px/1.4 var(--f-px,"Courier New",monospace);color:var(--c-dim,#bbb);letter-spacing:1px}
@@ -443,7 +442,6 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
 #missions:empty{display:none}
 body.haschat #missions{right:140px}
 #missions .ms-row{font:9px/1.2 "Courier New",monospace;color:var(--c-cream,#eee9d0);background:rgba(23,26,32,.62);border-right:3px solid var(--c-amber,#C79A54);padding:2px 6px;white-space:nowrap;display:flex;align-items:center;gap:5px}
-@media (orientation:portrait){#missions{right:10px;top:160px}body.haschat #missions{right:10px}}
 #missions .ms-row b{color:var(--c-amber,#C79A54);font-weight:bold}
 #missions .ms-row.done{border-right-color:var(--c-moss,#8DA568);color:var(--c-moss,#8DA568)}
 #missions .ms-row.flash{background:rgba(141,165,104,.55)}
@@ -494,9 +492,8 @@ body.haschat #missions{right:140px}
 <div id="rotate" role="alert">
   <canvas id="rotateCv" width="40" height="24" aria-hidden="true"></canvas>
   <h2>GIRE O CELULAR</h2>
-  <p>O Bit Survival rende mais na horizontal, mas também roda na vertical.</p>
+  <p>O Bit Survival é jogado na horizontal.</p>
   <button type="button" id="rotateBtn">TRAVAR EM PAISAGEM</button>
-  <button type="button" id="rotateSkip" class="alt">JOGAR NA VERTICAL</button>
 </div>
 
 <div id="hud" class="hide">
@@ -10397,19 +10394,10 @@ requestAnimationFrame(frame);
     const rot=document.getElementById('rotate'),btn=document.getElementById('rotateBtn');
     if(rot)['pointerdown','pointerup','touchstart','touchend','click'].forEach(t=>rot.addEventListener(t,e=>e.stopPropagation()));
     if(btn)btn.addEventListener('click',e=>{e.preventDefault();goLand(true);});
-    // Retrato é permitido: o aviso é só uma sugestão e não trava mais o jogo (essencial no APK, onde o sistema pode estar travado em retrato)
-    const okPort=()=>{document.documentElement.classList.add('portok');try{localStorage.setItem('minisurv_portok','1');}catch(e){}};
-    const skip=document.getElementById('rotateSkip');
-    if(skip)skip.addEventListener('click',e=>{e.preventDefault();okPort();});
-    try{
-      const ua=navigator.userAgent||'';
-      const native=!!window.Capacitor||!!window.cordova||/; wv\)/.test(ua)||(matchMedia&&matchMedia('(display-mode:standalone)').matches);
-      if(native||localStorage.getItem('minisurv_portok')==='1')document.documentElement.classList.add('portok');
-    }catch(e){}
     document.addEventListener('pointerdown',function once(){document.removeEventListener('pointerdown',once,true);goLand(false);},true);
     // 4) Em retrato durante a partida solo: pausa, para o jogador nao ser atacado sem ver a tela
     const portrait=matchMedia('(orientation:portrait)');
-    const onChange=()=>{try{if(portrait.matches&&state==='play'&&!MP.active&&!document.documentElement.classList.contains('portok'))pause();}catch(e){}};
+    const onChange=()=>{try{if(portrait.matches&&state==='play'&&!MP.active)pause();}catch(e){}};
     if(portrait.addEventListener)portrait.addEventListener('change',onChange);else if(portrait.addListener)portrait.addListener(onChange);
   }catch(e){}
 })();
