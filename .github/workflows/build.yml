@@ -32,6 +32,8 @@ jobs:
           rm -rf www/*
           cp -r ../index.html www/
           cp ../config.xml .
+          # Copia o ícone para a raiz do projeto Cordova
+          cp ../icon.png .
           cordova platform add android
 
       - name: Compilar APK de Debug
