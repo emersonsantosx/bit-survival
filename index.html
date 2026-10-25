@@ -407,18 +407,20 @@ canvas.ico{width:36px;height:36px;image-rendering:pixelated;image-rendering:cris
   #mphostscreen .card{overflow-y:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start;padding:6px 8px}
   #mphostscreen .card h2{margin-bottom:4px}
   #mphostscreen .card>p{margin:2px 0;font-size:9px}
-  #mphostscreen .name-input{padding:6px 8px;margin:2px 0}
+  #mphostscreen .name-input{padding:6px 8px;margin:2px auto}
   #mphostscreen .map-grid{grid-template-columns:repeat(4,1fr);gap:4px;margin:4px 0!important}
   #mphostscreen .map-opt{padding:4px 2px;font-size:8px}
   #mphostscreen .map-opt .ic{height:20px}
   #mphostscreen canvas.ico{width:20px;height:20px}
   #hostCodeWrap>p{margin:2px 0;font-size:9px}
-  #hostCodeWrap>div[style*="flex-direction:column"]{flex-direction:row!important;gap:10px!important;margin:4px 0!important;justify-content:center}
+  #hostCodeWrap>div[style*="flex-direction:column"]{flex-direction:row!important;gap:6px!important;align-items:center!important;margin:4px 0!important;justify-content:center}
   #hostCodeWrap .mp-status{margin:3px 0;min-height:14px;font-size:11px}
+  #hostCodeWrap .room-code{margin:0}
   #hostCodeWrap #btnCopyCode{flex:0 0 auto;width:auto!important;min-width:0!important;min-height:34px;padding:6px 12px!important;font-size:9px!important}
   #mphostscreen .room-code{font-size:14px;padding:6px 8px 6px 12px}
 }
 
+#hostCodeWrap .room-code{margin:0}
 /* ===== Aviso "gire o celular" (so em telas de toque em retrato) ===== */
 #rotate{display:none;position:fixed;inset:0;z-index:10000;background:#171A20;color:#E8E0CC;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;font-family:"Press Start 2P","Courier New",monospace;touch-action:none}
 #rotate canvas{width:160px;height:96px;image-rendering:pixelated;image-rendering:crisp-edges}
@@ -649,12 +651,11 @@ body.haschat #missions{right:140px}
     </div>
     <div id="hostCodeWrap" class="hide">
       <p style="font-size:11px">Compartilhe este código com seu amigo:</p>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin:8px 0">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin:6px 0">
         <div class="room-code" id="hostCode">------</div>
         <button class="menu-btn" id="btnCopyCode" style="padding:12px 22px;font-size:13px;width:auto;min-width:160px">COPIAR CÓDIGO</button>
       </div>
       <div class="mp-status" id="hostStatus">Aguardando conexão...</div>
-      <p style="font-size:10px;margin:4px 0 0">Dica: deixe o jogo aberto (janela flutuante ou tela dividida) até seu amigo entrar.</p>
     </div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
       <button class="go" id="btnHostCreate" style="margin:0">CRIAR SALA</button>
@@ -9911,7 +9912,7 @@ on('btnCopyCode','click',async e=>{
   const btn=$('btnCopyCode');
   const ok=()=>{
     if(btn){btn.textContent='COPIADO!';setTimeout(()=>{if(btn)btn.textContent='COPIAR CÓDIGO';},1800);}
-    setStatus('hostStatus','Código '+code+' copiado! Cole no WhatsApp.');
+    setStatus('hostStatus','Código '+code+' copiado!');
     toast('Código copiado: '+code);
   };
   const fail=()=>{
