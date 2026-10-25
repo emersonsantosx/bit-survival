@@ -1869,7 +1869,7 @@ function mpSend(data){
 /* Validação básica de pacotes / nomes (anti-lixo) */
 const NET_OK_TYPES=new Set(['worldInit','start','evt','player','snapshot','chat','gameOver','playerDied','playerRespawned','ping','pong']);
 const NET_OK_MAPS=new Set(['forest','desert','snow','city']);
-const NET_OK_EVT=new Set(['mission','treeDmg','rockDmg','itemRemoved','itemAdded','vehicleEnter','vehicleExit','vehicleLooted','shot','spit','campfireAdded','campfireRemoved','yeti','chestOpen','tentAdded','sleepSkip','zombieDmg','animalDmg','vehicleDying','vehicleExploded']);
+const NET_OK_EVT=new Set(['mission','treeDmg','rockDmg','itemRemoved','itemAdded','vehicleEnter','vehicleExit','vehicleLooted','shot','spit','campfireAdded','campfireRemoved','yeti','chestOpen','tentAdded','sleepSkip','zombieDmg','animalDmg','vehicleDying','vehicleExploded','bolt','zAtk','aAtk','curse']);
 const NET_OK_IDS=new Set(['host','guest']);
 function sanitizeName(n){
   if(typeof n!=='string') return 'Jogador';
@@ -3157,6 +3157,7 @@ function openChest(c,remote){
 }
 function lmCurse(c){
   const isD=c.kind==='gold';
+  if(MP.active)sendEvt('curse',{d:isD?1:0});
   setTimeout(()=>{toast(isD?'A maldição do templo desperta! Tempestade e mortos-vivos':'Uma nevasca cai e algo se move no gelo!');},900);
   weather=isD?'sand':'snow';setRain(false);weatherTimer=100;weatherParticles=[];
   const kinds=isD?[0,0,1,5,6]:[0,0,2,1,5];
@@ -3647,6 +3648,7 @@ function genWorld(seed) {
   genField(seed);
   genLandmark(seed);
   rebuildSolidGrid();
+  BASE_TREES=trees.map(t=>t.x+','+t.y);BASE_ROCKS=rocks.map(t=>t.x+','+t.y); // referência para sincronizar o que foi derrubado/quebrado
   buildMinimap();
   }catch(e){
     console.error('[genWorld] FALHOU na linha:',e.stack);
@@ -5887,7 +5889,7 @@ function update(dt){
     weatherParticles.length=0;
   }
   // Chuva apaga fogueiras gradualmente
-  if(weather==='rain' && campfires.length){
+  if(weather==='rain' && campfires.length && (!MP.active||MP.isHost)){ // só o anfitrião apaga fogueiras (o convidado recebe o evento)
     for(let i=campfires.length-1;i>=0;i--){
       const c=campfires[i];
       c.wet=(c.wet||0)+dt;
@@ -5921,7 +5923,9 @@ function update(dt){
   P.cd=Math.max(0,P.cd-dt);P.swing=Math.max(0,P.swing-dt);P.flash=Math.max(0,P.flash-dt);
   if(atkHeld&&!P.dead&&!chatOpen&&(P.hold||!WEAPONS[P.weapon]?.rod))attack();
   eatTick(dt);
-  for(let k=decals.length-1;k>=0;k--){decals[k].l-=dt;if(decals[k].l<=0)decals.splice(k,1);}
+  // Chuva lava o sangue depressa; a neve e a areia vão cobrindo aos poucos
+  const decayK=weather==='rain'?3.2:(weather==='snow'?1.8:(weather==='sand'?1.6:1));
+  for(let k=decals.length-1;k>=0;k--){decals[k].l-=dt*decayK;if(decals[k].l<=0)decals.splice(k,1);}
   if(!MP.active||MP.isHost){
     for(const z of zombies){
       if(z.dead)continue;
@@ -6076,15 +6080,17 @@ function update(dt){
       if(z.dead) continue;
       z._hitCD = (z._hitCD||0) - dt;
       const dd=Math.hypot(z.x-P.x,z.y-P.y);
-      let reach=dd < (z.r||5)+P.r+6 && !wallBlocks(z.x,z.y,P.x,P.y);
+      const ys=z.kind===9?1.45:1,zr=(z.r||5)*ys;                          // Yeti é grande: alcance maior (igual ao do anfitrião)
+      let reach=dd < zr+P.r+(z.kind===9?12:6) && !wallBlocks(z.x,z.y,P.x,P.y);
       if(P.inVehicle){ // dentro do carro: o alcance e medido ate a lataria
         const v=P.inVehicle;vehHalf(v);
-        reach=Math.hypot(Math.max(0,Math.abs(z.x-v.x)-v._hx),Math.max(0,Math.abs(z.y-v.y)-v._hy))<(z.r||5)+3;
+        reach=Math.hypot(Math.max(0,Math.abs(z.x-v.x)-v._hx),Math.max(0,Math.abs(z.y-v.y)-v._hy))<zr+3;
       }
       if(reach && z._hitCD<=0){
         const kind = z.kind||0;
         zombieHurt(z.dmg||9, kind===2?.5:kind===3?.6:.25);
         zombieVoice(z,'attack');
+        z.lunge=.15;sendEvt('zAtk',{id:z.netId});   // o anfitrião também vê (e ouve) o zumbi atacando
         z._hitCD = 1.1;
         if((kind===2||kind===3)&&!P.inVehicle){
           const a=Math.atan2(P.y-z.y,P.x-z.x);
@@ -6122,8 +6128,10 @@ function update(dt){
     for(const a of animals){
       if(a.dead||!ANIMAL_AGGRO[a.k]) continue;
       a._hitCD=(a._hitCD||0)-dt;
-      if(Math.hypot(a.x-P.x,a.y-P.y)<30 && a._hitCD<=0 && !wallBlocks(a.x,a.y,P.x,P.y)){
-        a._hitCD=1.1;
+      let near=Math.hypot(a.x-P.x,a.y-P.y)<30;
+      if(P.inVehicle){const v=vehHalf(P.inVehicle);near=Math.hypot(Math.max(0,Math.abs(a.x-v.x)-v._hx),Math.max(0,Math.abs(a.y-v.y)-v._hy))<14;} // dirigindo: alcance medido até a lataria
+      if(near && a._hitCD<=0 && !wallBlocks(a.x,a.y,P.x,P.y)){
+        a._hitCD=1.1;a.lunge=.12;sendEvt('aAtk',{x:Math.round(a.x),y:Math.round(a.y),k:a.k});
         animalHurt(a.k==='boar'?12:(a.k==='wolf'?10:(a.k==='scorpion'?8:6)),0.15);
       }
     }
@@ -6365,6 +6373,16 @@ function handleEvt(kind, data){
     for(let i=items.length-1;i>=0;i--){
       if(Math.abs(items[i].x-data.x)<4 && Math.abs(items[i].y-data.y)<4){ items.splice(i,1); break; }
     }
+  } else if(kind==='zAtk'){
+    const z=zombies.find(q=>q.netId===data.id&&!q.dead);
+    if(z){z.lunge=.15;try{zombieVoice(z,'attack');}catch(e){}}
+  } else if(kind==='aAtk'){
+    let best=null,bd=40;for(const a of animals){if(a.dead)continue;const d=Math.hypot(a.x-data.x,a.y-data.y);if(d<bd){bd=d;best=a;}}
+    if(best){best.lunge=.12;try{animalVoice(best,'attack');}catch(e){}}
+  } else if(kind==='curse'){
+    setTimeout(()=>{toast(data.d?'A maldição do templo desperta! Tempestade e mortos-vivos':'Uma nevasca cai e algo se move no gelo!');},900);
+  } else if(kind==='bolt'){
+    if(weather==='rain'&&Number.isFinite(data.d))applyBolt(clamp(data.d,.3,3));
   } else if(kind==='yeti'){
     toast('Algo enorme se move na nevasca...');
   } else if(kind==='chestOpen'){
@@ -6876,6 +6894,8 @@ function handleNetData(data,isHostSide){
       rp.sl={s:SLI[data.sl[0]|0]||'t',hx:clamp(data.sl[1],-20,20),hy:clamp(data.sl[2],-20,20),tent:!!data.sl[3]};
     }else rp.sl=null;
     if(isFiniteNum(data.fx)&&isFiniteNum(data.fy)){rp.fx=data.fx;rp.fy=data.fy;rp.fl=isFiniteNum(data.fl)?data.fl:3;}else{rp.fx=null;rp.fy=null;}
+    rp.ob=(Array.isArray(data.ob)&&data.ob.length>=3&&data.ob.every(isFiniteNum))?data.ob:null;   // o Observador que o outro jogador está vendo
+    rp.gh=(Array.isArray(data.gh)&&data.gh.length>=5&&data.gh.every(isFiniteNum))?data.gh:null;   // a aparição que o outro está vendo
     rp.isHost=!isHostSide;rp.anim=(rp.anim||0)+(data.moving?0.25:0);
     remotePlayers[data.id]=rp;
     // Teammate just died and we are also dead → end the match
@@ -6949,6 +6969,10 @@ function vehSetTarget(v,x,y,f){
 function applySnapshot(snap){
   if(!snap || typeof snap !== 'object' || !MP.active) return;
   if(!MP.isHost&&Array.isArray(snap.ch))snap.ch.forEach((v,i)=>{if(chestList[i]&&v===1)chestList[i].open=true;});
+  if(!MP.isHost&&(Array.isArray(snap.tg)||Array.isArray(snap.rg))){ // árvores/pedras que já foram destruídas (garante o mesmo mapa mesmo após queda de conexão)
+    const c1=applyGone(BASE_TREES,trees,snap.tg),c2=applyGone(BASE_ROCKS,rocks,snap.rg);
+    if(c1||c2)rebuildSolidGrid();
+  }
   if(!MP.isHost&&Array.isArray(snap.bd))applyBirds(snap.bd); // aves: estado vem do anfitrião
   if(!MP.isHost&&(snap.sc===0||snap.sc===1))SCW.on=snap.sc===1; // espantalho: o estado vem do anfitrião, igual para todos
   // Items: Host is authority — replace guest list (events give immediate feedback)
@@ -6981,7 +7005,7 @@ function applySnapshot(snap){
     for(const a of snap.tents){if(Array.isArray(a)&&isFiniteNum(a[0])&&isFiniteNum(a[1])&&!tents.some(t=>Math.abs(t.x-a[0])<10&&Math.abs(t.y-a[1])<10)){tents.push({x:a[0],y:a[1]});ch=true;}}
     if(ch)rebuildSolidGrid();
   }
-  const zin = Array.isArray(snap.zs) ? snap.zs.map(a=>({netId:'z'+a[0],x:a[1],y:a[2],kind:a[3],face:a[4]/100,hp:a[5],moving:!!a[6],si:a[7],anim:a[8]/10})) : snap.zombies;
+  const zin = Array.isArray(snap.zs) ? snap.zs.map(a=>({netId:'z'+a[0],x:a[1],y:a[2],kind:a[3],face:a[4]/100,hp:a[5],moving:!!a[6],si:a[7],anim:a[8]/10,lg:a[9]|0,ht:a[10]|0})) : snap.zombies;
   if(Array.isArray(zin)){
     const byId = new Map();
     for(const z of zombies) if(z.netId) byId.set(z.netId, z);
@@ -7013,8 +7037,8 @@ function applySnapshot(snap){
         moving: !!sz.moving, si: sz.si|0, skin: zombieLook(sz.kind,sz.si).skin, shirt: zombieLook(sz.kind,sz.si).shirt,
         ranged:!!t.ranged, range:t.range, crawler:!!t.crawler, screams:!!t.screams,
         bloater:!!t.bloater, berserk:!!t.berserk, yeti:!!t.yeti,
-        dead: false, hit: prev ? prev.hit : 0, vx: 0, vy: 0,
-        alert: 0, lock: prev ? Math.max(0, prev.lock) : 0, lunge: 0,
+        dead: false, hit: Math.max(prev ? prev.hit : 0, (sz.ht||(prev&&Number.isFinite(prev.hp)&&hp<prev.hp-.01))?.14:0), vx: 0, vy: 0,
+        alert: 0, lock: prev ? Math.max(0, prev.lock) : 0, lunge: sz.lg?.15:0,
         cd: prev ? prev.cd : 0, losT: 0, seen: false, wt: 0,
         tx: sz.x, ty: sz.y, _nx: sz.x, _ny: sz.y, spitT: prev ? prev.spitT : 0, screamT: prev ? prev.screamT : 0,
         _predT: predT, _hitCD: prev ? prev._hitCD : 0
@@ -7024,6 +7048,19 @@ function applySnapshot(snap){
     for(const z of zombies){
       if(z.dead && (z._predT||0)>0 && z.netId && !seenIds.has(z.netId)){
         next.push(z);
+      }
+    }
+    if(!MP.isHost&&P){ // zumbi que sumiu da lista dentro da tela morreu no anfitrião: mostra o mesmo efeito (mancha, sangue, grito)
+      const nid=new Set(next.map(q=>q.netId));
+      const was=new Set(zombies.filter(q=>q.lunge>0).map(q=>q.netId));
+      for(const q of next)if(q.lunge>0&&!was.has(q.netId)){try{zombieVoice(q,'attack');}catch(e){}} // ouve o ataque que o anfitrião viu
+      for(const z of zombies){
+        if(z.dead||!z.netId||nid.has(z.netId))continue;
+        if(Math.abs(z.x-P.x)<W/Z/2+30&&Math.abs(z.y-P.y)<H/Z/2+30){
+          decals.push({x:z.x,y:z.y,l:DECAL_LIFE});if(decals.length>24)decals.shift();
+          for(let i=0;i<8;i++)parts.push({x:z.x,y:z.y-5,vx:rnd(-60,60),vy:rnd(-60,20),t:rnd(.3,.7),c:'#7a1010',g:1});
+          try{zombieVoice(z,'death');}catch(e){}
+        }
       }
     }
     zombies = next;
@@ -7056,7 +7093,7 @@ function applySnapshot(snap){
     else vehicles = newList;
     if(P?.inVehicle && !vehicles.some(v=>v.id===P.inVehicle.id)) P.inVehicle=null;
   }
-  const ain = Array.isArray(snap.an) ? snap.an.map(a=>({k:a[0],x:a[1],y:a[2],face:a[3]/100,hp:a[4],max:a[5]})) : snap.animals;
+  const ain = Array.isArray(snap.an) ? snap.an.map(a=>({k:a[0],x:a[1],y:a[2],face:a[3]/100,hp:a[4],max:a[5],lg:a[6]|0})) : snap.animals;
   if(Array.isArray(ain)){
     const oldA=animals||[],usedA=new Set(),nextA=[];
     for(const a of ain){
@@ -7077,12 +7114,21 @@ function applySnapshot(snap){
       nextA.push({
         x:prev?prev.x:a.x,y:prev?prev.y:a.y,k:k,face:a.face||0,
         hp:hp,max:a.max||(Number.isFinite(a.hp)?Math.max(a.hp,1):4),
-        dead:false,flee:0,wt:1,tx:a.x,ty:a.y,atkCD:0,_nx:a.x,_ny:a.y,
+        dead:false,flee:0,wt:1,tx:a.x,ty:a.y,atkCD:0,_nx:a.x,_ny:a.y,lunge:a.lg?.12:0,
         _predT:pred,_hitCD:prev?prev._hitCD:0
       });
     }
     // Mortos por predição que o host ainda não confirmou continuam um instante
     for(const o of oldA){if(o.dead&&(o._predT||0)>0&&!usedA.has(o)&&!nextA.includes(o))nextA.push(o);}
+    if(!MP.isHost){for(const q of nextA)if(q.lunge>0&&!oldA.some(o=>o.lunge>0&&Math.hypot(o.x-q.x,o.y-q.y)<30)){try{animalVoice(q,'attack');}catch(e){}}}
+    if(!MP.isHost&&P){ // animal morto no anfitrião: sangue e mancha também aqui
+      for(const o of oldA){
+        if(o.dead||nextA.includes(o))continue;
+        if(Math.abs(o.x-P.x)<W/Z/2+30&&Math.abs(o.y-P.y)<H/Z/2+30){
+          for(let i=0;i<6;i++)parts.push({x:o.x,y:o.y-3,vx:rnd(-50,50),vy:rnd(-50,15),t:rnd(.3,.6),c:'#7a1010',g:1});
+        }
+      }
+    }
     animals=nextA;
   }
   const holdT=!!(P&&P.sleeping&&!MP.isHost&&Number.isFinite(snap.T)&&snap.T>T+30);   // convidado dormindo: o salto da noite chega pelo evento sleepSkip
@@ -7102,6 +7148,14 @@ function applySnapshot(snap){
   }
   if(Number.isFinite(snap.weatherTimer)) weatherTimer=clamp(snap.weatherTimer,0,300);
   if(Number.isFinite(snap.kills)) kills = snap.kills;
+}
+let BASE_TREES=[],BASE_ROCKS=[];
+function goneList(base,arr){const cur=new Set(arr.map(t=>t.x+','+t.y));const g=[];for(const k of base)if(!cur.has(k))g.push(k);return g;}
+function applyGone(base,arr,gone){
+  if(!Array.isArray(gone)||!gone.length)return false;
+  const g=new Set(gone);let ch=false;
+  for(let i=arr.length-1;i>=0;i--)if(g.has(arr[i].x+','+arr[i].y)){arr.splice(i,1);ch=true;}
+  return ch;
 }
 function packSnapshot(){
   // Prioritize zombies near host AND guests so both always see enemies around them
@@ -7142,16 +7196,17 @@ function packSnapshot(){
   // Formato compacto (arrays): ~3x menor que objetos — na cidade o snapshot grande travava o canal e o convidado não via zumbis
   const zPack=ordered.slice(0,zCapF).map(({z})=>[
     (typeof z.netId==='string'&&z.netId[0]==='z')?(+z.netId.slice(1)||0):0,
-    Math.round(z.x),Math.round(z.y),z.kind|0,Math.round((z.face||0)*100),Math.round(z.hp),z.moving?1:0,z.si|0,Math.round((z.anim||0)*10)
+    Math.round(z.x),Math.round(z.y),z.kind|0,Math.round((z.face||0)*100),Math.round(z.hp),z.moving?1:0,z.si|0,Math.round((z.anim||0)*10),z.lunge>0?1:0,z.hit>0?1:0
   ]);
-  // Items near players first
-  const iScored=items.map(it=>{
-    let minD=1e9;
-    for(const a of anchors) minD=Math.min(minD,Math.hypot(it.x-a.x,it.y-a.y));
-    return {it,minD};
-  });
-  iScored.sort((a,b)=>a.minD-b.minD);
-  const iPack=iScored.slice(0,50).map(({it})=>[it.t,Math.round(it.x),Math.round(it.y)]);
+  // Itens: os mais próximos de CADA jogador (antes, quem estava numa área cheia de itens roubava a vaga do outro)
+  const iSet=new Set();
+  for(const an of anchors){
+    const arr=[];
+    for(const it of items){const d=Math.hypot(it.x-an.x,it.y-an.y);if(d<1100)arr.push({it,d});}
+    arr.sort((x,y)=>x.d-y.d);
+    for(let i=0;i<Math.min(55,arr.length);i++)iSet.add(arr[i].it);
+  }
+  const iPack=[...iSet].map(it=>[it.t,Math.round(it.x),Math.round(it.y)]);
   // Animais perto dos players (host authority)
   const aScored=animals.filter(a=>!a.dead).map(a=>{
     let minD=1e9;
@@ -7159,7 +7214,7 @@ function packSnapshot(){
     return {a,minD};
   });
   aScored.sort((x,y)=>x.minD-y.minD);
-  const aPack=aScored.slice(0,30).map(({a})=>[a.k,Math.round(a.x),Math.round(a.y),Math.round((a.face||0)*100),Math.round(a.hp),a.max|0]);
+  const aPack=aScored.slice(0,30).map(({a})=>[a.k,Math.round(a.x),Math.round(a.y),Math.round((a.face||0)*100),Math.round(a.hp),a.max|0,a.lunge>0?1:0]);
   // Veículos: lista completa só a cada 3s; nos outros snapshots só os que estão perto de alguém ou em movimento
   const nowMs=performance.now();
   const fullV=!(MP._vNext>nowMs);
@@ -7180,6 +7235,7 @@ function packSnapshot(){
     tents:tents.map(t=>[Math.round(t.x),Math.round(t.y)]),
     sc:SCW.on?1:0,
     bd:packBirds(),
+    tg:fullV?goneList(BASE_TREES,trees):undefined,rg:fullV?goneList(BASE_ROCKS,rocks):undefined,
     ch:chestList.map(c=>c.open?1:0)
   };
 }
@@ -7192,6 +7248,8 @@ function packMyPlayer(){
     x:Math.round(P.x),y:Math.round(P.y),face:+P.face.toFixed(2),
     moving:!!P.moving,sprint:!!P.sprint,weapon:P.weapon||'fists',swing:+(P.swing||0).toFixed(2),
     hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle,skin:SKIN_SEL,hold:P.hold||''};
+  if(OBS.on&&!P.inside&&!P.inVehicle)p.ob=[Math.round(OBS.x),Math.round(OBS.y),OBS.glitch>0?1:0];
+  if(GH.on&&GH.b)p.gh=[GH.b.x|0,GH.b.y|0,Math.round(GH.x),Math.round(GH.y),GH.kill>0?1:0];
   if(P.sleeping){const sl=P.sleeping;p.sl=[SLC[sl.s]|0,sl.hx|0,sl.hy|0,sl.tent?1:0];}
   if(P.fish){p.fx=Math.round(P.fish.x);p.fy=Math.round(P.fish.y);p.fl=P.fish.ph?0:+Math.max(0,P.fish.wait-P.fish.t).toFixed(1);}
   if(P.inVehicle){
@@ -8328,11 +8386,10 @@ function updateGhost(dt){
     GH.kill=.001;GH.x=P.x;GH.y=P.y;flash=1;shake=10;ghSfx('kill');
   }
 }
-function drawGhost(){
-  if(!GH.on)return;
-  const kill=GH.kill>0;
+function drawGhost(){if(GH.on)drawGhostAt(GH.x,GH.y,GH.kill>0);}
+function drawGhostAt(gx,gy,kill){
   const sc=kill?2.2:1.25;
-  let x=GH.x+Math.sin(T*1.7)*.8,y=GH.y;
+  let x=gx+Math.sin(T*1.7)*.8,y=gy;
   const jit=Math.random()<.05?(Math.random()<.5?-2:2):0;
   ctx.save();
   ctx.translate(Math.round(x),Math.round(y));ctx.scale(sc,sc);
@@ -8825,6 +8882,11 @@ const MOTE=[];for(let i=0;i<22;i++)MOTE.push({x:Math.random(),y:Math.random(),s:
 const LP=[];  // pulsos de luz (tiro, explosão)
 function addPulse(x,y,r,d,col){LP.push({x:x,y:y,r:r,t:d,d:d,col:col||'w'});if(LP.length>12)LP.shift();}
 const LT={f:0,next:14,q:[]};
+function applyBolt(delay){ // mesmo raio e mesmo trovão para todos (dentro de casa não se vê o clarão)
+  if(!P||P.inside)return;
+  LT.f=1;LT.q.push({t:.12,v:.8},{t:.3,v:.55});
+  setTimeout(()=>{try{boom(1.6,.28,110);beep(55,.7,'sine',.07,-20);}catch(e){}},delay*1000);
+}
 function updateLighting(dt){
   updateSun();
   for(let i=LP.length-1;i>=0;i--){LP[i].t-=dt;if(LP[i].t<=0)LP.splice(i,1);}
@@ -8837,13 +8899,13 @@ function updateLighting(dt){
     }
   }else for(const f of FF)f.on=false;
   // relâmpagos (só com chuva e fora de prédios)
-  if(weather==='rain'&&!P.inside){
+  if(weather==='rain'&&(!MP.active||MP.isHost)){ // só o anfitrião sorteia o raio; o convidado recebe pelo evento 'bolt'
     LT.next-=dt;
     if(LT.next<=0){
       LT.next=12+Math.random()*22;
-      LT.f=1;LT.q.push({t:.12,v:.8},{t:.3,v:.55});
       const delay=.5+Math.random()*1.6;
-      setTimeout(()=>{try{boom(1.6,.28,110);beep(55,.7,'sine',.07,-20);}catch(e){}},delay*1000);
+      applyBolt(delay);
+      if(MP.active)sendEvt('bolt',{d:+delay.toFixed(2)});
     }
   }
   for(let i=LT.q.length-1;i>=0;i--){LT.q[i].t-=dt;if(LT.q[i].t<=0){LT.f=Math.max(LT.f,LT.q[i].v);LT.q.splice(i,1);}}
@@ -8935,6 +8997,7 @@ function drawLighting(sx,sy){
         if(z.dead||z.x<camX-10||z.x>camX+W/Z+10||z.y<camY-10||z.y>camY+H/Z+10)continue;
         const [zx,zy]=sp(z.x,z.y),sc=(typeof zombieScale==='function'?zombieScale(z):1);
         if(Math.sin(z.face||0)<-.5)continue; // de costas
+        const zbd=bldAt(z.x,z.y);if(zbd&&P.inside!==zbd&&zbd.roofA>.2)continue; // dentro de uma casa com o teto fechado: os olhos não aparecem através da parede
         ctx.globalAlpha=Math.min(1,(dark-.4)*2)*(z.kind===9?1:.8);
         ctx.fillRect(zx-2.5*Z*sc,zy-12*Z*sc,1.6*Z,1.3*Z);ctx.fillRect(zx+1*Z*sc,zy-12*Z*sc,1.6*Z,1.3*Z);
       }
@@ -9035,6 +9098,7 @@ function render(){
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
     }
     if(GH.on&&GH.b===b)drawGhost();
+    for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.gh&&rp.alive!==false&&rp.gh[0]===(b.x|0)&&rp.gh[1]===(b.y|0)&&!(GH.on&&GH.b===b))drawGhostAt(rp.gh[2],rp.gh[3],!!rp.gh[4]);}
     // Tudo abaixo (cuspe, tiros, partículas, números) só é visível DENTRO do prédio onde o jogador está
     ctx.save();ctx.beginPath();ctx.rect(b.x,b.y,b.w,b.h);ctx.clip();
     // Cuspe também aparece dentro de prédios (antes só causava dano invisível)
@@ -9240,6 +9304,7 @@ function render(){
     if(FIELD.sx>vx0-30&&FIELD.sx<vx1+30&&FIELD.sy>vy0&&FIELD.sy<vy1+40)list.push({y:FIELD.sy,k:10,o:FIELD});
   }
   if(OBS.on&&!P.inside)list.push({y:OBS.y,k:8,o:OBS});
+  if(!P.inside)for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.ob&&rp.alive!==false&&!rp.inVehicle)list.push({y:rp.ob[1],k:8,o:{x:rp.ob[0],y:rp.ob[1],alpha:1,glitch:rp.ob[2]?.3:0}});}
   if(!P.inVehicle&&!(P.sleeping&&P.sleeping.tent))list.push({y:P.y,k:2,o:P});
   list.sort((a,b)=>a.y-b.y);
   for(const e of list){
