@@ -470,6 +470,35 @@ body.haschat #missions{right:140px}
   #run{width:56px;height:56px;bottom:116px}
 }
 /* ===== Tela de SKINS ===== */
+.sv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 10px;margin:8px auto;max-width:560px;width:100%}
+.sv-slot{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sv-main{flex:1 1 auto;display:flex;align-items:center;gap:12px;text-align:left;background:var(--c-panel);border:3px solid var(--c-edge);color:var(--c-cream);padding:10px 12px;min-height:86px;cursor:pointer;font:9px/1.6 var(--f-px);box-shadow:0 4px 0 var(--c-deep);border-radius:0}
+.sv-main:hover,.sv-main:focus-visible{border-color:var(--c-moss);outline:none}
+.sv-main:active{transform:translateY(3px);box-shadow:none}
+.sv-main:disabled{opacity:.4;cursor:default;border-color:var(--c-edge);transform:none;box-shadow:0 4px 0 var(--c-deep)}
+.sv-main canvas{width:32px;height:52px;image-rendering:pixelated;flex:0 0 auto}
+.sv-main .sv-txt{display:flex;flex-direction:column;gap:4px;min-width:0}
+.sv-main b{color:var(--c-moss);font-weight:normal;font-size:10px;letter-spacing:1px}
+.sv-main i{font-style:normal;color:var(--c-cream);font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv-main i.dim{color:var(--c-dim)}
+.sv-main i.tag{color:var(--c-amber)}
+.sv-slot.empty .sv-main b{color:var(--c-dim)}
+.sv-del{align-self:flex-end;background:transparent;border:0;color:var(--c-red);font:7px var(--f-px);letter-spacing:1px;cursor:pointer;padding:6px 2px;min-height:0}
+.sv-del:hover,.sv-del:focus-visible{color:#e8e0cc;outline:none}
+.sv-del.off{visibility:hidden}
+.sv-confirm{position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(6,8,12,.9);display:flex;align-items:center;justify-content:center;z-index:5;padding:16px}
+.sv-confirm .box{background:var(--c-panel);border:3px solid var(--c-amber);padding:16px;max-width:400px;text-align:center;font:9px/1.8 var(--f-px);color:var(--c-cream)}
+.sv-confirm .box p{margin:0 0 14px;color:var(--c-cream)}
+.sv-confirm .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+@media (orientation:landscape) and (max-height:520px){
+  #slotscreen .card h2{margin-bottom:4px}
+  #slotscreen .card>p{margin:2px 0;font-size:9px}
+  .sv-grid{gap:4px 8px;margin:4px auto}
+  .sv-main{min-height:58px;padding:6px 10px;gap:10px}
+  .sv-main canvas{width:24px;height:39px}
+  .sv-main b{font-size:9px}.sv-main i{font-size:7px}
+  .sv-del{padding:3px 2px}
+}
 .skin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px auto;max-width:340px}
 .screen .skin-opt{padding:8px 4px;display:flex;align-items:center;justify-content:center;min-height:0}
 .skin-opt canvas{width:40px;height:65px;image-rendering:pixelated;display:block}
@@ -570,7 +599,7 @@ body.haschat #missions{right:140px}
 <div id="mapscreen" class="screen hide">
   <div class="card">
     <h2>ESCOLHA O MAPA</h2>
-    <p id="saveWarn" class="hide">Um novo jogo substitui o jogo salvo.</p>
+    <p id="saveWarn" class="hide"></p>
     <div class="map-grid">
       <button class="map-opt selected" data-map="forest">
         <span class="ic"><canvas class="ico" data-art="tree" width="9" height="9"></canvas></span><span>FLORESTA</span>
@@ -594,6 +623,16 @@ body.haschat #missions{right:140px}
       <button class="back" id="btnBackMap" style="margin:0">VOLTAR</button>
     </div>
   </div>
+</div>
+
+<div id="slotscreen" class="screen hide">
+  <div class="card" style="width:100%;max-width:600px;align-items:center">
+    <h2 id="slotTitle">ESCOLHA O SLOT</h2>
+    <p id="slotHint" style="font-size:10px;margin:0 0 6px"></p>
+    <div class="sv-grid" id="slotGrid"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:8px"><button class="back" id="btnBackSlot" style="margin:0">VOLTAR</button></div>
+  </div>
+  <div id="slotConfirm" class="sv-confirm hide"><div class="box"><p id="slotConfirmTxt"></p><div class="row"><button class="go" id="slotYes" style="margin:0">CONFIRMAR</button><button class="back" id="slotNo" style="margin:0">CANCELAR</button></div></div></div>
 </div>
 
 <div id="skinscreen" class="screen hide">
@@ -4198,7 +4237,9 @@ function newGame(){
     applyHudClasses();
     buildInv();updateHud(true);
     state='play';
-    clearSave(); // um jogo novo substitui o jogo salvo
+    curSlot=pendingSlot>0?pendingSlot:autoSlot(); pendingSlot=curSlot;
+    clearSave(curSlot); // um jogo novo substitui o que estava neste slot
+    saveGame(); refreshContinue(); // já cria o save do slot
     toast('Sobreviva no mapa '+selectedMap.toUpperCase()+'!');
     startAmbient();startRain();
   }catch(err){
@@ -4212,7 +4253,23 @@ function newGame(){
 /* ============ CONTINUAR (somente jogo solo) ============
    O mundo nasce de uma semente (a mesma técnica do multiplayer), então o save guarda a semente e só o que mudou:
    jogador, tempo, árvores/pedras que restaram, itens no chão, veículos, animais, zumbis, fogueiras e manchas. */
-const SAVE_KEY='minisurv_save', SAVE_VER=4, SAVE_EVERY=20;
+const SAVE_KEY='minisurv_save', SAVE_PREFIX='minisurv_save_', SAVE_SLOTS=4, SAVE_VER=4, SAVE_EVERY=20;
+let curSlot=0, pendingSlot=0; // curSlot = slot em uso na partida; pendingSlot = slot escolhido na tela de novo jogo
+function slotKey(n){return SAVE_PREFIX+n;}
+/* Save antigo (slot único) vira o 1º slot livre, uma única vez */
+function migrateSaves(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY); if(!raw) return;
+    for(let n=1;n<=SAVE_SLOTS;n++){ if(!localStorage.getItem(slotKey(n))){ localStorage.setItem(slotKey(n),raw); break; } }
+    localStorage.removeItem(SAVE_KEY);
+  }catch(e){}
+}
+/* slot livre mais antigo (ou o primeiro vazio) quando ninguém escolheu um */
+function autoSlot(){
+  let old=1,oldAt=Infinity;
+  for(let n=1;n<=SAVE_SLOTS;n++){ const d=readSave0(n); if(!d) return n; if((d.at||0)<oldAt){oldAt=d.at||0;old=n;} }
+  return old;
+}
 let worldSeed=0, saveT=0;
 const MAP_NAMES={forest:'FLORESTA',desert:'DESERTO',snow:'NEVE',city:'CIDADE'};
 const _q=(v,d)=>{const m=d===1?10:100;return Math.round(v*m)/m;};
@@ -4226,14 +4283,14 @@ function packObj(o){
   return r;
 }
 function canSave(){
-  return !!(P && worldSeed && !MP.active && !P.dead && (state==='play'||state==='pause'||state==='craft'));
+  return !!(P && worldSeed && curSlot>0 && !MP.active && !P.dead && (state==='play'||state==='pause'||state==='craft'));
 }
 function saveGame(){
   if(!canSave()) return false;
   try{
     const ps=JSON.parse(JSON.stringify(P,(k,v)=>(k==='inside'||k==='inVehicle'||k==='fish'||k==='sleeping'||k[0]==='_')?undefined:v));
     const data={
-      v:SAVE_VER, at:Date.now(), map:selectedMap, seed:worldSeed,
+      v:SAVE_VER, at:Date.now(), map:selectedMap, seed:worldSeed, sk:SKIN_SEL,
       T:_q(T,2), day, kills, weather, weatherTimer:_q(weatherTimer,1), spawnTimer:_q(spawnTimer,1),
       P:ps, inVeh:P.inVehicle?vehicles.indexOf(P.inVehicle):-1,
       trees:trees.map(t=>[t.x,t.y,_q(t.hp,2)]),
@@ -4244,38 +4301,38 @@ function saveGame(){
       decals:decals.map(d=>[_q(d.x,1),_q(d.y,1),_q(d.l,1)]),
       chests:chestList.map(c=>c.open?1:0)
     };
-    localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+    localStorage.setItem(slotKey(curSlot),JSON.stringify(data));
     return true;
   }catch(e){ console.warn('[save]',e); return false; }
 }
-function readSave(){
+function readSave(n){
   let d=null;
   try{
-    const raw=localStorage.getItem(SAVE_KEY); if(!raw) return null;
+    const raw=localStorage.getItem(slotKey(n)); if(!raw) return null;
     d=JSON.parse(raw);
     const ok=d && d.v===SAVE_VER && MAP_NAMES[d.map] && Number.isFinite(d.seed) && d.seed>0 && Number.isFinite(d.T) && d.P && Number.isFinite(d.P.hp) && d.P.hp>0
       && Array.isArray(d.trees)&&Array.isArray(d.rocks)&&Array.isArray(d.items)&&Array.isArray(d.zombies)&&Array.isArray(d.vehicles)&&Array.isArray(d.animals)&&Array.isArray(d.fires);
-    if(!ok){ clearSave(); return null; }
+    if(!ok){ clearSave(n); return null; }
     return d;
-  }catch(e){ clearSave(); return null; }
+  }catch(e){ clearSave(n); return null; }
 }
-function clearSave(){ try{localStorage.removeItem(SAVE_KEY);}catch(e){} refreshContinue(); }
+function clearSave(n){ n=n||curSlot; if(n>0){try{localStorage.removeItem(slotKey(n));}catch(e){}} refreshContinue(); }
 function refreshContinue(){
-  const d=readSave0();
-  const m=$('menu'); if(m) m.classList.toggle('hasSave',!!d);
-  const sub=$('contSub'); if(sub&&d) sub.textContent='DIA '+d.day+' · '+MAP_NAMES[d.map];
-  const w=$('saveWarn'); if(w) w.classList.toggle('hide',!d);
+  let last=null,lastN=0,cnt=0;
+  for(let n=1;n<=SAVE_SLOTS;n++){ const d=readSave0(n); if(d){cnt++; if(!last||(d.at||0)>(last.at||0)){last=d;lastN=n;}} }
+  const m=$('menu'); if(m) m.classList.toggle('hasSave',cnt>0);
+  const sub=$('contSub'); if(sub&&last) sub.textContent=(cnt>1?cnt+' SAVES · ':'')+'SLOT '+lastN+' · DIA '+last.day;
 }
 // leitura leve para o menu (não apaga nada se estiver inválido)
-function readSave0(){
+function readSave0(n){
   try{
-    const raw=localStorage.getItem(SAVE_KEY); if(!raw) return null;
+    const raw=localStorage.getItem(slotKey(n)); if(!raw) return null;
     const d=JSON.parse(raw);
     return (d&&d.v===SAVE_VER&&MAP_NAMES[d.map]&&Number.isFinite(d.seed)&&d.P&&d.P.hp>0)?d:null;
   }catch(e){ return null; }
 }
-function continueGame(){
-  const d=readSave();
+function continueGame(n){
+  const d=readSave(n);
   if(!d){ toast('Nenhum jogo salvo'); return; }
   aud();
   closeChat(); setChatButtonVisible(false);
@@ -4285,7 +4342,7 @@ function continueGame(){
   $('hud').classList.remove('hide');
   restoreWalkHUD();
   try{
-    selectedMap=d.map; worldSeed=d.seed;
+    selectedMap=d.map; worldSeed=d.seed; curSlot=n; pendingSlot=n;
     genWorld(d.seed);
     if(!plane) throw new Error('plane não gerado');
     // Tempo e clima (antes dos zumbis: a dificuldade deles depende do dia)
@@ -4342,7 +4399,7 @@ function continueGame(){
     state='menu';
     showScreen('menu');
     $('hud').classList.add('hide');
-    clearSave();
+    clearSave(n);curSlot=0;
     toast('Não foi possível retomar o jogo salvo');
   }
 }
@@ -4927,8 +4984,8 @@ function die(){
     return;
   }
 
-  // Singleplayer: morreu, o jogo salvo deixa de existir
-  clearSave();
+  // Singleplayer: morreu, o save deste slot deixa de existir (o slot fica livre para um novo jogo)
+  pendingSlot=curSlot; clearSave(curSlot); curSlot=0;
   state='dead';
   setAmbient(0);setRain(false);
   showDeathScreen(false);
@@ -7377,7 +7434,7 @@ const SKINS=[
   {skin:'#b9855a',hair:'#2a1d14',shirt:'#5a7a4a',alt:'#c08a3a',pants:'#4a4a34',f:false,os:'hoodie',hs:'cap',hat:'#8a3a2a',acc:'pack',pack:'#6a5a3a',boot:'#2a2418'},
   {skin:'#f0c8a0',hair:'#e0c060',shirt:'#4a7a7a',alt:'#8a5a9a',pants:'#3a4a6a',f:false,os:'tee',hs:'spiky',band:'#c04a3a',boot:'#e0dcd0'},
   {skin:'#6a4530',hair:'#1a1210',shirt:'#c9853a',alt:'#3a6a9a',pants:'#34343a',f:false,os:'vest',under:'#d8d4c8',hs:'afro',beard:true,boot:'#2a2018'},
-  {skin:'#f0c4a0',hair:'#0c0a09',shirt:'#a8486a',alt:'#4a8a9a',pants:'#3a3a58',f:true,os:'tank',hs:'long',boot:'#2a2018'},
+  {skin:'#f0c4a0',hair:'#0c0a09',shirt:'#a8486a',alt:'#4a8a9a',pants:'#3a4a6a',f:true,os:'sweater',hs:'long',slv:.85,boot:'#3a2a20'},
   {skin:'#b9855a',hair:'#2a1d14',shirt:'#3a8a7a',alt:'#d0803a',pants:'#4a3a2a',f:true,os:'jacket',hs:'pony',acc:'pack',pack:'#5a4a3a',boot:'#241c16'},
   {skin:'#f2cfae',hair:'#e6c66a',shirt:'#6a4aa0',alt:'#4a9a5a',pants:'#3a3a58',f:true,os:'dress',hs:'pig',hat:'#e8d0e0',boot:'#3a2a30'},
   {skin:'#6a4530',hair:'#1a1210',shirt:'#d4a24a',alt:'#c04a5a',pants:'#2a2a30',f:true,os:'tee',hs:'buns',band:'#c04a5a',boot:'#e0dcd0'}
@@ -7386,7 +7443,7 @@ let SKIN_SEL=0;
 try{const v=parseInt(localStorage.getItem('minisurv_skin'),10);if(v>=0&&v<SKINS.length)SKIN_SEL=v;}catch(e){}
 function skinLook(i,alt){
   const s=SKINS[(i>=0&&i<SKINS.length)?i:0];
-  return {skin:s.skin,hair:s.hair,shirt:alt?s.alt:s.shirt,pants:s.pants,female:s.f,os:s.os,hs:s.hs,hat:s.hat,band:s.band,acc:s.acc,pack:s.pack,under:s.under,beard:s.beard,boot:s.boot};
+  return {skin:s.skin,hair:s.hair,shirt:alt?s.alt:s.shirt,pants:s.pants,female:s.f,os:s.os,hs:s.hs,slv:s.slv,bow:s.bow,hat:s.hat,band:s.band,acc:s.acc,pack:s.pack,under:s.under,beard:s.beard,boot:s.boot};
 }
 /* Regra da skin repetida: quem entrou como CONVIDADO usa a cor alternativa (os dois lados calculam igual) */
 function myLook(){
@@ -7469,6 +7526,11 @@ function humanBody(R,o,face){
       R(-4,-9,8,8,S.under||'#d8d4c8');R(-4,-9,3,8,shirt);R(1,-9,3,8,shirt);R(-4,-5,8,1,'#e8e8a0');
       if(back){R(-4,-9,8,8,shirt);R(-4,-5,8,1,'#e8e8a0');R(-1,-9,2,8,sd);}
       break;
+    case 'sweater':
+      R(-4,-9,8,8,shirt);R(-2,-9,4,1,sl);R(-4,-2,8,1,sd);R(-4,-3,8,1,sl);
+      if(!back){R(-3,-7,1,4,sd);R(2,-7,1,4,sd);R(-1,-6,2,2,sl);}
+      R(-4,-2,8,1,'#2a2018');R(0,-2,1,1,'#c9a03a');
+      break;
     case 'tank':
       R(-4,-9,8,8,shirt);R(-4,-9,2,2,skin);R(2,-9,2,2,skin);R(-1,-9,2,1,skin);R(-4,-3,8,1,sd);
       break;
@@ -7526,7 +7588,7 @@ function humanBody(R,o,face){
   if(z&&hs!=='mask'&&hs!=='hazhood'){R(-3,-10,6,1,Sh(skin,-.18));}
   // cabelo / chapéu (parte de trás e de baixo, antes do rosto)
   switch(hs){
-    case 'long':R(-4,-16,8,1,hair);R(-4,-15,1,7,hair);R(3,-15,1,7,hair);if(back)R(-4,-16,8,9,hair);break;
+    case 'long':R(-3,-16,6,1,hair);if(back||ex>=0)R(-4,-16,1,8,hair);if(back||ex<=0)R(3,-16,1,8,hair);if(back)R(-4,-16,8,9,hair);break; // de lado, o cabelo cai só atrás e o olho da frente não some no preto
     case 'wild':R(-4,-16,8,1,hair);R(-4,-15,1,8,hair);R(3,-15,1,9,hair);R(-5,-10,1,3,hair);R(4,-9,1,3,hair);R(-5,-14,1,2,hair);if(back)R(-4,-16,8,10,hair);break;
     case 'pig':R(-5,-13,2,5,hair);R(3,-13,2,5,hair);R(-5,-13,2,1,S.hat||'#e8d0e0');R(3,-13,2,1,S.hat||'#e8d0e0');break;
     case 'pony':
@@ -7561,7 +7623,10 @@ function humanBody(R,o,face){
       else{sbn(1);const bx=Math.round(fx*3),by=Math.round(fy*2)-13;R(bx-2,by,4,1,Sh(hat,-.35));}
       break;}
     case 'long':
-      R(-3,-15,6,2,hair);break;
+      R(-3,-15,6,2,hair);
+      if(!back){R(-3,-13,2,1,hair);R(1,-13,2,1,hair);}
+      if(S.bow&&!back){R(2,-16,3,2,S.bow);R(3,-17,1,1,S.bow);R(3,-15,1,1,Sh(S.bow,-.25));}
+      break;
     case 'pony':
       R(-3,-16,6,1,hair);R(-3,-15,6,back?5:2,hair);if(!back)sbn(1);break;
     case 'buns':
@@ -7626,12 +7691,17 @@ function drawHeld(wpn,hx,hy,a){
   ctx.drawImage(cv,(H.off||0)/sc-H.ax,-H.ay);
   ctx.restore();return true;
 }
-/* braço de 2 px de largura, contínuo: manga da cor da roupa e antebraço de pele (coordenadas = canto superior esquerdo) */
-function armTo(sx,sy,ex,ey,sleeve,skin,aw){
-  const n=Math.max(Math.abs(ex-sx),Math.abs(ey-sy),1),w=aw||2;
-  for(let i=0;i<=n;i++){const t=i/n;R(Math.round(sx+(ex-sx)*t),Math.round(sy+(ey-sy)*t),(i===n||w>1)?2:1,(i===n||w>1)?2:2,t<.5?sleeve:skin);}
+/* braço = um traço reto de 2 px (sem cotovelo): manga na primeira metade, pele na segunda; coordenadas = centros do ombro e da mão */
+function armLine(sx,sy,ex,ey,sleeve,skin,fr){
+  const dx=ex-sx,dy=ey-sy,len=Math.hypot(dx,dy);
+  if(len<.5)return;
+  ctx.save();ctx.translate(sx,sy);ctx.rotate(Math.atan2(dy,dx));
+  const h=Math.max(1,Math.round(len*(fr||.5)));
+  ctx.fillStyle=sleeve;ctx.fillRect(0,-1,h,2);
+  ctx.fillStyle=skin;ctx.fillRect(h,-1,len-h+1,2);
+  ctx.restore();
 }
-const TWO_HAND={rifle:1,shotgun:1,smg:1,spear:1,fishingrod:1,pickaxe:1,axe:1,sword:0,bow:1};
+const TWO_HAND={rifle:1,shotgun:1,smg:1,bow:1,bat:1,axe:1,pickaxe:1,sword:1,spear:1,fishingrod:1}; // armas de duas mãos
 function human(x,y,face,o){
   const fx=Math.cos(face),fy=Math.sin(face);
   ctx.save();
@@ -7658,12 +7728,12 @@ function human(x,y,face,o){
     const l=o.lunge?3:0;
     const zs=zstyle(o.kind|0,o.zv|0),zsl=(zs.os==='bare'||zs.os==='tank'||zs.os==='dress'||zs.os==='gown')?o.skin:(zs.os==='fur'?'#f4f8fb':o.shirt);
     const sv=Math.abs(fx)>.6,l2=(o.lunge?3:0);
-    const sLx=sv?(fx>0?2:-4):-5,sRx=sv?(fx>0?2:-4):4;
-    const aLx=sLx+Math.round(fx*(5+l2))+(sv?0:-1),aLy=-7+Math.round(fy*(3+l2))+(sv?-2:0);
-    const aRx=sRx+Math.round(fx*(5+l2))+(sv?0:1),aRy=-7+Math.round(fy*(3+l2))+(sv?2:0);
-    armTo(sLx,-9,aLx,aLy,zsl,o.skin);armTo(sRx,-9,aRx,aRy,zsl,o.skin);
-    R(aLx-.5,aLy-.5,3,3,o.skin);R(aRx-.5,aRy-.5,3,3,o.skin);
-    R(aLx+1,aLy+1,1,1,Sh(o.skin,-.3));R(aRx+1,aRy+1,1,1,Sh(o.skin,-.3));
+    const sLx=sv?(fx>0?3:-3):-4,sRx=sv?(fx>0?3:-3):4;
+    const aLx=sLx+Math.round(fx*(6+l2))+(sv?0:-1),aLy=-6+Math.round(fy*(3+l2))+(sv?-2:0);
+    const aRx=sRx+Math.round(fx*(6+l2))+(sv?0:1),aRy=-6+Math.round(fy*(3+l2))+(sv?2:0);
+    armLine(sLx,-8,aLx,aLy,zsl,o.skin);armLine(sRx,-8,aRx,aRy,zsl,o.skin);
+    R(aLx-1,aLy-1,3,3,o.skin);R(aRx-1,aRy-1,3,3,o.skin);
+    R(aLx,aLy,1,1,Sh(o.skin,-.3));R(aRx,aRy,1,1,Sh(o.skin,-.3));
     if(o.spitter)R(hx+fx*2,hy+fy*2-1,3,2,'#40ff40');
     if(o.wind)R(hx+fx*2-2,hy+fy*2-3,6,5,'#b0ff80'); // pré-aviso do cuspe
     if(o.screamer){R(hx+fx*2,hy+fy*2-2,3,3,'#600');R(hx+fx*2,hy+fy*2-1,2,1,'#fff');}
@@ -7686,15 +7756,27 @@ function human(x,y,face,o){
   }else{
     {
       const sl=(o.os==='tank'||o.os==='bare')?o.skin:o.shirt,sgn=fx>=-.15?1:-1,sv=Math.abs(fx)>.6;
-      const aw=2,rc=o.female?3:5,hg=o.female?-6:-5,two=TWO_HAND[o.wpn]&&!o.hold,st=o.moving?Math.round(Math.sin(o.anim)*1.5):0;
-      const mSx=sv?(fx>0?2:-4):(sgn>0?4:-5),oSx=sv?mSx:(sgn>0?-5:4);
-      const mx=mSx+Math.round(fx*rc)+(sv?0:sgn),my=-6+Math.round(fy*(o.female?2:3));
-      // braço de apoio primeiro (fica atrás): junto da arma com armas de duas mãos, solto ao lado nas outras
-      if(two&&sv)armTo(oSx,-8,mx+Math.round(fx*(rc-1)),my+Math.round(fy*2)+1,sl,o.skin,aw);
-      else armTo(oSx,-9,oSx,hg+st,sl,o.skin,aw);
-      armTo(mSx,-9,mx,my,sl,o.skin,aw);
-      hx=mx+1;hy=my+1;
+      const two=TWO_HAND[o.wpn]&&!o.hold,st=o.moving?Math.round(Math.sin(o.anim)*1.5):0;
+      const shR=sv?(fx>0?3:-3):4,shL=sv?shR:-4,sY=-8;                 // centros dos ombros
+      const mS=sgn>0?shR:shL,oS=sgn>0?shL:shR;                        // ombro do braço principal / do outro
+      if(two){
+        // duas mãos no cabo: a de trás no encaixe da arma, a da frente alguns pixels adiante, as duas seguem o balanço do golpe
+        let sa=face;if(o.swing>0)sa=face+(o.swing/.18-.5)*2.2;
+        const cx=Math.cos(sa),cy=Math.sin(sa);
+        hx=Math.round(cx*5);hy=-6+Math.round(cy*3);
+        const gap=o.wpn==='bow'?2:4;
+        let ox=hx+Math.round(cx*gap),oy=hy+Math.round(cy*gap*.75);
+        if(oy<-11)oy=-11;
+        armLine(oS,sY,ox,oy,sl,o.skin,o.slv);armLine(mS,sY,hx,hy,sl,o.skin,o.slv);
+        R(ox-1,oy-1,2,2,o.skin);
+      } else {
+        // uma mão só (punhos, pistola, item): braço principal em direção à mira, o outro solto ao lado, balançando ao andar
+        hx=Math.round(fx*(o.female?4:5))+(sv?mS:mS+sgn);hy=-6+Math.round(fy*(o.female?2:3));
+        armLine(oS,sY,oS,-3+st,sl,o.skin,o.slv);R(oS-1,-4+st,2,2,o.skin);
+        armLine(mS,sY,hx,hy,sl,o.skin,o.slv);
+      }
     }
+    R(hx-1,hy-1,2,2,o.skin);
     let a=face;
     if(o.swing>0)a=face+(o.swing/.18-.5)*2.2;
     const wx=Math.cos(a),wy=Math.sin(a);
@@ -9793,11 +9875,11 @@ function renderAch(){
 /* ============ UI ============ */
 function showScreen(id){
   if(id==='menu') try{refreshContinue();}catch(e){}
-  const ids=['menu','invscr','mapscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
+  const ids=['menu','invscr','mapscreen','slotscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
   for(const s of ids){const e=$(s);if(e)e.classList.add('hide');}
   if(id){const e=$(id);if(e)e.classList.remove('hide');}
   try{
-    const wantMusic=['menu','mapscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen'].includes(id)||(id==='configscreen'&&state!=='pause');
+    const wantMusic=['menu','mapscreen','slotscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen'].includes(id)||(id==='configscreen'&&state!=='pause');
     if(wantMusic)musicStart();else musicStop();
   }catch(e){}
 }
@@ -9872,8 +9954,79 @@ on('btnReset','click',()=>{
   toast('Configurações restauradas');
 });
 
-on('btnPlay','click',()=>{aud();showScreen('mapscreen');});
-on('btnContinue','click',()=>{continueGame();});
+/* ===== Tela de slots (4 saves): JOGAR escolhe onde criar o novo jogo, CONTINUAR escolhe qual save abrir ===== */
+let slotMode='new', slotAsk=null;
+function slotDateStr(at){
+  if(!at) return '';
+  try{const d=new Date(at);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}catch(e){return '';}
+}
+function renderSlots(){
+  const g=$('slotGrid'); if(!g) return;
+  g.innerHTML='';
+  let any=false;
+  for(let n=1;n<=SAVE_SLOTS;n++){
+    const d=readSave0(n); if(d) any=true;
+    const w=document.createElement('div'); w.className='sv-slot'+(d?'':' empty');
+    const b=document.createElement('button'); b.className='sv-main'; b.type='button';
+    if(d){
+      const cv=document.createElement('canvas'); cv.width=16; cv.height=26; b.appendChild(cv);
+      try{drawSkinPreview(cv,SKIN_SEL);}catch(e){}
+    }
+    const tx=document.createElement('span'); tx.className='sv-txt';
+    const add=(t,c,tag)=>{const e=document.createElement(tag||'i');if(c)e.className=c;e.textContent=t;tx.appendChild(e);};
+    add('SLOT '+n,'','b');
+    if(d){
+      add(MAP_NAMES[d.map]);
+      add('DIA '+d.day+' · '+(d.kills|0)+' ABATES');
+      add(slotDateStr(d.at),'dim');
+      if(slotMode==='new') add('SUBSTITUIR','tag');
+    } else {
+      add(slotMode==='new'?'VAZIO':'SEM SAVE','dim');
+      if(slotMode==='new') add('NOVO JOGO','tag');
+    }
+    b.appendChild(tx);
+    if(slotMode==='load'&&!d) b.disabled=true;
+    b.addEventListener('click',()=>{aud();pickSlot(n);});
+    w.appendChild(b);
+    const del=document.createElement('button'); del.className='sv-del'+(d?'':' off'); del.type='button'; del.textContent='APAGAR';
+    if(d) del.addEventListener('click',e=>{e.stopPropagation();aud();askSlot('del',n);});
+    w.appendChild(del);
+    g.appendChild(w);
+  }
+  const t=$('slotTitle'),h=$('slotHint');
+  if(t) t.textContent=slotMode==='new'?'NOVO JOGO':'CONTINUAR';
+  if(h) h.textContent=slotMode==='new'?'Escolha um slot. Um slot ocupado pode ser substituído.':(any?'Escolha qual save abrir.':'Você ainda não tem nenhum jogo salvo.');
+}
+function openSlots(mode){slotMode=mode;closeSlotAsk();renderSlots();showScreen('slotscreen');}
+function pickSlot(n){
+  const d=readSave0(n);
+  if(slotMode==='load'){ if(d)continueGame(n); else renderSlots(); return; }
+  if(d) askSlot('replace',n); else goMapForSlot(n);
+}
+function goMapForSlot(n){
+  pendingSlot=n;
+  const d=readSave0(n),w=$('saveWarn');
+  if(w){w.textContent=d?'SLOT '+n+': o save atual será substituído ao iniciar.':'SLOT '+n+': novo jogo.';w.classList.remove('hide');}
+  showScreen('mapscreen');
+}
+function askSlot(kind,n){
+  const d=readSave0(n); slotAsk={kind:kind,n:n};
+  const t=$('slotConfirmTxt'),c=$('slotConfirm'),y=$('slotYes');
+  if(t)t.textContent=kind==='del'
+    ?'Apagar o SLOT '+n+(d?' ('+MAP_NAMES[d.map]+', dia '+d.day+')':'')+'? Isso não pode ser desfeito.'
+    :'Substituir o SLOT '+n+(d?' ('+MAP_NAMES[d.map]+', dia '+d.day+')':'')+'? O progresso dele será perdido quando a nova partida começar.';
+  if(y)y.textContent=kind==='del'?'APAGAR':'SUBSTITUIR';
+  if(c)c.classList.remove('hide');
+}
+function closeSlotAsk(){slotAsk=null;const c=$('slotConfirm');if(c)c.classList.add('hide');}
+on('slotYes','click',()=>{
+  aud();const a=slotAsk; closeSlotAsk(); if(!a)return;
+  if(a.kind==='del'){ clearSave(a.n); renderSlots(); } else goMapForSlot(a.n);
+});
+on('slotNo','click',()=>{aud();closeSlotAsk();});
+on('btnBackSlot','click',()=>{aud();closeSlotAsk();showScreen('menu');});
+on('btnPlay','click',()=>{aud();openSlots('new');});
+on('btnContinue','click',()=>{aud();openSlots('load');});
 window.addEventListener('pagehide',()=>{saveGame();});
 on('btnMulti','click',()=>{aud();showScreen('mpscreen');});
 on('btnSkins','click',()=>{aud();showScreen('skinscreen');});
@@ -9892,7 +10045,7 @@ document.querySelectorAll('.map-opt[data-skin]').forEach(btn=>{
 on('btnAch','click',()=>{aud();renderAch();showScreen('achscreen');});
 on('btnBackAch','click',()=>showScreen('menu'));
 on('btnConfig','click',()=>{aud();showScreen('configscreen');});
-on('btnBackMap','click',()=>showScreen('menu'));
+on('btnBackMap','click',()=>openSlots('new'));
 on('btnStart','click',()=>startGame());
 
 on('btnMPBack','click',()=>showScreen('menu'));
@@ -10299,7 +10452,7 @@ on('bpause','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
 on('bcraft','pointerdown',e=>{e.preventDefault();aud();openCraft();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play'&&!MP.active)pause();});
 {
-  try{refreshContinue();}catch(e){}
+  try{migrateSaves();refreshContinue();}catch(e){}
   const b=LSget();
   try{
     const savedName=localStorage.getItem('minisurv_name');
