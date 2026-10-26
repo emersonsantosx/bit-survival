@@ -7160,7 +7160,7 @@ function applySnapshot(snap){
     if(!MP.isHost){for(const q of nextA)if(q.lunge>0&&!oldA.some(o=>o.lunge>0&&Math.hypot(o.x-q.x,o.y-q.y)<30)){try{animalVoice(q,'attack');}catch(e){}}}
     if(!MP.isHost&&P){ // animal morto no anfitrião: sangue e mancha também aqui
       for(const o of oldA){
-        if(o.dead||nextA.includes(o))continue;
+        if(o.dead||usedA.has(o)||nextA.includes(o))continue; // só quem sumiu do snapshot (morreu no anfitrião) sangra aqui
         if(Math.abs(o.x-P.x)<W/Z/2+30&&Math.abs(o.y-P.y)<H/Z/2+30){
           for(let i=0;i<6;i++)parts.push({x:o.x,y:o.y-3,vx:rnd(-50,50),vy:rnd(-50,15),t:rnd(.3,.6),c:'#7a1010',g:1});
         }
@@ -7627,9 +7627,9 @@ function drawHeld(wpn,hx,hy,a){
   ctx.restore();return true;
 }
 /* braço de 2 px de largura, contínuo: manga da cor da roupa e antebraço de pele (coordenadas = canto superior esquerdo) */
-function armTo(sx,sy,ex,ey,sleeve,skin){
-  const n=Math.max(Math.abs(ex-sx),Math.abs(ey-sy),1);
-  for(let i=0;i<=n;i++){const t=i/n;R(Math.round(sx+(ex-sx)*t),Math.round(sy+(ey-sy)*t),2,2,t<.5?sleeve:skin);}
+function armTo(sx,sy,ex,ey,sleeve,skin,aw){
+  const n=Math.max(Math.abs(ex-sx),Math.abs(ey-sy),1),w=aw||2;
+  for(let i=0;i<=n;i++){const t=i/n;R(Math.round(sx+(ex-sx)*t),Math.round(sy+(ey-sy)*t),(i===n||w>1)?2:1,(i===n||w>1)?2:2,t<.5?sleeve:skin);}
 }
 const TWO_HAND={rifle:1,shotgun:1,smg:1,spear:1,fishingrod:1,pickaxe:1,axe:1,sword:0,bow:1};
 function human(x,y,face,o){
@@ -7686,13 +7686,13 @@ function human(x,y,face,o){
   }else{
     {
       const sl=(o.os==='tank'||o.os==='bare')?o.skin:o.shirt,sgn=fx>=-.15?1:-1,sv=Math.abs(fx)>.6;
-      const two=TWO_HAND[o.wpn]&&!o.hold,st=o.moving?Math.round(Math.sin(o.anim)*1.5):0;
+      const aw=2,rc=o.female?3:5,hg=o.female?-6:-5,two=TWO_HAND[o.wpn]&&!o.hold,st=o.moving?Math.round(Math.sin(o.anim)*1.5):0;
       const mSx=sv?(fx>0?2:-4):(sgn>0?4:-5),oSx=sv?mSx:(sgn>0?-5:4);
-      const mx=mSx+Math.round(fx*5)+(sv?0:sgn),my=-6+Math.round(fy*3);
+      const mx=mSx+Math.round(fx*rc)+(sv?0:sgn),my=-6+Math.round(fy*(o.female?2:3));
       // braço de apoio primeiro (fica atrás): junto da arma com armas de duas mãos, solto ao lado nas outras
-      if(two&&sv)armTo(oSx,-8,mx+Math.round(fx*4),my+Math.round(fy*2)+1,sl,o.skin);
-      else armTo(oSx,-9,oSx,-5+st,sl,o.skin);
-      armTo(mSx,-9,mx,my,sl,o.skin);
+      if(two&&sv)armTo(oSx,-8,mx+Math.round(fx*(rc-1)),my+Math.round(fy*2)+1,sl,o.skin,aw);
+      else armTo(oSx,-9,oSx,hg+st,sl,o.skin,aw);
+      armTo(mSx,-9,mx,my,sl,o.skin,aw);
       hx=mx+1;hy=my+1;
     }
     let a=face;
