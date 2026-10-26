@@ -3484,9 +3484,8 @@ function drawScarecrow(F){
   // cabeça de saco encardido, costurado
   R(x-6,y-37,12,11,'#8a7a55');R(x-6,y-37,12,2,'#a09068');R(x+4,y-35,2,9,'#6a5a3a');
   R(x-1,y-30,1,2,'#5a4a2e');R(x-4,y-27,1,2,'#5a4a2e');                                 // rugas e remendo
-  // olhos vazios com brilho vermelho pulsando
+  // olhos vazios, só buracos escuros
   R(x-4,y-34,3,3,'#0a0606');R(x+1,y-34,3,3,'#0a0606');
-  ctx.globalAlpha=pulse;R(x-3,y-33,1,1,'#ff3a2a');R(x+2,y-33,1,1,'#ff3a2a');ctx.globalAlpha=pulse*.28;R(x-5,y-35,5,5,'#ff2a1a');R(x,y-35,5,5,'#ff2a1a');ctx.globalAlpha=1;
   // boca costurada em zigue-zague
   R(x-4,y-28,9,1,'#0a0606');for(let i=-4;i<=4;i+=2){R(x+i,y-30,1,5,'#0a0606');}
   // chapéu de aba larga, rasgado e torto
@@ -10192,7 +10191,7 @@ function refreshInvScr(){
     '<div class="ibtns"><button class="ibtn use" id="ibUse"'+(usable?'':' disabled')+'>'+(EATABLE(sl.t)?(P.hold===sl.t?'GUARDAR':'SEGURAR'):'USAR')+'</button><button class="ibtn" id="ibDrop">SOLTAR</button>'+(sl.n>1?'<button class="ibtn" id="ibAll">TUDO</button>':'')+'</div>';
   const ok=()=>performance.now()>=craftReadyAt;
   const bu=$('ibUse'),bd=$('ibDrop'),ba=$('ibAll');
-  if(bu)bu.onclick=()=>{if(!ok())return;aud();useItem(invSel);};
+  if(bu)bu.onclick=()=>{if(!ok())return;aud();const _sl=P.inv[invSel],_seg=!!(_sl&&EATABLE(_sl.t)&&P.hold!==_sl.t);useItem(invSel);if(_seg&&P.hold===_sl.t)closeCraft();}; // SEGURAR fecha a mochila; GUARDAR e USAR mantêm aberta
   if(bd)bd.onclick=()=>{if(!ok())return;aud();discardItem(invSel);};
   if(ba)ba.onclick=()=>{if(!ok())return;aud();const k=invSel,c=P.inv[k]?P.inv[k].n:0;for(let q=0;q<c&&q<40;q++)discardItem(k);};
 }
