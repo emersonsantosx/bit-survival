@@ -4741,8 +4741,10 @@ function updateVehicles(dt){
         if(MP.active) sendEvt('vehicleExit', {id:v.id});
         toast('Você explodiu com o carro!');
         die();
-      } else if(P && !P.dead && Math.hypot(P.x-v.x,P.y-v.y)<55){
-        hurt(25,0.3);
+      } else if(P && !P.dead && Math.hypot(P.x-v.x,P.y-v.y)<70){
+        // quanto mais perto da explosão, mais dano (de ~50 colado no carro até ~5 na borda)
+        const dd=Math.hypot(P.x-v.x,P.y-v.y);
+        hurt(Math.round(5+45*Math.pow(1-dd/70,1.3)),0.3);
         toast('Explosão do carro!');
       }
       for(const z of zombies){
@@ -4898,6 +4900,7 @@ function makeNoise(x,y,r){
 }
 function hurt(n,bleedChance){
   if(P.dead)return;
+  if(P.inVehicle)return; // dentro de um veículo o jogador nunca leva dano: só o veículo sofre
   if(P._grace>0)return; // acabou de reconectar
   if(P.sleeping)wakeUp(true);
   if(EAT){EAT=null;eatLock=true;}
@@ -4917,12 +4920,12 @@ function carTakeHit(v,dmg){
   if(v.hp<=0&&!v.dying)startVehicleDeath(v);
 }
 function zombieHurt(n,bleedChance){
-  if(P&&P.inVehicle){carTakeHit(P.inVehicle,n*0.2);if(vehKind(P.inVehicle)!=='car')hurt(n*.5,bleedChance*.5);} // moto e buggy são abertos: protegem só pela metade
+  if(P&&P.inVehicle){carTakeHit(P.inVehicle,n*0.2);} // quem está no veículo não se machuca; só o veículo sofre (20% do dano)
   else hurt(n,bleedChance);
 }
 /* Dano de animal agressivo: igual ao de zumbi — dentro do carro o jogador fica protegido e o carro sofre 20% do dano */
 function animalHurt(n,bleedChance){
-  if(P&&P.inVehicle){carTakeHit(P.inVehicle,n*0.2);if(vehKind(P.inVehicle)!=='car')hurt(n*.5,bleedChance*.5);}
+  if(P&&P.inVehicle){carTakeHit(P.inVehicle,n*0.2);}
   else hurt(n,bleedChance);
 }
 function isOtherPlayerAlive(){
@@ -6200,11 +6203,7 @@ function update(dt){
   tracers=tracers.filter(t=>t.t>0);
   for(const b of blds){
     let target=P.inside===b?0:1;
-    // If driving through a building, open its roof so you can see where to exit
-    if(P.inVehicle){
-      const v=P.inVehicle;
-      if(v.x>b.x-10&&v.x<b.x+b.w+10&&v.y>b.y-10&&v.y<b.y+b.h+10) target=0;
-    }
+    // o telhado só abre quando o jogador está dentro da casa; de carro ou parado no canto, nada aparece
     b.roofA+=(target-b.roofA)*Math.min(1,dt*8);
   }
   for(const c of campfires){
@@ -7676,7 +7675,7 @@ function humanBody(R,o,face){
 }
 /* armas nas maos: usam os mesmos icones pixel art do inventario, giradas na direcao da mira */
 const HELD={
-  pistol:{ax:3,ay:4,gun:1},smg:{ax:4,ay:3,gun:1},shotgun:{ax:7,ay:3,gun:1},rifle:{ax:6,ay:3,gun:1},
+  pistol:{ax:2,ay:3,gun:1,s:.8},smg:{ax:3,ay:3,gun:1,s:.88},shotgun:{ax:6,ay:3,gun:1,s:.92},rifle:{ax:5,ay:3,gun:1,s:.92},
   bow:{ax:3,ay:5,off:3},
   bat:{ax:1,ay:9,rot:Math.PI/4},axe:{ax:4,ay:9,rot:Math.PI/4},pickaxe:{ax:2,ay:9,rot:Math.PI/4},
   sword:{ax:1,ay:9,rot:Math.PI/4,s:1.2},spear:{ax:1,ay:9,rot:Math.PI/4,s:1.5},fishingrod:{ax:1,ay:9,rot:Math.PI/4,s:1.3}
@@ -7700,7 +7699,8 @@ function armLine(sx,sy,ex,ey,sleeve,skin,fr){
   ctx.fillStyle=skin;ctx.fillRect(h,-1,len-h+1,2);
   ctx.restore();
 }
-const TWO_HAND={rifle:1,shotgun:1,smg:1,bow:1,bat:1,axe:1,pickaxe:1,sword:1,spear:1,fishingrod:1}; // armas de duas mãos
+function punchHand(h,sw){if(sw>0&&!h._pon)h._ph=(h._ph|0)^1;h._pon=sw>0;return h._ph|0;} // alterna soco direito/esquerdo a cada golpe
+const TWO_HAND={pistol:1,rifle:1,shotgun:1,smg:1,bow:1,bat:1,axe:1,pickaxe:1,sword:1,spear:1,fishingrod:1}; // armas de duas mãos
 function human(x,y,face,o){
   const fx=Math.cos(face),fy=Math.sin(face);
   ctx.save();
@@ -7763,7 +7763,7 @@ function human(x,y,face,o){
         let sa=face;if(o.swing>0)sa=face+(o.swing/.18-.5)*2.2;
         const cx=Math.cos(sa),cy=Math.sin(sa);
         hx=Math.round(cx*5);hy=-6+Math.round(cy*3);
-        const gap=o.wpn==='bow'?2:4;
+        const gap={bow:2,pistol:2,smg:3,shotgun:5,rifle:5}[o.wpn]||4;
         let ox=hx+Math.round(cx*gap),oy=hy+Math.round(cy*gap*.75);
         if(oy<-11)oy=-11;
         armLine(oS,sY,ox,oy,sl,o.skin,o.slv);armLine(mS,sY,hx,hy,sl,o.skin,o.slv);
@@ -7771,8 +7771,21 @@ function human(x,y,face,o){
       } else {
         // uma mão só (punhos, pistola, item): braço principal em direção à mira, o outro solto ao lado, balançando ao andar
         hx=Math.round(fx*(o.female?4:5))+(sv?mS:mS+sgn);hy=-6+Math.round(fy*(o.female?2:3));
+        if(o.swing>0&&o.wpn==='fists'&&!o.hold){
+          // soco: recua o punho, estica o braço na direção do alvo e volta; a cada golpe troca de mão, a outra fica em guarda
+          const p=1-o.swing/.18,ext=p<.3?-.45*(p/.3):Math.sin((p-.3)/.7*Math.PI);
+          const pS=o.ph?oS:mS,gS=o.ph?mS:oS;
+          const px=Math.round(pS+fx*(5+ext*4))+(sv?0:(o.ph?-sgn:sgn)),py=-6+Math.round(fy*(3+ext*3));
+          const gx=gS+Math.round(fx*3),gy=-6+Math.round(fy*2);
+          armLine(gS,sY,gx,gy,sl,o.skin,o.slv);R(gx-1,gy-1,2,2,o.skin);
+          armLine(pS,sY,px,py,sl,o.skin,o.slv);
+          hx=px;hy=py;
+          if(ext>.85){R(hx-2,hy-2,4,4,o.skin);R(hx-1,hy-1,2,2,Sh(o.skin,-.15)); // impacto
+            const ix=Math.round(hx+fx*4),iy=Math.round(hy+fy*3);R(ix-3,iy-1,1,1,'#fff');R(ix+2,iy-2,1,1,'#fff');R(ix,iy-3,1,1,'#ffe27a');R(ix+1,iy+2,1,1,'#ffe27a');}
+        }else{
         armLine(oS,sY,oS,-3+st,sl,o.skin,o.slv);R(oS-1,-4+st,2,2,o.skin);
         armLine(mS,sY,hx,hy,sl,o.skin,o.slv);
+        }
       }
     }
     R(hx-1,hy-1,2,2,o.skin);
@@ -7781,7 +7794,7 @@ function human(x,y,face,o){
     const wx=Math.cos(a),wy=Math.sin(a);
     drawHeld(o.wpn,hx,hy,a);
     if(o.hold&&ITEMS[o.hold]){const hc=pxCanvas(ITEMS[o.hold].e);if(hc){ctx.imageSmoothingEnabled=false;ctx.drawImage(hc,Math.round(hx+wx*5-hc.width/2),Math.round(hy+wy*4-hc.height/2));}}
-    const _fl={pistol:9,smg:11,shotgun:11,rifle:14}[o.wpn];
+    const _fl={pistol:8,smg:10,shotgun:11,rifle:13}[o.wpn];
     if(_fl&&o.flash>0)R(hx+wx*_fl-2,hy+wy*_fl-2,5,4,'#ffe27a');
     if(o.wpn==='bow'&&o.swing>0){ const bx=hx+wx*4, by=hy+wy*4; R(bx+wx*6,by+wy*6-1,8,1,'#c0c0c8'); R(bx+wx*14,by+wy*14-1,2,2,'#a0a0a8'); }
   }
@@ -8211,6 +8224,24 @@ function drawOpenVeh(K,v,L,W){
     R(L/2-2,-W/2+4,2,3,'#f0e8a0');R(L/2-2,W/2-7,2,3,'#f0e8a0');R(-L/2,-W/2+5,1,3,'#c02828');R(-L/2,W/2-8,1,3,'#c02828');
   }
 }
+/* piloto visto de cima nos veículos abertos (moto de neve, quadriciclo, buggy): corpo, cabeça, braços no guidão e pernas */
+function vehDriverLook(v){
+  if(P&&P.inVehicle===v)return myLook();
+  if(v.driverId){const rp=remotePlayers[v.driverId];if(rp&&rp.alive!==false)return remoteLook(rp);}
+  return null;
+}
+function drawRider(K,lk,L,W){
+  let cx,cy=0,hbx,hy;
+  if(K==='sled'){cx=-5;hbx=0;hy=5;}else if(K==='atv'){cx=-4;hbx=2;hy=5;}else{cx=0;cy=Math.round(-W/2+6.5);hbx=7;hy=1;}
+  const sh=(lk.os==='tank'||lk.os==='bare')?lk.skin:lk.shirt;
+  R(cx+1,cy-4,4,2,lk.pants);R(cx+1,cy+2,4,2,lk.pants);R(cx+4,cy-4,2,2,lk.boot||'#2a2420');R(cx+4,cy+2,2,2,lk.boot||'#2a2420'); // pernas e botas
+  if(lk.pack)R(cx-4,cy-3,2,6,'#3a3a2a');
+  armLine(cx,cy-3,hbx,cy-hy,sh,lk.skin,lk.slv);armLine(cx,cy+3,hbx,cy+hy,sh,lk.skin,lk.slv);
+  R(hbx-1,cy-hy-1,2,2,lk.skin);R(hbx-1,cy+hy-1,2,2,lk.skin);
+  R(cx-2,cy-4,5,8,sh);R(cx-2,cy-4,5,1,Sh(sh,.15));R(cx-2,cy+3,5,1,Sh(sh,-.2));      // tronco e ombros
+  R(cx-1,cy-3,3,6,lk.hair);R(cx+2,cy-3,2,6,lk.skin);                                 // cabeça: cabelo atrás, rosto na frente
+  if(lk.female)R(cx-3,cy-2,2,4,lk.hair);
+}
 function drawVehicle(v){
   // Local axes after rotate(face): +X = frente (direção do movimento), +Y = lado
   const L=v.w||36, W=v.h||20; // L=comprimento, W=largura
@@ -8280,6 +8311,7 @@ function drawVehicle(v){
     R(-2,-3,5,6,'#d9892b');
     R(-1,-2,3,2,'#e8a84a');
   }
+  if(VK!=='car'&&!v.destroyed){const lk=vehDriverLook(v);if(lk)drawRider(VK,lk,L,W);}
   // Indicador discreto se ocupado (borda no teto, não parece luz)
   if(v.driverId){
     R(-3,-W/2,6,1,'#80ffa0');
@@ -9065,6 +9097,8 @@ function drawInterior(b){
   const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
   // o prédio inteiro fica escuro; só os cômodos visíveis (com suas paredes) são desenhados
   R(b.x,b.y,b.w,b.h,'#040604');
+  // cômodos fora de vista: só uma silhueta apagada e semi-transparente (sem itens nem criaturas), para o jogador se situar na planta
+  ctx.globalAlpha=.25;ctx.drawImage(b._fc,b.x,b.y);ctx.globalAlpha=1;
   ctx.save();ctx.beginPath();
   for(const r of b._vis){
     const l=r.x<=b.x+WT+1?WT:IWT,t=r.y<=b.y+WT+1?WT:IWT,rr=r.x+r.w>=b.x+b.w-WT-1?WT:IWT,bb=r.y+r.h>=b.y+b.h-WT-1?WT:IWT;
@@ -9075,6 +9109,14 @@ function drawInterior(b){
   ctx.restore();ctx.imageSmoothingEnabled=sm;
   const near=nearestItem();
   for(const it of items)if(it.x>=b.x&&it.x<=b.x+b.w&&it.y>=b.y&&it.y<=b.y+b.h&&seeIn(b,it.x,it.y))drawItem(it,it===near);
+}
+/* item dentro da planta de uma casa: de fora (a pé ou de carro) ele nunca aparece, só quando o jogador está dentro e no cômodo certo */
+function itemIndoor(it){
+  if(it._in!==undefined)return it._in;
+  let r=false;
+  for(const b of blds)if(it.x>=b.x&&it.x<=b.x+b.w&&it.y>=b.y&&it.y<=b.y+b.h){r=true;break;}
+  Object.defineProperty(it,'_in',{value:r,writable:true,enumerable:false,configurable:true});
+  return r;
 }
 function drawRoof(b){
   ctx.globalAlpha=b.roofA;
@@ -9424,14 +9466,14 @@ function render(){
       const rp=remotePlayers[id];
       if(!rp || rp.alive===false || rp.inVehicle) continue;
       if(rp.x<b.x||rp.x>b.x+b.w||rp.y<b.y||rp.y>b.y+b.h||!seeIn(b,rp.x,rp.y)) continue;
-      if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,anim:rp.anim||0,wpn:rp.hold?null:(rp.weapon||'fists'),hold:rp.hold||null,swing:rp.swing||0,flash:rp.flash||0});
+      if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,anim:rp.anim||0,wpn:rp.hold?null:(rp.weapon||'fists'),hold:rp.hold||null,swing:rp.swing||0,ph:punchHand(rp,rp.swing||0),flash:rp.flash||0});
       const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
       ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
       ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
       if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
     }
     for(const an of animals)if(!an.dead&&an.x>=b.x&&an.x<=b.x+b.w&&an.y>=b.y&&an.y<=b.y+b.h&&seeIn(b,an.x,an.y))drawAnimal(an);
-    if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.hold?null:P.weapon,hold:P.hold||null,swing:P.swing,flash:P.flash});drawEatBar();
+    if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.hold?null:P.weapon,hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
     for(const z of zombies)if(!z.dead&&z.x>=b.x&&z.x<=b.x+b.w&&z.y>=b.y&&z.y<=b.y+b.h&&seeIn(b,z.x,z.y)){
       human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,zv:z.si|0,moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,yeti:z.kind===9,bloater:z.bloater||z.kind===7});
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
@@ -9609,12 +9651,12 @@ function render(){
   }
   let nearIt=null,nd=24;
   for(const it of items){
-    if(it.x<vx0||it.x>vx1||it.y<vy0||it.y>vy1)continue;
+    if(it.x<vx0||it.x>vx1||it.y<vy0||it.y>vy1||itemIndoor(it))continue;
     const d=Math.hypot(it.x-P.x,it.y-P.y);
     if(d<nd){nd=d;nearIt=it;}
   }
   for(const it of items){
-    if(it.x<vx0||it.x>vx1||it.y<vy0||it.y>vy1)continue;
+    if(it.x<vx0||it.x>vx1||it.y<vy0||it.y>vy1||itemIndoor(it))continue;
     drawItem(it,it===nearIt);
   }
   const wallCol=selectedMap==='snow'?'#4a5a6a':selectedMap==='desert'?'#7a5a3a':selectedMap==='city'?'#3a3a42':'#5a4636';
@@ -9664,14 +9706,14 @@ function render(){
     }else if(e.k===5){
       const rp=e.o;
       if(rp.alive!==false){
-        if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,anim:rp.anim||0,wpn:rp.hold?null:(rp.weapon||'fists'),hold:rp.hold||null,swing:rp.swing||0,flash:rp.flash||0});
+        if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,anim:rp.anim||0,wpn:rp.hold?null:(rp.weapon||'fists'),hold:rp.hold||null,swing:rp.swing||0,ph:punchHand(rp,rp.swing||0),flash:rp.flash||0});
         const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
         ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
         ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
         if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
       }
     }else{
-      if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.hold?null:P.weapon,hold:P.hold||null,swing:P.swing,flash:P.flash});drawEatBar();
+      if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.hold?null:P.weapon,hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
     }
   }
   for(const b of blds)if(vis(b)&&b.roofA>.02)drawRoof(b);
