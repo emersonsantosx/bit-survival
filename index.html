@@ -41,6 +41,7 @@ body.nomap #mm{display:none!important}
 #bpack.full b{color:#C0634A}
 #bpack:active{transform:translateY(2px);box-shadow:0 1px 0 #0c0e12}
 #bpack.nopack [data-px]{opacity:.75}
+#bpack.nobp{display:none!important}
 .inv-card{max-width:640px;width:100%;align-items:center}
 .inv-wrap{display:flex;gap:12px;align-items:flex-start;justify-content:center;width:100%}
 .inv-left{flex:0 0 auto;display:flex;flex-direction:column;gap:6px}
@@ -5082,14 +5083,13 @@ function cycleWeapon(){
   if(P.hold){putAwayHold();return;}
   const l=weaponList();if(!l.length)return;
   const i=l.indexOf(P.weapon);P.weapon=l[(Math.max(-1,i)+1)%l.length];
-  beep(300,.05,'square',.04);updateWeaponHud();
-  toast('Arma: '+(WEAPONS[P.weapon]?.n||'Mãos'));
+  beep(300,.05,'square',.04);updateWeaponHud();     // o botão de trocar arma já mostra a arma: sem aviso no topo
 }
 const WEAPON_ICON={fists:'fists',bat:'bat',axe:'axe',pickaxe:'pickaxe',sword:'sword',spear:'spear',bow:'bow',pistol:'pistol',smg:'smg',shotgun:'shotgun',rifle:'rifle',fishingrod:'rod'};
 let weaponWheelOpen=false, weaponWheelOpenedAt=0;
-function updateWeaponHud(){const el=$('wpn');if(el)el._sig=null;}   // o HUD redesenha a arma no próximo quadro
+function updateWeaponHud(){const el=$('wpn'),sw=$('swap');if(el)el._sig=null;if(sw)sw._sig=null;}   // o HUD redesenha a arma no próximo quadro
 function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
-function chooseWeapon(key){if(!P||!weaponList().includes(key))return;if(P.hold)putAwayHold(true);P.weapon=key;updateWeaponHud();beep(360,.06,'square',.045);toast('Arma equipada: '+(WEAPONS[key]?.n||key));closeWeaponWheel();}
+function chooseWeapon(key){if(!P||!weaponList().includes(key))return;if(P.hold)putAwayHold(true);P.weapon=key;updateWeaponHud();beep(360,.06,'square',.045);closeWeaponWheel();}
 function dropWeaponFromArsenal(key){
   if(!P||key==='fists'||!weaponList().includes(key)) return;
   const w=WEAPONS[key]; if(!w) return;
@@ -6853,6 +6853,7 @@ function toast(msg){
 }
 function updateHud(force){
   if(!P)return;
+  {const bt=$('bpack');if(bt)bt.classList.toggle('nobp',!P.pack);}
   const setW=(id,v)=>{const e=$(id);if(e)e.style.width=clamp(v,0,100)+'%';};
   setW('hpb',P.hp);setW('fdb',P.food);setW('wtb',P.water);setW('stb',P.stam);
   {const sc=$('stc');if(sc)sc.style.width=(100-clamp(P._scap||100,0,100))+'%';}
@@ -10730,7 +10731,7 @@ function updatePackBadge(){
   if(!P)return;
   const n=P.inv.length,cap=invCap(),b=$('bpackn'),bt=$('bpack');
   if(b)b.textContent=n+'/'+cap;
-  if(bt){bt.classList.toggle('full',n>=cap);bt.classList.toggle('nopack',!P.pack);}
+  if(bt){bt.classList.toggle('full',n>=cap);bt.classList.toggle('nopack',!P.pack);bt.classList.toggle('nobp',!P.pack);}   // o ícone da mochila só existe depois de ter uma mochila
 }
 function openInv(){
   if(state!=='play'||!P||P.dead)return;
