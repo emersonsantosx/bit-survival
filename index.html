@@ -117,7 +117,7 @@ body.nomap #mm{display:none!important}
 #swap .swc{position:absolute;right:-2px;bottom:-3px;min-width:18px;padding:0 3px;text-align:center;font:bold 13px/16px "Courier New",monospace;color:#ffd84a;background:rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.55);border-radius:9px;pointer-events:none}
 #swap .swc.low{color:#ff6a5a;border-color:#ff6a5a}
 #swap .swm{position:absolute;left:3px;top:2px;opacity:.75;pointer-events:none;display:flex}
-#toast{position:absolute;left:50%;top:40px;transform:translateX(-50%);max-width:60%;text-align:center;font-size:12px;background:rgba(0,0,0,.65);padding:4px 10px;border-radius:6px;opacity:0;transition:opacity .25s}
+#toast{position:absolute;left:50%;top:6px;transform:translateX(-50%);max-width:60%;text-align:center;font-size:12px;background:rgba(0,0,0,.65);padding:4px 10px;border-radius:6px;opacity:0;transition:opacity .25s}
 #toast.show{opacity:1}
 #inv{position:absolute;left:8px;top:124px;display:flex;flex-direction:column;gap:3px} /* abaixado para o status (SANGRANDO etc.) ter espaço acima */
 @media (max-height:340px){#inv{top:118px;gap:2px}#inv .slot{height:28px}}
@@ -834,7 +834,7 @@ body.haschat #missions{right:140px}
 </div>
 
 <div id="bigmap" class="hide"><div class="bmbox"><canvas id="bmc" width="300" height="300"></canvas><div id="bmz"><button id="bmzin" aria-label="Aproximar">+</button><button id="bmzout" aria-label="Afastar">-</button><button id="bmctr" aria-label="Centralizar em você">&#9678;</button></div><div id="bmleg"></div><div id="bmhint">Toque para marcar um ponto, ou no aliado para segui-lo. Arraste para mover, pinça ou +/- para zoom. Toque fora para fechar</div><button id="bmx" aria-label="Fechar mapa">X</button></div></div>
-<div id="loading" class="hide"><div class="lt" id="loadMsg">GERANDO O MUNDO...</div><div class="lb"><i></i><i></i><i></i><i></i></div><div class="lm" id="loadTip"></div></div>
+<div id="loading" class="hide"><div class="lt" id="loadMsg">GERANDO O MUNDO...</div><div class="lb"><i></i><i></i><i></i><i></i></div></div>
 <div id="deadscr" class="screen hide">
   <div class="card" style="max-width:420px">
     <h2 id="deadtitle">VOCÊ MORREU</h2>
@@ -2947,6 +2947,7 @@ function bigMapOpen(){
   atkHeld=false;sprintHeld=false;joy.id=null;joy.active=false;joy.x=joy.y=0;
   if(!MP.active)state='mapview';
   el.classList.toggle('mp',!!MP.active);
+  const bh=$('bmhint');if(bh)bh.textContent=MP.active?'Toque para marcar um ponto, ou no aliado para segui-lo. Arraste para mover, pinça ou +/- para zoom. Toque fora para fechar':'Toque para marcar um ponto. Arraste para mover, pinça ou +/- para zoom. Toque fora para fechar';
   el.classList.remove('hide');
   const css=Math.max(200,Math.min(innerWidth-20,innerHeight-70,760)),dpr=Math.min(2,window.devicePixelRatio||1),px=Math.round(css*dpr);
   const c=$('bmc');c.style.width=css+'px';c.style.height=css+'px';c.width=px;c.height=px;
@@ -10999,13 +11000,11 @@ function quitToMenu(){
   remotePlayers={};nextZombieNetId=1;
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#0b100b';ctx.fillRect(0,0,W,H);
 }
-const LOAD_TIPS=['Árvores e pedras nascem de novo, mas só onde o mapa ficou vazio.','Casas saqueadas voltam a ter loot depois de 3 dias.','Dentro de um veículo você não sofre dano, mas ele sim.','Zumbis longe de você ficam parados até alguém chegar perto.','No multiplayer, marque itens para o seu aliado.','Cada mundo é diferente: lagos, bosques e vilas mudam a cada jogo.','O minimapa mostra a região em volta de você.'];
 /* tela de carregamento: mostra o aviso, dá tempo de pintar e só então gera o mundo (a geração trava a tela por um instante) */
 function loadingRun(fn,msg){
   const el=$('loading');
   if(!el){fn();return;}
   $('loadMsg').textContent=msg||'GERANDO O MUNDO...';
-  $('loadTip').textContent=LOAD_TIPS[Math.floor(Math.random()*LOAD_TIPS.length)];
   el.classList.remove('hide');
   requestAnimationFrame(()=>setTimeout(()=>{
     try{fn();}catch(e){console.error('[loading]',e);}
