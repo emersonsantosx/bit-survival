@@ -108,6 +108,10 @@ body.nomap #mm{display:none!important}
 #top{position:absolute;right:8px;top:8px;text-align:right;font-size:11px}
 #mm{width:76px;height:76px;border:1px solid rgba(255,255,255,.45);background:#142014;display:block;margin-left:auto;image-rendering:pixelated}
 #top div{margin-top:2px}
+/* pausa e fabricar: mesmo tamanho, ícones centralizados e a dupla com a mesma largura do minimapa */
+#top .tbtns{display:flex;justify-content:flex-end;align-items:center;gap:4px;margin-top:5px}
+#top .tbtns .sm{width:36px;height:32px;margin:0;padding:0;display:flex!important;align-items:center;justify-content:center;box-sizing:border-box}
+#top .tbtns .sm .pxi{display:block;margin:0}
 .sm{background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:6px;font-size:14px;width:34px;height:30px;margin:4px 0 0 4px;padding:0}
 /* arma na mão: o próprio botão de trocar mostra o ícone da arma e a munição; o nome aparece só um instante ao trocar */
 #wpn{position:absolute;right:100px;bottom:166px;font-size:11px;font-weight:bold;background:rgba(0,0,0,.6);padding:3px 8px;border:1px solid rgba(255,255,255,.35);border-radius:8px;white-space:nowrap;pointer-events:none;opacity:0}
@@ -494,6 +498,7 @@ body.haschat #missions{right:140px}
 @media (orientation:landscape) and (max-height:350px){
   #mm{width:60px;height:60px}#bchat{right:78px}#missions{right:74px}body.haschat #missions{right:124px}
   #top div{margin-top:1px}
+  #top .tbtns{gap:4px;margin-top:3px}#top .tbtns .sm{width:28px;height:28px}
   #run{width:56px;height:56px;bottom:116px}
 }
 /* ===== Tela de SKINS ===== */
@@ -567,10 +572,10 @@ body.haschat #missions{right:140px}
   <div id="toast"></div>
   <div id="top">
     <canvas id="mm" width="76" height="76"></canvas>
-    <div id="clk">Dia 1 09:00</div><div id="wthIc" style="display:flex;justify-content:flex-end"></div>
+    <div id="clk">Dia 1 09:00</div>
     <div id="kl">Zumbis: 0</div>
     <div id="missions" aria-live="polite"></div>
-    <div><button class="sm" id="bpause" data-px="pause" data-s="2" aria-label="Pausa"></button><button class="sm" id="bcraft" data-px="hammer" data-s="2" aria-label="Fabricar"></button></div>
+    <div class="tbtns"><button class="sm" id="bpause" data-px="pause" data-s="2" aria-label="Pausa"></button><button class="sm" id="bcraft" data-px="hammer" data-s="2" aria-label="Fabricar"></button></div>
   </div>
   <div id="inv"></div>
   <button id="bpack" aria-label="Inventário"><span data-px="backpack" data-s="2"></span><b id="bpackn">0/6</b></button>
@@ -5386,24 +5391,30 @@ function pickup(){
   }
   else if(t==='pistol'||t==='smg'||t==='shotgun'||t==='rifle'||t==='bow'){
     // Já tem essa arma? Deixa no chão pro outro player
-    if(P.firearms[t]){ toast('Você já tem '+ITEMS[t].n+': deixe pro parceiro'); return; }
-    P.firearms[t]=true;
-    if(t==='bow'){ P.arrows=(P.arrows||0)+6; P.weapon='bow'; toast('Pegou: Arco (+6 flechas)'); }
-    else { P.ammo+=8; P.weapon=t; toast('Pegou: '+ITEMS[t].n+' (+8 munição)'); }
+    if(P.firearms[t]){
+      if(MP.active){ toast('Você já tem '+ITEMS[t].n+': deixe pro parceiro'); return; }
+      // sozinho não há com quem dividir: a arma repetida vira munição e some do chão, sem trocar a arma da mão
+      if(t==='bow'){ P.arrows=(P.arrows||0)+6; toast('Você já tem Arco: +6 flechas'); }
+      else { P.ammo+=8; toast('Você já tem '+ITEMS[t].n+': +8 munição'); }
+    }else{
+      P.firearms[t]=true;
+      if(t==='bow'){ P.arrows=(P.arrows||0)+6; P.weapon='bow'; toast('Pegou: Arco (+6 flechas)'); }
+      else { P.ammo+=8; P.weapon=t; toast('Pegou: '+ITEMS[t].n+' (+8 munição)'); }
+    }
     updateWeaponHud();
   }
   else if(t==='turban'||t==='parka'){
-    if(P[t]){toast('Você já veste isso: deixe pro parceiro');return;}
+    if(P[t]){toast('Você já veste isso'+(MP.active?': deixe pro parceiro':''));return;}
     P[t]=true;toast(t==='turban'?'Turbante vestido! Menos calor no deserto':'Casaco polar vestido! Menos frio na neve');
     try{refreshInvScr();}catch(e){}
   }
   else if(t==='backpack'){
-    if(P.pack){toast('Você já tem uma mochila: deixe pro parceiro');return;}
+    if(P.pack){toast('Você já tem uma mochila'+(MP.active?': deixe pro parceiro':''));return;}
     P.pack=true;buildInv();toast('Mochila equipada! Agora você carrega 12 itens');
   }
   else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='sword'||t==='spear'||t==='fishingrod'){
     if((P.meleeWeapons||[]).includes(t) || P.melee===t){
-      toast('Você já tem '+ITEMS[t].n+': deixe pro parceiro'); return;
+      toast('Você já tem '+ITEMS[t].n+(MP.active?': deixe pro parceiro':'')); return;
     }
     addMeleeWeapon(t);P.weapon=t;updateWeaponHud();toast('Pegou: '+ITEMS[t].n);
   }
@@ -6849,7 +6860,6 @@ function updateHud(force){
   if(tpb){const tv=P.temp||0;tpb.style.width=clamp(50+tv/2,2,100)+'%';tpb.style.background=tv<-55?'#3f6fe0':tv<-28?'#6ab0f0':tv>55?'#e04030':tv>28?'#e8863a':'#6fcf6f';}
   const hr=(START_HOUR+T/DAY_SECONDS*24)%24;
   const wthKey=weather==='rain'?'rain':(weather==='snow'?'snow':(weather==='sand'?'wind':''));
-  if(wthKey!==PXWEATHER){PXWEATHER=wthKey;const wi=$('wthIc');if(wi)wi.innerHTML=wthKey?pxIcon(wthKey,2):'';}
   const mpTxt=MP.active?(MP.isHost?' ['+(MP.playerName||'HOST').toUpperCase().slice(0,8)+']':' ['+(MP.playerName||'MP').toUpperCase().slice(0,8)+']'):'';
   const clk=$('clk');if(clk)clk.textContent='Dia '+day+' '+pad(Math.floor(hr))+':'+pad(Math.floor((hr%1)*60))+mpTxt;
   const kl=$('kl');if(kl)kl.textContent='Zumbis: '+kills;
