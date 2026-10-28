@@ -28,7 +28,10 @@ body.nomap #mm{display:none!important}
 #bmc{border:2px solid rgba(255,255,255,.5);image-rendering:pixelated;background:#0b100b}
 #bmleg{font:bold 12px "Courier New",monospace;color:#e8f0e0;text-align:center;min-height:16px;padding:0 8px}
 #bmx{position:absolute;right:-6px;top:-6px;width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.7);background:rgba(20,20,20,.9);color:#fff;font:bold 16px "Courier New",monospace;cursor:pointer}
-#bmhint{font:10px "Courier New",monospace;color:#9aa89a}
+#bmc{touch-action:none}
+#bmz{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+#bmz button{width:34px;height:34px;border-radius:8px;border:2px solid rgba(255,255,255,.7);background:rgba(20,20,20,.85);color:#fff;font:bold 18px "Courier New",monospace;cursor:pointer;touch-action:manipulation}
+#bmhint{max-width:90vw;text-align:center;font:10px "Courier New",monospace;color:#9aa89a}
 /* Pause e craft SEMPRE acessíveis */
 #bpause,#bcraft{display:inline-flex!important;align-items:center;justify-content:center}
 /* ===== botão da mochila e tela do inventário ===== */
@@ -106,7 +109,14 @@ body.nomap #mm{display:none!important}
 #mm{width:76px;height:76px;border:1px solid rgba(255,255,255,.45);background:#142014;display:block;margin-left:auto;image-rendering:pixelated}
 #top div{margin-top:2px}
 .sm{background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:6px;font-size:14px;width:34px;height:30px;margin:4px 0 0 4px;padding:0}
-#wpn{position:absolute;left:50%;top:8px;transform:translateX(-50%);font-size:12px;background:rgba(0,0,0,.5);padding:3px 8px;border:1px solid rgba(255,255,255,.3);border-radius:6px;white-space:nowrap}
+/* arma na mão: o próprio botão de trocar mostra o ícone da arma e a munição; o nome aparece só um instante ao trocar */
+#wpn{position:absolute;right:100px;bottom:166px;font-size:11px;font-weight:bold;background:rgba(0,0,0,.6);padding:3px 8px;border:1px solid rgba(255,255,255,.35);border-radius:8px;white-space:nowrap;pointer-events:none;opacity:0}
+#wpn.chg{animation:wpnshow 1.8s ease-out}
+@keyframes wpnshow{0%{opacity:1;transform:translateY(4px)}12%{transform:translateY(0)}70%{opacity:1}100%{opacity:0}}
+#swap{padding:0}
+#swap .swc{position:absolute;right:-2px;bottom:-3px;min-width:18px;padding:0 3px;text-align:center;font:bold 13px/16px "Courier New",monospace;color:#ffd84a;background:rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.55);border-radius:9px;pointer-events:none}
+#swap .swc.low{color:#ff6a5a;border-color:#ff6a5a}
+#swap .swm{position:absolute;left:3px;top:2px;opacity:.75;pointer-events:none;display:flex}
 #toast{position:absolute;left:50%;top:40px;transform:translateX(-50%);max-width:60%;text-align:center;font-size:12px;background:rgba(0,0,0,.65);padding:4px 10px;border-radius:6px;opacity:0;transition:opacity .25s}
 #toast.show{opacity:1}
 #inv{position:absolute;left:8px;top:124px;display:flex;flex-direction:column;gap:3px} /* abaixado para o status (SANGRANDO etc.) ter espaço acima */
@@ -123,7 +133,7 @@ body.nomap #mm{display:none!important}
 #ping{right:190px;bottom:34px;width:50px;height:50px;font-size:9px;line-height:1.05;padding:0;color:#4aa3ff;border-color:rgba(74,163,255,.8)}
 #ping.hide{display:none}
 #run{right:28px;bottom:122px;width:64px;height:64px}
-#swap{right:104px;bottom:104px;width:52px;height:52px}
+#swap{right:100px;bottom:102px;width:58px;height:58px}
 #weapon-wheel{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(0,0,0,.72);touch-action:pan-y;pointer-events:auto;-webkit-overflow-scrolling:touch}
 #weapon-wheel.hide{display:none!important}
 .weapon-wheel-ring{position:relative;width:min(92vw,430px);max-height:min(78vh,520px);overflow-y:auto;overflow-x:hidden;border:2px solid rgba(159,214,138,.8);border-radius:16px;background:linear-gradient(160deg,rgba(27,38,25,.99),rgba(8,12,8,.99));box-shadow:0 0 36px #000; padding:52px 12px 12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-content:start;overscroll-behavior:contain}
@@ -823,7 +833,7 @@ body.haschat #missions{right:140px}
   </div>
 </div>
 
-<div id="bigmap" class="hide"><div class="bmbox"><canvas id="bmc" width="300" height="300"></canvas><div id="bmleg"></div><div id="bmhint">Toque em qualquer lugar para fechar</div><button id="bmx" aria-label="Fechar mapa">X</button></div></div>
+<div id="bigmap" class="hide"><div class="bmbox"><canvas id="bmc" width="300" height="300"></canvas><div id="bmz"><button id="bmzin" aria-label="Aproximar">+</button><button id="bmzout" aria-label="Afastar">-</button><button id="bmctr" aria-label="Centralizar em você">&#9678;</button></div><div id="bmleg"></div><div id="bmhint">Toque para marcar um ponto, ou no aliado para segui-lo. Arraste para mover, pinça ou +/- para zoom. Toque fora para fechar</div><button id="bmx" aria-label="Fechar mapa">X</button></div></div>
 <div id="loading" class="hide"><div class="lt" id="loadMsg">GERANDO O MUNDO...</div><div class="lb"><i></i><i></i><i></i><i></i></div><div class="lm" id="loadTip"></div></div>
 <div id="deadscr" class="screen hide">
   <div class="card" style="max-width:420px">
@@ -2878,42 +2888,58 @@ function mmMarkers(){
   mmDot(P.x,P.y,4,4,Math.floor(T*2)%2?'#ffffff':'#4aa3ff');
   for(const c of campfires)mmDot(c.x,c.y,2,2,'#ff8020');
   for(const t of tents)mmDot(t.x,t.y,3,2,'#8DA568');
-  const blink=Math.floor(T*3)%2;
   for(const id in remotePlayers){
     const rp=remotePlayers[id];
     if(!rp||!Number.isFinite(rp.x)||rp.alive===false)continue;
     mmDot(rp.x,rp.y,6,6,'#000',true);                       // contorno escuro: o aliado destaca em qualquer fundo
-    mmDot(rp.x,rp.y,4,4,blink?'#ffffff':ALLY_COL(rp),true);
+    mmDot(rp.x,rp.y,4,4,ALLY_COL(rp),true);
   }
+  if(WP){wpUpdate();if(WP)mmDot(WP.x,WP.y,5,5,Math.floor(T*3)%2?'#ffffff':WP_COL,true);}
   drawPingsMini();
 }
-/* seta na borda da tela apontando para o aliado quando ele está fora da vista, com nome e distância */
-function drawAllyEdge(){
-  if(!MP.active||!P)return;
-  const m=34;
-  for(const id in remotePlayers){
-    const rp=remotePlayers[id];
-    if(!rp||rp.alive===false||!Number.isFinite(rp.x))continue;
-    const sx=(rp.x-camX)*Z,sy=(rp.y-camY)*Z;
-    if(sx>=m&&sx<=W-m&&sy>=m&&sy<=H-m)continue;
-    const cx=W/2,cy=H/2,dx=sx-cx,dy=sy-cy,k=Math.min((W/2-m)/Math.max(1,Math.abs(dx)),(H/2-m)/Math.max(1,Math.abs(dy)));
-    const ex=cx+dx*k,ey=cy+dy*k,a=Math.atan2(dy,dx),c=ALLY_COL(rp);
-    const nm=String(rp.name||'ALIADO').toUpperCase().slice(0,8),dm=Math.round(Math.hypot(rp.x-P.x,rp.y-P.y)/10)+'m';
-    ctx.save();ctx.translate(ex,ey);
-    ctx.globalAlpha=.55+.25*Math.sin(performance.now()/260);
-    ctx.fillStyle='rgba(0,0,0,.6)';ctx.beginPath();ctx.arc(0,0,17,0,6.283);ctx.fill();
-    ctx.globalAlpha=1;ctx.strokeStyle=c;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,17,0,6.283);ctx.stroke();
-    ctx.rotate(a);ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(5,-7);ctx.lineTo(5,7);ctx.closePath();ctx.fill();
-    ctx.rotate(-a);
-    ctx.font='bold 10px "Courier New",monospace';ctx.textAlign='center';
-    ctx.fillStyle=c;ctx.fillText(nm[0],0,4);
-    const ty=sy<cy?30:-22;                                    // texto do lado de dentro da tela
-    ctx.fillStyle='#000';ctx.fillText(nm+' '+dm,1,ty+1);ctx.fillStyle=c;ctx.fillText(nm+' '+dm,0,ty);
-    ctx.restore();
-  }
+/* ===== Ponto marcado no mapa grande: um lugar qualquer ou o aliado (que passa a ser seguido). Fica só para quem marcou ===== */
+let WP=null;     // {x,y,label,follow:id|null}
+function wpUpdate(){
+  if(!WP)return;
+  if(WP.follow){
+    const rp=remotePlayers[WP.follow];
+    if(!rp||rp.alive===false||!Number.isFinite(rp.x)){toast('Você perdeu o contato com '+WP.label);WP=null;return;}
+    WP.x=rp.x;WP.y=rp.y;
+  }else if(P&&Math.hypot(WP.x-P.x,WP.y-P.y)<45){toast('Você chegou: '+WP.label);WP=null;}
+}
+const WP_COL='#4ae0ff';
+function wpDist(){return Math.round(Math.hypot(WP.x-P.x,WP.y-P.y)/10);}
+function wpPick(wx,wy,K){          // o que está embaixo do toque: aliado, lago, vila, acampamento ou só um ponto
+  const tol=16/K;                  // 16 px de tela em unidades de mundo
+  let best=null,bd=tol;
+  for(const id in remotePlayers){const rp=remotePlayers[id];if(!rp||rp.alive===false||!Number.isFinite(rp.x))continue;const d=Math.hypot(rp.x-wx,rp.y-wy);if(d<bd){bd=d;best={x:rp.x,y:rp.y,follow:id,label:String(rp.name||'ALIADO').toUpperCase().slice(0,10)};}}
+  if(best)return best;
+  for(const l of lakes){const lx=l.cx,ly=l.cy;if(Math.hypot(lx-wx,ly-wy)<(l.r||150)+tol)return {x:lx,y:ly,label:l.fountain?'FONTE':selectedMap==='desert'?'OASIS':'LAGO',follow:null};}
+  for(const t of towns){if(Math.hypot(t.x-wx,t.y-wy)<Math.max(tol,160))return {x:t.x,y:t.y,label:'VILA',follow:null};}
+  for(const c of campfires)if(Math.hypot(c.x-wx,c.y-wy)<tol)return {x:c.x,y:c.y,label:'FOGUEIRA',follow:null};
+  for(const c of tents)if(Math.hypot(c.x-wx,c.y-wy)<tol)return {x:c.x,y:c.y,label:'TENDA',follow:null};
+  if(LM&&Math.hypot(LM.cx-wx,LM.cy-wy)<Math.max(tol,120))return {x:LM.cx,y:LM.cy,label:LM.kind==='temple'?'TEMPLO':'ACAMPAMENTO',follow:null};
+  return {x:wx,y:wy,label:'PONTO',follow:null};
 }
 /* mapa grande: toque no minimapa (ou tecla M). No solo congela o jogo; no multiplayer o mundo continua e o mapa fica translúcido */
 let bigOpen=false,bigTimer=0,bigPrevState='play';
+const bigV={z:1,cx:0,cy:0};
+function bmGeom(){                      // escala (K) e deslocamento (tx,ty) do mapa grande na tela; mantém o mapa sempre cobrindo a área
+  const c=$('bmc'),S=c.width,K=S/Math.max(WW,WH)*bigV.z,mw=WW*K,mh=WH*K;
+  let tx=S/2-bigV.cx*K,ty=S/2-bigV.cy*K;
+  tx=mw<=S?(S-mw)/2:clamp(tx,S-mw,0);ty=mh<=S?(S-mh)/2:clamp(ty,S-mh,0);
+  bigV.cx=(S/2-tx)/K;bigV.cy=(S/2-ty)/K;
+  return {c,S,K,tx,ty};
+}
+function bmZoomAt(f,clientX,clientY){   // zoom mantendo fixo o ponto sob o dedo/mouse
+  const G=bmGeom(),r=G.c.getBoundingClientRect();if(!r.width)return;
+  const px=clientX==null?G.S/2:(clientX-r.left)*G.S/r.width,py=clientY==null?G.S/2:(clientY-r.top)*G.S/r.height;
+  const wx=(px-G.tx)/G.K,wy=(py-G.ty)/G.K;
+  bigV.z=clamp(bigV.z*f,1,8);
+  const K2=G.S/Math.max(WW,WH)*bigV.z;
+  bigV.cx=wx-(px-G.S/2)/K2;bigV.cy=wy-(py-G.S/2)/K2;
+  bmGeom();bigMapDraw();
+}
 function bigMapOpen(){
   if(bigOpen||state!=='play'||!P||P.dead)return;
   const el=$('bigmap');if(!el)return;
@@ -2924,9 +2950,7 @@ function bigMapOpen(){
   el.classList.remove('hide');
   const css=Math.max(200,Math.min(innerWidth-20,innerHeight-70,760)),dpr=Math.min(2,window.devicePixelRatio||1),px=Math.round(css*dpr);
   const c=$('bmc');c.style.width=css+'px';c.style.height=css+'px';c.width=px;c.height=px;
-  const side=Math.max(WW,WH),K=px/side;
-  bigBase=document.createElement('canvas');bigBase.width=Math.ceil(WW*K);bigBase.height=Math.ceil(WH*K);
-  paintMapBase(bigBase.getContext('2d'),K);
+  bigV.z=1;bigV.cx=WW/2;bigV.cy=WH/2;
   bigMapDraw();
   bigTimer=setInterval(bigMapDraw,120);
 }
@@ -2936,19 +2960,19 @@ function bigMapClose(){
   const el=$('bigmap');if(el)el.classList.add('hide');
   if(state==='mapview')state='play';
   last=performance.now();lastFrameTs=0;
-  bigBase=null;
 }
 function bigMapDraw(){
-  if(!bigOpen||!P||!bigBase)return;
+  if(!bigOpen||!P)return;
   if(P.dead||state==='dead'||state==='pause'){bigMapClose();return;}
-  const c=$('bmc'),g=c.getContext('2d'),S=c.width,K=S/Math.max(WW,WH),t=performance.now();
+  const G=bmGeom(),c=G.c,g=c.getContext('2d'),S=G.S,K=G.K,t=performance.now();
   g.setTransform(1,0,0,1,0,0);g.imageSmoothingEnabled=false;
   g.fillStyle='#0b100b';g.fillRect(0,0,S,S);
-  g.drawImage(bigBase,0,0);
-  const u=Math.max(1,S/380);                                   // unidade de desenho proporcional ao tamanho do mapa na tela
-  g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=Math.max(1,u*.7);g.strokeRect(MM_X0*K,MM_Y0*K,MM_SPAN*K,MM_SPAN*K);
+  g.setTransform(1,0,0,1,G.tx,G.ty);                           // daqui em diante: coordenadas do mundo x K
+  paintMapBase(g,K);
+  const u=Math.max(1,S/380);                                   // tamanho dos marcadores: fixo na tela, não cresce com o zoom
+  g.strokeStyle='rgba(255,255,255,.45)';g.lineWidth=Math.max(1,u*.7);g.strokeRect(MM_X0*K,MM_Y0*K,MM_SPAN*K,MM_SPAN*K);
   g.fillStyle='#ff8020';for(const f of campfires)g.fillRect(f.x*K-u,f.y*K-u,2*u,2*u);
-  g.fillStyle='#8DA568';for(const f of tents)g.fillRect(f.x*K-1.5*u,f.y*K-u,3*u,2*u);
+  g.fillStyle='#4a6b2a';for(const f of tents)g.fillRect(f.x*K-1.5*u,f.y*K-u,3*u,2*u);
   for(const q of pings){g.fillStyle=Math.floor(t/300)%2?pingCol(q):'#fff';g.beginPath();g.arc(q.x*K,q.y*K,2.2*u,0,6.283);g.fill();}
   g.font='bold '+Math.round(9*u)+'px "Courier New",monospace';g.textAlign='center';
   const leg=[];
@@ -2961,19 +2985,75 @@ function bigMapDraw(){
     g.fillStyle='#000';g.fillText(nm,x+1,y-6*u+1);g.fillStyle=col;g.fillText(nm,x,y-6*u);
     leg.push({nm,col,d:Math.round(Math.hypot(rp.x-P.x,rp.y-P.y)/10)});
   }
+  if(WP)wpUpdate();
+  if(WP){
+    const wx=WP.x*K,wy=WP.y*K;
+    g.strokeStyle=WP_COL;g.lineWidth=Math.max(1,u*.8);g.setLineDash([4*u,3*u]);g.beginPath();g.moveTo(P.x*K,P.y*K);g.lineTo(wx,wy);g.stroke();g.setLineDash([]);
+    g.fillStyle='#000';g.beginPath();g.moveTo(wx,wy-7*u);g.lineTo(wx+5*u,wy);g.lineTo(wx,wy+7*u);g.lineTo(wx-5*u,wy);g.closePath();g.fill();
+    g.fillStyle=WP_COL;g.beginPath();g.moveTo(wx,wy-5.5*u);g.lineTo(wx+3.8*u,wy);g.lineTo(wx,wy+5.5*u);g.lineTo(wx-3.8*u,wy);g.closePath();g.fill();
+    g.fillStyle='#000';g.fillText(WP.label,wx+1,wy+13*u+1);g.fillStyle=WP_COL;g.fillText(WP.label,wx,wy+13*u);
+  }
   const px=P.x*K,py=P.y*K;
   g.save();g.translate(px,py);
-  g.fillStyle='rgba(74,163,255,.25)';g.beginPath();g.arc(0,0,(5+Math.sin(t/250)*1.5)*u,0,6.283);g.fill();
+  g.fillStyle='rgba(74,163,255,.3)';g.beginPath();g.arc(0,0,(5+Math.sin(t/250)*1.5)*u,0,6.283);g.fill();
   g.rotate(P.face||0);g.fillStyle='#000';g.beginPath();g.moveTo(6.5*u,0);g.lineTo(-4.5*u,-4.2*u);g.lineTo(-4.5*u,4.2*u);g.closePath();g.fill();
   g.fillStyle='#ffffff';g.beginPath();g.moveTo(5*u,0);g.lineTo(-3.4*u,-3.2*u);g.lineTo(-3.4*u,3.2*u);g.closePath();g.fill();
   g.restore();
-  g.fillStyle='#fff';g.fillText('VOCÊ',px+1,py-8*u+1);
+  g.fillStyle='#000';g.fillText('VOCÊ',px+1,py-8*u+1);g.fillStyle='#fff';g.fillText('VOCÊ',px,py-8*u);
+  g.setTransform(1,0,0,1,0,0);
   const lg=$('bmleg');
   if(lg){
-    const h='<span style="color:#fff">▲ VOCÊ</span>'+leg.map(l=>' &nbsp; <span style="color:'+l.col+'">● '+l.nm+' '+l.d+'m</span>').join('')+(MP.active&&!leg.length?' &nbsp; <span style="opacity:.6">aliado fora de contato</span>':'');
+    const h='<span style="color:#fff">▲ VOCÊ</span>'+leg.map(l=>' &nbsp; <span style="color:'+l.col+'">● '+l.nm+' '+l.d+'m</span>').join('')+(WP?' &nbsp; <span style="color:'+WP_COL+'">◆ '+WP.label+' '+wpDist()+'m</span>':'')+' &nbsp; <span style="opacity:.6">zoom '+bigV.z.toFixed(1)+'x</span>';
     if(lg._h!==h){lg.innerHTML=h;lg._h=h;}
   }
 }
+/* toque no mapa grande: aliado = seguir; lago/vila/templo etc. = marcar o lugar; qualquer outro ponto = marcar ali; tocar de novo no alvo remove */
+function bigMapTap(clientX,clientY){
+  const G=bmGeom(),r=G.c.getBoundingClientRect();if(!r.width)return;
+  const k=G.S/r.width;
+  const wx=((clientX-r.left)*k-G.tx)/G.K,wy=((clientY-r.top)*k-G.ty)/G.K;
+  if(wx<0||wy<0||wx>WW||wy>WH)return;
+  const kk=G.K/k;                                                      // px de tela por unidade de mundo
+  if(WP){const px=(WP.x-wx)*kk,py=(WP.y-wy)*kk;if(Math.hypot(px,py)<18){WP=null;bigMapDraw();return;}}
+  const pk=wpPick(wx,wy,kk);
+  WP=pk;
+  if(pk.follow)toast('Seguindo '+pk.label+'. Toque nele de novo para parar');
+  bigMapDraw();
+}
+/* gestos no mapa grande: um dedo arrasta, dois dedos fazem pinça, roda do mouse dá zoom, toque curto marca */
+(function(){
+  const c=$('bmc');if(!c)return;
+  const ptrs=new Map();let moved=false,sx=0,sy=0,pinch=null;
+  c.addEventListener('pointerdown',e=>{
+    e.preventDefault();e.stopPropagation();
+    try{c.setPointerCapture(e.pointerId);}catch(_){}
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size===1){moved=false;sx=e.clientX;sy=e.clientY;pinch=null;}
+    else if(ptrs.size===2){const a=[...ptrs.values()];pinch={d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1};moved=true;}
+  });
+  c.addEventListener('pointermove',e=>{
+    const o=ptrs.get(e.pointerId);if(!o)return;
+    e.preventDefault();
+    if(ptrs.size>=2&&pinch){
+      o.x=e.clientX;o.y=e.clientY;
+      const a=[...ptrs.values()],d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1;
+      bmZoomAt(d/pinch.d,(a[0].x+a[1].x)/2,(a[0].y+a[1].y)/2);pinch.d=d;return;
+    }
+    if(!moved&&Math.hypot(e.clientX-sx,e.clientY-sy)<7)return;
+    moved=true;
+    const G=bmGeom(),r=c.getBoundingClientRect(),k=G.S/r.width;
+    bigV.cx-=(e.clientX-o.x)*k/G.K;bigV.cy-=(e.clientY-o.y)*k/G.K;
+    o.x=e.clientX;o.y=e.clientY;bmGeom();bigMapDraw();
+  });
+  const up=e=>{
+    e.preventDefault();e.stopPropagation();
+    const had=ptrs.delete(e.pointerId);
+    if(ptrs.size===0){const tap=had&&!moved&&e.type==='pointerup';pinch=null;if(tap)bigMapTap(e.clientX,e.clientY);moved=false;}
+    else if(ptrs.size===1){pinch=null;const o=[...ptrs.values()][0];sx=o.x;sy=o.y;moved=true;}
+  };
+  c.addEventListener('pointerup',up);c.addEventListener('pointercancel',up);
+  c.addEventListener('wheel',e=>{e.preventDefault();bmZoomAt(Math.exp(-e.deltaY*0.0015),e.clientX,e.clientY);},{passive:false});
+})();
 function drawPingsMini(){
   for(const q of pings)mmDot(q.x,q.y,3,3,Math.floor(performance.now()/300)%2?pingCol(q):'#fff',true);
 }
@@ -4124,28 +4204,36 @@ function buildMinimap(){
 }
 /* desenha o fundo do mapa (estradas, lagos, prédios...) em qualquer escala: o minimapa usa 76 px por 2800 unidades, o mapa grande usa o mundo todo */
 function paintMapBase(g,s){
-  g.fillStyle=selectedMap==='snow'?'#b8c8d8':selectedMap==='desert'?'#b89a60':selectedMap==='city'?'#3a3a40':'#16261a';
+  /* cores escolhidas para o lago e as vilas se destacarem do chão em cada mapa */
+  const M=selectedMap,C=M==='snow'?{land:'#e6eef5',road:'#9fb0bf',lake:'#2f86d0',edge:'#0e3f73'}
+    :M==='desert'?{land:'#e0c68f',road:'#a98a55',lake:'#1f9ae0',edge:'#0b4a78'}
+    :M==='city'?{land:'#3a3d45',road:'#85795f',lake:'#3aa6f5',edge:'#d6efff'}
+    :{land:'#5f8a4a',road:'#d9c493',lake:'#1f86e8',edge:'#e6f6ff'};
+  g.fillStyle=C.land;
   g.fillRect(0,0,Math.ceil(WW*s),Math.ceil(WH*s));
-  g.fillStyle=selectedMap==='snow'?'#90a8b8':'#6a5c40';
+  g.fillStyle=C.road;
   for(const r of roads)g.fillRect(r.x*s,r.y*s,Math.max(1,r.w*s),Math.max(1,r.h*s));
-  if(FIELD){g.fillStyle='#b89a3a';g.fillRect(FIELD.x*s,FIELD.y*s,Math.max(2,FIELD.w*s),Math.max(2,FIELD.h*s));}
+  if(FIELD){g.fillStyle='#d9b84a';g.fillRect(FIELD.x*s,FIELD.y*s,Math.max(2,FIELD.w*s),Math.max(2,FIELD.h*s));}
   if(LM){g.fillStyle=LM.kind==='temple'?'#f0c830':'#9fe4ff';g.fillRect(LM.cx*s-2,LM.cy*s-2,5,5);g.fillStyle='#000';g.fillRect(LM.cx*s-1,LM.cy*s-1,3,3);g.fillStyle=LM.kind==='temple'?'#f0c830':'#9fe4ff';g.fillRect(LM.cx*s-.5,LM.cy*s-.5,1.5,1.5);}
-  g.fillStyle=selectedMap==='snow'?'#a0c8e0':'#206090';
+  g.fillStyle=C.lake;g.strokeStyle=C.edge;g.lineWidth=1.2;g.lineJoin='round';
   for(const l of lakes){
-    lakeShorePath(l,1,mms,s,0,0); g.fill();
+    lakeShorePath(l,1,g,s,0,0); g.fill(); g.stroke();
   }
   for(const b of blds){
     g.fillStyle=
-      b.type==='mil'?'#a8c070':
-      b.type==='shop'||b.type==='gas'?'#e07070':
-      b.type==='warehouse'?'#708090':
-      b.type==='apartment'?'#8090a8':
-      b.type==='office'?'#607088':
-      b.type==='clinic'?'#e0e8f0':
-      b.type==='garage'?'#908870':
-      b.type==='barn'?'#a05030':
-      b.type==='cabin'?'#8a5a3a':'#c9a070';
-    g.fillRect(Math.floor(b.x*s),Math.floor(b.y*s),Math.max(2,Math.ceil(b.w*s)),Math.max(2,Math.ceil(b.h*s)));
+      b.type==='mil'?'#7f9a3a':
+      b.type==='shop'||b.type==='gas'?'#ec6a6a':
+      b.type==='warehouse'?'#8a9aaa':
+      b.type==='apartment'?'#a9b6d0':
+      b.type==='office'?'#8aa0c0':
+      b.type==='clinic'?'#f4f7fb':
+      b.type==='garage'?'#b7ab88':
+      b.type==='barn'?'#b8582e':
+      b.type==='cabin'?'#9a6638':'#e0b57e';
+    const bx=Math.floor(b.x*s),by=Math.floor(b.y*s),bw=Math.max(2,Math.ceil(b.w*s)),bh=Math.max(2,Math.ceil(b.h*s));
+    g.fillRect(bx,by,bw,bh);
+    if(bw>=4&&bh>=4){g.strokeStyle='rgba(0,0,0,.6)';g.lineWidth=1;g.strokeRect(bx+.5,by+.5,bw-1,bh-1);}
+    g.strokeStyle=C.edge;
   }
 }
 let bigBase=null;
@@ -4993,7 +5081,7 @@ function cycleWeapon(){
 }
 const WEAPON_ICON={fists:'fists',bat:'bat',axe:'axe',pickaxe:'pickaxe',sword:'sword',spear:'spear',bow:'bow',pistol:'pistol',smg:'smg',shotgun:'shotgun',rifle:'rifle',fishingrod:'rod'};
 let weaponWheelOpen=false, weaponWheelOpenedAt=0;
-function updateWeaponHud(){const el=$('wpn');if(el)el.textContent=(WEAPONS[P.weapon]?.n||'Mãos');}
+function updateWeaponHud(){const el=$('wpn');if(el)el._sig=null;}   // o HUD redesenha a arma no próximo quadro
 function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
 function chooseWeapon(key){if(!P||!weaponList().includes(key))return;if(P.hold)putAwayHold(true);P.weapon=key;updateWeaponHud();beep(360,.06,'square',.045);toast('Arma equipada: '+(WEAPONS[key]?.n||key));closeWeaponWheel();}
 function dropWeaponFromArsenal(key){
@@ -6765,15 +6853,24 @@ function updateHud(force){
   const clk=$('clk');if(clk)clk.textContent='Dia '+day+' '+pad(Math.floor(hr))+':'+pad(Math.floor((hr%1)*60))+mpTxt;
   const kl=$('kl');if(kl)kl.textContent='Zumbis: '+kills;
   const w=WEAPONS[P.weapon];
-  const wpn=$('wpn');
-  if(wpn){
-    // Sem “DIRIGINDO” permanente — aviso de carro fica só no toast (3s)
-    let wk=null,wtx='';
-    if(w&&w.firearm&&w.bow){wk='bow';wtx=w.n+'  '+(P.arrows||0);}
-    else if(w&&w.firearm){wk=WEAPON_ICON[P.weapon]||'pistol';wtx=w.n+'  '+P.ammo;}
-    else if(w){wk=WEAPON_ICON[P.weapon]||'sword';wtx=w.n+(Object.keys(P.firearms||{}).length?'  ('+P.ammo+')':'');}
-    const wsig=wk+'|'+wtx;
-    if(wpn._sig!==wsig){wpn._sig=wsig;wpn.innerHTML=wk?pxFit(wk,22,14):'';wpn.appendChild(document.createTextNode(wtx));}
+  /* o botão de trocar arma mostra a arma na mão; só arma de fogo/arco mostra a munição. O nome aparece um instante quando troca */
+  {
+    const wpn=$('wpn'),sw=$('swap');
+    let wk='fists',wn=w?w.n:'Mãos',wc='',low=false;
+    if(w&&w.firearm&&w.bow){wk='bow';wc=String(P.arrows||0);low=(P.arrows||0)<=2;}
+    else if(w&&w.firearm){wk=WEAPON_ICON[P.weapon]||'pistol';wc=String(P.ammo|0);low=(P.ammo|0)<=3;}
+    else if(w){wk=WEAPON_ICON[P.weapon]||'fists';}
+    const wsig=wk+'|'+wn+'|'+wc;
+    if(sw&&sw._sig!==wsig){
+      sw._sig=wsig;
+      sw.innerHTML=pxFit(wk,40,32)+'<i class="swm">'+pxIcon('c_swap',1)+'</i>'+(wc!==''?'<b class="swc'+(low?' low':'')+'">'+wc+'</b>':'');
+      sw.setAttribute('aria-label','Trocar arma. Na mão: '+wn+(wc!==''?', munição '+wc:''));
+      if(wpn){
+        const nameChanged=wpn._wn!==undefined&&wpn._wn!==wn;wpn._wn=wn;
+        wpn.textContent=wn;
+        if(nameChanged){wpn.classList.remove('chg');void wpn.offsetWidth;wpn.classList.add('chg');}
+      }
+    }
   }
   // Status do personagem PERMANENTE (importante)
   let st='',stk='';
@@ -9969,7 +10066,7 @@ function render(){
     // Screen overlays (flash, joystick, minimap) — shared with outdoor path
     ctx.setTransform(1,0,0,1,0,0);
     ctx.globalCompositeOperation='multiply';ctx.fillStyle='rgb(255,238,214)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over';drawVignette(true);
-    ghostFx();sleepFx();drawPingsEdge();drawAllyEdge();
+    ghostFx();sleepFx();drawPingsEdge();
     if(CFG.dmgflash&&flash>0){ctx.fillStyle='rgba(190,0,0,'+(flash*.7).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
     else if(CFG.screenflash&&P.hp<30&&!P.dead){ctx.fillStyle='rgba(120,0,0,'+(.1+.07*Math.sin(T*6)).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
     if(joy.active&&!P.inVehicle){
@@ -10204,7 +10301,7 @@ function render(){
     if(OBS.vis){const va=.32*OBS.alpha,g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.65);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+va.toFixed(3)+')');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
     if(OBS.glitch>0){for(let i=0;i<9;i++){ctx.fillStyle=Math.random()<.5?'rgba(255,255,255,.12)':'rgba(0,0,0,.28)';ctx.fillRect(0,Math.random()*H,W,1+Math.random()*3*(OBS.glitch*4));}}
   }
-  drawFishMini();drawPingsEdge();drawAllyEdge();
+  drawFishMini();drawPingsEdge();
   if(CFG.dmgflash&&flash>0){ctx.fillStyle='rgba(190,0,0,'+(flash*.7).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
   else if(CFG.screenflash&&P.hp<30&&!P.dead){ctx.fillStyle='rgba(120,0,0,'+(.1+.07*Math.sin(T*6)).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
   if(joy.active&&!P.inVehicle){
@@ -10916,7 +11013,7 @@ function loadingRun(fn,msg){
   },60));
 }
 function startGame(){
-  aud();bigMapClose();
+  aud();bigMapClose();WP=null;
   closeChat();
   setChatButtonVisible(false);
   const cm=$('chat-msgs'); if(cm) cm.innerHTML=''; resetChatHistory();
@@ -10966,7 +11063,10 @@ on('bpause','pointerup',e=>{e.preventDefault();e.stopPropagation();aud();pause()
 on('bpause','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
 on('mm','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
 on('mm','pointerup',e=>{e.preventDefault();e.stopPropagation();aud();bigMapOpen();});
-on('bigmap','pointerup',e=>{e.preventDefault();e.stopPropagation();bigMapClose();});
+on('bigmap','pointerup',e=>{e.preventDefault();e.stopPropagation();const id=e.target&&e.target.id,cl=e.target&&e.target.classList;if(id==='bigmap'||id==='bmx'||(cl&&cl.contains('bmbox')))bigMapClose();});
+on('bmzin','click',e=>{e.stopPropagation();bmZoomAt(1.6);});
+on('bmzout','click',e=>{e.stopPropagation();bmZoomAt(1/1.6);});
+on('bmctr','click',e=>{e.stopPropagation();if(P){bigV.cx=P.x;bigV.cy=P.y;bmGeom();bigMapDraw();}});
 on('bcraft','pointerdown',e=>{e.preventDefault();aud();openCraft();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play'&&!MP.active)pause();});
 {
