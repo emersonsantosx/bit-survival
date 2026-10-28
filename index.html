@@ -71,6 +71,13 @@ body.nomap #mm{display:none!important}
 @media (max-height:420px) and (max-width:700px){.inv-det{flex-basis:150px}}
 
 .hide{display:none!important}
+#loading{position:fixed;inset:0;z-index:99999;background:#0b100b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#e8f0e0;font-family:"Courier New",monospace;text-align:center;padding:0 24px}
+#loading .lt{font-size:15px;letter-spacing:3px;font-weight:bold}
+#loading .lm{font-size:11px;opacity:.7;max-width:420px;line-height:1.5}
+#loading .lb{display:flex;gap:8px}
+#loading .lb i{width:12px;height:12px;background:#5ac86a;animation:ldb 1s infinite ease-in-out}
+#loading .lb i:nth-child(2){animation-delay:.15s}#loading .lb i:nth-child(3){animation-delay:.3s}#loading .lb i:nth-child(4){animation-delay:.45s}
+@keyframes ldb{0%,100%{transform:translateY(0);opacity:.35}50%{transform:translateY(-10px);opacity:1}}
 #bars{position:absolute;left:8px;top:8px;width:132px}
 .row{display:flex;align-items:center;gap:4px;margin-bottom:3px;font-size:11px}
 .row i{font-style:normal;width:14px;text-align:center}
@@ -808,6 +815,7 @@ body.haschat #missions{right:140px}
   </div>
 </div>
 
+<div id="loading" class="hide"><div class="lt" id="loadMsg">GERANDO O MUNDO...</div><div class="lb"><i></i><i></i><i></i><i></i></div><div class="lm" id="loadTip"></div></div>
 <div id="deadscr" class="screen hide">
   <div class="card" style="max-width:420px">
     <h2 id="deadtitle">VOCÊ MORREU</h2>
@@ -1561,7 +1569,12 @@ function buildSound(){
 }
 
 /* ============ CONSTANTES ============ */
-const WW=3400, WH=3400;
+let WW=3400, WH=3400, WSC=1, WAREA=1;     // tamanho do mundo: definido por mapa em setWorldSize() antes da geração
+const WORLD_S={forest:2.5,snow:2.5,desert:2.5,city:2};   // fator por lado (2 = 4x a área original)
+function setWorldSize(){
+  WSC=(typeof window!=='undefined'&&window.__S)||WORLD_S[selectedMap]||1;
+  WW=WH=Math.round(3400*WSC/50)*50;WAREA=(WW/3400)*(WH/3400);
+}
 const DAY_SECONDS=480, START_HOUR=9, UPD=700;
 const MAX_SLOTS=6, PACK_SLOTS=12;   // sem mochila: 6 itens diferentes; com mochila: 12
 function invCap(){return P&&P.pack?PACK_SLOTS:MAX_SLOTS;}
@@ -2200,20 +2213,51 @@ function vehHalf(v){
   }
   return v;
 }
+/* Grade de pontos para solidPoint: árvores, pedras, fogueiras e decorações sólidas (milhares num mundo grande) são consultadas por célula,
+   em vez de varrer tudo a cada tentativa. Reconstrói sozinha se algum array foi trocado/encolheu; só acrescenta o que foi adicionado no fim. */
+const SPG_C=64;let SPG=null;
+function spgSync(){
+  let g=SPG;
+  if(!g||g.at!==trees||g.ar!==rocks||g.ac!==campfires||g.ad!==decorations||trees.length<g.nt||rocks.length<g.nr||campfires.length<g.nc||decorations.length<g.nd){
+    g=SPG={m:new Map(),at:trees,ar:rocks,ac:campfires,ad:decorations,nt:0,nr:0,nc:0,nd:0};
+  }
+  const put=o=>{const k=(Math.floor(o.x/SPG_C)+8)*4096+Math.floor(o.y/SPG_C)+8;let a=g.m.get(k);if(!a){a=[];g.m.set(k,a);}a.push(o);};
+  for(;g.nt<trees.length;g.nt++)put(trees[g.nt]);
+  for(;g.nr<rocks.length;g.nr++)put(rocks[g.nr]);
+  for(;g.nc<campfires.length;g.nc++)put(campfires[g.nc]);
+  for(;g.nd<decorations.length;g.nd++)if(decorations[g.nd].solid)put(decorations[g.nd]);
+  return g.m;
+}
 function solidPoint(x,y,m){
   for(const b of blds){if(x>b.x-m&&x<b.x+b.w+m&&y>b.y-m&&y<b.y+b.h+m)return true;}
-  for(const t of trees){if(Math.abs(t.x-x)<m&&Math.abs(t.y-y)<m)return true;}
-  for(const r of rocks){if(Math.abs(r.x-x)<m&&Math.abs(r.y-y)<m)return true;}
-  for(const c of campfires){if(Math.abs(c.x-x)<m&&Math.abs(c.y-y)<m)return true;}
-  for(const d of decorations){if(d.solid&&Math.abs(d.x-x)<m&&Math.abs(d.y-y)<m)return true;}
+  {
+    const gm=spgSync(),cx0=Math.floor((x-m)/SPG_C),cx1=Math.floor((x+m)/SPG_C),cy0=Math.floor((y-m)/SPG_C),cy1=Math.floor((y+m)/SPG_C);
+    for(let cx=cx0;cx<=cx1;cx++)for(let cy=cy0;cy<=cy1;cy++){
+      const a=gm.get((cx+8)*4096+cy+8);if(!a)continue;
+      for(let i=0;i<a.length;i++){const o=a[i];if(Math.abs(o.x-x)<m&&Math.abs(o.y-y)<m)return true;}
+    }
+  }
   for(const v of vehicles){vehHalf(v);if(x>v.x-v._hx-m&&x<v.x+v._hx+m&&y>v.y-v._hy-m&&y<v.y+v._hy+m)return true;}
   if(plane&&x>plane.x-38-m&&x<plane.x+38+m&&y>plane.y-18-m&&y<plane.y+18+m)return true;
   if(pointInLake(x,y))return true;
   if(FIELD&&FIELD.fence)for(const w of FIELD.fence){if(x>w.x-m&&x<w.x+w.w+m&&y>w.y-m&&y<w.y+w.h+m)return true;}
   return false;
 }
+/* Grade de paredes: em mundo grande são milhares de retângulos; cada colisão consulta só as células em volta */
+const WG_C=96;let WG=null;
+function wallGrid(){
+  if(!WG||WG.ref!==walls||WG.n!==walls.length){
+    const m=new Map();
+    for(const w of walls){
+      const x0=Math.floor(w.x/WG_C),x1=Math.floor((w.x+w.w)/WG_C),y0=Math.floor(w.y/WG_C),y1=Math.floor((w.y+w.h)/WG_C);
+      for(let cx=x0;cx<=x1;cx++)for(let cy=y0;cy<=y1;cy++){const k=(cx+8)*4096+cy+8;let a=m.get(k);if(!a){a=[];m.set(k,a);}a.push(w);}
+    }
+    WG={m,ref:walls,n:walls.length};
+  }
+  return WG.m;
+}
 function pointSolid(px,py){
-  for(const w of walls){if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)return true;}
+  {const a=wallGrid().get((Math.floor(px/WG_C)+8)*4096+Math.floor(py/WG_C)+8);if(a)for(let i=0;i<a.length;i++){const w=a[i];if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)return true;}}
   for(const t of trees){const dx=px-t.x,dy=py-t.y;if(dx>-4&&dx<4&&dy>-4&&dy<4&&dx*dx+dy*dy<12)return true;}
   for(const v of vehicles){vehHalf(v);if(px>=v.x-v._hx&&px<=v.x+v._hx&&py>=v.y-v._hy&&py<=v.y+v._hy)return true;}
   if(plane&&px>=plane.x-35&&px<=plane.x+35&&py>=plane.y-16&&py<=plane.y+16)return true;
@@ -2224,6 +2268,7 @@ function pointSolid(px,py){
 const SOLID_GRID=128;
 let solidGrid=null;
 function rebuildSolidGrid(){
+  SPG=null;
   solidGrid=new Map();
   const put=(x,y,kind,ref)=>{
     const cx=Math.floor(x/SOLID_GRID), cy=Math.floor(y/SOLID_GRID);
@@ -2265,7 +2310,7 @@ function pushOut(e,r){
     }
   }
   for(const v of vehicles){
-    if(v===e)continue;
+    if(v===e||Math.abs(v.x-e.x)>50||Math.abs(v.y-e.y)>50)continue;
     vehHalf(v);
     const cx=clamp(e.x,v.x-v._hx,v.x+v._hx),cy=clamp(e.y,v.y-v._hy,v.y+v._hy);
     const dx=e.x-cx,dy=e.y-cy,d=Math.hypot(dx,dy);
@@ -2276,7 +2321,10 @@ function pushOut(e,r){
     const dx=e.x-cx,dy=e.y-cy,d=Math.hypot(dx,dy);
     if(d<r){if(d>.001){e.x=cx+dx/d*r;e.y=cy+dy/d*r;}else{e.x+=r;}}
   }
-  for(const w of walls)pushRect(e,r,w);
+  {
+    const gm=wallGrid(),cx0=Math.floor((e.x-r)/WG_C),cx1=Math.floor((e.x+r)/WG_C),cy0=Math.floor((e.y-r)/WG_C),cy1=Math.floor((e.y+r)/WG_C);
+    for(let cx=cx0;cx<=cx1;cx++)for(let cy=cy0;cy<=cy1;cy++){const a=gm.get((cx+8)*4096+cy+8);if(a)for(let i=0;i<a.length;i++)pushRect(e,r,a[i]);}
+  }
   if(FIELD&&FIELD.fence)for(const w of FIELD.fence)pushRect(e,r,w);
   for(let i=0;i<blds.length;i++){      // móveis (só do prédio onde a pessoa está)
     const b=blds[i];
@@ -2364,15 +2412,23 @@ function obbHitsCircle(cx,cy,c,s,L,W,px,py,rad){
   return (lx-qx)*(lx-qx)+(ly-qy)*(ly-qy)<rad*rad;
 }
 function vehicleOverlap(v){
+  vehicleOverlap._n=(vehicleOverlap._n|0)+1;
   if(!solidGrid) rebuildSolidGrid();
   const c=Math.cos(v.face||0),s=Math.sin(v.face||0);
   const L=(v.w||36)*0.5,W=(v.h||20)*0.46;
   const cx=v.x,cy=v.y,R=L+W+2;
   let cnt=0;
-  for(let i=0;i<walls.length;i++){
-    const w=walls[i];
-    if(w.x>cx+R||w.x+w.w<cx-R||w.y>cy+R||w.y+w.h<cy-R)continue;
-    if(obbHitsRect(cx,cy,c,s,L,W,w.x-1,w.y-1,w.x+w.w+1,w.y+w.h+1))cnt++;
+  {
+    const gm=wallGrid(),cx0=Math.floor((cx-R)/WG_C),cx1=Math.floor((cx+R)/WG_C),cy0=Math.floor((cy-R)/WG_C),cy1=Math.floor((cy+R)/WG_C);
+    for(let gx=cx0;gx<=cx1;gx++)for(let gy=cy0;gy<=cy1;gy++){
+      const a=gm.get((gx+8)*4096+gy+8);if(!a)continue;
+      for(let i=0;i<a.length;i++){
+        const w=a[i];
+        if(w._vc===vehicleOverlap._n)continue;w._vc=vehicleOverlap._n;      // parede que cruza várias células: conta uma vez só
+        if(w.x>cx+R||w.x+w.w<cx-R||w.y>cy+R||w.y+w.h<cy-R)continue;
+        if(obbHitsRect(cx,cy,c,s,L,W,w.x-1,w.y-1,w.x+w.w+1,w.y+w.h+1))cnt++;
+      }
+    }
   }
   if(FIELD&&FIELD.fence)for(const w of FIELD.fence)if(obbHitsRect(cx,cy,c,s,L,W,w.x-1,w.y-1,w.x+w.w+1,w.y+w.h+1))cnt++;
   for(let i=0;i<blds.length;i++){const b=blds[i];if(b.x>cx+R||b.x+b.w<cx-R||b.y>cy+R||b.y+b.h<cy-R)continue;if(obbHitsRect(cx,cy,c,s,L,W,b.x,b.y,b.x+b.w,b.y+b.h))cnt++;} // carro não entra em casa
@@ -2807,7 +2863,7 @@ function drawPingsEdge(){
   }
 }
 function drawPingsMini(){
-  for(const q of pings){mm.fillStyle=Math.floor(performance.now()/300)%2?pingCol(q):'#fff';mm.fillRect(Math.round(q.x/WW*76)-1,Math.round(q.y/WH*76)-1,3,3);}
+  for(const q of pings)mmDot(q.x,q.y,3,3,Math.floor(performance.now()/300)%2?pingCol(q):'#fff',true);
 }
 /* ===== Regeneração de árvores e pedras =====
    O mundo é dividido em quadras de 200x200. Na geração cada quadra guarda quantas árvores e pedras tinha. Com o tempo, a quadra mais esvaziada
@@ -3123,10 +3179,10 @@ function genCity(){
   crash.zone='crash'; cityCrash={x:crash.cx,y:crash.cy,bx:crash.bx,by:crash.by,bw:crash.bw,bh:crash.bh};
   // bases militares longe do ponto de partida
   const far=shuffle(blocks.filter(b=>b!==crash&&Math.hypot(b.cx-crash.cx,b.cy-crash.cy)>800));
-  for(let k=0;k<Math.min(3,far.length);k++) far[k].zone='mil';
+  for(let k=0;k<Math.min(Math.round(3*WAREA*.6),far.length);k++) far[k].zone='mil';
   for(const b of blocks){
     if(b.zone!=='res') continue;
-    const r=_rng(), d=Math.hypot(b.cx-WW/2,b.cy-WH/2)/2400;
+    const r=_rng(), d=Math.hypot(b.cx-WW/2,b.cy-WH/2)/(2400*WSC);
     if(r<.11) b.zone='park';
     else if(r<.16) b.zone='empty';
     else if(d<.38) b.zone='com';
@@ -3141,7 +3197,7 @@ function genCity(){
   }
   // bairros (usados para espalhar zumbis iniciais): longe do ponto de partida
   const cand=shuffle(blocks.filter(b=>b!==crash&&Math.hypot(b.cx-crash.cx,b.cy-crash.cy)>520&&b.zone!=='park'&&b.zone!=='empty'));
-  for(let k=0;k<Math.min(12,cand.length);k++) towns.push({x:cand[k].cx,y:cand[k].cy,mil:cand[k].zone==='mil'});
+  for(let k=0;k<Math.min(Math.round(12*WAREA*.7),cand.length);k++) towns.push({x:cand[k].cx,y:cand[k].cy,mil:cand[k].zone==='mil'});
 }
 function cityFree(x,y,hw,hh){
   for(const b of blds) if(x+hw>b.x-6&&x-hw<b.x+b.w+6&&y+hh>b.y-6&&y-hh<b.y+b.h+6) return false;
@@ -3231,15 +3287,16 @@ function genTown(cx,cy,mil){
   return {x:cx,y:cy,mil:mil,hubx:ox-30,huby:Math.round(hubs[0])};
 }
 function genRural(){
-  const count=selectedMap==='desert'?4:6;
+  const count=Math.max(selectedMap==='desert'?4:6,Math.round((selectedMap==='desert'?4:6)*WAREA*.8*FL.towns));
   const spots=[]; let tries=0;
-  while(spots.length<count&&tries<2500){
+  while(spots.length<count&&tries<2500*WAREA){
     tries++;
     const x=rnd(450,WW-450), y=rnd(450,WH-450);
     if(spots.every(t=>Math.hypot(t.x-x,t.y-y)>800)) spots.push({x:x,y:y});
   }
   // bases militares: as duas últimas vilas (quando há 3 ou mais)
-  spots.forEach((p,i)=>{ p.mil=spots.length>=3&&i>=spots.length-2; });
+  const nMil=Math.max(2,Math.round(spots.length*(selectedMap==='desert'?.45:.33)));
+  spots.forEach((p,i)=>{ p.mil=spots.length>=3&&i>=spots.length-nMil; });
   for(const p of spots){
     let t=null;
     for(let a=0;a<12&&!t;a++){
@@ -3721,8 +3778,16 @@ function drawScarecrow(F){
   // palha caindo do pescoço
   R(x-7,y-27,2,4,'#b89c48');R(x+5,y-27,2,5,'#b89c48');R(x+6,y-23,1,2,'#b89c48');
 }
+/* "Sabor" do mundo: cada semente sorteia densidades e formatos diferentes (mais mata, mais pedra, mais vilas, mais lagos...). Igual para anfitrião e convidado. */
+let FL={tree:1,rock:1,decor:1,fauna:1,towns:1,lakes:0,clr:1,clp:.8};
+function worldFlavor(){
+  FL={tree:rnd(.75,1.3),rock:rnd(.7,1.35),decor:rnd(.8,1.25),fauna:rnd(.8,1.3),towns:rnd(.8,1.2),lakes:rint(0,1),clr:rnd(.7,1.4),clp:rnd(.62,.9)};
+}
 function genWorld(seed) {
+  setWorldSize();
   setRng(seed);
+  worldFlavor();
+  solidGrid=null;SPG=null;FIELD=null;LM=null;chestList=[];   // grades de colisão do mundo anterior não podem vazar para a geração (senão o mesmo seed gera mundos diferentes)
   try {
   trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];tents=[];spits=[];decorations=[];animals=[];
   cityInter=[];cityCrash=null;lampList=[];
@@ -3731,7 +3796,8 @@ function genWorld(seed) {
   if(selectedMap==='city') genCity(); else genRural();
   // Um único lago isolado — Floresta e Neve; no Deserto é um oásis menor (seed-determinístico = sync no multiplayer)
   lakes=[];
-  if(mapHasLake()&&selectedMap!=='city'){
+  const lakeN=Math.max(1,Math.round(WAREA*(selectedMap==='desert'?.45:.5)))+FL.lakes;     // mundo maior: vários lagos/oásis
+  if(mapHasLake()&&selectedMap!=='city')for(let li=0;li<lakeN;li++){
     let cx=0,cy=0,mainR=160,valid=false,lTries=0;
     for(const fm of [1,.6,.35,.15]){ if(valid)break; lTries=0;
     while(!valid && lTries<300){
@@ -3750,6 +3816,8 @@ function genWorld(seed) {
       for(const t of towns){
         if(Math.hypot(t.x-cx,t.y-cy) < Math.max(mainR+450*fm,mainR+120)){ ok=false; break; }
       }
+      if(!ok) continue;
+      for(const l of lakes){ if(Math.hypot(l.cx-cx,l.cy-cy) < l.r+mainR+450*fm){ ok=false; break; } }   // um lago longe do outro
       if(ok) valid=true;
     }
     }
@@ -3817,14 +3885,14 @@ function genWorld(seed) {
   plane={x:planeX,y:planeY,w:70,h:46};
   for(let i=0;i<5;i++)items.push({t:wpick({food:4,water:4,bandage:3,ammo:4,pistol:1,smg:1}),x:plane.x+rnd(-25,25),y:plane.y+rnd(-12,12)});
 
-  const treeCount=selectedMap==='desert'?180:selectedMap==='snow'?560:selectedMap==='city'?300:900;
+  const treeCount=Math.round((selectedMap==='desert'?180:selectedMap==='snow'?560:selectedMap==='city'?300:900)*WAREA*FL.tree);
   const centers=[];
-  for(let i=0;i<40;i++)centers.push({x:rnd(100,WW-100),y:rnd(100,WH-100),r:rnd(140,400)});
+  for(let i=0,nc=Math.round(40*WAREA);i<nc;i++)centers.push({x:rnd(100,WW-100),y:rnd(100,WH-100),r:rnd(140,400)*FL.clr});
   let count=0,g=0;
-  while(count<treeCount&&g<12000){
+  while(count<treeCount&&g<12000*WAREA){
     g++;
     let x,y;
-    if(_rng()<.8){const c=pick(centers),a=rnd(0,6.283),d=_rng()*c.r;x=c.x+Math.cos(a)*d;y=c.y+Math.sin(a)*d;}
+    if(_rng()<FL.clp){const c=pick(centers),a=rnd(0,6.283),d=_rng()*c.r;x=c.x+Math.cos(a)*d;y=c.y+Math.sin(a)*d;}
     else{x=rnd(30,WW-30);y=rnd(30,WH-30);}
     if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,selectedMap==='city'?30:22))continue;
     if(onCityRoad(x,y,14))continue;
@@ -3840,12 +3908,12 @@ function genWorld(seed) {
     trees.push({x:Math.round(x),y:Math.round(y),k:k,hp:4,seed:_rng()});count++;
   }
 
-  const rockCount=selectedMap==='desert'?240:selectedMap==='snow'?260:selectedMap==='city'?0:320;
+  const rockCount=Math.round((selectedMap==='desert'?240:selectedMap==='snow'?260:selectedMap==='city'?0:320)*WAREA*FL.rock);
   let rc=0,rg=0;
-  while(rc<rockCount&&rg<12000){
+  while(rc<rockCount&&rg<12000*WAREA){
     rg++;
     let x,y;
-    if(_rng()<.7){const c=pick(centers),a=rnd(0,6.283),d=_rng()*c.r;x=c.x+Math.cos(a)*d;y=c.y+Math.sin(a)*d;}
+    if(_rng()<FL.clp-.1){const c=pick(centers),a=rnd(0,6.283),d=_rng()*c.r;x=c.x+Math.cos(a)*d;y=c.y+Math.sin(a)*d;}
     else{x=rnd(40,WW-40);y=rnd(40,WH-40);}
     if(x<40||y<40||x>WW-40||y>WH-40||solidPoint(x,y,selectedMap==='city'?30:24))continue;
     if(onCityRoad(x,y,14))continue;
@@ -3857,9 +3925,9 @@ function genWorld(seed) {
   }
 
   const decorList = DECOR_BY_MAP[selectedMap] || DECOR_BY_MAP.forest;
-  const decorCount = selectedMap==='city'?280:selectedMap==='desert'?320:selectedMap==='snow'?340:450;
+  const decorCount = Math.round((selectedMap==='city'?280:selectedMap==='desert'?320:selectedMap==='snow'?340:450)*WAREA*FL.decor);
   let dc=0,dg=0;
-  while(dc<decorCount&&dg<14000){
+  while(dc<decorCount&&dg<14000*WAREA){
     dg++;
     const x=rnd(40,WW-40),y=rnd(40,WH-40);
     if(solidPoint(x,y,selectedMap==='city'?22:16))continue;
@@ -3876,13 +3944,13 @@ function genWorld(seed) {
   if(selectedMap==='city')cityLamps();
   lampList=decorations.filter(d=>d.type==='lamp'); // postes: abrem luz na escuridão à noite
   let oc=0,og=0;
-  while(oc<26&&og<700){
+  while(oc<Math.round(26*WAREA)&&og<700*WAREA){
     og++;
     const x=rnd(60,WW-60),y=rnd(60,WH-60);
     if(solidPoint(x,y,14)||pointInLake(x,y))continue;
     items.push({t:wpick(OUT_LOOT),x,y});oc++;
   }
-  const stoneGround=selectedMap==='city'?70:40;   // cidade tem menos pedras: mais pedra solta no chão
+  const stoneGround=Math.round((selectedMap==='city'?70:40)*WAREA);   // cidade tem menos pedras: mais pedra solta no chão
   for(let i=0;i<stoneGround;i++){
     const x=rnd(60,WW-60),y=rnd(60,WH-60);
     if(!solidPoint(x,y,14))items.push({t:'stone',x,y});
@@ -3900,7 +3968,7 @@ function genWorld(seed) {
     selectedMap==='city'?[{k:'rat',n:14},{k:'dog',n:6}]:[];
   for(const plan of animalPlan){
     let ac=0,ag=0;
-    while(ac<plan.n&&ag<400){
+    while(ac<Math.round(plan.n*WAREA*FL.fauna)&&ag<400*WAREA){
       ag++;
       const x=rnd(60,WW-60),y=rnd(60,WH-60);
       if(solidPoint(x,y,12)||pointInLake(x,y))continue;
@@ -3923,11 +3991,26 @@ function genWorld(seed) {
     setRng(null);
   }
 }
+/* Minimapa: janela de MM_SPAN unidades em volta do jogador (o mapa grande inteiro em 76 px ficaria ilegível); a base é desenhada uma vez do mundo todo */
+let MM_SPAN=2800,MM_K=76/2800,MM_X0=0,MM_Y0=0;
+function mmFrame(){          // posiciona a janela e desenha a base; depois disso: x do mapa = (x-MM_X0)*MM_K
+  MM_X0=clamp(P.x-MM_SPAN/2,0,Math.max(0,WW-MM_SPAN));MM_Y0=clamp(P.y-MM_SPAN/2,0,Math.max(0,WH-MM_SPAN));
+  mm.clearRect(0,0,76,76);
+  mm.drawImage(mmStatic,Math.round(MM_X0*MM_K),Math.round(MM_Y0*MM_K),76,76,0,0,76,76);
+}
+function mmDot(x,y,w,h,col,edge){   // marcador; se edge, fica preso na borda quando o ponto está fora da janela
+  let px=(x-MM_X0)*MM_K,py=(y-MM_Y0)*MM_K;
+  if(edge){px=clamp(px,2,74);py=clamp(py,2,74);}
+  mm.fillStyle=col;mm.fillRect(Math.round(px)-(w>>1),Math.round(py)-(h>>1),w,h);
+}
 function buildMinimap(){
-  const s=76/WW;
+  MM_SPAN=Math.min(2800,WW);MM_K=76/MM_SPAN;
+  const side=Math.ceil(WW*MM_K);
+  mmStatic.width=side;mmStatic.height=Math.ceil(WH*MM_K);
+  const s=MM_K;
   try{ if(FIELD){ /* marcado depois do fundo */ } }catch(e){}
   mms.fillStyle=selectedMap==='snow'?'#b8c8d8':selectedMap==='desert'?'#b89a60':selectedMap==='city'?'#3a3a40':'#16261a';
-  mms.fillRect(0,0,76,76);
+  mms.fillRect(0,0,mmStatic.width,mmStatic.height);
   mms.fillStyle=selectedMap==='snow'?'#90a8b8':'#6a5c40';
   for(const r of roads)mms.fillRect(r.x*s,r.y*s,Math.max(1,r.w*s),Math.max(1,r.h*s));
   if(FIELD){mms.fillStyle='#b89a3a';mms.fillRect(FIELD.x*s,FIELD.y*s,Math.max(2,FIELD.w*s),Math.max(2,FIELD.h*s));}
@@ -4008,10 +4091,10 @@ function initBirds(){
   for(const spk of list){
     const sp=BIRD_SP[spk];
     if(sp.soar){ // urubus rodando no céu em 2 ou 3 grupos
-      const groups=Math.max(1,Math.round(sp.cnt/3));let made=0;
+      const nCnt=Math.max(sp.cnt,Math.round(sp.cnt*WAREA*.7)),groups=Math.max(1,Math.round(nCnt/3));let made=0;
       for(let g=0;g<groups;g++){
         const cx=rnd(300,WW-300),cy=rnd(300,WH-300),rad=rnd(70,130),dir=Math.random()<.5?-1:1;
-        const n=g===groups-1?sp.cnt-made:Math.ceil(sp.cnt/groups);
+        const n=g===groups-1?nCnt-made:Math.ceil(nCnt/groups);
         for(let i=0;i<n;i++){
           const b=newBird(spk,cx,cy,'soar');b.cx=cx;b.cy=cy;b.rad=rad*rnd(.85,1.15);b.ang=i/n*6.283+rnd(-.3,.3);b.w=dir*rnd(.28,.4);b.z=b.zt=rnd(44,58);
           birds.push(b);made++;
@@ -4019,7 +4102,7 @@ function initBirds(){
       }
       continue;
     }
-    for(let i=0,tries=0;i<sp.cnt&&tries<600;tries++){
+    for(let i=0,tries=0,cnt=Math.max(sp.cnt,Math.round(sp.cnt*WAREA*.7));i<cnt&&tries<600*WAREA;tries++){
       const x=rnd(80,WW-80),y=rnd(80,WH-80);
       if(!birdOK(x,y))continue;
       if(Math.hypot(x-P.x,y-P.y)<90)continue;
@@ -4433,8 +4516,8 @@ function populate(){
     }
   }
   let c=0,g=0;
-  const openCap=Math.round(40*cityBonus*ini);
-  while(c<openCap&&g<600){
+  const openCap=Math.round(40*cityBonus*ini*WAREA);
+  while(c<openCap&&g<600*WAREA){
     g++;
     const x=rnd(40,WW-40),y=rnd(40,WH-40);
     if(Math.hypot(x-P.x,y-P.y)<500||solidPoint(x,y,12))continue;
@@ -4479,7 +4562,7 @@ function newGame(){
 /* ============ CONTINUAR (somente jogo solo) ============
    O mundo nasce de uma semente (a mesma técnica do multiplayer), então o save guarda a semente e só o que mudou:
    jogador, tempo, árvores/pedras que restaram, itens no chão, veículos, animais, zumbis, fogueiras e manchas. */
-const SAVE_KEY='minisurv_save', SAVE_PREFIX='minisurv_save_', SAVE_SLOTS=4, SAVE_VER=4, SAVE_EVERY=20;
+const SAVE_KEY='minisurv_save', SAVE_PREFIX='minisurv_save_', SAVE_SLOTS=4, SAVE_VER=5, SAVE_EVERY=20;
 let curSlot=0, pendingSlot=0; // curSlot = slot em uso na partida; pendingSlot = slot escolhido na tela de novo jogo
 function slotKey(n){return SAVE_PREFIX+n;}
 /* Save antigo (slot único) vira o 1º slot livre, uma única vez */
@@ -4516,7 +4599,7 @@ function saveGame(){
   try{
     const ps=JSON.parse(JSON.stringify(P,(k,v)=>(k==='inside'||k==='inVehicle'||k==='fish'||k==='sleeping'||k[0]==='_')?undefined:v));
     const data={
-      v:SAVE_VER, at:Date.now(), map:selectedMap, seed:worldSeed, sk:SKIN_SEL,
+      v:SAVE_VER, ws:WW, at:Date.now(), map:selectedMap, seed:worldSeed, sk:SKIN_SEL,
       T:_q(T,2), day, kills, weather, weatherTimer:_q(weatherTimer,1), spawnTimer:_q(spawnTimer,1),
       P:ps, inVeh:P.inVehicle?vehicles.indexOf(P.inVehicle):-1,
       trees:trees.map(t=>[t.x,t.y,_q(t.hp,2)]),
@@ -4532,12 +4615,14 @@ function saveGame(){
     return true;
   }catch(e){ console.warn('[save]',e); return false; }
 }
+/* o save só vale se o mundo tem o mesmo tamanho de quando foi salvo (a geração depende dele) */
+function saveWorldOk(d){return !!d&&!!d.map&&d.ws===Math.round(3400*(WORLD_S[d.map]||1)/50)*50;}
 function readSave(n){
   let d=null;
   try{
     const raw=localStorage.getItem(slotKey(n)); if(!raw) return null;
     d=JSON.parse(raw);
-    const ok=d && d.v===SAVE_VER && MAP_NAMES[d.map] && Number.isFinite(d.seed) && d.seed>0 && Number.isFinite(d.T) && d.P && Number.isFinite(d.P.hp) && d.P.hp>0
+    const ok=d && d.v===SAVE_VER && saveWorldOk(d) && MAP_NAMES[d.map] && Number.isFinite(d.seed) && d.seed>0 && Number.isFinite(d.T) && d.P && Number.isFinite(d.P.hp) && d.P.hp>0
       && Array.isArray(d.trees)&&Array.isArray(d.rocks)&&Array.isArray(d.items)&&Array.isArray(d.zombies)&&Array.isArray(d.vehicles)&&Array.isArray(d.animals)&&Array.isArray(d.fires);
     if(!ok){ clearSave(n); return null; }
     return d;
@@ -4555,7 +4640,7 @@ function readSave0(n){
   try{
     const raw=localStorage.getItem(slotKey(n)); if(!raw) return null;
     const d=JSON.parse(raw);
-    return (d&&d.v===SAVE_VER&&MAP_NAMES[d.map]&&Number.isFinite(d.seed)&&d.P&&d.P.hp>0)?d:null;
+    return (d&&d.v===SAVE_VER&&saveWorldOk(d)&&MAP_NAMES[d.map]&&Number.isFinite(d.seed)&&d.P&&d.P.hp>0)?d:null;
   }catch(e){ return null; }
 }
 function continueGame(n){
@@ -9776,16 +9861,14 @@ function render(){
       ctx.beginPath();ctx.arc(joy.ox,joy.oy,JR,0,6.283);ctx.fill();ctx.stroke();
       ctx.fillStyle='rgba(255,255,255,.6)';ctx.beginPath();ctx.arc(joy.px,joy.py,JK,0,6.283);ctx.fill();ctx.globalAlpha=1;
     }
-    mm.clearRect(0,0,76,76);
-    mm.drawImage(mmStatic,0,0);
-    const mx=P.x/WW*76,my=P.y/WH*76;
-    mm.fillStyle=Math.floor(T*2)%2?'#ffffff':'#4aa3ff';
-    mm.fillRect(Math.round(mx)-2,Math.round(my)-2,4,4);
-    for(const c of campfires){mm.fillStyle='#ff8020';mm.fillRect(Math.round(c.x/WW*76)-1,Math.round(c.y/WH*76)-1,2,2);}for(const t of tents){mm.fillStyle='#8DA568';mm.fillRect(Math.round(t.x/WW*76)-1,Math.round(t.y/WH*76)-1,3,2);}
+    mmFrame();
+    mmDot(P.x,P.y,4,4,Math.floor(T*2)%2?'#ffffff':'#4aa3ff');
+    for(const c of campfires)mmDot(c.x,c.y,2,2,'#ff8020');
+    for(const t of tents)mmDot(t.x,t.y,3,2,'#8DA568');
     for(const id in remotePlayers){
       const rp=remotePlayers[id];
-      mm.fillStyle=rp.isHost?'#ff8080':'#80ffa0';
-      mm.fillRect(Math.round(rp.x/WW*76)-2,Math.round(rp.y/WH*76)-2,4,4);
+      if(!rp||!Number.isFinite(rp.x))continue;
+      mmDot(rp.x,rp.y,4,4,rp.isHost?'#ff8080':'#80ffa0',true);
     }
     drawPingsMini();
     return;
@@ -10024,16 +10107,14 @@ function render(){
   // Minimapa: não redesenha todo frame em economia
   mmDrawT++;
   if((mmDrawT%perf().mmEvery)===0){
-    mm.clearRect(0,0,76,76);
-    mm.drawImage(mmStatic,0,0);
-    const mx=P.x/WW*76,my=P.y/WH*76;
-    mm.fillStyle=Math.floor(T*2)%2?'#ffffff':'#4aa3ff';
-    mm.fillRect(Math.round(mx)-2,Math.round(my)-2,4,4);
-    for(const c of campfires){mm.fillStyle='#ff8020';mm.fillRect(Math.round(c.x/WW*76)-1,Math.round(c.y/WH*76)-1,2,2);}for(const t of tents){mm.fillStyle='#8DA568';mm.fillRect(Math.round(t.x/WW*76)-1,Math.round(t.y/WH*76)-1,3,2);}
+    mmFrame();
+    mmDot(P.x,P.y,4,4,Math.floor(T*2)%2?'#ffffff':'#4aa3ff');
+    for(const c of campfires)mmDot(c.x,c.y,2,2,'#ff8020');
+    for(const t of tents)mmDot(t.x,t.y,3,2,'#8DA568');
     for(const id in remotePlayers){
       const rp=remotePlayers[id];
-      mm.fillStyle=rp.isHost?'#ff8080':'#80ffa0';
-      mm.fillRect(Math.round(rp.x/WW*76)-2,Math.round(rp.y/WH*76)-2,4,4);
+      if(!rp||!Number.isFinite(rp.x))continue;
+      mmDot(rp.x,rp.y,4,4,rp.isHost?'#ff8080':'#80ffa0',true);
     }
     drawPingsMini();
   }
@@ -10306,7 +10387,7 @@ function renderSlots(){
 function openSlots(mode){slotMode=mode;closeSlotAsk();renderSlots();showScreen('slotscreen');}
 function pickSlot(n){
   const d=readSave0(n);
-  if(slotMode==='load'){ if(d)continueGame(n); else renderSlots(); return; }
+  if(slotMode==='load'){ if(d)loadingRun(()=>continueGame(n),'CARREGANDO O JOGO...'); else renderSlots(); return; }
   if(d) askSlot('replace',n); else goMapForSlot(n);
 }
 function goMapForSlot(n){
@@ -10352,7 +10433,7 @@ on('btnAch','click',()=>{aud();renderAch();showScreen('achscreen');});
 on('btnBackAch','click',()=>showScreen('menu'));
 on('btnConfig','click',()=>{aud();showScreen('configscreen');});
 on('btnBackMap','click',()=>openSlots('new'));
-on('btnStart','click',()=>startGame());
+on('btnStart','click',()=>loadingRun(()=>startGame(),'GERANDO O MUNDO...'));
 
 on('btnMPBack','click',()=>showScreen('menu'));
 on('btnMPHost','click',()=>{aud();showScreen('mphostscreen');const w=$('hostCodeWrap');if(w)w.classList.add('hide');setStatus('hostStatus','');});
@@ -10719,6 +10800,19 @@ function quitToMenu(){
   remotePlayers={};nextZombieNetId=1;
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#0b100b';ctx.fillRect(0,0,W,H);
 }
+const LOAD_TIPS=['Árvores e pedras nascem de novo, mas só onde o mapa ficou vazio.','Casas saqueadas voltam a ter loot depois de 3 dias.','Dentro de um veículo você não sofre dano, mas ele sim.','Zumbis longe de você ficam parados até alguém chegar perto.','No multiplayer, marque itens para o seu aliado.','Cada mundo é diferente: lagos, bosques e vilas mudam a cada jogo.','O minimapa mostra a região em volta de você.'];
+/* tela de carregamento: mostra o aviso, dá tempo de pintar e só então gera o mundo (a geração trava a tela por um instante) */
+function loadingRun(fn,msg){
+  const el=$('loading');
+  if(!el){fn();return;}
+  $('loadMsg').textContent=msg||'GERANDO O MUNDO...';
+  $('loadTip').textContent=LOAD_TIPS[Math.floor(Math.random()*LOAD_TIPS.length)];
+  el.classList.remove('hide');
+  requestAnimationFrame(()=>setTimeout(()=>{
+    try{fn();}catch(e){console.error('[loading]',e);}
+    finally{el.classList.add('hide');}
+  },60));
+}
 function startGame(){
   aud();
   closeChat();
@@ -10739,7 +10833,7 @@ function startGame(){
 on('again','click',()=>{
   if(MP.active){quitToMenu();return;}
   showScreen(null);const d=$('deadscr');if(d)d.classList.add('hide');
-  startGame();
+  loadingRun(()=>startGame(),'GERANDO O MUNDO...');
 });
 on('btnRespawn','click',()=>{
   aud();
