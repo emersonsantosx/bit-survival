@@ -115,9 +115,9 @@ body.nomap #mm{display:none!important}
 #top .tbtns .sm .pxi{display:block;margin:0}
 .sm{background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:6px;font-size:14px;width:34px;height:30px;margin:4px 0 0 4px;padding:0}
 /* arma na mão: o próprio botão de trocar mostra o ícone da arma e a munição; o nome aparece só um instante ao trocar */
-#wpn{position:absolute;right:100px;bottom:166px;font-size:11px;font-weight:bold;background:rgba(0,0,0,.6);padding:3px 8px;border:1px solid rgba(255,255,255,.35);border-radius:8px;white-space:nowrap;pointer-events:none;opacity:0}
+#wpn{position:absolute;right:129px;bottom:166px;transform:translateX(50%);font-size:11px;font-weight:bold;background:rgba(0,0,0,.6);padding:3px 8px;border:1px solid rgba(255,255,255,.35);border-radius:8px;white-space:nowrap;pointer-events:none;opacity:0}
 #wpn.chg{animation:wpnshow 1.8s ease-out}
-@keyframes wpnshow{0%{opacity:1;transform:translateY(4px)}12%{transform:translateY(0)}70%{opacity:1}100%{opacity:0}}
+@keyframes wpnshow{0%{opacity:1;transform:translateX(50%) translateY(4px)}12%{transform:translateX(50%) translateY(0)}70%{opacity:1;transform:translateX(50%)}100%{opacity:0;transform:translateX(50%)}}
 #swap{padding:0}
 #swap .swc{position:absolute;right:-2px;bottom:-3px;min-width:18px;padding:0 3px;text-align:center;font:bold 13px/16px "Courier New",monospace;color:#ffd84a;background:rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.55);border-radius:9px;pointer-events:none}
 #swap .swc.low{color:#ff6a5a;border-color:#ff6a5a}
@@ -135,8 +135,6 @@ body.nomap #mm{display:none!important}
 .btn.hot{border-color:#ffd84a;box-shadow:0 0 10px #ffd84a;color:#ffd84a}
 #atk{right:16px;bottom:22px;width:88px;height:88px;font-size:15px;background:rgba(160,30,30,.6)}
 #pick{right:118px;bottom:26px;width:64px;height:64px}
-#ping{right:190px;bottom:34px;width:50px;height:50px;font-size:9px;line-height:1.05;padding:0;color:#4aa3ff;border-color:rgba(74,163,255,.8)}
-#ping.hide{display:none}
 #run{right:28px;bottom:122px;width:64px;height:64px}
 #swap{right:100px;bottom:102px;width:58px;height:58px}
 #weapon-wheel{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(0,0,0,.72);touch-action:pan-y;pointer-events:auto;-webkit-overflow-scrolling:touch}
@@ -582,7 +580,6 @@ body.haschat #missions{right:140px}
   <button id="bpack" aria-label="Inventário"><span data-px="backpack" data-s="2"></span><b id="bpackn">0/6</b></button>
   <button class="btn" id="atk" aria-label="Atacar" data-px="c_atk" data-s="4"></button>
   <button class="btn" id="pick" aria-label="Pegar" data-px="c_hand" data-s="3"></button>
-  <button class="btn hide" id="ping" aria-label="Marcar item para o aliado">MARCAR</button>
   <button class="btn" id="run" aria-label="Correr" data-px="c_run" data-s="3"></button>
   <button class="btn" id="swap" aria-label="Trocar arma" data-px="c_swap" data-s="3"></button>
   <div id="weapon-wheel" class="hide" aria-label="Seletor de armas">
@@ -2834,6 +2831,38 @@ function sendPing(it){
   toast('Marcou: '+ITEMS[it.t].n);beep(880,.08,'sine',.05);
   return true;
 }
+/* botão discreto em cima do item mais próximo (só multiplayer): tocar nele marca o item para o aliado. O toque no botão não aciona o joystick */
+let pingBadge=null;                    // {x,y,it} em pixels do canvas, atualizado a cada quadro
+function pingCandidate(){
+  if(!MP.active||!MP.connected||!P||P.dead||P.inVehicle||state!=='play')return null;
+  let b=null,bd=34;
+  for(const it of items){if(!ITEMS[it.t])continue;const d=Math.hypot(it.x-P.x,it.y-P.y);if(d<bd){bd=d;b=it;}}
+  return b;
+}
+function drawPingBadge(){
+  pingBadge=null;
+  const it=pingCandidate();if(!it)return;
+  const bob=Math.sin(performance.now()/260)*1.5;
+  const x=(it.x-camX)*Z,y=Math.max(16,(it.y-camY)*Z-31*Z+bob);
+  pingBadge={x,y,it};
+  const mine=pings.find(q=>q.mine&&Math.abs(q.x-it.x)<3&&Math.abs(q.y-it.y)<3);
+  const col=mine?'#4aa3ff':'#ffd84a';
+  ctx.save();ctx.translate(x,y);
+  ctx.globalAlpha=.82;
+  ctx.fillStyle='rgba(10,14,20,.78)';ctx.beginPath();ctx.arc(0,0,11,0,6.283);ctx.fill();
+  ctx.lineWidth=1.5;ctx.strokeStyle=col;ctx.stroke();
+  ctx.globalAlpha=1;ctx.fillStyle=col;
+  if(mine){ctx.lineWidth=2;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(-4,0);ctx.lineTo(-1,3);ctx.lineTo(4,-3);ctx.stroke();}
+  else{ctx.beginPath();ctx.arc(0,-2,3.4,0,6.283);ctx.fill();ctx.beginPath();ctx.moveTo(-2.6,-0.2);ctx.lineTo(2.6,-0.2);ctx.lineTo(0,5);ctx.closePath();ctx.fill();ctx.fillStyle='rgba(10,14,20,.9)';ctx.beginPath();ctx.arc(0,-2,1.2,0,6.283);ctx.fill();}
+  ctx.restore();
+}
+function pingBadgeHit(p){            // p: ponto do toque em pixels do canvas
+  const b=pingBadge;if(!b||!b.it||!items.includes(b.it))return null;
+  const sx=(b.it.x-camX)*Z,sy=(b.it.y-camY)*Z;
+  if(Math.hypot(p.x-b.x,p.y-b.y)<24||Math.hypot(p.x-sx,p.y-(sy-5*Z))<14)return b.it;
+  return null;
+}
+function allyHasFirearm(t){for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.alive!==false&&Array.isArray(rp.fw)&&rp.fw.includes(t))return true;}return false;}
 function pingNearest(){if(state==='play'&&!P.inVehicle)sendPing(nearestItem());}
 function recvPing(d){
   if(!d||typeof d.t!=='string'||!ITEMS[d.t]||!Number.isFinite(d.x)||!Number.isFinite(d.y))return;
@@ -5392,8 +5421,9 @@ function pickup(){
   else if(t==='pistol'||t==='smg'||t==='shotgun'||t==='rifle'||t==='bow'){
     // Já tem essa arma? Deixa no chão pro outro player
     if(P.firearms[t]){
-      if(MP.active){ toast('Você já tem '+ITEMS[t].n+': deixe pro parceiro'); return; }
-      // sozinho não há com quem dividir: a arma repetida vira munição e some do chão, sem trocar a arma da mão
+      // no multiplayer a arma só fica no chão se o aliado ainda não tem; se os dois já têm, vira munição como no solo
+      if(MP.active&&!allyHasFirearm(t)){ toast('Você já tem '+ITEMS[t].n+': deixe pro parceiro'); return; }
+      // a arma repetida vira munição e some do chão, sem trocar a arma da mão
       if(t==='bow'){ P.arrows=(P.arrows||0)+6; toast('Você já tem Arco: +6 flechas'); }
       else { P.ammo+=8; toast('Você já tem '+ITEMS[t].n+': +8 munição'); }
     }else{
@@ -6912,7 +6942,6 @@ function updateHud(force){
   }
   if(P.sleeping){canInteract=true;btnText='LEVANTAR';}
   else if(!nearestItem()&&findSleepSpot()){canInteract=true;btnText='DORMIR';}
-  {const pg=$('ping');if(pg){const on=!!(MP.active&&MP.connected&&!P.inVehicle&&!P.dead&&nearestItem());pg.classList.toggle('hide',!on);}}
   const pick_=$('pick');
   if(pick_){if(pick_.dataset.st!==btnText){pick_.dataset.st=btnText;pick_.setAttribute('aria-label',btnText==='ABRIR'?'Abrir baú':btnText==='ÁGUA'?'Beber água':btnText==='ASSAR'?'Assar':btnText==='ENTRAR'?'Entrar':btnText==='DORMIR'?'Dormir':btnText==='LEVANTAR'?'Levantar':'Pegar');pick_.innerHTML=pxIcon(PICK_ICON[btnText]||'c_hand',3);}
     pick_.classList.toggle('hot',canInteract);}
@@ -7548,6 +7577,7 @@ function handleNetData(data,isHostSide){
     rp.weapon=(typeof data.weapon==='string'?data.weapon.slice(0,16):'fists');
     rp.swing=isFiniteNum(data.swing)?data.swing:0;
     rp.hold=(typeof data.hold==='string'&&EATABLE(data.hold)&&ITEMS[data.hold])?data.hold:'';
+    rp.fw=Array.isArray(data.fw)?data.fw.filter(k=>typeof k==='string'&&WEAPONS[k]&&WEAPONS[k].firearm).slice(0,8):(rp.fw||[]);   // armas de fogo que o aliado já tem
     rp.hp=isFiniteNum(data.hp)?clamp(data.hp,0,100):rp.hp;
     rp.alive=data.alive!==false;rp.inVehicle=!!data.inVehicle;
     if(Array.isArray(data.sl)&&data.sl.length>=4&&data.sl.every(isFiniteNum)){
@@ -7909,7 +7939,7 @@ function packMyPlayer(){
   const p = {type:'player',id:myNetId(),name:MP.playerName||'Jogador',
     x:Math.round(P.x),y:Math.round(P.y),face:+P.face.toFixed(2),
     moving:!!P.moving,sprint:!!P.sprint,weapon:P.weapon||'fists',swing:+(P.swing||0).toFixed(2),
-    hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle,skin:SKIN_SEL,hold:P.hold||''};
+    hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle,skin:SKIN_SEL,hold:P.hold||'',fw:Object.keys(P.firearms||{}).filter(k=>P.firearms[k])};
   if(OBS.on&&!P.inside&&!P.inVehicle)p.ob=[Math.round(OBS.x),Math.round(OBS.y),OBS.glitch>0?1:0];
   if(GH.on&&GH.b)p.gh=[GH.b.x|0,GH.b.y|0,Math.round(GH.x),Math.round(GH.y),GH.kill>0?1:0];
   if(P.sleeping){const sl=P.sleeping;p.sl=[SLC[sl.s]|0,sl.hx|0,sl.hy|0,sl.tent?1:0];}
@@ -10078,7 +10108,7 @@ function render(){
     // Screen overlays (flash, joystick, minimap) — shared with outdoor path
     ctx.setTransform(1,0,0,1,0,0);
     ctx.globalCompositeOperation='multiply';ctx.fillStyle='rgb(255,238,214)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over';drawVignette(true);
-    ghostFx();sleepFx();drawPingsEdge();
+    ghostFx();sleepFx();drawPingsEdge();drawPingBadge();
     if(CFG.dmgflash&&flash>0){ctx.fillStyle='rgba(190,0,0,'+(flash*.7).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
     else if(CFG.screenflash&&P.hp<30&&!P.dead){ctx.fillStyle='rgba(120,0,0,'+(.1+.07*Math.sin(T*6)).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
     if(joy.active&&!P.inVehicle){
@@ -10313,7 +10343,7 @@ function render(){
     if(OBS.vis){const va=.32*OBS.alpha,g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.65);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+va.toFixed(3)+')');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
     if(OBS.glitch>0){for(let i=0;i<9;i++){ctx.fillStyle=Math.random()<.5?'rgba(255,255,255,.12)':'rgba(0,0,0,.28)';ctx.fillRect(0,Math.random()*H,W,1+Math.random()*3*(OBS.glitch*4));}}
   }
-  drawFishMini();drawPingsEdge();
+  drawFishMini();drawPingsEdge();drawPingBadge();
   if(CFG.dmgflash&&flash>0){ctx.fillStyle='rgba(190,0,0,'+(flash*.7).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
   else if(CFG.screenflash&&P.hp<30&&!P.dead){ctx.fillStyle='rgba(120,0,0,'+(.1+.07*Math.sin(T*6)).toFixed(3)+')';ctx.fillRect(0,0,W,H);}
   if(joy.active&&!P.inVehicle){
@@ -10803,6 +10833,7 @@ cv.addEventListener('pointerdown',e=>{
   if(state!=='play'||!P||P.inVehicle)return;
   e.preventDefault();
   const p=toCanvasXY(e);
+  {const hit=MP.active?pingBadgeHit(p):null;if(hit){sendPing(hit);return;}}   // toque no botão do item: marca e NÃO inicia o joystick
   if(joy.id===null&&e.clientX<(dispW||W)*.58){
     joy.id=e.pointerId;joy.ox=joy.px=p.x;joy.oy=joy.py=p.y;joy.x=joy.y=0;joy.active=true;
     try{cv.setPointerCapture(e.pointerId);}catch(err){}
@@ -10817,18 +10848,6 @@ cv.addEventListener('pointermove',e=>{
   joy.x=d?dx/d*f:0;joy.y=d?dy/d*f:0;
 });
 function joyEnd(e){if(e.pointerId===joy.id){joy.id=null;joy.active=false;joy.x=joy.y=0;}}
-/* toque rápido em cima de um item perto do jogador (multiplayer) = marcar para o aliado */
-let tapDown=null;
-cv.addEventListener('pointerdown',e=>{tapDown={id:e.pointerId,t:performance.now(),x:e.clientX,y:e.clientY};});
-cv.addEventListener('pointerup',e=>{
-  const d=tapDown;tapDown=null;
-  if(!d||d.id!==e.pointerId||!MP.active||!MP.connected||state!=='play'||!P||P.inVehicle||P.dead)return;
-  if(performance.now()-d.t>320||Math.hypot(e.clientX-d.x,e.clientY-d.y)>10)return;
-  const p=toCanvasXY(e),wx=camX+p.x/Z,wy=camY+p.y/Z;
-  let best=null,bd=14;
-  for(const it of items){const dd=Math.hypot(it.x-wx,(it.y-5)-wy);if(dd<bd&&Math.hypot(it.x-P.x,it.y-P.y)<60){bd=dd;best=it;}}
-  if(best)sendPing(best);
-});
 cv.addEventListener('pointerup',joyEnd);
 cv.addEventListener('pointercancel',joyEnd);
 
@@ -10843,7 +10862,6 @@ function holdBtn(id,down,up){
 holdBtn('atk',()=>{atkHeld=true;attack();},()=>{atkHeld=false;});
 holdBtn('run',()=>{sprintHeld=true;},()=>{sprintHeld=false;});
 holdBtn('pick',()=>pickup());
-holdBtn('ping',()=>pingNearest());
 const swapBtn=$('swap');
 let swapPressTimer=null,swapPressActive=false,swapLongTriggered=false,swapPressPointer=null;
 function cancelSwapPress(){
