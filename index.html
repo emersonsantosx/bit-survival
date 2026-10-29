@@ -2197,6 +2197,30 @@ function lakeWobble(l,ang){
   const s=l._seed;
   return 0.82+0.12*Math.sin(ang*2.3+s)+0.08*Math.cos(ang*4.1-s*0.5)+0.05*Math.sin(ang*7+s*1.3);
 }
+/* profundidade 0..1 no ponto: 0 na margem, 1 a partir de ~24 px para dentro (chafariz da cidade não afunda ninguém) */
+function lakeDepth(x,y){
+  for(const l of lakes){
+    if(l.fountain)continue;
+    const dx=x-l.cx,dy=(y-l.cy)/0.92,d2=dx*dx+dy*dy,lim=l.r*1.08;
+    if(d2>lim*lim)continue;
+    let a=Math.atan2(dy,dx);if(a<0)a+=6.283;
+    const edge=l.r*lakeWobble(l,a),d=Math.sqrt(d2);
+    if(d<edge)return Math.min(1,(edge-d)/24);
+  }
+  return 0;
+}
+/* superfície da água em volta de quem está afundado: elipse azul translúcida que esconde o corte do corpo, com marolas */
+function waterSurface(x,y,depth,k){
+  const t=T*3,rx=(6+depth*3)*k,ry=(2.6+depth*.8)*k,X=Math.round(x),Y=Math.round(y);
+  ctx.save();
+  ctx.fillStyle='rgba(38,112,176,'+(.5+.25*depth).toFixed(2)+')';            // metade da frente da elipse: cobre o corte do corpo sem tapar a cabeça
+  ctx.beginPath();ctx.ellipse(X,Y,rx,ry,0,0,3.1416);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(205,235,255,.75)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.ellipse(X,Y,rx,ry,0,0,3.1416);ctx.stroke();
+  const w=(t%1);ctx.globalAlpha=.55*(1-w);ctx.strokeStyle='#e6f6ff';           // marola que se abre
+  ctx.beginPath();ctx.ellipse(X,Y,rx+3+w*7*k,ry+1.5+w*3*k,0,0,6.283);ctx.stroke();
+  ctx.restore();
+}
 function nearFountain(x,y){
   for(const l of lakes)if(l.fountain&&Math.hypot(x-l.cx,(y-l.cy)/.92)<l.r*1.6)return true;
   return false;
@@ -4671,7 +4695,8 @@ function damageAnimal(a,dmg,net){
 }
 function drawAnimal(a){
   if(a.dead) return;
-  const x=a.x,y=a.y;
+  const x=a.x,y=a.y,dep=lakeDepth(x,y);
+  if(dep>=.04){ctx.save();ctx.beginPath();ctx.rect(x-24,y-40,48,40+3-dep*6);ctx.clip();}   // na água só a parte de cima do bicho aparece
   shadow(x,y+2,6,3);
   ctx.save();ctx.translate(x,y);ctx.rotate(a.face||0);
   const col=
@@ -4687,6 +4712,7 @@ function drawAnimal(a){
   else if(a.k==='vulture'||a.k==='crow'){ R(-4,-1,8,3,col); R(-6,-3,5,2,col); R(1,-3,5,2,col); R(3,-2,3,2,'#c07040'); }
   else { R(-3,-2,6,4,col); }
   ctx.restore();
+  if(dep>=.04){ctx.restore();waterSurface(x,y+3-dep*6,dep,.7);}
   // Barra de vida (vermelha, igual zumbis)
   if(a.max && (a.hp<a.max || (P && Math.hypot(P.x-x,P.y-y)<100))){
     const bw=12, ratio=clamp(a.hp/a.max,0,1);
@@ -8302,14 +8328,21 @@ function armLine(sx,sy,ex,ey,sleeve,skin,fr){
 function punchHand(h,sw){if(sw>0&&!h._pon)h._ph=(h._ph|0)^1;h._pon=sw>0;return h._ph|0;} // alterna soco direito/esquerdo a cada golpe
 const TWO_HAND={pistol:1,rifle:1,shotgun:1,smg:1,bow:1,bat:1,axe:1,pickaxe:1,sword:1,spear:1,fishingrod:1}; // armas de duas mãos
 function human(x,y,face,o){
+  humanDraw(x,y,face,o);
+  let d=lakeDepth(x,y);
+  if(d>=.04){if(o.crawler)d*=.4;const k=o.s||1;waterSurface(x,y+(3-3*d)*k,d,k);}
+}
+function humanDraw(x,y,face,o){
   const fx=Math.cos(face),fy=Math.sin(face);
   ctx.save();
   ctx.translate(Math.round(x),Math.round(y));
-  const inWater=pointInLake(x,y);
+  let depth=lakeDepth(x,y);if(depth<.04)depth=0;
+  if(depth&&o.crawler)depth*=.4;                              // quem rasteja fica mais por cima
   let scaleM=o.s||1,offsetY=0;
-  if(inWater){scaleM*=0.88+Math.sin(T*8)*0.04;offsetY=3;}
+  if(depth){offsetY=depth*9+Math.sin(T*5+x*.07)*.6*depth;}   // afunda até só a cabeça ficar para fora e balança na água
   if(scaleM!==1)ctx.scale(scaleM,scaleM);
   ctx.translate(0,offsetY);
+  if(depth){ctx.beginPath();ctx.rect(-40,-80,80,80+(3-depth*12)-0);ctx.clip();}   // corta tudo abaixo da linha d'água (pescoço quando fundo)
   if(o.crawler){
     shadow(0,2,8,3);
     const bx=fx>=0?-1:1,ca=Math.sin(o.anim*0.5);
