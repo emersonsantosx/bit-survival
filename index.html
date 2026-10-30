@@ -8436,6 +8436,7 @@ function humanBody(R,o,face){
         if(front&&kind!==4)R(-1,-10,2,1,kind===6?'#400':'#7a1010');}
     }else{
       R(eL,-12,1,1,'#111');R(eR,-12,1,1,'#111');
+      if(hs==='long'&&ex!==0){R(ex>0?3:-4,-11,1,1,Sh(skin,-.1));R(ex>0?1:-2,-11,1,1,Sh(skin,-.06));}   // nariz de perfil e bochecha: o rosto de lado fica legivel
       if(S.beard){R(-3,-11,6,2,hair);R(-1,-11,2,1,skin);}
     }
   }
@@ -8457,7 +8458,9 @@ function humanBody(R,o,face){
       break;}
     case 'long':
       R(-3,-15,6,2,hair);
-      if(!back){R(-3,-13,2,1,hair);R(1,-13,2,1,hair);}
+      if(!back){   // de lado a franja cai so do lado de tras: assim o olho de la nao se funde ao cabelo preto e o rosto mostra os dois olhos
+        if(ex===0){R(-3,-13,2,1,hair);R(1,-13,2,1,hair);}else if(ex>0)R(-3,-13,2,1,hair);else R(1,-13,2,1,hair);
+      }
       if(S.bow&&!back){R(2,-16,3,2,S.bow);R(3,-17,1,1,S.bow);R(3,-15,1,1,Sh(S.bow,-.25));}
       break;
     case 'pony':
