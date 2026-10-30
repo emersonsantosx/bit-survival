@@ -8700,12 +8700,24 @@ function treeSprite(k,v,snow){
   const ell=(cx,cy,rx,ry,col)=>{for(let y=-ry;y<=ry;y++){const hf=Math.round(rx*Math.sqrt(Math.max(0,1-(y*y)/(ry*ry+.01))));px(cx-hf,cy+y,hf*2+1,1,col);}};
   const line=(x0,y0,x1,y1,t,col)=>{const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0))||1;for(let i=0;i<=n;i++)px(x0+(x1-x0)*i/n-(t>>1),y0+(y1-y0)*i/n-(t>>1),t,t,col);};
   const WH='#f2f8fc',WS='#c8dcec';
-  const trunk=(w,h,b)=>{
-    const x0=-Math.floor(w/2),q=Math.max(1,w>>2);
-    px(x0,-h,w,h,b[1]);px(x0,-h,q,h,b[2]);px(x0+w-q,-h,q,h,b[0]);
-    px(x0-2,-3,w+4,3,b[1]);px(x0-2,-3,2,3,b[2]);px(x0+w,-3,2,3,b[0]);px(x0-1,-1,w+2,1,b[0]);
-    for(let i=0,n=Math.round(h/5);i<n;i++)px(x0+1+r()*(w-3),-h+r()*(h-4),1,2,b[0]);
+  const trunk=(w,h,b,bend)=>{   // tronco afunilado, com raizes na base, veios de casca, nos e leve curvatura
+    const bd=bend===undefined?Math.round((r()-.5)*2):bend;
+    const cxAt=i=>Math.round(bd*Math.sin(i/h*2.5)*1.2);
+    for(let i=0;i<h;i++){
+      const fl=i<5?Math.round((5-i)*.4):0,wi=Math.max(2,Math.round(w*(1-.2*i/h))+fl*2);
+      const x0=cxAt(i)-(wi>>1),band=Math.max(1,Math.round(wi*.28));
+      px(x0,-1-i,wi,1,b[1]);px(x0,-1-i,band,1,b[2]);px(x0+wi-band,-1-i,band,1,b[0]);
+    }
+    const x00=cxAt(0)-((w+4)>>1);
+    px(x00,-1,w+4,1,b[0]);px(x00-1,-1,2,1,b[1]);px(x00+w+3,-1,2,1,b[0]);   // pontas das raizes
+    for(let s=0,n=Math.max(2,Math.round(w*h/36));s<n;s++){
+      const len=3+Math.floor(r()*5),i=6+Math.floor(r()*Math.max(1,h-6-len)),off=1+Math.floor(r()*Math.max(1,Math.round(w*.8)-2));
+      const x=cxAt(i)-(w>>1)+off;px(x,-1-i-len,1,len,b[0]);
+      if(r()<.5)px(x-1,-1-i-len+1,1,Math.max(1,len-2),b[2]);
+    }
+    if(h>=20&&r()<.7){const i=Math.round(h*(.3+r()*.25)),x=cxAt(i)-(w>>1)+1+Math.floor(r()*Math.max(1,w-4));px(x,-1-i,2,2,b[0]);px(x,-2-i,2,1,b[2]);}
   };
+  const br=(x0,y0,x1,y1,t,col)=>{const mx=(x0+x1)/2,my=(y0+y1)/2;line(x0,y0,mx,my,t,col);line(mx,my,x1,y1,Math.max(1,t-1),col);};   // galho que afina
   const fol=(cx,cy,rx,ry,p,sn)=>{
     ell(cx+1,cy+2,rx,ry,p[0]);ell(cx,cy,rx,ry,p[1]);
     ell(cx-Math.round(rx*.22),cy-Math.round(ry*.28),Math.max(2,Math.round(rx*.62)),Math.max(2,Math.round(ry*.58)),p[2]);
@@ -8734,7 +8746,7 @@ function treeSprite(k,v,snow){
     if(k===2){pine(66+v*3,16+v,5,['#10303b','#1b4a5a','#2d6676'],4,['#2a2a30','#4a4038','#6a5a4a'],true);}
     else if(k===4){ // árvore seca com neve
       const b=['#2a2a30','#4a4038','#6a5a4a'];trunk(5,34+v*3,b);
-      line(0,-26,-12,-40-v*2,3,b[1]);line(0,-30,12,-44,3,b[1]);line(-6,-34,-10,-52,2,b[1]);line(5,-36,9,-54-v,2,b[1]);line(0,-34-v*3,-2,-58-v*3,2,b[1]);
+      br(0,-26,-12,-40-v*2,3,b[1]);br(0,-30,12,-44,3,b[1]);br(-6,-34,-10,-52,2,b[1]);br(5,-36,9,-54-v,2,b[1]);br(0,-34-v*3,-2,-58-v*3,2,b[1]);
       for(const q of [[-12,-41],[12,-45],[-10,-53],[9,-55],[-2,-59]])px(q[0]-2,q[1]-1,5,2,WH);
       px(-3,-8,7,2,WH);
     }else{ // carvalho carregado de neve
@@ -8746,17 +8758,23 @@ function treeSprite(k,v,snow){
     if(k===3){
       if(v<2){ // árvore seca retorcida
         const b=['#3a2c1c','#5a4630','#7a6444'];trunk(6,30+v*4,b);
-        line(0,-24,-14,-38,4,b[1]);line(0,-28,13,-42,4,b[1]);line(-8,-33,-12,-50,3,b[1]);line(7,-37,11,-52,3,b[1]);line(0,-30,1,-54-v*3,3,b[1]);
+        br(0,-24,-14,-38,4,b[1]);br(0,-28,13,-42,4,b[1]);br(-8,-33,-12,-50,3,b[1]);br(7,-37,11,-52,3,b[1]);br(0,-30,1,-54-v*3,3,b[1]);
         px(-17,-41,4,3,b[2]);px(11,-45,5,3,b[2]);
       }else{ // acácia de copa achatada
-        const b=['#3a2c1c','#5a4630','#7a6444'];trunk(5,26,b);line(0,-24,-10,-34,3,b[1]);line(0,-24,11,-33,3,b[1]);
+        const b=['#3a2c1c','#5a4630','#7a6444'];trunk(5,26,b);br(0,-24,-10,-34,3,b[1]);br(0,-24,11,-33,3,b[1]);
         const p=['#4f6a28','#6f8a3a','#8fae4c','#c4dc88'];
         fol(-2,-40,24+v,7,p);fol(-14,-35,13,6,p);fol(14,-34,13,6,p);fol(0,-46,15,6,p);
       }
     }else if(k===6){ // palmeira
       const sw=v-1.5;
-      for(let i=0;i<9;i++){const t=i/8,x=Math.round(Math.sin(t*1.6)*sw*2.2),y=-Math.round(t*58);px(x-2,y-6,5,7,i%2?'#8a7440':'#6a5a30');px(x-2,y-6,1,7,'#a89050');}
-      const tx=Math.round(Math.sin(1.6)*sw*2.2),ty=-60;
+      const pcx=i=>Math.round(Math.sin(i/59*1.6)*sw*2.2);
+      for(let i=0;i<60;i++){   // tronco curvo e continuo, mais grosso na base, com aneis
+        const wi=Math.round(7-3*i/60)+(i<4?2:0),x=pcx(i)-(wi>>1),q=Math.max(1,wi>>2);
+        px(x,-1-i,wi,1,i%5===0?'#5a4a28':i%5===1?'#a08a4c':'#8a7440');
+        px(x,-1-i,q,1,i%5===0?'#6a5a30':'#b09a58');px(x+wi-q,-1-i,q,1,'#5a4a28');
+      }
+      px(pcx(0)-5,-1,2,1,'#8a7440');px(pcx(0)+4,-1,2,1,'#5a4a28');
+      const tx=pcx(59),ty=-60;
       const fr=['#2f7a34','#3f9a44','#5ab85a'];
       for(let i=0;i<9;i++){
         const a=-3.14+i*.785+(v*.1),dx=Math.cos(a),dy=Math.sin(a)*.45,L=22+(i%2)*4;
@@ -8779,7 +8797,7 @@ function treeSprite(k,v,snow){
     if(k===0){pine(58+v*4,17+v,5,['#133a1d','#1c5628','#2a7336'],5,FB,sn0);}
     else if(k===1){trunk(7,24,FB);const p=['#1d4d27','#2d7535','#4aa347','#8fd46e'];for(const q of [[0,-54-v*2,11,9],[-13,-42,12,10],[13,-43,12,10],[0,-40,17,12],[-7,-50,9,8],[8,-51,9,8]])fol(q[0],q[1],q[2],q[3],p,sn0);}
     else if(k===9){ // bétula
-      px(-2,-40,5,40,'#e8e2d4');px(-2,-40,1,40,'#fffaf0');px(1,-40,2,40,'#b8b0a0');px(-3,-3,7,3,'#e8e2d4');
+      trunk(5,41,['#a8a090','#e8e2d4','#fffaf0'],0);
       for(let i=0;i<8;i++)px(-2+(i%2),-8-i*5,3,1,'#2a2a2a');
       const p=['#3f7a34','#5a9e48','#86c262','#c4e88a'];for(const q of [[0,-52,9,9],[-8,-44,9,8],[8,-45,9,8],[0,-42,11,8]])fol(q[0],q[1],q[2],q[3],p,sn0);
     }else{ // copa grande
