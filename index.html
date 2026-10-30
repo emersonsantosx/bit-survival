@@ -2236,7 +2236,7 @@ function pointInLake(x,y){
   }
   return false;
 }
-/* ===== ORLA DA CIDADE: parque a direita, calcadao de ondas, praia e mar raso na borda de baixo =====
+/* ===== ORLA DA CIDADE: calcadao de ondas, praia e mar raso na borda de baixo (direita, esquerda e topo ficam com o chao cinza da cidade) =====
    Tudo e derivado das ruas ja geradas e de um gerador proprio (mkRng): nao consome o _rng, entao o resto do mundo continua igual. */
 let ORLA=null;
 function orlaShore(x){const o=ORLA;return o.sea+9*Math.sin(x*.0042+o.p1)+5*Math.sin(x*.011+o.p2)+3*Math.sin(x*.027+o.p3);}
@@ -2246,11 +2246,20 @@ function inSea(x,y){return !!ORLA&&y>ORLA.top&&y>orlaShore(x)&&!onPier(x,y);}
 function genOrla(){
   let yb=0,xb=0;
   for(const r of roads){if(r.y+r.h>yb)yb=r.y+r.h;if(r.x+r.w>xb)xb=r.x+r.w;}
+  {   // margem da direita igual a da esquerda (a geracao ja terminou, entao cortar o mundo aqui nao mexe no sorteio)
+    let x0=1e9;for(const r of roads)if(r.x<x0)x0=r.x;
+    const nw=Math.round(xb+x0);
+    if(nw<WW){
+      WW=nw;
+      const kx=a=>a.filter(e=>e.x<WW-6);
+      trees=kx(trees);rocks=kx(rocks);decorations=kx(decorations);items=kx(items);animals=kx(animals);vehicles=vehicles.filter(v=>v.x<WW-24);
+    }
+  }
   const m=WH-yb;
   if(m<90)return;
   const h=mkRng(((Math.round(yb)*131+Math.round(xb)*71+WW)%99991)/99991);
-  const sandW=Math.round(clamp(m*.2,26,50)),seaD=clamp(m*.5,64,230);
-  const sea=Math.max(WH-seaD,yb+sandW+24);
+  const sandW=Math.round(clamp(m*.32,34,110)),seaD=clamp(m*.4,56,200);
+  const sea=Math.max(WH-seaD,yb+sandW+22);
   ORLA={yb,xb,sea,sandW,top:sea-24,p1:h()*6.28,p2:h()*6.28,p3:h()*6.28,piers:[]};
   const o=ORLA;
   for(const fx of [.18+h()*.14,.58+h()*.22]){
@@ -2317,21 +2326,6 @@ function orlaPatterns(){
 function drawOrla(vx0,vy0,vx1,vy1){
   const o=ORLA;if(!o)return;
   orlaPatterns();
-  if(vx1>o.xb&&vy0<o.yb){                              // parque (grama) no lugar da calcada cinza a direita
-    const gy=Math.max(0,vy0),gh=Math.min(vy1,o.yb)-gy;
-    ctx.save();ctx.beginPath();ctx.rect(o.xb,gy,vx1-o.xb,gh);ctx.clip();
-    R(o.xb,gy,vx1-o.xb,gh,'#3c6a33');
-    const tx0=Math.floor(Math.max(vx0,o.xb)/16),tx1=Math.ceil(vx1/16),ty0=Math.floor(gy/16),ty1=Math.ceil((gy+gh)/16);
-    for(let ty=ty0;ty<ty1;ty++)for(let tx=tx0;tx<tx1;tx++){
-      const v=(((tx*73856093)^(ty*19349663))>>>0)%100,px=tx*16,py=ty*16;
-      if(v<30)R(px,py,16,16,'#467a3a');
-      else if(v<42)R(px,py,16,16,'#36612d');
-      else if(v<52){R(px+4,py+5,2,3,'#5a9a48');R(px+10,py+9,2,2,'#2d5226');}
-      else if(v<56)R(px+6,py+7,3,2,'#e8d86a');
-    }
-    ctx.restore();
-    R(o.xb,gy,3,gh,'#8a877e');
-  }
   if(vy1<o.yb)return;
   ctx.save();ctx.beginPath();ctx.rect(0,0,WW,WH);ctx.clip();
   const xa=Math.max(Math.floor(vx0/8)*8-8,-8),xe=Math.min(Math.ceil(vx1/8)*8+8,WW+8);
@@ -4410,7 +4404,6 @@ function paintMapBase(g,s){
   g.fillStyle=C.land;
   g.fillRect(0,0,Math.ceil(WW*s),Math.ceil(WH*s));
   if(M==='city'&&ORLA){const o=ORLA;
-    g.fillStyle='#3f6e35';g.fillRect(o.xb*s,0,Math.ceil((WW-o.xb)*s)+1,Math.ceil(o.yb*s));
     g.fillStyle='#bdb8aa';g.fillRect(0,o.yb*s,Math.ceil(WW*s),Math.ceil((o.sea-o.sandW-o.yb)*s));
     g.fillStyle='#e0cb92';g.fillRect(0,(o.sea-o.sandW)*s,Math.ceil(WW*s),Math.ceil(o.sandW*s)+1);
     g.fillStyle='#2a8fb8';g.fillRect(0,o.sea*s,Math.ceil(WW*s),Math.ceil((WH-o.sea)*s)+1);
