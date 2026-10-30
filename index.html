@@ -2246,11 +2246,20 @@ function inSea(x,y){return !!ORLA&&y>ORLA.top&&y>orlaShore(x)&&!onPier(x,y);}
 function genOrla(){
   let yb=0,xb=0;
   for(const r of roads){if(r.y+r.h>yb)yb=r.y+r.h;if(r.x+r.w>xb)xb=r.x+r.w;}
+  {   // margem da direita igual a da esquerda (a geracao ja terminou, entao cortar o mundo aqui nao mexe no sorteio)
+    let x0=1e9;for(const r of roads)if(r.x<x0)x0=r.x;
+    const nw=Math.round(xb+x0);
+    if(nw<WW){
+      WW=nw;
+      const kx=a=>a.filter(e=>e.x<WW-6);
+      trees=kx(trees);rocks=kx(rocks);decorations=kx(decorations);items=kx(items);animals=kx(animals);vehicles=vehicles.filter(v=>v.x<WW-24);
+    }
+  }
   const m=WH-yb;
   if(m<90)return;
   const h=mkRng(((Math.round(yb)*131+Math.round(xb)*71+WW)%99991)/99991);
-  const sandW=Math.round(clamp(m*.2,26,50)),seaD=clamp(m*.5,64,230);
-  const sea=Math.max(WH-seaD,yb+sandW+24);
+  const sandW=Math.round(clamp(m*.32,34,110)),seaD=clamp(m*.4,56,200);
+  const sea=Math.max(WH-seaD,yb+sandW+22);
   ORLA={yb,xb,sea,sandW,top:sea-24,p1:h()*6.28,p2:h()*6.28,p3:h()*6.28,piers:[]};
   const o=ORLA;
   for(const fx of [.18+h()*.14,.58+h()*.22]){
