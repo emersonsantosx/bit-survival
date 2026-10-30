@@ -2236,7 +2236,7 @@ function pointInLake(x,y){
   }
   return false;
 }
-/* ===== ORLA DA CIDADE: parque a direita, calcadao de ondas, praia e mar raso na borda de baixo =====
+/* ===== ORLA DA CIDADE: calcadao de ondas, praia e mar raso na borda de baixo (direita, esquerda e topo ficam com o chao cinza da cidade) =====
    Tudo e derivado das ruas ja geradas e de um gerador proprio (mkRng): nao consome o _rng, entao o resto do mundo continua igual. */
 let ORLA=null;
 function orlaShore(x){const o=ORLA;return o.sea+9*Math.sin(x*.0042+o.p1)+5*Math.sin(x*.011+o.p2)+3*Math.sin(x*.027+o.p3);}
@@ -2246,11 +2246,20 @@ function inSea(x,y){return !!ORLA&&y>ORLA.top&&y>orlaShore(x)&&!onPier(x,y);}
 function genOrla(){
   let yb=0,xb=0;
   for(const r of roads){if(r.y+r.h>yb)yb=r.y+r.h;if(r.x+r.w>xb)xb=r.x+r.w;}
+  {   // margem da direita igual a da esquerda (a geracao ja terminou, entao cortar o mundo aqui nao mexe no sorteio)
+    let x0=1e9;for(const r of roads)if(r.x<x0)x0=r.x;
+    const nw=Math.round(xb+x0);
+    if(nw<WW){
+      WW=nw;
+      const kx=a=>a.filter(e=>e.x<WW-6);
+      trees=kx(trees);rocks=kx(rocks);decorations=kx(decorations);items=kx(items);animals=kx(animals);vehicles=vehicles.filter(v=>v.x<WW-24);
+    }
+  }
   const m=WH-yb;
   if(m<90)return;
   const h=mkRng(((Math.round(yb)*131+Math.round(xb)*71+WW)%99991)/99991);
-  const sandW=Math.round(clamp(m*.2,26,50)),seaD=clamp(m*.5,64,230);
-  const sea=Math.max(WH-seaD,yb+sandW+24);
+  const sandW=Math.round(clamp(m*.32,34,110)),seaD=clamp(m*.4,56,200);
+  const sea=Math.max(WH-seaD,yb+sandW+22);
   ORLA={yb,xb,sea,sandW,top:sea-24,p1:h()*6.28,p2:h()*6.28,p3:h()*6.28,piers:[]};
   const o=ORLA;
   for(const fx of [.18+h()*.14,.58+h()*.22]){
@@ -2317,21 +2326,6 @@ function orlaPatterns(){
 function drawOrla(vx0,vy0,vx1,vy1){
   const o=ORLA;if(!o)return;
   orlaPatterns();
-  if(vx1>o.xb&&vy0<o.yb){                              // parque (grama) no lugar da calcada cinza a direita
-    const gy=Math.max(0,vy0),gh=Math.min(vy1,o.yb)-gy;
-    ctx.save();ctx.beginPath();ctx.rect(o.xb,gy,vx1-o.xb,gh);ctx.clip();
-    R(o.xb,gy,vx1-o.xb,gh,'#3c6a33');
-    const tx0=Math.floor(Math.max(vx0,o.xb)/16),tx1=Math.ceil(vx1/16),ty0=Math.floor(gy/16),ty1=Math.ceil((gy+gh)/16);
-    for(let ty=ty0;ty<ty1;ty++)for(let tx=tx0;tx<tx1;tx++){
-      const v=(((tx*73856093)^(ty*19349663))>>>0)%100,px=tx*16,py=ty*16;
-      if(v<30)R(px,py,16,16,'#467a3a');
-      else if(v<42)R(px,py,16,16,'#36612d');
-      else if(v<52){R(px+4,py+5,2,3,'#5a9a48');R(px+10,py+9,2,2,'#2d5226');}
-      else if(v<56)R(px+6,py+7,3,2,'#e8d86a');
-    }
-    ctx.restore();
-    R(o.xb,gy,3,gh,'#8a877e');
-  }
   if(vy1<o.yb)return;
   ctx.save();ctx.beginPath();ctx.rect(0,0,WW,WH);ctx.clip();
   const xa=Math.max(Math.floor(vx0/8)*8-8,-8),xe=Math.min(Math.ceil(vx1/8)*8+8,WW+8);
@@ -4410,7 +4404,6 @@ function paintMapBase(g,s){
   g.fillStyle=C.land;
   g.fillRect(0,0,Math.ceil(WW*s),Math.ceil(WH*s));
   if(M==='city'&&ORLA){const o=ORLA;
-    g.fillStyle='#3f6e35';g.fillRect(o.xb*s,0,Math.ceil((WW-o.xb)*s)+1,Math.ceil(o.yb*s));
     g.fillStyle='#bdb8aa';g.fillRect(0,o.yb*s,Math.ceil(WW*s),Math.ceil((o.sea-o.sandW-o.yb)*s));
     g.fillStyle='#e0cb92';g.fillRect(0,(o.sea-o.sandW)*s,Math.ceil(WW*s),Math.ceil(o.sandW*s)+1);
     g.fillStyle='#2a8fb8';g.fillRect(0,o.sea*s,Math.ceil(WW*s),Math.ceil((WH-o.sea)*s)+1);
@@ -4872,6 +4865,8 @@ function zombieLook(kind,si){
   const v=(si|0)%5;
   const skin=kind===9?'#d8e0ea':kind===3?'#556b2f':kind===2?'#8a5a4a':kind===4?'#7ac070':kind===5?'#6a8060':kind===6?'#c0a0a0':kind===7?'#4a7a38':kind===8?'#c05040':kind===0?ZFLESH[v]:kind===1?'#a0b070':t.color;
   const shirt=kind===9?'#f0f4f8':kind===3?'#b22222':kind===2?'#3a1a1a':kind===5?'#4a3a20':kind===6?'#7a4a7a':kind===7?'#5a4a30':kind===8?'#5a1010':kind===4?'#c8b830':kind===1?'#c0a050':ZSHIRTS[v];
+  const M=ZMAP[selectedMap];                                    // cada mapa tem o seu povo de zumbis
+  if(M){if(kind===0)return {skin:M.fl[v],shirt:M.sh[v]};const o=M.look&&M.look[kind];if(o)return {skin:o[0],shirt:o[1]};}
   return {skin:skin,shirt:shirt};
 }
 /* true se o ponto aparece (ou está quase aparecendo) na tela de algum jogador: zumbi novo nunca nasce à vista */
@@ -8257,7 +8252,56 @@ const ZSTYLE={
   9:{os:'fur',hs:'bald',pants:'#e6edf3',hair:'#f4f8fb',boot:'#e6edf3'}
 };
 const ZEYE=[ '#f0e060','#f0e060',null,'#ff4040','#b0ff70','#f0e060','#ffffff','#d8e870','#ff3030','#ff3030' ];
-function zstyle(kind,zv){return kind===0?ZS_COMMON[zv%5]:(ZSTYLE[kind]||ZS_COMMON[0]);}
+/* Zumbis exclusivos de cada mapa: a cidade mantém os moradores (operário, executivo, paciente, soldado, capuz);
+   floresta, neve e deserto ganham gente que combina com o lugar. Cores de pele e roupa em fl/sh, estilos em common/kinds. */
+const ZMAP={
+  forest:{
+    fl:['#6a8a4a','#728f52','#5f8548','#7a9250','#668a56'],
+    sh:['#a83a2a','#d8741a','#4a6a3a','#3a6a8a','#8a8a4a'],
+    common:[
+      {os:'flannel',hs:'beanie',hat:'#a8402a',pants:'#3a4a5a',hair:'#3a2a18',boot:'#3a2a1a',patch:'#4a7a3a'},                 // lenhador
+      {os:'vest',hs:'cap',hat:'#4a5a2a',under:'#4a5a38',pants:'#4a5a38',hair:'#2a2218',boot:'#2a2418',patch:'#4a7a3a'},       // caçador de colete laranja
+      {os:'jacket',hs:'ranger',hat:'#5a6a3a',pants:'#4a4a38',hair:'#2a2218',boot:'#2a2018',patch:'#4a7a3a'},                  // guarda florestal
+      {os:'jacket',hs:'bucket',hat:'#8a8a5a',pants:'#6a5a3a',shorts:true,acc:'pack',pack:'#b05a2a',hair:'#3a2a18',boot:'#4a3a28',patch:'#4a7a3a'}, // trilheiro de mochila
+      {os:'vest',hs:'bucket',hat:'#c8b870',under:'#c8c0a0',pants:'#3a4a2a',hair:'#3a3028',boot:'#2a3a20',patch:'#4a7a3a'}      // pescador
+    ],
+    look:{1:['#8aa060','#6a9a50'],2:['#7a5a3a','#3a3a1a'],3:['#4a6a2a','#6a3a1a'],5:['#5a7a4a','#4a5a2a'],6:['#a8b090','#5a6a3a'],7:['#4a7a38','#5a5a2a'],8:['#a85a3a','#3a2a10']},
+    kinds:{1:{os:'flannel',hs:'band',band:'#e0701a',pants:'#3a4a5a',hair:'#3a2a18',boot:'#3a2a1a',patch:'#4a7a3a'}}
+  },
+  snow:{
+    fl:['#a8c0d0','#9ab4c8','#b0c4d4','#98b0c0','#a4bccc'],
+    sh:['#c04a3a','#3a5a9a','#8a4a3a','#3a9aa8','#e0e4e8'],
+    common:[
+      {os:'jacket',hs:'beanie',hat:'#c04a3a',goggles:true,pants:'#2a3a5a',hair:'#3a3028',boot:'#2a2a30',patch:'#dff0fa'},     // esquiador
+      {os:'parka',hs:'hoodfur',pants:'#3a3a44',hair:'#2a2218',boot:'#2a2a30',patch:'#dff0fa'},                                 // montanhista de parka
+      {os:'sweater',hs:'ushanka',hat:'#6a5a4a',pants:'#4a4a50',hair:'#3a3028',boot:'#2a2018',patch:'#dff0fa'},                  // nórdico de ushanka
+      {os:'hoodie',hs:'beanie',hat:'#3a9aa8',pants:'#2a2a30',hair:'#2a2218',boot:'#e0dcd0',patch:'#dff0fa'},                    // snowboarder
+      {os:'parka',hs:'hoodfur',pants:'#d8dce0',hair:'#cfd6dc',boot:'#8a8a90',patch:'#dff0fa'}                                   // caçador camuflado de branco
+    ],
+    look:{1:['#a8c8d8','#c04a3a'],2:['#8a98a8','#3a4a5a'],3:['#7a98b0','#dfe8f0'],5:['#8aa8b8','#4a5a6a'],6:['#c8d4dc','#6a7a9a'],7:['#7a9ab0','#5a6a7a'],8:['#c07a6a','#3a4a6a']},
+    kinds:{1:{os:'jacket',hs:'beanie',hat:'#c04a3a',pants:'#2a3a5a',hair:'#3a3028',boot:'#2a2a30',patch:'#dff0fa'},
+           8:{os:'parka',hs:'hoodfur',pants:'#3a2a2a',hair:'#a0201a',boot:'#1a1010',patch:'#dff0fa'}}
+  },
+  desert:{
+    fl:['#b89a6a','#a88a5a','#c0a478','#b08c5c','#a48458'],
+    sh:['#d8c8a0','#4a6a8a','#e0805a','#d8cfae','#8a5a2a'],
+    common:[
+      {os:'robe',hs:'turban',hat:'#e8e0c8',veil:true,sash:'#a03a2a',pants:'#8a7a5a',hair:'#222',boot:'#5a4a30',patch:'#d8c090'},   // beduíno de turbante
+      {os:'overalls',hs:'strawhat',hat:'#d8c070',band:'#a03a2a',under:'#c8b890',pants:'#4a6a8a',hair:'#3a2a18',boot:'#4a3a28',patch:'#d8c090'}, // garimpeiro
+      {os:'hawaii',hs:'strawhat',hat:'#e8d890',band:'#3a8a7a',pants:'#d8c898',shorts:true,hair:'#3a2a18',boot:'#d0c8b0',patch:'#d8c090'},   // turista
+      {os:'wrap',hs:'wraphead',pants:'#d8cfae',hair:'#3a3028',boot:'#d8cfae',patch:'#d8c090'},                                      // múmia enfaixada
+      {os:'overalls',hs:'minehat',under:'#6a6a6a',pants:'#5a4a3a',hair:'#222',boot:'#2a2018',patch:'#d8c090'}                       // mineiro de capacete
+    ],
+    look:{1:['#c0a478','#d8d0b8'],2:['#a07a50','#4a2a1a'],3:['#9a8a5a','#a02020'],5:['#a88a5a','#6a5a3a'],6:['#d0b898','#8a4a3a'],7:['#8a8a4a','#6a5a2a'],8:['#c07a50','#5a2a1a']},
+    kinds:{1:{os:'tank',hs:'turban',hat:'#d8d0b8',veil:true,pants:'#8a7a5a',hair:'#222',boot:'#5a4a30',patch:'#d8c090'},
+           3:{os:'robe',hs:'turban',hat:'#a02020',sash:'#e0c040',pants:null,hair:'#222',boot:'#3a2a1a',patch:'#d8c090'}}
+  }
+};
+function zstyle(kind,zv){
+  const M=ZMAP[selectedMap];
+  if(M){if(kind===0)return M.common[zv%5];if(M.kinds[kind])return M.kinds[kind];}
+  return kind===0?ZS_COMMON[zv%5]:(ZSTYLE[kind]||ZS_COMMON[0]);
+}
 /* Corpo inteiro SEM mãos e armas (R = função de retângulo; o menu de skins usa a mesma função) */
 function humanBody(R,o,face){
   const fx=Math.cos(face),fy=Math.sin(face);
@@ -8277,7 +8321,7 @@ function humanBody(R,o,face){
   else if(os==='dress'||os==='gown'){R(-4,-2+l1,3,5,skin);R(1,-2+l2,3,5,skin);}
   else{R(-4,-2+l1,3,5,pants);R(1,-2+l2,3,5,pants);}
   R(-4,1+l1,3,2,boot);R(1,1+l2,3,2,boot);
-  if(z&&kind===0&&zv===2){R(-4,-1+l1,3,1,'#e8e4d8');}                 // bandagem na perna do paciente
+  if(z&&kind===0&&S.os==='gown'){R(-4,-1+l1,3,1,'#e8e4d8');}                 // bandagem na perna do paciente
   // mochila (de lado/frente aparece atrás; de costas cobre as costas)
   if(S.acc==='pack'&&!back){R(-5,-8,1,5,S.pack);R(4,-8,1,5,S.pack);}
   // tronco
@@ -8345,6 +8389,26 @@ function humanBody(R,o,face){
       break;
     case 'fur':
       R(-4,-9,8,8,shirt);R(-5,-8,1,3,'#fff');R(4,-6,1,3,'#fff');R(-2,-3,4,2,'#cfdde8');
+      break;
+    case 'flannel':
+      R(-4,-9,8,8,shirt);R(-3,-9,1,8,sd);R(0,-9,1,8,sd);R(3,-9,1,8,sd);R(-4,-7,8,1,sd);R(-4,-4,8,1,sd);R(-1,-9,2,1,skin);R(-4,-2,8,1,'#2a2018');R(0,-2,1,1,'#c9a03a');
+      break;
+    case 'parka':
+      R(-5,-9,10,9,shirt);R(-5,-6,10,1,sd);R(-5,-3,10,1,sd);R(-5,0,10,1,'#e8e4d8');R(-4,-10,8,2,'#e8e4d8');
+      if(!back)R(0,-8,1,8,Sh(shirt,-.35));
+      break;
+    case 'robe':
+      R(-4,-9,8,8,shirt);R(-5,-1,10,2,shirt);R(-5,0,10,1,sd);R(-4,-5,8,1,S.sash||sd);R(-1,-9,2,1,skin);if(!back)R(0,-8,1,3,sd);
+      break;
+    case 'overalls':
+      R(-4,-9,8,8,S.under||'#c8b890');R(-4,-5,8,4,shirt);R(-3,-9,1,4,shirt);R(2,-9,1,4,shirt);
+      if(!back){R(-3,-5,1,1,'#d0b030');R(2,-5,1,1,'#d0b030');}
+      break;
+    case 'hawaii':
+      R(-4,-9,8,8,shirt);R(-3,-8,1,1,'#f0e0e0');R(0,-7,1,1,'#f0d050');R(2,-5,1,1,'#f0e0e0');R(-3,-4,1,1,'#f0d050');R(1,-3,1,1,'#f0e0e0');R(-1,-9,2,1,skin);
+      break;
+    case 'wrap':
+      R(-4,-9,8,8,'#d8cfae');for(let i=0;i<4;i++)R(-4,-8+i*2,8,1,'#b8ae8c');R(2,-3,2,3,'#d8cfae');R(3,-1,1,2,'#b8ae8c');
       break;
     default: // tee
       R(-4,-9,8,8,shirt);R(-4,-6,8,1,sl);R(-1,-9,2,1,skin);R(-4,-2,8,1,'#2a2018');
@@ -8427,6 +8491,33 @@ function humanBody(R,o,face){
       else R(-4,-16,8,7,'#c8b830');break;
     case 'wild':
       R(-4,-16,8,3,hair);R(-5,-15,1,1,hair);R(4,-14,1,1,hair);if(back)R(-4,-16,8,10,hair);break;
+    case 'beanie':{const hat=S.hat||'#a8402a';
+      if(back)R(-3,-16,6,6,hat);else{R(-3,-16,6,3,hat);R(-3,-13,6,1,Sh(hat,-.3));sbn(1);}
+      R(-1,-18,2,2,Sh(hat,.4));
+      if(S.goggles&&!back){R(-3,-12,6,2,'#2a2a2e');R(-3,-12,6,1,'#e0702a');R(-2,-11,2,1,'#9ad8f0');R(1,-11,2,1,'#9ad8f0');}
+      break;}
+    case 'ushanka':{const hat=S.hat||'#6a5a4a';
+      R(-4,-17,8,3,hat);R(-3,-18,6,1,Sh(hat,.2));R(-4,-14,1,4,hat);R(3,-14,1,4,hat);R(-4,-14,8,1,'#d8d0c0');
+      if(back)R(-4,-17,8,7,hat);break;}
+    case 'hoodfur':{const hc=Sh(shirt,-.1);
+      if(back)R(-4,-17,8,8,hc);else{R(-4,-17,8,2,hc);R(-4,-15,2,3,hc);R(-4,-12,1,3,hc);R(2,-15,2,3,hc);R(3,-12,1,3,hc);R(-2,-15,4,2,Sh(skin,-.4));}
+      R(-4,-16,8,1,'#e8e4d8');if(!back){R(-4,-15,1,6,'#e8e4d8');R(3,-15,1,6,'#e8e4d8');R(-3,-10,6,1,'#e8e4d8');}
+      break;}
+    case 'turban':{const hat=S.hat||'#e8e0c8';
+      R(-4,-17,8,4,hat);R(-4,-14,8,1,Sh(hat,-.25));R(-3,-16,6,1,Sh(hat,.25));R(-4,-15,8,1,Sh(hat,-.12));R(2,-18,2,2,hat);
+      if(back)R(-4,-17,8,8,hat);else if(S.veil)R(-3,-11,6,2,hat);
+      break;}
+    case 'strawhat':{const hat=S.hat||'#d8c070';
+      R(-6,-15,12,2,hat);R(-3,-18,6,3,Sh(hat,.1));R(-3,-16,6,1,S.band||'#a03a2a');R(-6,-14,12,1,Sh(hat,-.3));break;}
+    case 'ranger':{const hat=S.hat||'#5a6a3a';
+      R(-5,-15,10,2,hat);R(-3,-18,6,3,hat);R(-3,-16,6,1,'#c8a840');R(-5,-14,10,1,Sh(hat,-.3));break;}
+    case 'bucket':{const hat=S.hat||'#8a8a5a';
+      R(-4,-17,8,3,hat);R(-5,-14,10,2,hat);R(-3,-18,6,1,Sh(hat,.2));R(-5,-13,10,1,Sh(hat,-.3));break;}
+    case 'minehat':
+      R(-4,-17,8,3,'#d8a820');R(-3,-18,6,1,'#e8b830');R(-4,-14,8,1,'#8a6a10');if(!back)R(0,-17,2,2,'#fff6a0');break;
+    case 'wraphead':
+      R(-3,-16,6,3,'#d8cfae');R(-3,-13,6,1,'#b8ae8c');R(-3,-15,6,1,'#b8ae8c');if(back)R(-3,-16,6,6,'#d8cfae');
+      if(!back){R(-3,-11,6,1,'#d8cfae');R(2,-12,2,3,'#d8cfae');}break;
   }
   if(S.band&&hs!=='cap')R(-3,-14,6,1,S.band);
   if(S.band&&hs==='band')R(3,-14,2,2,S.band);
@@ -8438,6 +8529,7 @@ function humanBody(R,o,face){
       if(kind!==1)R(-4+(w%2)*7,-3,1,2,skin);                      // rasgo na roupa
       if(front)R(-2+(w%3),-9,1,2,'#7a1010');                      // sangue no queixo
     }
+    if(S.patch&&kind!==9){R(-3+(zv*2)%4,-8+(zv%3)*2,2,1,S.patch);R(1,-4,2,1,S.patch);if(!back)R(-3,-13,1,1,S.patch);}   // musgo, gelo ou areia
     if(kind===3){R(-4,-1,8,1,'#2a1010');R(-4,-6,1,3,Sh(skin,-.2));}
     if(kind===6&&front){R(-1,-10,2,2,'#400');R(-1,-10,2,1,'#fff');}
     if(kind===8&&!back){R(-3,-13,1,3,'#601010');R(2,-12,1,2,'#601010');}   // pintura de guerra
@@ -8592,43 +8684,147 @@ function drawRock(r){
   if(selectedMap==='forest' && (k===0||k===1)) R(x-2,y-8,3,2,'#3a6a3a'); // moss
   if(weather==='snow'||selectedMap==='snow')R(x-7,y-7,14,2,'#e8f4f8');
 }
-function drawTree(t){
-  const x=t.x,y=t.y;treeShadow(x,y,t.k|0);
-  const trunk=selectedMap==='snow'?'#3a4654':(selectedMap==='desert'?'#5a4a30':selectedMap==='city'?'#4a3a28':'#5a3d22');
-  R(x-1,y-6,3,7,trunk);
-  const k=t.k|0;
-  if(k===0){ // pointed pine
-    R(x-7,y-12,14,6,'#1f4a26');R(x-5,y-17,10,6,'#255a2d');R(x-3,y-21,6,5,'#2b6a33');
-    if(weather==='snow'||selectedMap==='snow')R(x-6,y-13,12,2,'#e8f4f8');
-  } else if(k===1){ // round oak
-    R(x-8,y-15,16,10,'#2a6a2a');R(x-6,y-19,12,6,'#348034');R(x-4,y-17,4,2,'#4a9a44');R(x+2,y-11,4,2,'#245a24');
-    if(weather==='snow')R(x-7,y-16,14,3,'#e8f4f8');
-  } else if(k===2){ // snow pine
-    R(x-6,y-16,12,12,'#204050');R(x-4,y-22,8,8,'#30586a');R(x-2,y-26,4,5,'#e8f4f8');
-    R(x-5,y-14,10,2,'#e8f4f8');R(x-3,y-20,6,2,'#e8f4f8');
-  } else if(k===3){ // desert dead
-    R(x-2,y-14,4,12,'#6a5a40');R(x-6,y-11,4,3,'#5a4a30');R(x+2,y-9,4,3,'#5a4a30');R(x-4,y-16,3,3,'#4a3a20');
-  } else if(k===4){ // snow dead
-    R(x-1,y-18,2,12,'#3a4654');R(x-5,y-14,4,2,'#3a4654');R(x+2,y-12,5,2,'#3a4654');R(x-3,y-20,3,2,'#e8f4f8');
-  } else if(k===5){ // snowy oak
-    R(x-7,y-14,14,10,'#3a5a4a');R(x-5,y-18,10,6,'#4a6a5a');R(x-6,y-15,12,3,'#e8f4f8');R(x-4,y-19,8,2,'#f0f8fc');
-  } else if(k===6){ // palm
-    R(x-1,y-20,3,16,'#6a5a30');
-    for(let i=0;i<6;i++){const a=-1.2+i*0.4;R(x+Math.round(Math.cos(a)*8)-1,y-18+Math.round(Math.sin(a)*4),6,2,'#3a8a3a');}
-    R(x-2,y-22,5,3,'#4a9a4a');
-  } else if(k===7){ // desert scrub
-    R(x-4,y-8,8,6,'#6a7a3a');R(x-3,y-10,6,3,'#7a8a4a');R(x-5,y-6,3,3,'#5a6a2a');R(x+2,y-7,3,3,'#5a6a2a');
-  } else if(k===8){ // city street tree
-    R(x-1,y-8,3,8,'#4a3a28');R(x-6,y-14,12,8,'#3a7a3a');R(x-4,y-18,8,6,'#4a8a4a');R(x-3,y-16,2,2,'#6aba5a');
-  } else if(k===9){ // birch
-    R(x-1,y-18,3,14,'#e8e0d0');R(x-1,y-14,3,1,'#3a3a3a');R(x-1,y-10,3,1,'#3a3a3a');
-    R(x-6,y-16,12,6,'#5a9a4a');R(x-4,y-20,8,5,'#6aaa5a');R(x-5,y-14,4,3,'#4a8a3a');
-  } else { // big canopy
-    R(x-2,y-10,4,10,'#4a3020');
-    R(x-10,y-16,20,10,'#1a5a28');R(x-8,y-22,16,8,'#246a30');R(x-5,y-26,10,6,'#2a7a38');
-    R(x-3,y-20,3,2,'#4aaa44');R(x+3,y-14,3,2,'#1a4a20');
-    if(weather==='snow')R(x-9,y-17,18,3,'#e8f4f8');
+/* ============ ÁRVORES ============
+   Cada árvore é um sprite pré-desenhado (um por mapa, tipo e variação), bem maior que o personagem (que tem uns 20 px):
+   pinheiros e carvalhos chegam a 50 ou 70 px. A variação (0 a 3) vem da semente que a árvore já tinha, então o mundo não muda.
+   Quando o jogador passa atrás de uma copa, ela fica meio transparente. */
+const TSP={};
+function treeSprite(k,v,snow){
+  const key=selectedMap+'|'+k+'|'+v+'|'+(snow?1:0);
+  if(TSP[key])return TSP[key];
+  const map=selectedMap,W=112,HH=112,ox=56,oy=106;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=HH;
+  const c=cv.getContext('2d'),r=mkRng((k*7+v*13+map.length*29+1)/131);
+  let top=0,half=0;
+  const px=(x,y,w,h,col)=>{x=Math.round(x);y=Math.round(y);if(w<=0||h<=0)return;c.fillStyle=col;c.fillRect(ox+x,oy+y,w,h);if(-y>top)top=-y;if(Math.abs(x)>half)half=Math.abs(x);if(Math.abs(x+w)>half)half=Math.abs(x+w);};
+  const ell=(cx,cy,rx,ry,col)=>{for(let y=-ry;y<=ry;y++){const hf=Math.round(rx*Math.sqrt(Math.max(0,1-(y*y)/(ry*ry+.01))));px(cx-hf,cy+y,hf*2+1,1,col);}};
+  const line=(x0,y0,x1,y1,t,col)=>{const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0))||1;for(let i=0;i<=n;i++)px(x0+(x1-x0)*i/n-(t>>1),y0+(y1-y0)*i/n-(t>>1),t,t,col);};
+  const WH='#f2f8fc',WS='#c8dcec';
+  const trunk=(w,h,b,bend)=>{   // tronco afunilado, com raizes na base, veios de casca, nos e leve curvatura
+    const bd=bend===undefined?Math.round((r()-.5)*2):bend;
+    const cxAt=i=>Math.round(bd*Math.sin(i/h*2.5)*1.2);
+    for(let i=0;i<h;i++){
+      const fl=i<5?Math.round((5-i)*.4):0,wi=Math.max(2,Math.round(w*(1-.2*i/h))+fl*2);
+      const x0=cxAt(i)-(wi>>1),band=Math.max(1,Math.round(wi*.28));
+      px(x0,-1-i,wi,1,b[1]);px(x0,-1-i,band,1,b[2]);px(x0+wi-band,-1-i,band,1,b[0]);
+    }
+    const x00=cxAt(0)-((w+4)>>1);
+    px(x00,-1,w+4,1,b[0]);px(x00-1,-1,2,1,b[1]);px(x00+w+3,-1,2,1,b[0]);   // pontas das raizes
+    for(let s=0,n=Math.max(2,Math.round(w*h/36));s<n;s++){
+      const len=3+Math.floor(r()*5),i=6+Math.floor(r()*Math.max(1,h-6-len)),off=1+Math.floor(r()*Math.max(1,Math.round(w*.8)-2));
+      const x=cxAt(i)-(w>>1)+off;px(x,-1-i-len,1,len,b[0]);
+      if(r()<.5)px(x-1,-1-i-len+1,1,Math.max(1,len-2),b[2]);
+    }
+    if(h>=20&&r()<.7){const i=Math.round(h*(.3+r()*.25)),x=cxAt(i)-(w>>1)+1+Math.floor(r()*Math.max(1,w-4));px(x,-1-i,2,2,b[0]);px(x,-2-i,2,1,b[2]);}
+  };
+  const br=(x0,y0,x1,y1,t,col)=>{const mx=(x0+x1)/2,my=(y0+y1)/2;line(x0,y0,mx,my,t,col);line(mx,my,x1,y1,Math.max(1,t-1),col);};   // galho que afina
+  const fol=(cx,cy,rx,ry,p,sn)=>{
+    ell(cx+1,cy+2,rx,ry,p[0]);ell(cx,cy,rx,ry,p[1]);
+    ell(cx-Math.round(rx*.22),cy-Math.round(ry*.28),Math.max(2,Math.round(rx*.62)),Math.max(2,Math.round(ry*.58)),p[2]);
+    for(let i=0,n=Math.round(rx*ry/8);i<n;i++){const a=r()*6.283,d=Math.sqrt(r());px(cx+Math.cos(a)*rx*.85*d,cy+Math.sin(a)*ry*.85*d,2,1,r()<.55?p[3]:p[0]);}
+    if(sn){ell(cx-1,cy-Math.round(ry*.5),Math.round(rx*.72),Math.max(2,Math.round(ry*.36)),WH);ell(cx,cy-Math.round(ry*.3),Math.round(rx*.5),Math.max(1,Math.round(ry*.14)),WS);}
+  };
+  const tier=(cy,hw,h,p,sn)=>{
+    for(let i=0;i<h;i++){
+      const hf=Math.max(1,Math.round(hw*(i+1)/h)),y=cy-h+i;
+      px(-hf,y,hf+1,1,i<h*.5?p[2]:p[1]);px(1,y,hf,1,p[0]);
+      if(r()<.35)px(-hf,y,1,1,p[0]);
+      if(sn&&i>1&&i<h*.7){px(-hf+1,y,Math.max(2,Math.round(hf*.55)),1,WH);}
+    }
+    px(-hw,cy-1,hw*2+1,1,'rgba(0,0,0,.4)');px(-hw+1,cy,hw*2-1,1,'rgba(0,0,0,.2)');
+    if(sn){for(let x=-hw+1;x<hw;x+=4)px(x,cy-2,2,1,WH);}
+  };
+  const pine=(H,hw,n,p,tw,b,sn)=>{
+    trunk(tw,12,b);
+    const step=Math.round((H-14)/(n-.2)*.8);
+    for(let i=0;i<n;i++){const cy=-10-i*step,w=Math.max(4,Math.round(hw*(1-i/n*.7)));tier(cy,w,Math.round(step*1.25)+4,p,sn);}
+    px(-1,-10-(n-1)*step-Math.round(step*1.25)-3,2,3,sn?WH:p[2]);
+  };
+  const FB=['#3e2918','#5e402a','#7e5a3a'];
+  const sn0=!!snow;
+  if(map==='snow'){
+    if(k===2){pine(66+v*3,16+v,5,['#10303b','#1b4a5a','#2d6676'],4,['#2a2a30','#4a4038','#6a5a4a'],true);}
+    else if(k===4){ // árvore seca com neve
+      const b=['#2a2a30','#4a4038','#6a5a4a'];trunk(5,34+v*3,b);
+      br(0,-26,-12,-40-v*2,3,b[1]);br(0,-30,12,-44,3,b[1]);br(-6,-34,-10,-52,2,b[1]);br(5,-36,9,-54-v,2,b[1]);br(0,-34-v*3,-2,-58-v*3,2,b[1]);
+      for(const q of [[-12,-41],[12,-45],[-10,-53],[9,-55],[-2,-59]])px(q[0]-2,q[1]-1,5,2,WH);
+      px(-3,-8,7,2,WH);
+    }else{ // carvalho carregado de neve
+      trunk(7,34,['#2a2a30','#4a4038','#6a5a4a']);
+      const p=['#223d38','#33564d','#4f7568','#9cc0b8'];
+      for(const q of [[0,-50-v*2,10,8],[-12,-40,11,9],[12,-41,11,9],[0,-36,14,10],[-6,-46,9,8],[7,-47,9,8]])fol(q[0],q[1],q[2],q[3],p,true);
+    }
+  }else if(map==='desert'){
+    if(k===3){
+      if(v<2){ // árvore seca retorcida
+        const b=['#3a2c1c','#5a4630','#7a6444'];trunk(6,30+v*4,b);
+        br(0,-24,-14,-38,4,b[1]);br(0,-28,13,-42,4,b[1]);br(-8,-33,-12,-50,3,b[1]);br(7,-37,11,-52,3,b[1]);br(0,-30,1,-54-v*3,3,b[1]);
+        px(-17,-41,4,3,b[2]);px(11,-45,5,3,b[2]);
+      }else{ // acácia de copa achatada
+        const b=['#3a2c1c','#5a4630','#7a6444'];trunk(5,36,b);br(0,-30,-10,-36,3,b[1]);br(0,-30,11,-35,3,b[1]);
+        const p=['#4f6a28','#6f8a3a','#8fae4c','#c4dc88'];
+        fol(-2,-40,24+v,7,p);fol(-14,-35,13,6,p);fol(14,-34,13,6,p);fol(0,-46,15,6,p);
+      }
+    }else if(k===6){ // palmeira
+      const sw=v-1.5;
+      const pcx=i=>Math.round(Math.sin(i/59*1.6)*sw*2.2);
+      for(let i=0;i<60;i++){   // tronco curvo e continuo, mais grosso na base, com aneis
+        const wi=Math.round(7-3*i/60)+(i<4?2:0),x=pcx(i)-(wi>>1),q=Math.max(1,wi>>2);
+        px(x,-1-i,wi,1,i%5===0?'#5a4a28':i%5===1?'#a08a4c':'#8a7440');
+        px(x,-1-i,q,1,i%5===0?'#6a5a30':'#b09a58');px(x+wi-q,-1-i,q,1,'#5a4a28');
+      }
+      px(pcx(0)-5,-1,2,1,'#8a7440');px(pcx(0)+4,-1,2,1,'#5a4a28');
+      const tx=pcx(59),ty=-60;
+      const fr=['#2f7a34','#3f9a44','#5ab85a'];
+      for(let i=0;i<9;i++){
+        const a=-3.14+i*.785+(v*.1),dx=Math.cos(a),dy=Math.sin(a)*.45,L=22+(i%2)*4;
+        for(let s=1;s<=L;s++){const t=s/L,x=tx+dx*s,y=ty+dy*s+t*t*14;px(x,y,3,2,fr[(s>>2)%3]);if(s%3===0&&s>5){px(x,y+2,1,3,fr[0]);px(x,y-2,1,2,fr[2]);}}
+      }
+      ell(tx,ty+1,4,3,'#2a6a2e');px(tx-3,ty+3,3,3,'#5a3a1a');px(tx+1,ty+3,3,3,'#5a3a1a');
+    }else{ // arbusto seco
+      const p=['#4e5a26','#6a7a36','#8a9a4a','#b8c878'];
+      fol(-6,-8,9,7,p);fol(6,-8,9,7,p);fol(0,-13,8,7,p);
+      for(let i=0;i<5;i++)px(-8+i*4,-4,1,4,'#5a4630');
+    }
+  }else if(map==='city'){
+    if(k===8){ // árvore de rua com grade na base
+      px(-5,-3,11,3,'#3a3a40');px(-4,-2,9,1,'#5a5a62');
+      trunk(4,26,FB);
+      fol(0,-34,14+(v>>1),12,['#1f5f2c','#2f8a3c','#52b34e','#a4e47e']);fol(-8,-26,8,7,['#1f5f2c','#2f8a3c','#52b34e','#a4e47e']);fol(9,-27,8,7,['#1f5f2c','#2f8a3c','#52b34e','#a4e47e']);
+    }else if(k===0){pine(46+v*2,12,4,['#16452a','#1f6638','#2e8648'],4,FB,sn0);}
+    else{trunk(6,36,FB);const p=['#1f5a2c','#2f8038','#4fa84a','#90d870'];for(const q of [[0,-50,11,9],[-11,-40,11,9],[12,-41,11,9],[0,-38,15,11]])fol(q[0],q[1],q[2],q[3],p,sn0);}
+  }else{ // floresta
+    if(k===0){pine(58+v*4,17+v,5,['#133a1d','#1c5628','#2a7336'],5,FB,sn0);}
+    else if(k===1){trunk(7,38,FB);const p=['#1d4d27','#2d7535','#4aa347','#8fd46e'];for(const q of [[0,-54-v*2,11,9],[-13,-42,12,10],[13,-43,12,10],[0,-40,17,12],[-7,-50,9,8],[8,-51,9,8]])fol(q[0],q[1],q[2],q[3],p,sn0);}
+    else if(k===9){ // bétula
+      trunk(5,41,['#a8a090','#e8e2d4','#fffaf0'],0);
+      for(let i=0;i<8;i++)px(-2+(i%2),-8-i*5,3,1,'#2a2a2a');
+      const p=['#3f7a34','#5a9e48','#86c262','#c4e88a'];for(const q of [[0,-52,9,9],[-8,-44,9,8],[8,-45,9,8],[0,-42,11,8]])fol(q[0],q[1],q[2],q[3],p,sn0);
+    }else{ // copa grande
+      trunk(10,50,['#34200f','#52361d','#704c2c']);
+      const p=['#153a20','#1f5a2c','#32823a','#68b458'];for(const q of [[0,-70,14,10],[-16,-58,14,11],[16,-59,14,11],[0,-56,20,14],[-9,-66,11,9],[10,-67,11,9],[-22,-46,10,8],[22,-47,10,8]])fol(q[0],q[1],q[2],q[3],p,sn0);
+    }
   }
+  return TSP[key]={cv:cv,ox:ox,oy:oy,top:top,half:Math.max(8,half)};
+}
+function treeShadow(x,y,s){
+  const L=Math.min(s.top,56)*SUN.len*.55,rw=s.half*.62;
+  const tx=x+SUN.dx*L,ty=y+2+SUN.dy*L*.6;
+  ctx.fillStyle=SUN.fs;ctx.beginPath();
+  ctx.moveTo(x-2,y+2);ctx.lineTo(x+2,y+2);ctx.lineTo(tx+1.5,ty);ctx.lineTo(tx-1.5,ty);ctx.closePath();
+  ctx.moveTo(tx+rw,ty);ctx.ellipse(tx,ty,rw*(1+.15*SUN.len),rw*.5,0,0,6.283);
+  ctx.moveTo(x+5,y+2);ctx.ellipse(x,y+2,5,2,0,0,6.283);
+  ctx.fill();
+}
+function drawTree(t){
+  const x=t.x,y=t.y,k=t.k|0,v=Math.floor((t.seed||0)*4)&3;
+  const s=treeSprite(k,v,weather==='snow'&&selectedMap!=='snow');
+  treeShadow(x,y,s);
+  const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
+  const behind=P&&!P.inside&&P.y<y-3&&P.y>y-s.top&&Math.abs(P.x-x)<s.half;   // jogador atrás da copa
+  if(behind)ctx.globalAlpha=.5;
+  ctx.drawImage(s.cv,x-s.ox,y-s.oy);
+  ctx.globalAlpha=1;ctx.imageSmoothingEnabled=sm;
 }
 function drawDecoration(d){
   const x=d.x,y=d.y;
@@ -10371,16 +10567,6 @@ function shadow(x,y,rx,ry){
   ctx.fillStyle=SUN.fs;ctx.beginPath();
   ctx.ellipse(Math.round(x+SUN.dx*k*rx*.75),Math.round(y+SUN.dy*k*ry*.9),rx*(1+.35*k*Math.abs(SUN.dx)),ry*(1+.12*k),0,0,6.283);ctx.fill();
 }
-const TREE_H=[21,19,26,14,18,18,22,8,18,20,26],TREE_W=[7,8,6,3,4,7,8,5,6,6,10];
-function treeShadow(x,y,k){
-  const H=TREE_H[k]||18,rw=TREE_W[k]||6,L=H*SUN.len*.55;
-  const tx=x+SUN.dx*L,ty=y+2+SUN.dy*L*.6;
-  ctx.fillStyle=SUN.fs;ctx.beginPath();
-  ctx.moveTo(x-2,y+2);ctx.lineTo(x+2,y+2);ctx.lineTo(tx+1.5,ty);ctx.lineTo(tx-1.5,ty);ctx.closePath();
-  ctx.moveTo(tx+rw,ty);ctx.ellipse(tx,ty,rw*(1+.15*SUN.len),rw*.55,0,0,6.283);
-  ctx.moveTo(x+4,y+2);ctx.ellipse(x,y+2,4,2,0,0,6.283);
-  ctx.fill();
-}
 function hullPts(pts){
   pts.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
   const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
@@ -10869,7 +11055,7 @@ function render(){
   }
   for(const b of blds)if(vis(b))drawFacade(b);   // fachada sul: material da parede, janelas e porta de cada prédio
   const list=[];
-  for(const t of trees)if(t.x>vx0&&t.x<vx1&&t.y>vy0&&t.y<vy1+24)list.push({y:t.y,k:0,o:t});
+  for(const t of trees)if(t.x>vx0-36&&t.x<vx1+36&&t.y>vy0&&t.y<vy1+80)list.push({y:t.y,k:0,o:t});
   for(const d of decorations)if(d.x>vx0&&d.x<vx1&&d.y>vy0&&d.y<vy1+24)list.push({y:d.y,k:6,o:d});
   for(const r of rocks)if(r.x>vx0&&r.x<vx1&&r.y>vy0&&r.y<vy1+24)list.push({y:r.y,k:3,o:r});
   for(const c of campfires)if(c.x>vx0&&c.x<vx1&&c.y>vy0&&c.y<vy1)list.push({y:c.y,k:4,o:c});
