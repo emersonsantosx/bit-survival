@@ -2199,6 +2199,7 @@ function lakeWobble(l,ang){
 }
 /* profundidade 0..1 no ponto: 0 na margem, 1 a partir de ~24 px para dentro (chafariz da cidade não afunda ninguém) */
 function lakeDepth(x,y){
+  if(ORLA&&y>ORLA.top&&inSea(x,y))return Math.min(1,(y-orlaShore(x))/24);
   for(const l of lakes){
     if(l.fountain)continue;
     const dx=x-l.cx,dy=(y-l.cy)/0.92,d2=dx*dx+dy*dy,lim=l.r*1.08;
@@ -2226,6 +2227,7 @@ function nearFountain(x,y){
   return false;
 }
 function pointInLake(x,y){
+  if(ORLA&&y>ORLA.top&&inSea(x,y))return true;
   for(const l of lakes){
     const dx=x-l.cx, dy=(y-l.cy)/0.92, d2=dx*dx+dy*dy, lim=l.r*1.08;
     if(d2>lim*lim) continue;
@@ -2233,6 +2235,139 @@ function pointInLake(x,y){
     if(Math.sqrt(d2)<l.r*lakeWobble(l,a)) return true;
   }
   return false;
+}
+/* ===== ORLA DA CIDADE: parque a direita, calcadao de ondas, praia e mar raso na borda de baixo =====
+   Tudo e derivado das ruas ja geradas e de um gerador proprio (mkRng): nao consome o _rng, entao o resto do mundo continua igual. */
+let ORLA=null;
+function orlaShore(x){const o=ORLA;return o.sea+9*Math.sin(x*.0042+o.p1)+5*Math.sin(x*.011+o.p2)+3*Math.sin(x*.027+o.p3);}
+function orlaSand(x){const o=ORLA;return orlaShore(x)-o.sandW-6*Math.sin(x*.0063+o.p2);}
+function onPier(x,y){for(const p of ORLA.piers)if(x>p.x-p.w/2&&x<p.x+p.w/2&&y>=p.y0&&y<=p.y1)return true;return false;}
+function inSea(x,y){return !!ORLA&&y>ORLA.top&&y>orlaShore(x)&&!onPier(x,y);}
+function genOrla(){
+  let yb=0,xb=0;
+  for(const r of roads){if(r.y+r.h>yb)yb=r.y+r.h;if(r.x+r.w>xb)xb=r.x+r.w;}
+  const m=WH-yb;
+  if(m<90)return;
+  const h=mkRng(((Math.round(yb)*131+Math.round(xb)*71+WW)%99991)/99991);
+  const sandW=Math.round(clamp(m*.2,26,50)),seaD=clamp(m*.5,64,230);
+  const sea=Math.max(WH-seaD,yb+sandW+24);
+  ORLA={yb,xb,sea,sandW,top:sea-24,p1:h()*6.28,p2:h()*6.28,p3:h()*6.28,piers:[]};
+  const o=ORLA;
+  for(const fx of [.18+h()*.14,.58+h()*.22]){
+    const x=Math.round(WW*fx),sh=orlaShore(x);
+    o.piers.push({x,w:30,y0:Math.round(orlaSand(x)-2),y1:Math.round(Math.min(WH-14,sh+60+h()*70))});
+  }
+  const keep=a=>a.filter(e=>e.y<yb-6);
+  trees=keep(trees);rocks=keep(rocks);decorations=keep(decorations);items=keep(items);animals=keep(animals);
+  vehicles=vehicles.filter(v=>v.y<yb-10);
+  const dec=(x,y,type,solid)=>{decorations.push({x:Math.round(x),y:Math.round(y),type,solid:!!solid,seed:h()});};
+  const nearPier=x=>o.piers.some(p=>Math.abs(x-p.x)<p.w/2+22);
+  const prom=x=>orlaSand(x)-yb;
+  for(let x=60+h()*60;x<WW-50;x+=118+h()*60){          // palmeiras do calcadao
+    if(nearPier(x))continue;
+    const ph=prom(x);
+    dec(x,ph>=40?yb+ph-14:orlaSand(x)+8,'palmorla',true);
+  }
+  for(let x=140;x<WW-60;x+=260){if(!nearPier(x)&&prom(x)>=24)dec(x,yb+9,'lamp',true);}
+  for(let x=300+h()*100;x<WW-80;x+=380+h()*120){if(!nearPier(x)&&prom(x)>=34)dec(x,yb+prom(x)*.42,'bench',true);}
+  for(let x=520+h()*200;x<WW-120;x+=1000+h()*400){
+    if(nearPier(x))continue;
+    const kx=x,ky=prom(kx)>=60?yb+prom(kx)*.55:orlaSand(kx)+16;
+    dec(kx,ky,'kiosk',true);
+    items.push({t:h()<.5?'water':'food',x:Math.round(kx+h()*30-15),y:Math.round(ky+14)});
+  }
+  for(let x=110+h()*80;x<WW-60;x+=95+h()*80){          // guarda-sois e toalhas
+    if(nearPier(x))continue;
+    const sy=orlaSand(x),shy=orlaShore(x),y=sy+(shy-sy)*(.35+h()*.3);
+    if(shy-sy<26)continue;
+    if(h()<.62){dec(x,y,'umbrella',false);dec(x+14,y+8,'towel',false);}
+    else dec(x,y+4,'towel',false);
+  }
+  for(const fx of [.31,.77]){const x=Math.round(WW*(fx+h()*.06));if(!nearPier(x)){const sy=orlaSand(x),shy=orlaShore(x);dec(x,sy+(shy-sy)*.55,'lifeguard',true);}}
+  for(let x=90+h()*60;x<WW-50;x+=190+h()*90){          // boias
+    if(nearPier(x))continue;
+    const y=orlaShore(x)+Math.min(54,(WH-orlaShore(x))*.55);
+    if(y<WH-8)dec(x,y,'buoy',false);
+  }
+  for(let i=0;i<4;i++){                                // barcos e pedras no mar
+    const x=Math.round(WW*(.08+h()*.84));if(nearPier(x))continue;
+    const sh=orlaShore(x),room=WH-sh;
+    if(room>74)dec(x,sh+Math.min(room-22,46+h()*50),'boat',true);
+  }
+  for(let i=0;i<7;i++){
+    const x=Math.round(WW*(.04+h()*.92));if(nearPier(x))continue;
+    const sh=orlaShore(x),room=WH-sh;
+    if(room>60)dec(x,sh+14+h()*Math.min(40,room-30),'searock',true);
+  }
+  lampList=decorations.filter(d=>d.type==='lamp');
+}
+let _PAVE=null,_SANDP=null;
+function orlaPatterns(){
+  if(_PAVE)return;
+  let c=document.createElement('canvas');c.width=48;c.height=16;let g=c.getContext('2d');
+  g.fillStyle='#cfc9ba';g.fillRect(0,0,48,16);
+  for(let x=0;x<48;x++){const y=Math.round(6+3.2*Math.sin(x/48*6.283));g.fillStyle='#7d786e';g.fillRect(x,y,1,4);g.fillStyle='#e6e1d3';g.fillRect(x,y-2,1,1);}
+  _PAVE=ctx.createPattern(c,'repeat');
+  c=document.createElement('canvas');c.width=32;c.height=32;g=c.getContext('2d');
+  g.fillStyle='#e0cb92';g.fillRect(0,0,32,32);
+  const r=mkRng(.37);
+  for(let i=0;i<22;i++){g.fillStyle=i%3?'#cdb577':'#efdfa8';g.fillRect(Math.floor(r()*31),Math.floor(r()*31),2,1+(i%2));}
+  _SANDP=ctx.createPattern(c,'repeat');
+}
+function drawOrla(vx0,vy0,vx1,vy1){
+  const o=ORLA;if(!o)return;
+  orlaPatterns();
+  if(vx1>o.xb&&vy0<o.yb){                              // parque (grama) no lugar da calcada cinza a direita
+    const gy=Math.max(0,vy0),gh=Math.min(vy1,o.yb)-gy;
+    ctx.save();ctx.beginPath();ctx.rect(o.xb,gy,vx1-o.xb,gh);ctx.clip();
+    R(o.xb,gy,vx1-o.xb,gh,'#3c6a33');
+    const tx0=Math.floor(Math.max(vx0,o.xb)/16),tx1=Math.ceil(vx1/16),ty0=Math.floor(gy/16),ty1=Math.ceil((gy+gh)/16);
+    for(let ty=ty0;ty<ty1;ty++)for(let tx=tx0;tx<tx1;tx++){
+      const v=(((tx*73856093)^(ty*19349663))>>>0)%100,px=tx*16,py=ty*16;
+      if(v<30)R(px,py,16,16,'#467a3a');
+      else if(v<42)R(px,py,16,16,'#36612d');
+      else if(v<52){R(px+4,py+5,2,3,'#5a9a48');R(px+10,py+9,2,2,'#2d5226');}
+      else if(v<56)R(px+6,py+7,3,2,'#e8d86a');
+    }
+    ctx.restore();
+    R(o.xb,gy,3,gh,'#8a877e');
+  }
+  if(vy1<o.yb)return;
+  const xa=Math.max(Math.floor(vx0/8)*8-8,-8),xe=Math.min(Math.ceil(vx1/8)*8+8,WW+8);
+  const band=(fTop,fBot)=>{ctx.beginPath();ctx.moveTo(xa,fTop(xa));for(let x=xa+8;x<=xe;x+=8)ctx.lineTo(x,fTop(x));for(let x=xe;x>=xa;x-=8)ctx.lineTo(x,fBot(x));ctx.closePath();};
+  const yb=()=>o.yb+0,sand=orlaSand,shore=orlaShore,bot=()=>WH+12;
+  band(yb,sand);ctx.fillStyle=_PAVE;ctx.fill();                       // calcadao de ondas
+  ctx.strokeStyle='#8f8a7f';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(xa,sand(xa));for(let x=xa+8;x<=xe;x+=8)ctx.lineTo(x,sand(x));ctx.stroke();
+  band(sand,shore);ctx.fillStyle=_SANDP;ctx.fill();                   // areia
+  band(x=>shore(x)-9,shore);ctx.fillStyle='rgba(140,105,55,.32)';ctx.fill();
+  const t=T;
+  band(shore,bot);ctx.fillStyle='#16688f';ctx.fill();                 // mar: fundo
+  band(shore,x=>shore(x)+46+4*Math.sin(x*.03+t*.8));ctx.fillStyle='#2189b3';ctx.fill();
+  band(shore,x=>shore(x)+20+3*Math.sin(x*.05+t*1.2));ctx.fillStyle='#3fb0c9';ctx.fill();
+  band(shore,x=>shore(x)+8+2*Math.sin(x*.07+t*1.6));ctx.fillStyle='#86d9dc';ctx.fill();
+  ctx.strokeStyle='rgba(235,250,255,.5)';ctx.lineWidth=1.5;ctx.beginPath();
+  for(let x=Math.floor(xa/36)*36;x<xe;x+=36){
+    for(let k=0;k<9;k++){
+      const y=shore(x)+30+k*26+3*Math.sin(t*1.1+x*.02+k),dx=x+((t*12+k*13)%36);
+      if(y>WH)break;ctx.moveTo(dx,y);ctx.lineTo(dx+12,y);
+    }
+  }
+  ctx.stroke();
+  for(let x=xa;x<xe;x+=8){                                            // espuma da arrebentacao
+    const fy=shore(x)+Math.round(1.8*Math.sin(t*1.7+x*.05));
+    ctx.fillStyle='rgba(255,255,255,.85)';ctx.fillRect(x,fy-1,9,3);
+    ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(x,fy+4+Math.round(Math.sin(t*1.3+x*.09)*2),9,1);
+  }
+  for(const p of o.piers){                                            // pier de madeira (da pra andar por cima)
+    if(p.x+p.w<vx0||p.x-p.w>vx1)continue;
+    const L=p.x-p.w/2,len=p.y1-p.y0;
+    R(L+4,p.y0+6,p.w,len,'rgba(0,30,50,.28)');
+    R(L,p.y0,p.w,len,'#8a6a44');
+    for(let y=p.y0+3;y<p.y1;y+=6)R(L,y,p.w,1,'#6e5232');
+    R(L,p.y0,2,len,'#5a4228');R(L+p.w-2,p.y0,2,len,'#5a4228');
+    for(let y=p.y0+10;y<p.y1;y+=38){R(L-2,y,4,5,'#4a3622');R(L+p.w-2,y,4,5,'#4a3622');}
+    R(L-2,p.y1-3,p.w+4,4,'#4a3622');
+  }
 }
 /* Meia-largura/altura do veículo alinhada aos eixos, considerando a rotação (carro de lado ocupa 20x36, não 36x20) */
 /* Terreno sob o carro: estrada = melhor aderência e velocidade; fora dela depende do mapa */
@@ -4042,7 +4177,7 @@ function genWorld(seed) {
   solidGrid=null;SPG=null;FIELD=null;LM=null;chestList=[];   // grades de colisão do mundo anterior não podem vazar para a geração (senão o mesmo seed gera mundos diferentes)
   try {
   trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];tents=[];spits=[];decorations=[];animals=[];
-  cityInter=[];cityCrash=null;lampList=[];
+  cityInter=[];cityCrash=null;lampList=[];ORLA=null;
   plane=null;
 
   if(selectedMap==='city') genCity(); else genRural();
@@ -4233,6 +4368,7 @@ function genWorld(seed) {
   }
   genField(seed);
   genLandmark(seed);
+  if(selectedMap==='city')genOrla();
   rebuildSolidGrid();
   BASE_TREES=trees.map(t=>t.x+','+t.y);BASE_ROCKS=rocks.map(t=>t.x+','+t.y);regrowInit(); // referência para sincronizar o que foi derrubado/quebrado
   buildMinimap();
@@ -4271,6 +4407,12 @@ function paintMapBase(g,s){
     :{land:'#5f8a4a',road:'#d9c493',lake:'#1f86e8',edge:'#e6f6ff'};
   g.fillStyle=C.land;
   g.fillRect(0,0,Math.ceil(WW*s),Math.ceil(WH*s));
+  if(M==='city'&&ORLA){const o=ORLA;
+    g.fillStyle='#3f6e35';g.fillRect(o.xb*s,0,Math.ceil((WW-o.xb)*s)+1,Math.ceil(o.yb*s));
+    g.fillStyle='#bdb8aa';g.fillRect(0,o.yb*s,Math.ceil(WW*s),Math.ceil((o.sea-o.sandW-o.yb)*s));
+    g.fillStyle='#e0cb92';g.fillRect(0,(o.sea-o.sandW)*s,Math.ceil(WW*s),Math.ceil(o.sandW*s)+1);
+    g.fillStyle='#2a8fb8';g.fillRect(0,o.sea*s,Math.ceil(WW*s),Math.ceil((WH-o.sea)*s)+1);
+  }
   g.fillStyle=C.road;
   for(const r of roads)g.fillRect(r.x*s,r.y*s,Math.max(1,r.w*s),Math.max(1,r.h*s));
   if(FIELD){g.fillStyle='#d9b84a';g.fillRect(FIELD.x*s,FIELD.y*s,Math.max(2,FIELD.w*s),Math.max(2,FIELD.h*s));}
@@ -5375,6 +5517,7 @@ function pickup(){
   {const ch=nearestChest();if(ch&&!nearestItem()){openChest(ch,false);return;}}
   {const sp=findSleepSpot();if(sp&&!nearestItem()){trySleep(sp);return;}}
   // Pesca no lago (só Floresta/Neve) — inventário local de cada player (sem sync de item no chão)
+  if(ORLA&&inSea(P.x,P.y)&&!nearFountain(P.x,P.y)&&!nearestItem()){ toast('Água salgada, não dá pra beber'); beep(140,.06,'square',.04); return; }
   if((pointInLake(P.x,P.y)||nearFountain(P.x,P.y)) && mapHasLake() && !nearestItem()){ // item solto por perto tem prioridade sobre a água
     if(P.water<97){
       P.water=Math.min(100,P.water+14);
@@ -8647,6 +8790,57 @@ function drawDecoration(d){
       R(x-4,y-26,10,5,'#4a4a4a');
       R(x-2,y-22,5,2,dark>.2?'#fff0b0':'#6a6a62'); // lâmpada
       break;
+    case'palmorla':{
+      shadow(x+8,y+2,18,4);
+      const ln=d.seed<.5?-1:1,sw=Math.sin(T*1.2+d.seed*9)*1.5;
+      for(let i=0;i<13;i++){const q=i/12;R(x+ln*Math.sin(q*1.5)*9-2.5,y-i*4.6-4,5-(q>.75?1:0),5,i%2?'#85653f':'#9a7a52');}
+      const cx=x+ln*Math.sin(1.5)*9+sw,cy=y-60;
+      for(let f=0;f<8;f++){
+        const a=f/8*6.283+.3,col=f%2?'#2f7a3a':'#3e9449';
+        for(let j=1;j<=11;j++)R(cx+Math.cos(a)*j*2.1,cy+Math.sin(a)*j*1.1+j*j*.07,3,2,col);
+      }
+      R(cx-2,cy+1,3,3,'#5a3a1e');R(cx+2,cy+2,3,3,'#6a4624');
+      break;}
+    case'umbrella':{
+      const cols=['#e04a3a','#f0c030','#2a8fd0','#ef7fb0','#3aa860'],c=cols[Math.floor(d.seed*5)%5];
+      shadow(x+5,y+3,18,4);R(x-1,y-30,2,32,'#e8e4d8');
+      for(let r=0;r<9;r++){const w=Math.round(21*Math.sqrt(1-(r/9)*(r/9)));for(let k=-w;k<w;k+=4)R(x+k,y-30-r,Math.min(4,w-k),1,(((k+48)/4)|0)%2?c:'#f4f1e8');}
+      R(x-21,y-30,42,1,'rgba(0,0,0,.22)');
+      break;}
+    case'towel':{
+      const cols=['#e8503c','#f4d03c','#3a9ae0','#f08cb8','#58c070'],c=cols[Math.floor(d.seed*5)%5];
+      R(x-9,y-3,18,8,c);R(x-9,y-1,18,1,'#f4f1e8');R(x-9,y+2,18,1,'#f4f1e8');
+      break;}
+    case'kiosk':{
+      shadow(x,y+3,28,5);
+      R(x-24,y-26,48,26,'#f2e9d2');R(x-24,y-4,48,4,'#d9cfb4');R(x-18,y-24,36,10,'#37526b');R(x-20,y-14,40,3,'#8a6a44');
+      for(let i=0;i<12;i++)R(x-27+i*4.5,y-35,5,9,i%2?'#f4f1e8':'#e2503c');
+      R(x-12,y-43,24,7,'#2a8fd0');R(x-9,y-41,18,1,'#f4f1e8');
+      break;}
+    case'lifeguard':{
+      shadow(x,y+3,16,4);
+      R(x-10,y-16,3,16,'#8a6a44');R(x+7,y-16,3,16,'#8a6a44');R(x-12,y-19,24,3,'#a8845a');
+      R(x-9,y-36,18,17,'#e8e0cf');R(x-6,y-32,12,6,'#37526b');R(x-12,y-40,24,4,'#e2503c');
+      R(x+9,y-52,1,14,'#444');R(x+10,y-52,8+Math.round(Math.sin(T*4)*1),5,'#e2503c');
+      break;}
+    case'buoy':{
+      const by=Math.round(Math.sin(T*2+d.seed*9)*1.5);
+      ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(x,y+1,8,3,0,0,6.283);ctx.stroke();
+      R(x-3,y-9+by,6,3,'#e2503c');R(x-3,y-6+by,6,3,'#f4f1e8');R(x-3,y-3+by,6,3,'#e2503c');
+      break;}
+    case'boat':{
+      const bo=Math.round(Math.sin(T*1.5+d.seed*9)*1.5);
+      ctx.fillStyle='rgba(0,30,50,.25)';ctx.beginPath();ctx.ellipse(x,y+3,26,5,0,0,6.283);ctx.fill();
+      ctx.fillStyle=d.seed<.5?'#8a3a2a':'#2a5a8a';ctx.beginPath();ctx.ellipse(x,y-3+bo,24,8,0,0,3.1416);ctx.fill();
+      R(x-24,y-5+bo,48,3,'#d8c9a8');R(x-6,y-16+bo,14,11,'#e8e0cf');R(x-4,y-14+bo,10,4,'#37526b');R(x-8,y-18+bo,18,3,'#8a6a44');
+      R(x+14,y-30+bo,2,26,'#6a5236');
+      ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(x,y+1,28,5+Math.sin(T*2)*.6,0,0,6.283);ctx.stroke();
+      break;}
+    case'searock':{
+      shadow(x,y+2,12,3);
+      R(x-9,y-8,18,9,'#5b5f66');R(x-6,y-13,12,6,'#74787f');R(x-3,y-13,4,2,'#8a8e95');
+      R(x-12,y-1,24,2,'rgba(255,255,255,.65)');
+      break;}
     case'sign':
       shadow(x,y+2,3,3);
       R(x-1,y-14,2,12,'#5a5a5a');
@@ -10569,7 +10763,7 @@ function render(){
     const lr=l.r*1.25;
     if(l.cx+lr>vx0&&l.cx-lr<vx1&&l.cy+lr>vy0&&l.cy-lr<vy1) drawLake(l);
   }
-  if(selectedMap==='city') drawCityRoads(vx0,vy0,vx1,vy1);
+  if(selectedMap==='city'){ drawCityRoads(vx0,vy0,vx1,vy1); drawOrla(vx0,vy0,vx1,vy1); }
   else for(const r of roads){
     if(r.x>vx1||r.x+r.w<vx0||r.y>vy1||r.y+r.h<vy0)continue;
     const roadCol=selectedMap==='snow'?'#98a4b0':selectedMap==='desert'?'#8c7c5c':selectedMap==='city'?'#3a3a40':'#7a6a4a';
