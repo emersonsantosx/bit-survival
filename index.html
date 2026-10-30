@@ -4728,6 +4728,8 @@ function zombieLook(kind,si){
   const v=(si|0)%5;
   const skin=kind===9?'#d8e0ea':kind===3?'#556b2f':kind===2?'#8a5a4a':kind===4?'#7ac070':kind===5?'#6a8060':kind===6?'#c0a0a0':kind===7?'#4a7a38':kind===8?'#c05040':kind===0?ZFLESH[v]:kind===1?'#a0b070':t.color;
   const shirt=kind===9?'#f0f4f8':kind===3?'#b22222':kind===2?'#3a1a1a':kind===5?'#4a3a20':kind===6?'#7a4a7a':kind===7?'#5a4a30':kind===8?'#5a1010':kind===4?'#c8b830':kind===1?'#c0a050':ZSHIRTS[v];
+  const M=ZMAP[selectedMap];                                    // cada mapa tem o seu povo de zumbis
+  if(M){if(kind===0)return {skin:M.fl[v],shirt:M.sh[v]};const o=M.look&&M.look[kind];if(o)return {skin:o[0],shirt:o[1]};}
   return {skin:skin,shirt:shirt};
 }
 /* true se o ponto aparece (ou está quase aparecendo) na tela de algum jogador: zumbi novo nunca nasce à vista */
@@ -8112,7 +8114,56 @@ const ZSTYLE={
   9:{os:'fur',hs:'bald',pants:'#e6edf3',hair:'#f4f8fb',boot:'#e6edf3'}
 };
 const ZEYE=[ '#f0e060','#f0e060',null,'#ff4040','#b0ff70','#f0e060','#ffffff','#d8e870','#ff3030','#ff3030' ];
-function zstyle(kind,zv){return kind===0?ZS_COMMON[zv%5]:(ZSTYLE[kind]||ZS_COMMON[0]);}
+/* Zumbis exclusivos de cada mapa: a cidade mantém os moradores (operário, executivo, paciente, soldado, capuz);
+   floresta, neve e deserto ganham gente que combina com o lugar. Cores de pele e roupa em fl/sh, estilos em common/kinds. */
+const ZMAP={
+  forest:{
+    fl:['#6a8a4a','#728f52','#5f8548','#7a9250','#668a56'],
+    sh:['#a83a2a','#d8741a','#4a6a3a','#3a6a8a','#8a8a4a'],
+    common:[
+      {os:'flannel',hs:'beanie',hat:'#a8402a',pants:'#3a4a5a',hair:'#3a2a18',boot:'#3a2a1a',patch:'#4a7a3a'},                 // lenhador
+      {os:'vest',hs:'cap',hat:'#4a5a2a',under:'#4a5a38',pants:'#4a5a38',hair:'#2a2218',boot:'#2a2418',patch:'#4a7a3a'},       // caçador de colete laranja
+      {os:'jacket',hs:'ranger',hat:'#5a6a3a',pants:'#4a4a38',hair:'#2a2218',boot:'#2a2018',patch:'#4a7a3a'},                  // guarda florestal
+      {os:'jacket',hs:'bucket',hat:'#8a8a5a',pants:'#6a5a3a',shorts:true,acc:'pack',pack:'#b05a2a',hair:'#3a2a18',boot:'#4a3a28',patch:'#4a7a3a'}, // trilheiro de mochila
+      {os:'vest',hs:'bucket',hat:'#c8b870',under:'#c8c0a0',pants:'#3a4a2a',hair:'#3a3028',boot:'#2a3a20',patch:'#4a7a3a'}      // pescador
+    ],
+    look:{1:['#8aa060','#6a9a50'],2:['#7a5a3a','#3a3a1a'],3:['#4a6a2a','#6a3a1a'],5:['#5a7a4a','#4a5a2a'],6:['#a8b090','#5a6a3a'],7:['#4a7a38','#5a5a2a'],8:['#a85a3a','#3a2a10']},
+    kinds:{1:{os:'flannel',hs:'band',band:'#e0701a',pants:'#3a4a5a',hair:'#3a2a18',boot:'#3a2a1a',patch:'#4a7a3a'}}
+  },
+  snow:{
+    fl:['#a8c0d0','#9ab4c8','#b0c4d4','#98b0c0','#a4bccc'],
+    sh:['#c04a3a','#3a5a9a','#8a4a3a','#3a9aa8','#e0e4e8'],
+    common:[
+      {os:'jacket',hs:'beanie',hat:'#c04a3a',goggles:true,pants:'#2a3a5a',hair:'#3a3028',boot:'#2a2a30',patch:'#dff0fa'},     // esquiador
+      {os:'parka',hs:'hoodfur',pants:'#3a3a44',hair:'#2a2218',boot:'#2a2a30',patch:'#dff0fa'},                                 // montanhista de parka
+      {os:'sweater',hs:'ushanka',hat:'#6a5a4a',pants:'#4a4a50',hair:'#3a3028',boot:'#2a2018',patch:'#dff0fa'},                  // nórdico de ushanka
+      {os:'hoodie',hs:'beanie',hat:'#3a9aa8',pants:'#2a2a30',hair:'#2a2218',boot:'#e0dcd0',patch:'#dff0fa'},                    // snowboarder
+      {os:'parka',hs:'hoodfur',pants:'#d8dce0',hair:'#cfd6dc',boot:'#8a8a90',patch:'#dff0fa'}                                   // caçador camuflado de branco
+    ],
+    look:{1:['#a8c8d8','#c04a3a'],2:['#8a98a8','#3a4a5a'],3:['#7a98b0','#dfe8f0'],5:['#8aa8b8','#4a5a6a'],6:['#c8d4dc','#6a7a9a'],7:['#7a9ab0','#5a6a7a'],8:['#c07a6a','#3a4a6a']},
+    kinds:{1:{os:'jacket',hs:'beanie',hat:'#c04a3a',pants:'#2a3a5a',hair:'#3a3028',boot:'#2a2a30',patch:'#dff0fa'},
+           8:{os:'parka',hs:'hoodfur',pants:'#3a2a2a',hair:'#a0201a',boot:'#1a1010',patch:'#dff0fa'}}
+  },
+  desert:{
+    fl:['#b89a6a','#a88a5a','#c0a478','#b08c5c','#a48458'],
+    sh:['#d8c8a0','#4a6a8a','#e0805a','#d8cfae','#8a5a2a'],
+    common:[
+      {os:'robe',hs:'turban',hat:'#e8e0c8',veil:true,sash:'#a03a2a',pants:'#8a7a5a',hair:'#222',boot:'#5a4a30',patch:'#d8c090'},   // beduíno de turbante
+      {os:'overalls',hs:'strawhat',hat:'#d8c070',band:'#a03a2a',under:'#c8b890',pants:'#4a6a8a',hair:'#3a2a18',boot:'#4a3a28',patch:'#d8c090'}, // garimpeiro
+      {os:'hawaii',hs:'strawhat',hat:'#e8d890',band:'#3a8a7a',pants:'#d8c898',shorts:true,hair:'#3a2a18',boot:'#d0c8b0',patch:'#d8c090'},   // turista
+      {os:'wrap',hs:'wraphead',pants:'#d8cfae',hair:'#3a3028',boot:'#d8cfae',patch:'#d8c090'},                                      // múmia enfaixada
+      {os:'overalls',hs:'minehat',under:'#6a6a6a',pants:'#5a4a3a',hair:'#222',boot:'#2a2018',patch:'#d8c090'}                       // mineiro de capacete
+    ],
+    look:{1:['#c0a478','#d8d0b8'],2:['#a07a50','#4a2a1a'],3:['#9a8a5a','#a02020'],5:['#a88a5a','#6a5a3a'],6:['#d0b898','#8a4a3a'],7:['#8a8a4a','#6a5a2a'],8:['#c07a50','#5a2a1a']},
+    kinds:{1:{os:'tank',hs:'turban',hat:'#d8d0b8',veil:true,pants:'#8a7a5a',hair:'#222',boot:'#5a4a30',patch:'#d8c090'},
+           3:{os:'robe',hs:'turban',hat:'#a02020',sash:'#e0c040',pants:null,hair:'#222',boot:'#3a2a1a',patch:'#d8c090'}}
+  }
+};
+function zstyle(kind,zv){
+  const M=ZMAP[selectedMap];
+  if(M){if(kind===0)return M.common[zv%5];if(M.kinds[kind])return M.kinds[kind];}
+  return kind===0?ZS_COMMON[zv%5]:(ZSTYLE[kind]||ZS_COMMON[0]);
+}
 /* Corpo inteiro SEM mãos e armas (R = função de retângulo; o menu de skins usa a mesma função) */
 function humanBody(R,o,face){
   const fx=Math.cos(face),fy=Math.sin(face);
@@ -8132,7 +8183,7 @@ function humanBody(R,o,face){
   else if(os==='dress'||os==='gown'){R(-4,-2+l1,3,5,skin);R(1,-2+l2,3,5,skin);}
   else{R(-4,-2+l1,3,5,pants);R(1,-2+l2,3,5,pants);}
   R(-4,1+l1,3,2,boot);R(1,1+l2,3,2,boot);
-  if(z&&kind===0&&zv===2){R(-4,-1+l1,3,1,'#e8e4d8');}                 // bandagem na perna do paciente
+  if(z&&kind===0&&S.os==='gown'){R(-4,-1+l1,3,1,'#e8e4d8');}                 // bandagem na perna do paciente
   // mochila (de lado/frente aparece atrás; de costas cobre as costas)
   if(S.acc==='pack'&&!back){R(-5,-8,1,5,S.pack);R(4,-8,1,5,S.pack);}
   // tronco
@@ -8200,6 +8251,26 @@ function humanBody(R,o,face){
       break;
     case 'fur':
       R(-4,-9,8,8,shirt);R(-5,-8,1,3,'#fff');R(4,-6,1,3,'#fff');R(-2,-3,4,2,'#cfdde8');
+      break;
+    case 'flannel':
+      R(-4,-9,8,8,shirt);R(-3,-9,1,8,sd);R(0,-9,1,8,sd);R(3,-9,1,8,sd);R(-4,-7,8,1,sd);R(-4,-4,8,1,sd);R(-1,-9,2,1,skin);R(-4,-2,8,1,'#2a2018');R(0,-2,1,1,'#c9a03a');
+      break;
+    case 'parka':
+      R(-5,-9,10,9,shirt);R(-5,-6,10,1,sd);R(-5,-3,10,1,sd);R(-5,0,10,1,'#e8e4d8');R(-4,-10,8,2,'#e8e4d8');
+      if(!back)R(0,-8,1,8,Sh(shirt,-.35));
+      break;
+    case 'robe':
+      R(-4,-9,8,8,shirt);R(-5,-1,10,2,shirt);R(-5,0,10,1,sd);R(-4,-5,8,1,S.sash||sd);R(-1,-9,2,1,skin);if(!back)R(0,-8,1,3,sd);
+      break;
+    case 'overalls':
+      R(-4,-9,8,8,S.under||'#c8b890');R(-4,-5,8,4,shirt);R(-3,-9,1,4,shirt);R(2,-9,1,4,shirt);
+      if(!back){R(-3,-5,1,1,'#d0b030');R(2,-5,1,1,'#d0b030');}
+      break;
+    case 'hawaii':
+      R(-4,-9,8,8,shirt);R(-3,-8,1,1,'#f0e0e0');R(0,-7,1,1,'#f0d050');R(2,-5,1,1,'#f0e0e0');R(-3,-4,1,1,'#f0d050');R(1,-3,1,1,'#f0e0e0');R(-1,-9,2,1,skin);
+      break;
+    case 'wrap':
+      R(-4,-9,8,8,'#d8cfae');for(let i=0;i<4;i++)R(-4,-8+i*2,8,1,'#b8ae8c');R(2,-3,2,3,'#d8cfae');R(3,-1,1,2,'#b8ae8c');
       break;
     default: // tee
       R(-4,-9,8,8,shirt);R(-4,-6,8,1,sl);R(-1,-9,2,1,skin);R(-4,-2,8,1,'#2a2018');
@@ -8282,6 +8353,33 @@ function humanBody(R,o,face){
       else R(-4,-16,8,7,'#c8b830');break;
     case 'wild':
       R(-4,-16,8,3,hair);R(-5,-15,1,1,hair);R(4,-14,1,1,hair);if(back)R(-4,-16,8,10,hair);break;
+    case 'beanie':{const hat=S.hat||'#a8402a';
+      if(back)R(-3,-16,6,6,hat);else{R(-3,-16,6,3,hat);R(-3,-13,6,1,Sh(hat,-.3));sbn(1);}
+      R(-1,-18,2,2,Sh(hat,.4));
+      if(S.goggles&&!back){R(-3,-12,6,2,'#2a2a2e');R(-3,-12,6,1,'#e0702a');R(-2,-11,2,1,'#9ad8f0');R(1,-11,2,1,'#9ad8f0');}
+      break;}
+    case 'ushanka':{const hat=S.hat||'#6a5a4a';
+      R(-4,-17,8,3,hat);R(-3,-18,6,1,Sh(hat,.2));R(-4,-14,1,4,hat);R(3,-14,1,4,hat);R(-4,-14,8,1,'#d8d0c0');
+      if(back)R(-4,-17,8,7,hat);break;}
+    case 'hoodfur':{const hc=Sh(shirt,-.1);
+      if(back)R(-4,-17,8,8,hc);else{R(-4,-17,8,2,hc);R(-4,-15,2,3,hc);R(-4,-12,1,3,hc);R(2,-15,2,3,hc);R(3,-12,1,3,hc);R(-2,-15,4,2,Sh(skin,-.4));}
+      R(-4,-16,8,1,'#e8e4d8');if(!back){R(-4,-15,1,6,'#e8e4d8');R(3,-15,1,6,'#e8e4d8');R(-3,-10,6,1,'#e8e4d8');}
+      break;}
+    case 'turban':{const hat=S.hat||'#e8e0c8';
+      R(-4,-17,8,4,hat);R(-4,-14,8,1,Sh(hat,-.25));R(-3,-16,6,1,Sh(hat,.25));R(-4,-15,8,1,Sh(hat,-.12));R(2,-18,2,2,hat);
+      if(back)R(-4,-17,8,8,hat);else if(S.veil)R(-3,-11,6,2,hat);
+      break;}
+    case 'strawhat':{const hat=S.hat||'#d8c070';
+      R(-6,-15,12,2,hat);R(-3,-18,6,3,Sh(hat,.1));R(-3,-16,6,1,S.band||'#a03a2a');R(-6,-14,12,1,Sh(hat,-.3));break;}
+    case 'ranger':{const hat=S.hat||'#5a6a3a';
+      R(-5,-15,10,2,hat);R(-3,-18,6,3,hat);R(-3,-16,6,1,'#c8a840');R(-5,-14,10,1,Sh(hat,-.3));break;}
+    case 'bucket':{const hat=S.hat||'#8a8a5a';
+      R(-4,-17,8,3,hat);R(-5,-14,10,2,hat);R(-3,-18,6,1,Sh(hat,.2));R(-5,-13,10,1,Sh(hat,-.3));break;}
+    case 'minehat':
+      R(-4,-17,8,3,'#d8a820');R(-3,-18,6,1,'#e8b830');R(-4,-14,8,1,'#8a6a10');if(!back)R(0,-17,2,2,'#fff6a0');break;
+    case 'wraphead':
+      R(-3,-16,6,3,'#d8cfae');R(-3,-13,6,1,'#b8ae8c');R(-3,-15,6,1,'#b8ae8c');if(back)R(-3,-16,6,6,'#d8cfae');
+      if(!back){R(-3,-11,6,1,'#d8cfae');R(2,-12,2,3,'#d8cfae');}break;
   }
   if(S.band&&hs!=='cap')R(-3,-14,6,1,S.band);
   if(S.band&&hs==='band')R(3,-14,2,2,S.band);
@@ -8293,6 +8391,7 @@ function humanBody(R,o,face){
       if(kind!==1)R(-4+(w%2)*7,-3,1,2,skin);                      // rasgo na roupa
       if(front)R(-2+(w%3),-9,1,2,'#7a1010');                      // sangue no queixo
     }
+    if(S.patch&&kind!==9){R(-3+(zv*2)%4,-8+(zv%3)*2,2,1,S.patch);R(1,-4,2,1,S.patch);if(!back)R(-3,-13,1,1,S.patch);}   // musgo, gelo ou areia
     if(kind===3){R(-4,-1,8,1,'#2a1010');R(-4,-6,1,3,Sh(skin,-.2));}
     if(kind===6&&front){R(-1,-10,2,2,'#400');R(-1,-10,2,1,'#fff');}
     if(kind===8&&!back){R(-3,-13,1,3,'#601010');R(2,-12,1,2,'#601010');}   // pintura de guerra
