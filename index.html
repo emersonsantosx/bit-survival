@@ -8545,10 +8545,19 @@ const HELD={
   bat:{ax:1,ay:9,rot:Math.PI/4},axe:{ax:4,ay:9,rot:Math.PI/4},pickaxe:{ax:2,ay:9,rot:Math.PI/4},
   sword:{ax:1,ay:9,rot:Math.PI/4,s:1.2},spear:{ax:1,ay:9,rot:Math.PI/4,s:1.5},fishingrod:{ax:1,ay:9,rot:Math.PI/4,s:1.3}
 };
-function drawHeld(wpn,hx,hy,a){
+/* arma branca (machado, picareta, taco, espada, lanca): olhando para a esquerda o desenho e o balanco sao o ESPELHO do golpe para a direita (antes, para a esquerda a arma ia de baixo para cima e a cabeca ficava de ponta-cabeca) */
+function meleeLeft(wpn,face){const H=HELD[wpn];return !!H&&!H.gun&&wpn!=='bow'&&Math.cos(face)<0;}
+function swingAngle(o,face){
+  if(!(o.swing>0))return face;
+  const d=(o.swing/.18-.5)*2.2;
+  return meleeLeft(o.wpn,face)?face-d:face+d;
+}
+function drawHeld(wpn,hx,hy,a,left){
   const H=HELD[wpn];if(!H)return false;
   const cv=pxCanvas(H.ic||WEAPON_ICON[wpn]||wpn);if(!cv)return false;
-  ctx.save();ctx.translate(hx,hy);ctx.rotate(a+(H.rot||0));
+  ctx.save();ctx.translate(hx,hy);
+  if(left){ctx.scale(-1,1);ctx.rotate(Math.PI-a+(H.rot||0));}
+  else ctx.rotate(a+(H.rot||0));
   if(H.gun&&Math.cos(a)<0)ctx.scale(1,-1);
   const sc=H.s||1;ctx.scale(sc,sc);ctx.imageSmoothingEnabled=false;
   ctx.drawImage(cv,(H.off||0)/sc-H.ax,-H.ay);
@@ -8632,7 +8641,7 @@ function humanDraw(x,y,face,o){
       const mS=sgn>0?shR:shL,oS=sgn>0?shL:shR;                        // ombro do braço principal / do outro
       if(two){
         // duas mãos no cabo: a de trás no encaixe da arma, a da frente alguns pixels adiante, as duas seguem o balanço do golpe
-        let sa=face;if(o.swing>0)sa=face+(o.swing/.18-.5)*2.2;
+        const sa=swingAngle(o,face);
         const cx=Math.cos(sa),cy=Math.sin(sa);
         hx=Math.round(cx*5);hy=-6+Math.round(cy*3);
         const gap={bow:2,pistol:2,smg:3,shotgun:5,rifle:5}[o.wpn]||4;
@@ -8661,10 +8670,9 @@ function humanDraw(x,y,face,o){
       }
     }
     R(hx-1,hy-1,2,2,o.skin);
-    let a=face;
-    if(o.swing>0)a=face+(o.swing/.18-.5)*2.2;
+    const a=swingAngle(o,face);
     const wx=Math.cos(a),wy=Math.sin(a);
-    drawHeld(o.wpn,hx,hy,a);
+    drawHeld(o.wpn,hx,hy,a,meleeLeft(o.wpn,face));
     if(o.hold&&ITEMS[o.hold]){const hc=pxCanvas(ITEMS[o.hold].e);if(hc){ctx.imageSmoothingEnabled=false;ctx.drawImage(hc,Math.round(hx+wx*5-hc.width/2),Math.round(hy+wy*4-hc.height/2));}}
     const _fl={pistol:8,smg:10,shotgun:11,rifle:13}[o.wpn];
     if(_fl&&o.flash>0)R(hx+wx*_fl-2,hy+wy*_fl-2,5,4,'#ffe27a');
