@@ -1519,13 +1519,13 @@ function startRain(){
     rainNoise={master:master,lp:lp,src:s1};
   }catch(e){}
 }
-function setRainMode(on,muff){   // muff: 0 ao ar livre · 1 no carro · 2 dentro de prédio
+function setRainMode(on,muff){   // muff: 0 ao ar livre (inclui veiculos abertos) · 1 no carro fechado · 2 dentro de prédio
   if(!AC)return;
   if(on&&!rainNoise)startRain();
   if(!rainNoise){rainSt.on=false;return;}
   const vol=volFor('rain');
-  const g=on?.2*vol*(muff===2?.5:(muff===1?.7:1)):0;
-  const f=muff===2?650:(muff===1?2400:7000);
+  const g=on?.2*vol*(muff===2?.5:(muff===1?.55:1)):0;
+  const f=muff===2?650:(muff===1?1500:7000);
   const t=AC.currentTime;
   try{
     rainNoise.master.gain.cancelScheduledValues(t);rainNoise.master.gain.setTargetAtTime(g,t,.45);
@@ -1570,7 +1570,7 @@ function rainThunder(){
 function syncRainAudio(dt){
   if(!AC||!P)return;
   const want=weather==='rain'&&state!=='menu';
-  const muff=P.inside?2:(P.inVehicle?1:0);
+  const muff=P.inside?2:(P.inVehicle&&vehKind(P.inVehicle)==='car'?1:0);   // so o carro fechado (cidade) abafa; moto de neve, quadriciclo e buggy sao abertos
   const vol=volFor('rain');
   if(want!==rainSt.on||muff!==rainSt.muff||vol!==rainSt.vol) setRainMode(want,muff);
   if(!rainSt.on||!rainNoise)return;
@@ -6381,7 +6381,7 @@ function envTemp(){
   const hod=(START_HOUR+T/DAY_SECONDS*24)%24;
   let tg=m.base+m.amp*Math.sin((hod-8)/24*6.2832);       // máximo ~14h, mínimo ~2h
   if(weather==='rain') tg-=14; else if(weather==='snow') tg-=8; else if(weather==='sand') tg+=8;
-  if(P.inVehicle) tg*=0.6;                                   // cabine do carro
+  if(P.inVehicle&&vehKind(P.inVehicle)==='car') tg*=0.6;      // cabine do carro fechado (veiculos abertos nao isolam)
   else if(bldAt(P.x,P.y)) tg*=0.3;                           // abrigo isola do clima
   else if(nearTent(P.x,P.y,34)) tg*=0.55;                    // barraca protege um pouco
   else {
@@ -6411,7 +6411,7 @@ function tempTick(dt){
   if(!Number.isFinite(P.temp)) P.temp=0;
   { // água do lago/oásis: ficar dentro vai molhando e esfriando aos poucos; fora, seca devagar
     const inW=!P.inVehicle&&pointInLake(P.x,P.y), snow=selectedMap==='snow';
-    const sheltered=!!(P.inVehicle||bldAt(P.x,P.y)||nearTent(P.x,P.y,34));
+    const sheltered=!!((P.inVehicle&&vehKind(P.inVehicle)==='car')||bldAt(P.x,P.y)||nearTent(P.x,P.y,34));
     const rainWet=!inW&&weather==='rain'&&!sheltered;                       // chuva molha quem esta ao relento
     let nearFire=false;for(const c of campfires){if(Math.hypot(c.x-P.x,c.y-P.y)<70){nearFire=true;break;}}
     const dry=(snow?55:30)/(nearFire?3:1);                                   // perto da fogueira seca bem mais rapido
