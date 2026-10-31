@@ -481,6 +481,12 @@ body.haschat #missions{right:140px}
 #menu .menu-row .menu-btn{flex:1;min-width:0;font-size:9px;letter-spacing:0;padding-left:6px;padding-right:6px}
 #menu .menu-row .menu-btn::before{display:none!important}
 .ach-sum{font:9px/1.4 var(--f-px,"Courier New",monospace);color:var(--c-amber,#C79A54);margin:0 0 6px}
+.ach-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 8px;text-align:center}
+@media (max-width:560px){.ach-stats{grid-template-columns:repeat(2,1fr)}}
+.ach-stats div{background:var(--c-panel,#20242c);border:2px solid var(--c-line,#3a3f4a);padding:5px 4px}
+.ach-stats b{display:block;font:11px/1.3 var(--f-px,"Courier New",monospace);color:var(--c-amber,#C79A54)}
+.ach-stats span{font:9px/1.3 "Courier New",monospace;color:var(--c-dim,#9a9684)}
+.ach-title2{font:9px/1.4 var(--f-px,"Courier New",monospace);color:var(--c-cream,#eee9d0);margin:2px 0 6px}
 .ach-list{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;flex:1;text-align:left}
 @media (max-width:560px){.ach-list{grid-template-columns:1fr}}
 .ach-row{display:flex;align-items:center;gap:8px;background:var(--c-panel,#20242c);border:2px solid var(--c-line,#3a3f4a);padding:6px 8px}
@@ -688,6 +694,8 @@ body.haschat #missions{right:140px}
 <div id="achscreen" class="screen hide">
   <div class="card">
     <h2>CONQUISTAS</h2>
+    <div class="ach-title2">ESTATÍSTICAS</div>
+    <div class="ach-stats" id="achStats"></div>
     <div class="ach-sum" id="achSum"></div>
     <div class="ach-list" id="achList"></div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">
@@ -5043,6 +5051,7 @@ function newGame(){
       walk:0,inside:null,inVehicle:null};
     pushOut(P,P.r);
     populate();
+    statBump('games');
     pings=[];pingCD=0;T=0;kills=0;shake=0;flash=0;spawnTimer=3;dark=0;day=1;update._lastDay=1;atkHeld=false;sprintHeld=false;
     touchGas=0;touchSteer=0;stepT=0;
     MP.active=false;remotePlayers={};
@@ -5826,6 +5835,7 @@ function showDeathScreen(canRespawn){
 function die(){
   if(!P || P.dead) return;
   closeWeaponWheel();closeChat();
+  statBump('deaths');
   P.sleeping=null;SLP.fade=0;P.hp=0;P.dead=true;P.fish=null;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;
   if(P.inVehicle){ try{exitVehicle();}catch(e){} }
   restoreWalkHUD();
@@ -6823,6 +6833,7 @@ function updateZ(z,dt){
 function update(dt){
   if(!P||!isFinite(dt))return;
   T+=dt;
+  statTick(dt);
   const hr=START_HOUR+T/DAY_SECONDS*24;
   dark=darkness(hr%24);
   day=Math.floor(hr/24)+1;
@@ -11423,7 +11434,30 @@ function achSet(stat,v){
   if(!(v>(ACHD.s[stat]||0)))return;
   ACHD.s[stat]=v;achSave();achCheck(stat);
 }
+/* ---- Estatisticas de todas as partidas (guardadas junto das conquistas) ---- */
+let _statAcc=0,_statPx=null,_statPy=null,_statSaveT=0;
+function statTick(dt){
+  if(!P||P.dead)return;
+  ACHD.s.playSec=(ACHD.s.playSec||0)+dt;
+  if(_statPx!==null){const d=Math.hypot(P.x-_statPx,P.y-_statPy);if(d<60)ACHD.s.dist=(ACHD.s.dist||0)+d;}  // ignora teleportes (respawn, carregar save)
+  _statPx=P.x;_statPy=P.y;
+  _statSaveT+=dt;if(_statSaveT>15){_statSaveT=0;achSave();}
+}
+function statBump(k){ACHD.s[k]=(ACHD.s[k]||0)+1;achSave();_statPx=null;}
+function fmtDur(sec){sec=Math.floor(sec);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60);return h>0?h+'h '+m+'min':m+'min '+(sec%60)+'s';}
+function renderStats(){
+  const el=document.getElementById('achStats');if(!el)return;
+  const s=ACHD.s,best=Math.max(+(LSget()||0),0);
+  const rows=[
+    [s.games||0,'Partidas'],[s.deaths||0,'Mortes'],[fmtDur(s.playSec||0),'Tempo jogado'],
+    [fmtDur(best),'Maior sobrevivência'],['Dia '+(s.maxDay||0),'Maior dia'],[Math.round((s.dist||0)/50)+' m','Distância a pé'],
+    [s.kill||0,'Zumbis mortos'],[s.killAnimal||0,'Animais caçados'],[s.fish||0,'Peixes pescados'],
+    [s.get_wood||0,'Madeira coletada'],[s.cook||0,'Alimentos cozidos'],[s.craft||0,'Itens fabricados']
+  ];
+  el.innerHTML=rows.map(r=>'<div><b>'+r[0]+'</b><span>'+r[1]+'</span></div>').join('');
+}
 function renderAch(){
+  try{renderStats();}catch(e){}
   const list=document.getElementById('achList'),sum=document.getElementById('achSum');if(!list)return;
   let got=0,h='';
   for(const a of ACH){
