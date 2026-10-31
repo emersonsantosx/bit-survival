@@ -2241,6 +2241,12 @@ function pointInLake(x,y){
 let ORLA=null;
 function orlaShore(x){const o=ORLA;return o.sea+9*Math.sin(x*.0042+o.p1)+5*Math.sin(x*.011+o.p2)+3*Math.sin(x*.027+o.p3);}
 function orlaSand(x){const o=ORLA;return orlaShore(x)-o.sandW-6*Math.sin(x*.0063+o.p2);}
+function orlaHit(e,r){   // estruturas da orla (quiosque, torre, barcos, pedras, grade do pier)
+  if(e.y<ORLA.yb-4)return;
+  for(const w of ORLA.rects)pushRect(e,r,w);
+  for(const w of ORLA.rails)pushRect(e,r,w);
+}
+function onSand(x,y){return !!ORLA&&y>ORLA.yb&&y>orlaSand(x)&&y<=orlaShore(x)&&!onPier(x,y);}
 function onPier(x,y){for(const p of ORLA.piers)if(x>p.x-p.w/2&&x<p.x+p.w/2&&y>=p.y0&&y<=p.y1)return true;return false;}
 function inSea(x,y){return !!ORLA&&y>ORLA.top&&y>orlaShore(x)&&!onPier(x,y);}
 function genOrla(){
@@ -2260,11 +2266,14 @@ function genOrla(){
   const h=mkRng(((Math.round(yb)*131+Math.round(xb)*71+WW)%99991)/99991);
   const sandW=Math.round(clamp(m*.32,34,110)),seaD=clamp(m*.4,56,200);
   const sea=Math.max(WH-seaD,yb+sandW+22);
-  ORLA={yb,xb,sea,sandW,top:sea-24,p1:h()*6.28,p2:h()*6.28,p3:h()*6.28,piers:[]};
+  ORLA={yb,xb,sea,sandW,top:sea-24,p1:h()*6.28,p2:h()*6.28,p3:h()*6.28,piers:[],rects:[],rails:[]};
   const o=ORLA;
   for(const fx of [.18+h()*.14,.58+h()*.22]){
     const x=Math.round(WW*fx),sh=orlaShore(x);
-    o.piers.push({x,w:30,y0:Math.round(orlaSand(x)-2),y1:Math.round(Math.min(WH-14,sh+60+h()*70))});
+    const pr={x,w:30,y0:Math.round(orlaSand(x)-2),y1:Math.round(Math.min(WH-14,sh+60+h()*70))};
+    o.piers.push(pr);
+    const L=x-15,ys=Math.round(Math.min(sh,orlaShore(L),orlaShore(L+30)))-2;   // grade nas laterais e na ponta: so se entra no pier pela areia
+    o.rails.push({x:L-4,y:ys,w:4,h:pr.y1-ys+3},{x:L+30,y:ys,w:4,h:pr.y1-ys+3},{x:L-4,y:pr.y1-1,w:38,h:4});
   }
   const keep=a=>a.filter(e=>e.y<yb-6);
   trees=keep(trees);rocks=keep(rocks);decorations=keep(decorations);items=keep(items);animals=keep(animals);
@@ -2282,17 +2291,17 @@ function genOrla(){
   for(let x=520+h()*200;x<WW-120;x+=1000+h()*400){
     if(nearPier(x))continue;
     const kx=x,ky=prom(kx)>=60?yb+prom(kx)*.55:orlaSand(kx)+16;
-    dec(kx,ky,'kiosk',true);
+    dec(kx,ky,'kiosk',false);o.rects.push({x:kx-22,y:ky-9,w:44,h:11});
     items.push({t:h()<.5?'water':'food',x:Math.round(kx+h()*30-15),y:Math.round(ky+14)});
   }
   for(let x=110+h()*80;x<WW-60;x+=95+h()*80){          // guarda-sois e toalhas
     if(nearPier(x))continue;
     const sy=orlaSand(x),shy=orlaShore(x),y=sy+(shy-sy)*(.35+h()*.3);
     if(shy-sy<26)continue;
-    if(h()<.62){dec(x,y,'umbrella',false);dec(x+14,y+8,'towel',false);}
+    if(h()<.62){dec(x,y,'umbrella',false);o.rects.push({x:x-2,y:y-3,w:4,h:4});dec(x+14,y+8,'towel',false);}
     else dec(x,y+4,'towel',false);
   }
-  for(const fx of [.31,.77]){const x=Math.round(WW*(fx+h()*.06));if(!nearPier(x)){const sy=orlaSand(x),shy=orlaShore(x);dec(x,sy+(shy-sy)*.55,'lifeguard',true);}}
+  for(const fx of [.31,.77]){const x=Math.round(WW*(fx+h()*.06));if(!nearPier(x)){const sy=orlaSand(x),shy=orlaShore(x);{const ly=sy+(shy-sy)*.55;dec(x,ly,'lifeguard',false);o.rects.push({x:x-11,y:ly-8,w:22,h:9});}}}
   for(let x=90+h()*60;x<WW-50;x+=190+h()*90){          // boias
     if(nearPier(x))continue;
     const y=orlaShore(x)+Math.min(54,(WH-orlaShore(x))*.55);
@@ -2301,12 +2310,12 @@ function genOrla(){
   for(let i=0;i<4;i++){                                // barcos e pedras no mar
     const x=Math.round(WW*(.08+h()*.84));if(nearPier(x))continue;
     const sh=orlaShore(x),room=WH-sh;
-    if(room>74)dec(x,sh+Math.min(room-22,46+h()*50),'boat',true);
+    if(room>74){const by=sh+Math.min(room-22,46+h()*50);dec(x,by,'boat',false);o.rects.push({x:x-22,y:by-8,w:44,h:10});}
   }
   for(let i=0;i<7;i++){
     const x=Math.round(WW*(.04+h()*.92));if(nearPier(x))continue;
     const sh=orlaShore(x),room=WH-sh;
-    if(room>60)dec(x,sh+14+h()*Math.min(40,room-30),'searock',true);
+    if(room>60){const ry=sh+14+h()*Math.min(40,room-30);dec(x,ry,'searock',false);o.rects.push({x:x-9,y:ry-6,w:18,h:7});}
   }
   lampList=decorations.filter(d=>d.type==='lamp');
 }
@@ -2363,6 +2372,10 @@ function drawOrla(vx0,vy0,vx1,vy1){
     for(let y=p.y0+10;y<p.y1;y+=38){R(L-2,y,4,5,'#4a3622');R(L+p.w-2,y,4,5,'#4a3622');}
     R(L-2,p.y1-3,p.w+4,4,'#4a3622');
   }
+  for(const w of o.rails){   // corrimao do pier (laterais e ponta)
+    if(w.x>vx1||w.x+w.w<vx0)continue;
+    R(w.x,w.y,w.w,w.h,'#6e5232');R(w.x,w.y,w.w>w.h?w.w:1,w.w>w.h?1:w.h,'#b08a5c');
+  }
   ctx.restore();
 }
 /* Meia-largura/altura do veículo alinhada aos eixos, considerando a rotação (carro de lado ocupa 20x36, não 36x20) */
@@ -2381,6 +2394,7 @@ function carTopAt(x,y){const wf=(weather==='rain'||weather==='sand')?.92:1;retur
 function terrainFor(x,y){
   if(pointInLake(x,y)) return TERR.water;
   if(onCityRoad(x,y,0)) return selectedMap==='snow'?TERR.icy:TERR.road;
+  if(onSand(x,y)) return TERR.sand;
   return selectedMap==='city'?TERR.lot:(selectedMap==='desert'?TERR.sand:(selectedMap==='snow'?TERR.snow:TERR.grass));
 }
 function vehHalf(v){
@@ -2417,6 +2431,7 @@ function solidPoint(x,y,m){
   for(const v of vehicles){vehHalf(v);if(x>v.x-v._hx-m&&x<v.x+v._hx+m&&y>v.y-v._hy-m&&y<v.y+v._hy+m)return true;}
   if(plane&&x>plane.x-38-m&&x<plane.x+38+m&&y>plane.y-18-m&&y<plane.y+18+m)return true;
   if(pointInLake(x,y))return true;
+  if(ORLA&&y>ORLA.yb-4){for(const w of ORLA.rects)if(x>w.x-m&&x<w.x+w.w+m&&y>w.y-m&&y<w.y+w.h+m)return true;for(const w of ORLA.rails)if(x>w.x-m&&x<w.x+w.w+m&&y>w.y-m&&y<w.y+w.h+m)return true;}
   if(FIELD&&FIELD.fence)for(const w of FIELD.fence){if(x>w.x-m&&x<w.x+w.w+m&&y>w.y-m&&y<w.y+w.h+m)return true;}
   return false;
 }
@@ -2503,6 +2518,7 @@ function pushOut(e,r){
     for(let cx=cx0;cx<=cx1;cx++)for(let cy=cy0;cy<=cy1;cy++){const a=gm.get((cx+8)*4096+cy+8);if(a)for(let i=0;i<a.length;i++)pushRect(e,r,a[i]);}
   }
   if(FIELD&&FIELD.fence)for(const w of FIELD.fence)pushRect(e,r,w);
+  if(ORLA)orlaHit(e,r);
   for(let i=0;i<blds.length;i++){      // móveis (só do prédio onde a pessoa está)
     const b=blds[i];
     if(e.x<b.x||e.x>b.x+b.w||e.y<b.y||e.y>b.y+b.h||!b.furn)continue;
@@ -3964,9 +3980,11 @@ function updateLM(dt){
   if(LM&&!LM.seen&&Math.hypot(P.x-LM.cx,P.y-LM.cy)<300){
     LM.seen=true;toast(LM.kind==='temple'?'Você avistou o Templo Enterrado':'Você avistou o Acampamento da Expedição');
   }
-  if(selectedMap!=='desert'&&selectedMap!=='snow'){if(prints.length)prints.length=0;return;}
+  const beach=selectedMap==='city'&&!!ORLA;
+  if(selectedMap!=='desert'&&selectedMap!=='snow'&&!beach){if(prints.length)prints.length=0;return;}
   // pegadas na areia e na neve (o jogador e os zumbis por perto)
   const mark=(o,big)=>{
+    if(beach&&!onSand(o.x,o.y)){o._lp=null;return;}   // na praia so a areia marca
     const lp=o._lp;
     if(!lp){o._lp={x:o.x,y:o.y,s:1};return;}
     const dx=o.x-lp.x,dy=o.y-lp.y;
@@ -3983,7 +4001,7 @@ function updateLM(dt){
 }
 function drawPrints(vx0,vx1,vy0,vy1){
   if(!prints.length)return;
-  const col=selectedMap==='snow'?'#9fb2c4':'#a5854a';
+  const col=selectedMap==='snow'?'#9fb2c4':selectedMap==='city'?'#8f7640':'#a5854a';
   ctx.fillStyle=col;
   for(const p of prints){
     if(p.x<vx0||p.x>vx1||p.y<vy0||p.y>vy1)continue;
@@ -4533,12 +4551,12 @@ const ANIMAL_PREY={deer:1,rabbit:1,camel:1,crow:1,vulture:1};
 const BIRD_SP={
   sabia:     {n:'Sabiá',      body:'#7a5a3a',belly:'#d88a4a',wing:'#5e422a',beak:'#e0b040',sz:1,  cnt:9, snd:'chirp'},
   bemtevi:   {n:'Bem-te-vi',  body:'#8a7a5a',belly:'#f0d040',wing:'#6a5a40',beak:'#2a2a2a',sz:1,  cnt:6, snd:'chirp'},
-  perdiz:    {n:'Perdiz-da-neve',body:'#e8eef4',belly:'#ffffff',wing:'#c0ccd8',beak:'#2a2a30',sz:1.25,cnt:8,snd:'cluck'},
+  perdiz:    {n:'Perdiz-da-neve',body:'#e8eef4',belly:'#ffffff',wing:'#c0ccd8',beak:'#2a2a30',sz:1.1,cnt:8,snd:'cluck'},
   pardalneve:{n:'Pardal-da-neve',body:'#f2f4f6',belly:'#ffffff',wing:'#2a2a32',beak:'#e0a030',sz:.9,cnt:7, snd:'chirp'},
   calhandra: {n:'Calhandra',  body:'#b89a60',belly:'#e8d8a8',wing:'#8a6a38',beak:'#5a4a30',sz:1,  cnt:9, snd:'chirp'},
-  urubu:     {n:'Urubu',      body:'#2a2a2e',belly:'#3a3a40',wing:'#1e1e22',beak:'#c88050',sz:1.7,cnt:6, soar:true},
+  urubu:     {n:'Urubu',      body:'#2a2a2e',belly:'#3a3a40',wing:'#1e1e22',beak:'#c88050',sz:1.6,cnt:6, soar:true},
   pombo:     {n:'Pombo',      body:'#8a8e98',belly:'#a8acb8',wing:'#6a6e78',beak:'#c0a090',sz:1.1,cnt:12,snd:'coo'},
-  corvo:     {n:'Corvo',      body:'#22222a',belly:'#2e2e38',wing:'#16161c',beak:'#3a3a44',sz:1.3,cnt:8, snd:'caw'}
+  corvo:     {n:'Corvo',      body:'#22222a',belly:'#2e2e38',wing:'#16161c',beak:'#3a3a44',sz:1.2,cnt:8, snd:'caw'}
 };
 const BIRD_MAP={forest:['sabia','bemtevi'],snow:['perdiz','pardalneve'],desert:['calhandra','urubu'],city:['pombo','corvo']};
 const BIRD_FLOCK={forest:['sabia','bemtevi'],snow:['pardalneve','perdiz'],desert:['calhandra'],city:['pombo','corvo']};
@@ -4772,7 +4790,7 @@ function applyBirds(list){
   birds=next;
 }
 function drawBirdBody(b,x,y,air){
-  const sp=BIRD_SP[b.sp],s=sp.sz*1.35;
+  const sp=BIRD_SP[b.sp],s=sp.sz*.72;   // passaro de verdade e bem menor que a pessoa (a pessoa tem uns 20 px)
   ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.scale(b.face*s,s);
   if(!air){
     const hop=b.mv?-Math.abs(Math.sin(b.ph*16))*1.2:0,pk=b.peck>0?(Math.sin(b.ph*18)>0?1:0):0;
@@ -4806,7 +4824,7 @@ function drawBirdsAir(vx0,vx1,vy0,vy1){
     if(b.x<vx0-20||b.x>vx1+20||b.y-b.z<vy0-20||b.y-b.z>vy1+20)continue;
     const sp=BIRD_SP[b.sp];
     ctx.globalAlpha=.22*Math.max(.3,1-b.z/110);
-    ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(Math.round(b.x+b.z*.25),Math.round(b.y+2),Math.max(2,4*sp.sz*(1-b.z/200)),Math.max(1,1.6*sp.sz*(1-b.z/200)),0,0,6.283);ctx.fill();
+    ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(Math.round(b.x+b.z*.25),Math.round(b.y+2),Math.max(2,3*sp.sz*(1-b.z/200)),Math.max(1,1.2*sp.sz*(1-b.z/200)),0,0,6.283);ctx.fill();
     ctx.globalAlpha=1;
     drawBirdBody(b,b.x,b.y-b.z,true);
   }
@@ -6591,6 +6609,7 @@ function updateP(dt){
   const wantSprint=sprintHeld&&P.moving&&P.stam>0&&!P.exhausted&&!inWater;
   P.sprint=!!wantSprint;
   let sp=P.sprint?78:(inWater?24:46);
+  if(!inWater&&onSand(P.x,P.y))sp*=.9;                          // areia fofa: um pouco mais devagar
   if(FIELD&&inCorn(P.x,P.y))sp*=.88; // abrir caminho entre os pés de milho
   if(P.hp<30)sp*=.85;
   // Clima com impacto: neve freia; chuva gasta mais stamina
@@ -8651,10 +8670,19 @@ const HELD={
   bat:{ax:1,ay:9,rot:Math.PI/4},axe:{ax:4,ay:9,rot:Math.PI/4},pickaxe:{ax:2,ay:9,rot:Math.PI/4},
   sword:{ax:1,ay:9,rot:Math.PI/4,s:1.2},spear:{ax:1,ay:9,rot:Math.PI/4,s:1.5},fishingrod:{ax:1,ay:9,rot:Math.PI/4,s:1.3}
 };
-function drawHeld(wpn,hx,hy,a){
+/* arma branca (machado, picareta, taco, espada, lanca): olhando para a esquerda o desenho e o balanco sao o ESPELHO do golpe para a direita (antes, para a esquerda a arma ia de baixo para cima e a cabeca ficava de ponta-cabeca) */
+function meleeLeft(wpn,face){const H=HELD[wpn];return !!H&&!H.gun&&wpn!=='bow'&&Math.cos(face)<0;}
+function swingAngle(o,face){
+  if(!(o.swing>0))return face;
+  const d=(o.swing/.18-.5)*2.2;
+  return meleeLeft(o.wpn,face)?face-d:face+d;
+}
+function drawHeld(wpn,hx,hy,a,left){
   const H=HELD[wpn];if(!H)return false;
   const cv=pxCanvas(H.ic||WEAPON_ICON[wpn]||wpn);if(!cv)return false;
-  ctx.save();ctx.translate(hx,hy);ctx.rotate(a+(H.rot||0));
+  ctx.save();ctx.translate(hx,hy);
+  if(left){ctx.scale(-1,1);ctx.rotate(Math.PI-a+(H.rot||0));}
+  else ctx.rotate(a+(H.rot||0));
   if(H.gun&&Math.cos(a)<0)ctx.scale(1,-1);
   const sc=H.s||1;ctx.scale(sc,sc);ctx.imageSmoothingEnabled=false;
   ctx.drawImage(cv,(H.off||0)/sc-H.ax,-H.ay);
@@ -8738,7 +8766,7 @@ function humanDraw(x,y,face,o){
       const mS=sgn>0?shR:shL,oS=sgn>0?shL:shR;                        // ombro do braço principal / do outro
       if(two){
         // duas mãos no cabo: a de trás no encaixe da arma, a da frente alguns pixels adiante, as duas seguem o balanço do golpe
-        let sa=face;if(o.swing>0)sa=face+(o.swing/.18-.5)*2.2;
+        const sa=swingAngle(o,face);
         const cx=Math.cos(sa),cy=Math.sin(sa);
         hx=Math.round(cx*5);hy=-6+Math.round(cy*3);
         const gap={bow:2,pistol:2,smg:3,shotgun:5,rifle:5}[o.wpn]||4;
@@ -8767,10 +8795,9 @@ function humanDraw(x,y,face,o){
       }
     }
     R(hx-1,hy-1,2,2,o.skin);
-    let a=face;
-    if(o.swing>0)a=face+(o.swing/.18-.5)*2.2;
+    const a=swingAngle(o,face);
     const wx=Math.cos(a),wy=Math.sin(a);
-    drawHeld(o.wpn,hx,hy,a);
+    drawHeld(o.wpn,hx,hy,a,meleeLeft(o.wpn,face));
     if(o.hold&&ITEMS[o.hold]){const hc=pxCanvas(ITEMS[o.hold].e);if(hc){ctx.imageSmoothingEnabled=false;ctx.drawImage(hc,Math.round(hx+wx*5-hc.width/2),Math.round(hy+wy*4-hc.height/2));}}
     const _fl={pistol:8,smg:10,shotgun:11,rifle:13}[o.wpn];
     if(_fl&&o.flash>0)R(hx+wx*_fl-2,hy+wy*_fl-2,5,4,'#ffe27a');
@@ -11197,7 +11224,7 @@ function render(){
     else if(e.k===8){ drawObserver(e.o); }
     else if(e.k===10){ drawScarecrow(e.o); }
     else if(e.k===11){ drawStalk(e.o); }
-    else if(e.k===12){ shadow(e.o.x,e.o.y,3*BIRD_SP[e.o.sp].sz,1.4); drawBirdBody(e.o,e.o.x,e.o.y,false); }
+    else if(e.k===12){ shadow(e.o.x,e.o.y,2*BIRD_SP[e.o.sp].sz,1); drawBirdBody(e.o,e.o.x,e.o.y,false); }
     else if(e.k===1){
       const z=e.o;
       human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,zv:z.si|0,moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,yeti:z.kind===9,bloater:z.bloater||z.kind===7});
