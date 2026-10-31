@@ -5134,7 +5134,7 @@ function readSave(n){
     d=JSON.parse(raw);
     const ok=d && d.v===SAVE_VER && saveWorldOk(d) && MAP_NAMES[d.map] && Number.isFinite(d.seed) && d.seed>0 && Number.isFinite(d.T) && d.P && Number.isFinite(d.P.hp) && d.P.hp>0
       && Array.isArray(d.trees)&&Array.isArray(d.rocks)&&Array.isArray(d.items)&&Array.isArray(d.zombies)&&Array.isArray(d.vehicles)&&Array.isArray(d.animals)&&Array.isArray(d.fires);
-    if(!ok){ clearSave(n); return null; }
+    if(!ok){ toast('Save do slot '+n+' incompatível com esta versão'); return null; }   // não apaga: o jogador pode recuperar com a versão certa
     return d;
   }catch(e){ clearSave(n); return null; }
 }
