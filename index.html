@@ -7895,6 +7895,7 @@ function handleNetData(data,isHostSide){
     const wasAlive=rp.alive!==false && rp.id;
     rp.id=data.id;rp.name=sanitizeName(data.name);
     rp.skin=(Number.isInteger(data.skin)&&data.skin>=0&&data.skin<SKINS.length)?data.skin:0;
+    rp.pk=data.pk?1:0;
     rp.tx=pos.x;rp.ty=pos.y;
     if(rp.x===undefined){rp.x=pos.x;rp.y=pos.y;}
     rp.face=isFiniteNum(data.face)?data.face:rp.face;
@@ -8264,7 +8265,7 @@ function packMyPlayer(){
   const p = {type:'player',id:myNetId(),name:MP.playerName||'Jogador',
     x:Math.round(P.x),y:Math.round(P.y),face:+P.face.toFixed(2),
     moving:!!P.moving,sprint:!!P.sprint,weapon:P.weapon||'fists',swing:+(P.swing||0).toFixed(2),
-    hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle,skin:SKIN_SEL,hold:P.hold||'',fw:Object.keys(P.firearms||{}).filter(k=>P.firearms[k])};
+    hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle,skin:SKIN_SEL,pk:P.pack?1:0,hold:P.hold||'',fw:Object.keys(P.firearms||{}).filter(k=>P.firearms[k])};
   if(OBS.on&&!P.inside&&!P.inVehicle)p.ob=[Math.round(OBS.x),Math.round(OBS.y),OBS.glitch>0?1:0];
   if(GH.on&&GH.b)p.gh=[GH.b.x|0,GH.b.y|0,Math.round(GH.x),Math.round(GH.y),GH.kill>0?1:0];
   if(P.sleeping){const sl=P.sleeping;p.sl=[SLC[sl.s]|0,sl.hx|0,sl.hy|0,sl.tent?1:0];}
@@ -8366,16 +8367,16 @@ let SKIN_SEL=0;
 try{const v=parseInt(localStorage.getItem('minisurv_skin'),10);if(v>=0&&v<SKINS.length)SKIN_SEL=v;}catch(e){}
 function skinLook(i,alt){
   const s=SKINS[(i>=0&&i<SKINS.length)?i:0];
-  return {skin:s.skin,hair:s.hair,shirt:alt?s.alt:s.shirt,pants:s.pants,female:s.f,os:s.os,hs:s.hs,slv:s.slv,bow:s.bow,hat:s.hat,band:s.band,acc:s.acc,pack:s.pack,under:s.under,beard:s.beard,boot:s.boot};
+  return {skin:s.skin,hair:s.hair,shirt:alt?s.alt:s.shirt,pants:s.pants,female:s.f,os:s.os,hs:s.hs,slv:s.slv,bow:s.bow,hat:s.hat,band:s.band,acc:s.acc,pack:s.pack,under:s.under,beard:s.beard,boot:s.boot,bag:false};
 }
 /* Regra da skin repetida: quem entrou como CONVIDADO usa a cor alternativa (os dois lados calculam igual) */
 function myLook(){
   let alt=false;
   if(MP.active&&!MP.isHost){for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.skin===SKIN_SEL){alt=true;break;}}}
-  return skinLook(SKIN_SEL,alt);
+  const lk=skinLook(SKIN_SEL,alt);lk.bag=!!(P&&P.pack);return lk;
 }
 function remoteLook(rp){
-  return skinLook(rp.skin|0,!rp.isHost&&(rp.skin|0)===SKIN_SEL);
+  const lk=skinLook(rp.skin|0,!rp.isHost&&(rp.skin|0)===SKIN_SEL);lk.bag=!!rp.pk;return lk;
 }
 function drawSkinPreview(cv,i){
   const c=cv.getContext('2d'),o=skinLook(i,false);
@@ -8483,6 +8484,12 @@ function humanBody(R,o,face){
   if(z&&kind===0&&S.os==='gown'){R(-4,-1+l1,3,1,'#e8e4d8');}                 // bandagem na perna do paciente
   // mochila (de lado/frente aparece atrás; de costas cobre as costas)
   if(S.acc==='pack'&&!back){R(-5,-8,1,5,S.pack);R(4,-8,1,5,S.pack);}
+  // mochila craftada/encontrada (P.pack): de lado fica atras do tronco, de frente so aparecem as bordas, de costas cobre as costas
+  const bagOn=!!o.bag&&!z&&S.acc!=='pack',bagC='#7a5a34',bagS='#3a2a1a';
+  if(bagOn&&!back){
+    if(ex!==0){const bx=ex>0?-7:4;R(bx,-10,3,8,bagC);R(bx,-10,3,1,Sh(bagC,.25));R(bx,-5,3,2,Sh(bagC,-.25));R(bx+(ex>0?0:2),-9,1,6,Sh(bagC,-.3));}
+    else{R(-5,-9,1,6,bagC);R(4,-9,1,6,bagC);R(-5,-9,1,1,Sh(bagC,.25));R(4,-9,1,1,Sh(bagC,.25));}
+  }
   // tronco
   switch(os){
     case 'jacket':
@@ -8571,6 +8578,11 @@ function humanBody(R,o,face){
       break;
     default: // tee
       R(-4,-9,8,8,shirt);R(-4,-6,8,1,sl);R(-1,-9,2,1,skin);R(-4,-2,8,1,'#2a2018');
+  }
+  if(bagOn){
+    if(back){R(-3,-10,6,8,bagC);R(-3,-10,6,1,Sh(bagC,.25));R(-2,-5,4,2,Sh(bagC,-.25));R(-3,-3,6,1,Sh(bagC,-.3));R(-4,-8,1,5,bagS);R(3,-8,1,5,bagS);R(-1,-8,2,1,bagS);}
+    else if(ex!==0){R(ex>0?-2:1,-9,1,4,bagS);}                // alca no ombro
+    else{R(-3,-9,1,5,bagS);R(2,-9,1,5,bagS);}                  // alcas no peito
   }
   // mochila de costas
   if(S.acc==='pack'&&back){R(-3,-9,6,7,S.pack);R(-3,-9,6,1,Sh(S.pack,.25));R(-2,-4,4,2,Sh(S.pack,-.25));R(-4,-8,1,4,Sh(S.pack,-.3));R(3,-8,1,4,Sh(S.pack,-.3));}
