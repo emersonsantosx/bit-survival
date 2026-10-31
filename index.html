@@ -5121,7 +5121,12 @@ function saveGame(){
   }catch(e){ console.warn('[save]',e); return false; }
 }
 /* o save só vale se o mundo tem o mesmo tamanho de quando foi salvo (a geração depende dele) */
-function saveWorldOk(d){return !!d&&!!d.map&&d.ws===Math.round(3400*(WORLD_S[d.map]||1)/50)*50;}
+function saveWorldOk(d){
+  if(!d||!d.map)return false;
+  const base=Math.round(3400*(WORLD_S[d.map]||1)/50)*50;
+  /* a cidade tem a margem da direita aparada depois de gerada (ver genOrla), entao o WW salvo pode ser menor que o tamanho-base; a geracao continua sendo a mesma */
+  return d.ws===base||(d.map==='city'&&d.ws<=base&&d.ws>=base-700);
+}
 function readSave(n){
   let d=null;
   try{
