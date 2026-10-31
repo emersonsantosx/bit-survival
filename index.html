@@ -8369,14 +8369,25 @@ function skinLook(i,alt){
   const s=SKINS[(i>=0&&i<SKINS.length)?i:0];
   return {skin:s.skin,hair:s.hair,shirt:alt?s.alt:s.shirt,pants:s.pants,female:s.f,os:s.os,hs:s.hs,slv:s.slv,bow:s.bow,hat:s.hat,band:s.band,acc:s.acc,pack:s.pack,under:s.under,beard:s.beard,boot:s.boot,bag:false};
 }
+/* Mapa da neve: todas as skins nascem agasalhadas (casaco, gorro com pompom e luvas); cores derivadas da propria skin.
+   Só visual: o casaco polar do jogo (item) continua sendo o que realmente reduz o frio. */
+function snowOutfit(lk,i){
+  if(selectedMap!=='snow')return lk;
+  const s=SKINS[(i>=0&&i<SKINS.length)?i:0],hatC=s.alt||'#8a3a3a';
+  if(lk.os!=='robe')lk.os='parka';
+  if(!(lk.hs==='long'||lk.hs==='pony'||lk.hs==='pig'))lk.hs='short';   // tira bonés e cabelos volumosos que não cabem sob o gorro
+  lk.band=undefined;lk.beanie=hatC;lk.glove=Sh(hatC,-.3);lk.slv=.6;
+  if(lk.female||lk.pants===lk.skin)lk.pants='#3a3a48';                  // calça quente no lugar de saia ou short
+  return lk;
+}
 /* Regra da skin repetida: quem entrou como CONVIDADO usa a cor alternativa (os dois lados calculam igual) */
 function myLook(){
   let alt=false;
   if(MP.active&&!MP.isHost){for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.skin===SKIN_SEL){alt=true;break;}}}
-  const lk=skinLook(SKIN_SEL,alt);lk.bag=!!(P&&P.pack);return lk;
+  const lk=skinLook(SKIN_SEL,alt);lk.bag=!!(P&&P.pack);return snowOutfit(lk,SKIN_SEL);
 }
 function remoteLook(rp){
-  const lk=skinLook(rp.skin|0,!rp.isHost&&(rp.skin|0)===SKIN_SEL);lk.bag=!!rp.pk;return lk;
+  const lk=skinLook(rp.skin|0,!rp.isHost&&(rp.skin|0)===SKIN_SEL);lk.bag=!!rp.pk;return snowOutfit(lk,rp.skin|0);
 }
 function drawSkinPreview(cv,i){
   const c=cv.getContext('2d'),o=skinLook(i,false);
@@ -8694,6 +8705,12 @@ function humanBody(R,o,face){
   }
   if(S.band&&hs!=='cap')R(-3,-14,6,1,S.band);
   if(S.band&&hs==='band')R(3,-14,2,2,S.band);
+  if(o.beanie&&!z){ // gorro de lã com barra e pompom (cabelo comprido ainda aparece embaixo)
+    const hc=o.beanie;
+    if(back)R(-4,-17,8,7,hc);else{R(-4,-17,8,3,hc);R(-4,-14,1,2,hc);R(3,-14,1,2,hc);}
+    R(-3,-18,6,1,Sh(hc,.2));R(-4,-14,8,1,'#e8e4d8');R(-1,-20,2,2,'#f4f4f4');
+    if(back)R(-4,-11,8,1,'#e8e4d8');
+  }
   // detalhes por tipo de zumbi
   if(z){
     if(kind===0||kind===1||kind===5){
@@ -8807,6 +8824,7 @@ function humanDraw(x,y,face,o){
   }else{
     {
       const sl=(o.os==='tank'||o.os==='bare')?o.skin:o.shirt,sgn=fx>=-.15?1:-1,sv=Math.abs(fx)>.6;
+      const gk=o.glove||o.skin;                                         // luvas: a mão usa a cor da luva
       const two=TWO_HAND[o.wpn]&&!o.hold,st=o.moving?Math.round(Math.sin(o.anim)*1.5):0;
       const shR=sv?(fx>0?3:-3):4,shL=sv?shR:-4,sY=-8;                 // centros dos ombros
       const mS=sgn>0?shR:shL,oS=sgn>0?shL:shR;                        // ombro do braço principal / do outro
@@ -8818,8 +8836,8 @@ function humanDraw(x,y,face,o){
         const gap={bow:2,pistol:2,smg:3,shotgun:5,rifle:5}[o.wpn]||4;
         let ox=hx+Math.round(cx*gap),oy=hy+Math.round(cy*gap*.75);
         if(oy<-11)oy=-11;
-        armLine(oS,sY,ox,oy,sl,o.skin,o.slv);armLine(mS,sY,hx,hy,sl,o.skin,o.slv);
-        R(ox-1,oy-1,2,2,o.skin);
+        armLine(oS,sY,ox,oy,sl,gk,o.slv);armLine(mS,sY,hx,hy,sl,gk,o.slv);
+        R(ox-1,oy-1,2,2,gk);
       } else {
         // uma mão só (punhos, pistola, item): braço principal em direção à mira, o outro solto ao lado, balançando ao andar
         hx=Math.round(fx*(o.female?4:5))+(sv?mS:mS+sgn);hy=-6+Math.round(fy*(o.female?2:3));
@@ -8829,18 +8847,18 @@ function humanDraw(x,y,face,o){
           const pS=o.ph?oS:mS,gS=o.ph?mS:oS;
           const px=Math.round(pS+fx*(5+ext*4))+(sv?0:(o.ph?-sgn:sgn)),py=-6+Math.round(fy*(3+ext*3));
           const gx=gS+Math.round(fx*3),gy=-6+Math.round(fy*2);
-          armLine(gS,sY,gx,gy,sl,o.skin,o.slv);R(gx-1,gy-1,2,2,o.skin);
-          armLine(pS,sY,px,py,sl,o.skin,o.slv);
+          armLine(gS,sY,gx,gy,sl,gk,o.slv);R(gx-1,gy-1,2,2,gk);
+          armLine(pS,sY,px,py,sl,gk,o.slv);
           hx=px;hy=py;
           if(ext>.85){R(hx-2,hy-2,4,4,o.skin);R(hx-1,hy-1,2,2,Sh(o.skin,-.15)); // impacto
             const ix=Math.round(hx+fx*4),iy=Math.round(hy+fy*3);R(ix-3,iy-1,1,1,'#fff');R(ix+2,iy-2,1,1,'#fff');R(ix,iy-3,1,1,'#ffe27a');R(ix+1,iy+2,1,1,'#ffe27a');}
         }else{
-        armLine(oS,sY,oS,-3+st,sl,o.skin,o.slv);R(oS-1,-4+st,2,2,o.skin);
-        armLine(mS,sY,hx,hy,sl,o.skin,o.slv);
+        armLine(oS,sY,oS,-3+st,sl,gk,o.slv);R(oS-1,-4+st,2,2,gk);
+        armLine(mS,sY,hx,hy,sl,gk,o.slv);
         }
       }
     }
-    R(hx-1,hy-1,2,2,o.skin);
+    R(hx-1,hy-1,2,2,o.glove||o.skin);
     const a=swingAngle(o,face);
     const wx=Math.cos(a),wy=Math.sin(a);
     drawHeld(o.wpn,hx,hy,a,meleeLeft(o.wpn,face));
@@ -9442,8 +9460,8 @@ function drawRider(K,lk,L,W){
   const sh=(lk.os==='tank'||lk.os==='bare')?lk.skin:lk.shirt;
   R(cx+1,cy-4,4,2,lk.pants);R(cx+1,cy+2,4,2,lk.pants);R(cx+4,cy-4,2,2,lk.boot||'#2a2420');R(cx+4,cy+2,2,2,lk.boot||'#2a2420'); // pernas e botas
   if(lk.pack)R(cx-4,cy-3,2,6,'#3a3a2a');
-  armLine(cx,cy-3,hbx,cy-hy,sh,lk.skin,lk.slv);armLine(cx,cy+3,hbx,cy+hy,sh,lk.skin,lk.slv);
-  R(hbx-1,cy-hy-1,2,2,lk.skin);R(hbx-1,cy+hy-1,2,2,lk.skin);
+  armLine(cx,cy-3,hbx,cy-hy,sh,lk.glove||lk.skin,lk.slv);armLine(cx,cy+3,hbx,cy+hy,sh,lk.glove||lk.skin,lk.slv);
+  R(hbx-1,cy-hy-1,2,2,lk.glove||lk.skin);R(hbx-1,cy+hy-1,2,2,lk.glove||lk.skin);
   R(cx-2,cy-4,5,8,sh);R(cx-2,cy-4,5,1,Sh(sh,.15));R(cx-2,cy+3,5,1,Sh(sh,-.2));      // tronco e ombros
   R(cx-1,cy-3,3,6,lk.hair);R(cx+2,cy-3,2,6,lk.skin);                                 // cabeça: cabelo atrás, rosto na frente
   if(lk.female)R(cx-3,cy-2,2,4,lk.hair);
