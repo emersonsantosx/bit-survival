@@ -6400,7 +6400,6 @@ function envTemp(){
   if(P.water<25&&tg>0) tg+=(25-P.water)*.5;                   // desidratado: não sua, esquenta mais (até +12)
   if(P.bleed) tg-=8;                                          // perda de sangue dá calafrio
   if(P.sick>0) tg+=6;                                         // intoxicação dá febre
-  if(selectedMap==='snow'&&tg<0) tg*=.65;                     // roupa de neve: todo mundo ja nasce agasalhado (casaco, gorro e luvas)
   if(P.turban&&tg>0) tg*=.65;                                 // turbante (marco do deserto)
   return clamp(tg,-100,100);
 }
@@ -8367,7 +8366,7 @@ function skinLook(i,alt){
   return {skin:s.skin,hair:s.hair,shirt:alt?s.alt:s.shirt,pants:s.pants,female:s.f,os:s.os,hs:s.hs,slv:s.slv,bow:s.bow,hat:s.hat,band:s.band,acc:s.acc,pack:s.pack,under:s.under,beard:s.beard,boot:s.boot,bag:false};
 }
 /* Mapa da neve: todas as skins nascem agasalhadas (casaco, gorro com pompom e luvas); cores derivadas da propria skin.
-   A roupa já dá a proteção contra o frio da neve (o antigo item Casaco Polar foi removido). */
+   Só visual: a roupa não protege do frio (o antigo item Casaco Polar foi removido). */
 function snowOutfit(lk,i){
   if(selectedMap!=='snow')return lk;
   const s=SKINS[(i>=0&&i<SKINS.length)?i:0],hatC=s.alt||'#8a3a3a';
@@ -11819,7 +11818,7 @@ function refreshInvScr(){
   if(eq){
     const wk=P.weapon,w=WEAPONS[wk];
     const ammo=w&&w.bow?(P.arrows||0):(w&&w.firearm?P.ammo:null);
-    const gear=(P.turban?'<span>VESTE</span><b>Turbante</b>':'')+(selectedMap==='snow'?'<span>VESTE</span><b>Roupa de neve</b>':'');
+    const gear=(P.turban?'<span>VESTE</span><b>Turbante</b>':'');
     eq.innerHTML=gear+'<span>ARMA</span>'+(w?pxFit(WEAPON_ICON[wk]||wk,22,18):'')+'<b>'+(w?w.n:'Mãos')+'</b>'+(ammo!==null?'<span>'+(w&&w.bow?'FLECHAS':'MUNIÇÃO')+'</span><b>'+ammo+'</b>':'');
   }
   // detalhes
