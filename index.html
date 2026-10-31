@@ -1677,7 +1677,6 @@ PXG.corn=['..kYYk..','.kYYYYk.','.kYkYYk.','.kYYYYk.','.kYkYYk.','gkYYYYkg','Ggk
 PXG.cookedcorn=['..kAAk..','.kAANAk.','.kANAAk.','.kAAANk.','.kANAAk.','gkAAAAkg','GgkAAkgG','.GggggG.','..GggG..','...gg...'];
 PXG.c_chest=['..kkkkkkk..','.kNNNNNNNk.','kNNNNNNNNNk','kYYYYYYYYYk','kkkkYYYkkkk','kNNNNYNNNNk','kNNNNNNNNNk','.kkkkkkkkk.'];
 PXG.turban=['...cccc...','..WWWWWW..','.WWcWWcWW.','.WcWWWWcW.','RRRRRRRRRR','.WWWWWWWW.','..WcWWcW..','...WWWW...'];
-PXG.parka=['..WWWWWW..','.WWkkkkWW.','.WWkkkkWW.','BBBBWWBBBB','BBBBBBBBBB','BbBBBBBBbB','BbBBbbBBbB','BBBBBBBBBB','.BBB..BBB.','.BBB..BBB.'];
 PXG.c_hand=['..kkkkkkkk..', '.kffffffffk.', 'kffffffffFFk', 'kffffffffFFk', 'kffkffkffFk.', 'kffkffkffFk.', '.kfkffkffk..', '..kkkkkkk...', '..SSSSSSS...', '.SSWSSSsS...', '..ssssss....'];
 PXG.c_swap=pxLines(11,10,[['l',1,2,9,2,'W',0],['l',7,0,9,2,'W',0],['l',7,4,9,2,'W',0],['l',1,7,9,7,'W',0],['l',3,5,1,7,'W',0],['l',3,9,1,7,'W',0]]);
 PXG.c_flame=['....R....','....RR...','...RRR...','..RRORR..','.RRROORR.','.RROYORR.','.RROYYOR.','..ROYYO..','...OOO...'];
@@ -1734,7 +1733,6 @@ const ITEMS={
   cookedmeat:{n:'Carne assada',e:'cookedmeat'},
   corn:{n:'Milho',e:'corn'},
   turban:{n:'Turbante do Deserto',e:'turban'},
-  parka:{n:'Casaco Polar',e:'parka'},
   cookedcorn:{n:'Milho assado',e:'cookedcorn'},
   wood:{n:'Madeira',e:'wood'},
   stone:{n:'Pedra',e:'stone'},
@@ -1847,7 +1845,7 @@ function pickWeather(rf){
   if(selectedMap==='snow') return r<.45?'none':'snow';
   return r<.65?'none':'rain';
 }
-function lakeLoot(t){const o=mapHasLake()?Object.assign({fishingrod:1.5},t):t;return selectedMap==='snow'?Object.assign({parka:3},o):o;} // neve: casaco polar também aparece nas casas
+function lakeLoot(t){return mapHasLake()?Object.assign({fishingrod:1.5},t):t;}
 /* fora dos prédios só existem pedra e taco; todo o resto (comida, água, armas, curativos) fica dentro das casas */
 const OUT_LOOT={stone:6,bat:.25};
 
@@ -3039,7 +3037,6 @@ const FLOOT={
 function furnLootTable(f,b){
   let t=FLOOT[(f.room&&f.room.k)+':'+f.k]||FLOOT[f.k];
   if(!t)return null;
-  if(selectedMap==='snow'&&(f.k==='wardrobe'||f.k==='dresser'))t=Object.assign({parka:3},t);          // casaco polar no guarda-roupa
   if(mapHasLake()&&(f.k==='workbench'||(f.k==='crate'&&(b.type==='cabin'||b.type==='garage'))))t=Object.assign({fishingrod:1.3},t); // vara de pesca na oficina e no deposito
   return t;
 }
@@ -3939,7 +3936,7 @@ const LM_SIDE_S=['cookedmeat','food','bandage','wood','cloth','ammo','water','cl
 function chestLoot(c){
   const isD=selectedMap==='desert',out=[];
   if(c.main){
-    out.push(isD?'turban':'parka',isD?'shotgun':'smg','ammo','ammo','medkit');
+    out.push(isD?'turban':'medkit',isD?'shotgun':'smg','ammo','ammo','medkit');
     out.push(isD?'water':'cookedmeat',isD?'water':'cookedmeat');
   }else{
     const tb=isD?LM_SIDE_D:LM_SIDE_S,n=2+(Math.random()<.5?1:0);
@@ -5736,9 +5733,9 @@ function pickup(){
     }
     updateWeaponHud();
   }
-  else if(t==='turban'||t==='parka'){
+  else if(t==='turban'){
     if(P[t]){toast('Você já veste isso'+(MP.active?': deixe pro parceiro':''));return;}
-    P[t]=true;toast(t==='turban'?'Turbante vestido! Menos calor no deserto':'Casaco polar vestido! Menos frio na neve');
+    P[t]=true;toast('Turbante vestido! Menos calor no deserto');
     try{refreshInvScr();}catch(e){}
   }
   else if(t==='backpack'){
@@ -5972,7 +5969,7 @@ function damageZ(z,dmg,kx,ky,fromNet,wn){
         items.push({t:'cloth',x:z.x,y:z.y});
         if(MP.active) sendEvt('itemAdded', {t:'cloth', x:z.x, y:z.y});
       }
-      if((z.kind|0)===9){ // Yeti: kit médico, bandagem, tecido e carne (o casaco polar se acha pelo mapa)
+      if((z.kind|0)===9){ // Yeti: kit médico, bandagem, tecido e carne
         ['medkit','bandage','cloth','cloth','meat','meat','meat'].forEach((t,i)=>{
           const a=i*1.05,x=z.x+Math.cos(a)*12,y=z.y+Math.sin(a)*10;
           items.push({t:t,x:x,y:y});
@@ -6403,7 +6400,6 @@ function envTemp(){
   if(P.water<25&&tg>0) tg+=(25-P.water)*.5;                   // desidratado: não sua, esquenta mais (até +12)
   if(P.bleed) tg-=8;                                          // perda de sangue dá calafrio
   if(P.sick>0) tg+=6;                                         // intoxicação dá febre
-  if(P.parka&&tg<0) tg*=.65;                                  // casaco polar (marco da neve)
   if(P.turban&&tg>0) tg*=.65;                                 // turbante (marco do deserto)
   return clamp(tg,-100,100);
 }
@@ -8370,7 +8366,7 @@ function skinLook(i,alt){
   return {skin:s.skin,hair:s.hair,shirt:alt?s.alt:s.shirt,pants:s.pants,female:s.f,os:s.os,hs:s.hs,slv:s.slv,bow:s.bow,hat:s.hat,band:s.band,acc:s.acc,pack:s.pack,under:s.under,beard:s.beard,boot:s.boot,bag:false};
 }
 /* Mapa da neve: todas as skins nascem agasalhadas (casaco, gorro com pompom e luvas); cores derivadas da propria skin.
-   Só visual: o casaco polar do jogo (item) continua sendo o que realmente reduz o frio. */
+   Só visual: a roupa não protege do frio (o antigo item Casaco Polar foi removido). */
 function snowOutfit(lk,i){
   if(selectedMap!=='snow')return lk;
   const s=SKINS[(i>=0&&i<SKINS.length)?i:0],hatC=s.alt||'#8a3a3a';
@@ -11773,7 +11769,7 @@ on('craftclose','click',closeCraft);
 let invSel=0;
 const IDESC={
   food:'Feijão enlatado. Recupera 35 de fome.',water:'Garrafa de água. Recupera 40 de sede.',fish:'Peixe cru. Recupera 30 de fome, melhor assar na fogueira.',
-  cookedfish:'Peixe assado. Recupera 55 de fome e 5 de vida.',meat:'Carne crua. Recupera 25 de fome, melhor assar na fogueira.',cookedmeat:'Carne assada. Recupera 60 de fome e 8 de vida.',turban:'Turbante do templo. Vestido, reduz o calor do deserto em cerca de um terço.',parka:'Casaco da expedição. Vestido, reduz o frio da neve em cerca de um terço.',corn:'Milho do milharal. Recupera 14 de fome. Segure na mão perto da fogueira para assar.',cookedcorn:'Milho assado. Recupera 32 de fome e 3 de vida.',
+  cookedfish:'Peixe assado. Recupera 55 de fome e 5 de vida.',meat:'Carne crua. Recupera 25 de fome, melhor assar na fogueira.',cookedmeat:'Carne assada. Recupera 60 de fome e 8 de vida.',turban:'Turbante do templo. Vestido, reduz o calor do deserto em cerca de um terço.',corn:'Milho do milharal. Recupera 14 de fome. Segure na mão perto da fogueira para assar.',cookedcorn:'Milho assado. Recupera 32 de fome e 3 de vida.',
   wood:'Material de crafting. Abra o crafting para usar.',stone:'Material de crafting. Abra o crafting para usar.',cloth:'Tecido. Usado para fabricar bandagem e mochila.',
   bandage:'Estanca sangramento e recupera 10 de vida.',medkit:'Kit médico. Recupera 50 de vida e estanca sangramento.'
 };
@@ -11822,7 +11818,7 @@ function refreshInvScr(){
   if(eq){
     const wk=P.weapon,w=WEAPONS[wk];
     const ammo=w&&w.bow?(P.arrows||0):(w&&w.firearm?P.ammo:null);
-    const gear=(P.turban?'<span>VESTE</span><b>Turbante</b>':'')+(P.parka?'<span>VESTE</span><b>Casaco</b>':'');
+    const gear=(P.turban?'<span>VESTE</span><b>Turbante</b>':'');
     eq.innerHTML=gear+'<span>ARMA</span>'+(w?pxFit(WEAPON_ICON[wk]||wk,22,18):'')+'<b>'+(w?w.n:'Mãos')+'</b>'+(ammo!==null?'<span>'+(w&&w.bow?'FLECHAS':'MUNIÇÃO')+'</span><b>'+ammo+'</b>':'');
   }
   // detalhes
