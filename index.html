@@ -1519,13 +1519,13 @@ function startRain(){
     rainNoise={master:master,lp:lp,src:s1};
   }catch(e){}
 }
-function setRainMode(on,muff){   // muff: 0 ao ar livre · 1 no carro · 2 dentro de prédio
+function setRainMode(on,muff){   // muff: 0 ao ar livre (inclui veiculos abertos) · 1 no carro fechado · 2 dentro de prédio
   if(!AC)return;
   if(on&&!rainNoise)startRain();
   if(!rainNoise){rainSt.on=false;return;}
   const vol=volFor('rain');
-  const g=on?.2*vol*(muff===2?.5:(muff===1?.7:1)):0;
-  const f=muff===2?650:(muff===1?2400:7000);
+  const g=on?.2*vol*(muff===2?.5:(muff===1?.55:1)):0;
+  const f=muff===2?650:(muff===1?1500:7000);
   const t=AC.currentTime;
   try{
     rainNoise.master.gain.cancelScheduledValues(t);rainNoise.master.gain.setTargetAtTime(g,t,.45);
@@ -1570,7 +1570,7 @@ function rainThunder(){
 function syncRainAudio(dt){
   if(!AC||!P)return;
   const want=weather==='rain'&&state!=='menu';
-  const muff=P.inside?2:(P.inVehicle?1:0);
+  const muff=P.inside?2:(P.inVehicle&&vehKind(P.inVehicle)==='car'?1:0);   // so o carro fechado (cidade) abafa; moto de neve, quadriciclo e buggy sao abertos
   const vol=volFor('rain');
   if(want!==rainSt.on||muff!==rainSt.muff||vol!==rainSt.vol) setRainMode(want,muff);
   if(!rainSt.on||!rainNoise)return;
@@ -6381,7 +6381,7 @@ function envTemp(){
   const hod=(START_HOUR+T/DAY_SECONDS*24)%24;
   let tg=m.base+m.amp*Math.sin((hod-8)/24*6.2832);       // máximo ~14h, mínimo ~2h
   if(weather==='rain') tg-=14; else if(weather==='snow') tg-=8; else if(weather==='sand') tg+=8;
-  if(P.inVehicle) tg*=0.6;                                   // cabine do carro
+  if(P.inVehicle&&vehKind(P.inVehicle)==='car') tg*=0.6;      // cabine do carro fechado (veiculos abertos nao isolam)
   else if(bldAt(P.x,P.y)) tg*=0.3;                           // abrigo isola do clima
   else if(nearTent(P.x,P.y,34)) tg*=0.55;                    // barraca protege um pouco
   else {
@@ -6411,7 +6411,7 @@ function tempTick(dt){
   if(!Number.isFinite(P.temp)) P.temp=0;
   { // água do lago/oásis: ficar dentro vai molhando e esfriando aos poucos; fora, seca devagar
     const inW=!P.inVehicle&&pointInLake(P.x,P.y), snow=selectedMap==='snow';
-    const sheltered=!!(P.inVehicle||bldAt(P.x,P.y)||nearTent(P.x,P.y,34));
+    const sheltered=!!((P.inVehicle&&vehKind(P.inVehicle)==='car')||bldAt(P.x,P.y)||nearTent(P.x,P.y,34));
     const rainWet=!inW&&weather==='rain'&&!sheltered;                       // chuva molha quem esta ao relento
     let nearFire=false;for(const c of campfires){if(Math.hypot(c.x-P.x,c.y-P.y)<70){nearFire=true;break;}}
     const dry=(snow?55:30)/(nearFire?3:1);                                   // perto da fogueira seca bem mais rapido
@@ -7895,6 +7895,7 @@ function handleNetData(data,isHostSide){
     const wasAlive=rp.alive!==false && rp.id;
     rp.id=data.id;rp.name=sanitizeName(data.name);
     rp.skin=(Number.isInteger(data.skin)&&data.skin>=0&&data.skin<SKINS.length)?data.skin:0;
+    rp.pk=data.pk?1:0;
     rp.tx=pos.x;rp.ty=pos.y;
     if(rp.x===undefined){rp.x=pos.x;rp.y=pos.y;}
     rp.face=isFiniteNum(data.face)?data.face:rp.face;
@@ -8264,7 +8265,7 @@ function packMyPlayer(){
   const p = {type:'player',id:myNetId(),name:MP.playerName||'Jogador',
     x:Math.round(P.x),y:Math.round(P.y),face:+P.face.toFixed(2),
     moving:!!P.moving,sprint:!!P.sprint,weapon:P.weapon||'fists',swing:+(P.swing||0).toFixed(2),
-    hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle,skin:SKIN_SEL,hold:P.hold||'',fw:Object.keys(P.firearms||{}).filter(k=>P.firearms[k])};
+    hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle,skin:SKIN_SEL,pk:P.pack?1:0,hold:P.hold||'',fw:Object.keys(P.firearms||{}).filter(k=>P.firearms[k])};
   if(OBS.on&&!P.inside&&!P.inVehicle)p.ob=[Math.round(OBS.x),Math.round(OBS.y),OBS.glitch>0?1:0];
   if(GH.on&&GH.b)p.gh=[GH.b.x|0,GH.b.y|0,Math.round(GH.x),Math.round(GH.y),GH.kill>0?1:0];
   if(P.sleeping){const sl=P.sleeping;p.sl=[SLC[sl.s]|0,sl.hx|0,sl.hy|0,sl.tent?1:0];}
@@ -8366,16 +8367,27 @@ let SKIN_SEL=0;
 try{const v=parseInt(localStorage.getItem('minisurv_skin'),10);if(v>=0&&v<SKINS.length)SKIN_SEL=v;}catch(e){}
 function skinLook(i,alt){
   const s=SKINS[(i>=0&&i<SKINS.length)?i:0];
-  return {skin:s.skin,hair:s.hair,shirt:alt?s.alt:s.shirt,pants:s.pants,female:s.f,os:s.os,hs:s.hs,slv:s.slv,bow:s.bow,hat:s.hat,band:s.band,acc:s.acc,pack:s.pack,under:s.under,beard:s.beard,boot:s.boot};
+  return {skin:s.skin,hair:s.hair,shirt:alt?s.alt:s.shirt,pants:s.pants,female:s.f,os:s.os,hs:s.hs,slv:s.slv,bow:s.bow,hat:s.hat,band:s.band,acc:s.acc,pack:s.pack,under:s.under,beard:s.beard,boot:s.boot,bag:false};
+}
+/* Mapa da neve: todas as skins nascem agasalhadas (casaco, gorro com pompom e luvas); cores derivadas da propria skin.
+   Só visual: o casaco polar do jogo (item) continua sendo o que realmente reduz o frio. */
+function snowOutfit(lk,i){
+  if(selectedMap!=='snow')return lk;
+  const s=SKINS[(i>=0&&i<SKINS.length)?i:0],hatC=s.alt||'#8a3a3a';
+  if(lk.os!=='robe')lk.os='parka';
+  if(!(lk.hs==='long'||lk.hs==='pony'||lk.hs==='pig'))lk.hs='short';   // tira bonés e cabelos volumosos que não cabem sob o gorro
+  lk.band=undefined;lk.beanie=hatC;lk.glove=Sh(hatC,-.3);lk.slv=.6;
+  if(lk.female||lk.pants===lk.skin)lk.pants='#3a3a48';                  // calça quente no lugar de saia ou short
+  return lk;
 }
 /* Regra da skin repetida: quem entrou como CONVIDADO usa a cor alternativa (os dois lados calculam igual) */
 function myLook(){
   let alt=false;
   if(MP.active&&!MP.isHost){for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.skin===SKIN_SEL){alt=true;break;}}}
-  return skinLook(SKIN_SEL,alt);
+  const lk=skinLook(SKIN_SEL,alt);lk.bag=!!(P&&P.pack);return snowOutfit(lk,SKIN_SEL);
 }
 function remoteLook(rp){
-  return skinLook(rp.skin|0,!rp.isHost&&(rp.skin|0)===SKIN_SEL);
+  const lk=skinLook(rp.skin|0,!rp.isHost&&(rp.skin|0)===SKIN_SEL);lk.bag=!!rp.pk;return snowOutfit(lk,rp.skin|0);
 }
 function drawSkinPreview(cv,i){
   const c=cv.getContext('2d'),o=skinLook(i,false);
@@ -8483,6 +8495,12 @@ function humanBody(R,o,face){
   if(z&&kind===0&&S.os==='gown'){R(-4,-1+l1,3,1,'#e8e4d8');}                 // bandagem na perna do paciente
   // mochila (de lado/frente aparece atrás; de costas cobre as costas)
   if(S.acc==='pack'&&!back){R(-5,-8,1,5,S.pack);R(4,-8,1,5,S.pack);}
+  // mochila craftada/encontrada (P.pack): de lado fica atras do tronco, de frente so aparecem as bordas, de costas cobre as costas
+  const bagOn=!!o.bag&&!z&&S.acc!=='pack',bagC='#7a5a34',bagS='#3a2a1a';
+  if(bagOn&&!back){
+    if(ex!==0){const bx=ex>0?-7:4;R(bx,-10,3,8,bagC);R(bx,-10,3,1,Sh(bagC,.25));R(bx,-5,3,2,Sh(bagC,-.25));R(bx+(ex>0?0:2),-9,1,6,Sh(bagC,-.3));}
+    else{R(-5,-9,1,6,bagC);R(4,-9,1,6,bagC);R(-5,-9,1,1,Sh(bagC,.25));R(4,-9,1,1,Sh(bagC,.25));}
+  }
   // tronco
   switch(os){
     case 'jacket':
@@ -8571,6 +8589,11 @@ function humanBody(R,o,face){
       break;
     default: // tee
       R(-4,-9,8,8,shirt);R(-4,-6,8,1,sl);R(-1,-9,2,1,skin);R(-4,-2,8,1,'#2a2018');
+  }
+  if(bagOn){
+    if(back){R(-3,-10,6,8,bagC);R(-3,-10,6,1,Sh(bagC,.25));R(-2,-5,4,2,Sh(bagC,-.25));R(-3,-3,6,1,Sh(bagC,-.3));R(-4,-8,1,5,bagS);R(3,-8,1,5,bagS);R(-1,-8,2,1,bagS);}
+    else if(ex!==0){R(ex>0?-2:1,-9,1,4,bagS);}                // alca no ombro
+    else{R(-3,-9,1,5,bagS);R(2,-9,1,5,bagS);}                  // alcas no peito
   }
   // mochila de costas
   if(S.acc==='pack'&&back){R(-3,-9,6,7,S.pack);R(-3,-9,6,1,Sh(S.pack,.25));R(-2,-4,4,2,Sh(S.pack,-.25));R(-4,-8,1,4,Sh(S.pack,-.3));R(3,-8,1,4,Sh(S.pack,-.3));}
@@ -8682,6 +8705,12 @@ function humanBody(R,o,face){
   }
   if(S.band&&hs!=='cap')R(-3,-14,6,1,S.band);
   if(S.band&&hs==='band')R(3,-14,2,2,S.band);
+  if(o.beanie&&!z){ // gorro de lã com barra e pompom (cabelo comprido ainda aparece embaixo)
+    const hc=o.beanie;
+    if(back)R(-4,-17,8,7,hc);else{R(-4,-17,8,3,hc);R(-4,-14,1,2,hc);R(3,-14,1,2,hc);}
+    R(-3,-18,6,1,Sh(hc,.2));R(-4,-14,8,1,'#e8e4d8');R(-1,-20,2,2,'#f4f4f4');
+    if(back)R(-4,-11,8,1,'#e8e4d8');
+  }
   // detalhes por tipo de zumbi
   if(z){
     if(kind===0||kind===1||kind===5){
@@ -8795,6 +8824,7 @@ function humanDraw(x,y,face,o){
   }else{
     {
       const sl=(o.os==='tank'||o.os==='bare')?o.skin:o.shirt,sgn=fx>=-.15?1:-1,sv=Math.abs(fx)>.6;
+      const gk=o.glove||o.skin;                                         // luvas: a mão usa a cor da luva
       const two=TWO_HAND[o.wpn]&&!o.hold,st=o.moving?Math.round(Math.sin(o.anim)*1.5):0;
       const shR=sv?(fx>0?3:-3):4,shL=sv?shR:-4,sY=-8;                 // centros dos ombros
       const mS=sgn>0?shR:shL,oS=sgn>0?shL:shR;                        // ombro do braço principal / do outro
@@ -8806,8 +8836,8 @@ function humanDraw(x,y,face,o){
         const gap={bow:2,pistol:2,smg:3,shotgun:5,rifle:5}[o.wpn]||4;
         let ox=hx+Math.round(cx*gap),oy=hy+Math.round(cy*gap*.75);
         if(oy<-11)oy=-11;
-        armLine(oS,sY,ox,oy,sl,o.skin,o.slv);armLine(mS,sY,hx,hy,sl,o.skin,o.slv);
-        R(ox-1,oy-1,2,2,o.skin);
+        armLine(oS,sY,ox,oy,sl,gk,o.slv);armLine(mS,sY,hx,hy,sl,gk,o.slv);
+        R(ox-1,oy-1,2,2,gk);
       } else {
         // uma mão só (punhos, pistola, item): braço principal em direção à mira, o outro solto ao lado, balançando ao andar
         hx=Math.round(fx*(o.female?4:5))+(sv?mS:mS+sgn);hy=-6+Math.round(fy*(o.female?2:3));
@@ -8817,18 +8847,18 @@ function humanDraw(x,y,face,o){
           const pS=o.ph?oS:mS,gS=o.ph?mS:oS;
           const px=Math.round(pS+fx*(5+ext*4))+(sv?0:(o.ph?-sgn:sgn)),py=-6+Math.round(fy*(3+ext*3));
           const gx=gS+Math.round(fx*3),gy=-6+Math.round(fy*2);
-          armLine(gS,sY,gx,gy,sl,o.skin,o.slv);R(gx-1,gy-1,2,2,o.skin);
-          armLine(pS,sY,px,py,sl,o.skin,o.slv);
+          armLine(gS,sY,gx,gy,sl,gk,o.slv);R(gx-1,gy-1,2,2,gk);
+          armLine(pS,sY,px,py,sl,gk,o.slv);
           hx=px;hy=py;
           if(ext>.85){R(hx-2,hy-2,4,4,o.skin);R(hx-1,hy-1,2,2,Sh(o.skin,-.15)); // impacto
             const ix=Math.round(hx+fx*4),iy=Math.round(hy+fy*3);R(ix-3,iy-1,1,1,'#fff');R(ix+2,iy-2,1,1,'#fff');R(ix,iy-3,1,1,'#ffe27a');R(ix+1,iy+2,1,1,'#ffe27a');}
         }else{
-        armLine(oS,sY,oS,-3+st,sl,o.skin,o.slv);R(oS-1,-4+st,2,2,o.skin);
-        armLine(mS,sY,hx,hy,sl,o.skin,o.slv);
+        armLine(oS,sY,oS,-3+st,sl,gk,o.slv);R(oS-1,-4+st,2,2,gk);
+        armLine(mS,sY,hx,hy,sl,gk,o.slv);
         }
       }
     }
-    R(hx-1,hy-1,2,2,o.skin);
+    R(hx-1,hy-1,2,2,o.glove||o.skin);
     const a=swingAngle(o,face);
     const wx=Math.cos(a),wy=Math.sin(a);
     drawHeld(o.wpn,hx,hy,a,meleeLeft(o.wpn,face));
@@ -9430,8 +9460,8 @@ function drawRider(K,lk,L,W){
   const sh=(lk.os==='tank'||lk.os==='bare')?lk.skin:lk.shirt;
   R(cx+1,cy-4,4,2,lk.pants);R(cx+1,cy+2,4,2,lk.pants);R(cx+4,cy-4,2,2,lk.boot||'#2a2420');R(cx+4,cy+2,2,2,lk.boot||'#2a2420'); // pernas e botas
   if(lk.pack)R(cx-4,cy-3,2,6,'#3a3a2a');
-  armLine(cx,cy-3,hbx,cy-hy,sh,lk.skin,lk.slv);armLine(cx,cy+3,hbx,cy+hy,sh,lk.skin,lk.slv);
-  R(hbx-1,cy-hy-1,2,2,lk.skin);R(hbx-1,cy+hy-1,2,2,lk.skin);
+  armLine(cx,cy-3,hbx,cy-hy,sh,lk.glove||lk.skin,lk.slv);armLine(cx,cy+3,hbx,cy+hy,sh,lk.glove||lk.skin,lk.slv);
+  R(hbx-1,cy-hy-1,2,2,lk.glove||lk.skin);R(hbx-1,cy+hy-1,2,2,lk.glove||lk.skin);
   R(cx-2,cy-4,5,8,sh);R(cx-2,cy-4,5,1,Sh(sh,.15));R(cx-2,cy+3,5,1,Sh(sh,-.2));      // tronco e ombros
   R(cx-1,cy-3,3,6,lk.hair);R(cx+2,cy-3,2,6,lk.skin);                                 // cabeça: cabelo atrás, rosto na frente
   if(lk.female)R(cx-3,cy-2,2,4,lk.hair);
