@@ -2704,7 +2704,7 @@ const WT=6, IWT=4, GAPW=26;
 /* [comprimento, espessura, modo, guarda loot]; modo: along = lado comprido junto da parede, perp = lado comprido para dentro, free = no meio do cômodo */
 const FURN={
   couch:[26,11,'along',0], tv:[14,8,'along',0], table:[20,13,'along',1], bed:[27,15,'perp',0], bed2:[27,28,'perp',0], wardrobe:[18,9,'along',1],
-  nightstand:[9,9,'along',1], shelf:[24,8,'along',1], counter:[28,9,'along',1], fridge:[11,11,'along',1], stove:[11,11,'along',0],
+  nightstand:[9,9,'along',1], shelf:[24,8,'along',1], counter:[28,9,'along',1], fridge:[11,11,'along',1], stove:[11,11,'along',0], ksink:[26,10,'along',1],
   desk:[22,12,'along',1], locker:[16,8,'along',1], crate:[11,11,'along',1], barrel:[9,9,'along',0], bench:[24,8,'along',0],
   medbed:[26,14,'perp',0], medcab:[16,8,'along',1], bunk:[26,13,'perp',0], rack:[26,8,'along',1], workbench:[28,12,'along',1],
   hay:[14,12,'along',0], plant:[8,8,'along',0], toilet:[9,11,'along',0], sink:[12,9,'along',1], tub:[30,14,'along',0], bookcase:[24,8,'along',1], dresser:[20,9,'along',1], lamp:[6,6,'along',0], pallet:[22,22,'free',1], aisle:[26,8,'free',1], meet:[44,16,'free',1]
@@ -2908,6 +2908,53 @@ function genInterior(b){
       }
     }
   }
+  /* Segunda passada, so com gerador proprio (nao consome o _rng, entao o resto do mundo nao muda): completa o que faz sentido em cada lugar.
+     cozinha sempre com pia e fogao; casas com armario de remedios no banheiro; clinica com farmacia e mais armarios medicos; loja com geladeira de bebidas */
+  {
+    const lr=mkRng(((Math.round(b.x)*131+Math.round(b.y)*71+(b.w|0)*7)%99991)/99991);
+    const addF=(r,kk)=>{
+      const d=FURN[kk];
+      for(let t=0;t<18;t++){
+        const s=['t','b','l','r'][Math.floor(lr()*4)],horiz=(s==='t'||s==='b');
+        const w=horiz?d[0]:d[1],h=horiz?d[1]:d[0];
+        if(w>r.w-2||h>r.h-2)continue;
+        let x,y;
+        if(horiz){x=Math.round(r.x+1+lr()*(r.w-2-w));y=s==='t'?r.y:r.y+r.h-h;}
+        else{y=Math.round(r.y+1+lr()*(r.h-2-h));x=s==='l'?r.x:r.x+r.w-w;}
+        const f={x,y,w,h,k:kk,s,loot:!!d[3],sd:Math.floor(lr()*997),room:r};
+        let bad=false;
+        for(const z of zones)if(rectsHit(f,z,0)){bad=true;break;}
+        if(!bad)for(const o of b.furn)if(rectsHit(f,o,2)){bad=true;break;}
+        if(bad)continue;
+        b.furn.push(f);
+        if(!intConnected(b,keys)||intUnreached(b,keys[0])>baseUn){b.furn.pop();continue;}
+        return f;
+      }
+      return null;
+    };
+    const cnt=(r,k)=>b.furn.filter(f=>f.room===r&&f.k===k).length;
+    for(const r of rooms){
+      if(r.k==='kitchen'){
+        const fr=b.furn.filter(f=>f.room===r&&f.k==='counter');
+        if(!cnt(r,'ksink')){const f=fr.shift();if(f)f.k='ksink';else addF(r,'ksink');}     // uma das bancadas vira a pia
+        if(!cnt(r,'stove')){
+          const f=fr.shift();
+          if(f){const o=FURN.stove;f.k='stove';f.loot=false;if(f.s==='b')f.y=f.y+f.h-o[1];if(f.s==='r')f.x=f.x+f.w-o[0];f.w=o[0];f.h=o[1];}   // ou vira o fogao (menor que a bancada: so libera espaco)
+          else addF(r,'stove');
+        }
+        if(!cnt(r,'fridge'))addF(r,'fridge');
+      }
+      else if(b.type==='clinic'){
+        if(r.k==='exam'){while(cnt(r,'medcab')<2&&addF(r,'medcab')){}}
+        else if(r.k==='waiting'){if(lr()<.6)addF(r,'medcab');}
+        else if(r.k==='storage'){addF(r,'medcab');addF(r,'medcab');addF(r,'shelf');r.k='pharmacy';r.fl='tile2';}
+        else if(r.k==='bathroom'&&!cnt(r,'medcab'))addF(r,'medcab');
+      }
+      else if(r.k==='bathroom'&&(b.type==='house'||b.type==='cabin'||b.type==='apartment')){if(!cnt(r,'medcab')&&lr()<.55)addF(r,'medcab');}
+      else if(r.k==='shop'&&(b.type==='shop'||b.type==='gas')){if(!b.furn.some(f=>f.k==='fridge')&&lr()<.85)addF(r,'fridge');}
+      else if(b.type==='mil'&&r.k==='storage'){if(lr()<.75)addF(r,'medcab');}
+    }
+  }
 }
 function intBlocked(b,x1,y1,x2,y2){const a=b.iw;for(let i=0;i<a.length;i++)if(segRectHit(x1,y1,x2,y2,a[i]))return true;return false;}
 /* próximo ponto por onde o zumbi deve andar para ir de (fx,fy) a (tx,ty) dentro do prédio; null = pode ir reto */
@@ -2947,21 +2994,55 @@ function roomSpawnPoint(b,r){
   }
   return {x:r.x+r.w/2,y:r.y+r.h/2};
 }
+/* o que cada movel guarda (chave "comodo:movel" vence a do movel puro); quem nao esta aqui usa a tabela geral do tipo de predio */
+const FLOOT={
+  fridge:{food:6,water:5,meat:1}, ksink:{water:6,food:1}, sink:{water:4,bandage:3},
+  medcab:{bandage:6,medkit:4}, 'exam:medcab':{bandage:6,medkit:5}, 'pharmacy:medcab':{bandage:6,medkit:5}, 'pharmacy:shelf':{bandage:6,medkit:4,water:1},
+  'waiting:table':{water:3,food:1,bandage:1.5}, 'exam:shelf':{bandage:5,medkit:3},
+  'kitchen:counter':{food:6,water:3}, 'kitchen:shelf':{food:7,water:3}, 'kitchen:table':{food:4,water:3},
+  nightstand:{bandage:2,water:3,food:2,ammo:1,pistol:.15}, wardrobe:{cloth:7,backpack:1,bat:.4}, dresser:{cloth:6,bandage:1},
+  bookcase:{cloth:1,food:1,water:1,bandage:1}, 'living:table':{food:3,water:4}, 'living:shelf':{food:2,water:3,bandage:1},
+  'storage:crate':{wood:4,stone:3,food:3,water:2,ammo:1.5,arrows:1}, 'storage:shelf':{food:5,water:5,bandage:1.5,medkit:.7,cloth:1},
+  'shop:shelf':{food:7,water:6,bandage:2,medkit:.5}, 'shop:aisle':{food:7,water:6,bandage:2}, 'shop:counter':{ammo:2,bandage:2,food:2,water:2,bat:.5}, 'shop:fridge':{water:8,food:3},
+  desk:{food:2,water:3,bandage:1.5,ammo:.7,cloth:1}, locker:{bandage:3,food:2,water:2,medkit:1,ammo:1.5,bat:1},
+  'barracks:locker':{ammo:6,medkit:2.5,bandage:3.5,food:3,water:3,pistol:1},
+  'armory:rack':{pistol:4,smg:3,shotgun:2.5,rifle:2,ammo:5}, 'armory:crate':{ammo:9,medkit:2,bandage:2,smg:.8,shotgun:.8}, 'armory:locker':{ammo:5,medkit:2,bandage:2,pistol:1.5},
+  workbench:{axe:3,bat:2,stone:3,wood:3,ammo:1.5,arrows:1.5}, 'workshop:shelf':{wood:3,stone:3,ammo:1.5,bandage:1}, 'workshop:crate':{wood:3,stone:3,ammo:2,axe:1},
+  pallet:{food:3,water:3,wood:2,stone:2,ammo:1.5,bandage:1,cloth:1.5}, 'hall:aisle':{food:4,water:4,wood:2,stone:1,ammo:1,cloth:1}, 'hall:crate':{food:3,water:2,wood:2,stone:2,ammo:1.5,axe:.7},
+  'stall:crate':{food:3,water:2,wood:3,corn:3,arrows:1},
+  table:{food:3,water:3}, shelf:{food:4,water:4,bandage:1.2,cloth:1}, counter:{food:4,water:3,ammo:1}, crate:{wood:3,stone:3,food:2,water:2,ammo:1.5}
+};
+function furnLootTable(f,b){
+  let t=FLOOT[(f.room&&f.room.k)+':'+f.k]||FLOOT[f.k];
+  if(!t)return null;
+  if(selectedMap==='snow'&&(f.k==='wardrobe'||f.k==='dresser'))t=Object.assign({parka:3},t);          // casaco polar no guarda-roupa
+  if(mapHasLake()&&(f.k==='workbench'||(f.k==='crate'&&(b.type==='cabin'||b.type==='garage'))))t=Object.assign({fishingrod:1.3},t); // vara de pesca na oficina e no deposito
+  return t;
+}
 function placeBldLoot(b,n,lootKey,room){
   // room (opcional): reposição de loot num cômodo só; os itens da casa levam a marca h para o jogo saber que eram loot de casa
   const spots=b.furn.filter(f=>f.loot&&(!room||inRoomRect(room,f.x+f.w/2,f.y+f.h/2,0)));
   for(let i=0;i<n;i++){
-    let x,y,t=null;
+    let x,y,t=null,tbl=null;
     if(spots.length){
       const f=spots[Math.floor(_rng()*spots.length)];
       x=f.x+f.w/2+rnd(-3,3);y=f.y+f.h/2+rnd(-2,2);
-      if(f.k==='fridge')t=wpick({food:3,water:5});
-      else if(f.k==='medcab')t=wpick({bandage:6,medkit:3});
-      else if(f.k==='sink')t=wpick({bandage:5,water:5});
+      tbl=furnLootTable(f,b);
     }else{
       const p=room?roomSpawnPoint(b,room):(bldSpawnPoint(b)||{x:b.x+b.w/2,y:b.y+b.h/2});x=p.x;y=p.y;
     }
-    items.push({t:t||wpick(lakeLoot(LOOT[lootKey]||LOOT.house)),x:Math.round(x),y:Math.round(y),h:true});
+    items.push({t:wpick(tbl||lakeLoot(LOOT[lootKey]||LOOT.house)),x:Math.round(x),y:Math.round(y),h:true});
+  }
+}
+/* clinica sempre tem remedio de verdade: itens extras nos armarios medicos (gerador proprio, nao mexe no _rng) */
+function medicBonus(b){
+  const lr=mkRng(((Math.round(b.x)*29+Math.round(b.y)*53+(b.h|0))%99991)/99991);
+  const spots=b.furn.filter(f=>f.k==='medcab');
+  if(!spots.length)return;
+  const n=2+(b.rooms.length>=6?1:0)+(lr()<.5?1:0);
+  for(let i=0;i<n;i++){
+    const f=spots[Math.floor(lr()*spots.length)];
+    items.push({t:lr()<.6?'bandage':'medkit',x:Math.round(f.x+f.w/2+(lr()*6-3)),y:Math.round(f.y+f.h/2+(lr()*4-2)),h:true});
   }
 }
 
@@ -3411,6 +3492,7 @@ function addBuilding(x,y,w,h,type){
   if(n>0||type==='house'){ if(b.rooms.length>=6)n+=1; }
   if(n>0) n+=rint(0,Math.max(0,b.rooms.length-2));
   placeBldLoot(b,n,lootKey);
+  if(b.type==='clinic')medicBonus(b);
 }
 function tryPlaceBuilding(cx,cy,type,pad){
   pad = pad==null ? (selectedMap==='city'?16:34) : pad;
@@ -5356,6 +5438,18 @@ function nearestItem(){
   for(const it of items){const d=Math.hypot(it.x-P.x,it.y-P.y);if(d<bd){bd=d;b=it;}}
   return b;
 }
+/* movel de dentro de casa mais perto do jogador (distancia ate a borda do movel) */
+function nearestFurn(kinds,reach){
+  const b=P&&P.inside;if(!b||!b.furn||P.inVehicle)return null;
+  let best=null,bd=reach;
+  for(const f of b.furn){
+    if(kinds.indexOf(f.k)<0)continue;
+    const dx=Math.max(f.x-P.x,0,P.x-(f.x+f.w)),dy=Math.max(f.y-P.y,0,P.y-(f.y+f.h)),d=Math.hypot(dx,dy);
+    if(d<bd){bd=d;best=f;}
+  }
+  return best;
+}
+function nearestStove(){const f=nearestFurn(['stove'],16);return f?{x:f.x+f.w/2,y:f.y+f.h/2,stove:true}:null;}
 function nearestCampfire(){
   let b=null,bd=42;
   for(const c of campfires){const d=Math.hypot(c.x-P.x,c.y-P.y);if(d<bd){bd=d;b=c;}}
@@ -5495,7 +5589,7 @@ function pickup(){
   if(P.fish){cancelFishing(P.fish.ph===2?'Você soltou a linha':'Você recolheu a linha');return;}
   if(P.sleeping){wakeUp(false);return;}
 
-  const cf=nearestCampfire();
+  const cf=nearestCampfire()||nearestStove();
   const ck=cf&&P.hold?cookOf(P.hold):null;
   if(ck){ // só assa o que está na mão
     const raw=P.hold;
@@ -5510,6 +5604,17 @@ function pickup(){
     cookSizzle();
     for(let i=0;i<8;i++)parts.push({x:cf.x+rnd(-8,8),y:cf.y-6,vx:rnd(-20,20),vy:rnd(-60,-20),t:.6,c:'#ffd27a'});
     return;
+  }
+  {const tap=!nearestItem()&&nearestFurn(['ksink','sink'],14);   // torneira da pia (cozinha e banheiro): bebe direto ou enche uma garrafa
+    if(tap){
+      if(P.water<97){P.water=Math.min(100,P.water+14);toast('Você bebeu água da torneira');}
+      else{if(!addItem('water')){toast('Sede saciada · inventário cheio');return;}toast('Garrafa enchida na torneira');}
+      beep(430,.1,'sine',.045);
+      for(let i=0;i<5;i++)parts.push({x:tap.x+tap.w/2+rnd(-4,4),y:tap.y+tap.h/2,vx:rnd(-10,10),vy:rnd(-30,-10),t:.35,c:'#8cc8f0'});
+      return;
+    }
+    const st=!nearestItem()&&!P.hold&&nearestStove();
+    if(st){toast('Segure carne, peixe ou milho crus para assar no fogão');return;}
   }
   {const ch=nearestChest();if(ch&&!nearestItem()){openChest(ch,false);return;}}
   {const sp=findSleepSpot();if(sp&&!nearestItem()){trySleep(sp);return;}}
@@ -7098,7 +7203,8 @@ function updateHud(force){
   let canInteract=false,btnText='PEGAR';
   if(nearestItem())canInteract=true;
   if((pointInLake(P.x,P.y)||nearFountain(P.x,P.y))&&mapHasLake()&&!nearestItem()){canInteract=true;btnText='ÁGUA';}
-  const cf=nearestCampfire();
+  const cf=nearestCampfire()||nearestStove();
+  if(!nearestItem()&&nearestFurn(['ksink','sink'],14)){canInteract=true;btnText='ÁGUA';}
   {const _ch=nearestChest();if(_ch&&!nearestItem()){canInteract=true;btnText='ABRIR';}}
   if(!nearestItem()&&nearestCactus()){canInteract=true;btnText='ÁGUA';}
   if(cf && P.hold && cookOf(P.hold)){canInteract=true;btnText='ASSAR';}
@@ -10066,6 +10172,7 @@ function furnDraw(c,f,ox,oy){
     case 'hay':R(x,y,w,h,'#a8903e');R(x+1,y+1,w-2,h-2,'#d0b45c');for(let i=2;i<w-2;i+=3)R(x+i,y+2,1,h-4,'#b89c48');break;
     case 'toilet':R(x,y,w,h,'#b8c0c6');R(x+1,y+1,w-2,h-2,'#f0f3f5');R(x+2,y+h-6,w-4,4,'#d6dce0');R(x+3,y+h-5,w-6,2,'#9ab0c0');break;
     case 'sink':R(x,y,w,h,'#9aa2aa');R(x+1,y+1,w-2,h-2,'#eef1f3');R(x+3,y+2,w-6,h-5,'#9ec4dc');R(x+w/2-1,y+1,2,2,'#6a7076');break;
+    case 'ksink':R(x,y,w,h,'#5a5f66');R(x+1,y+1,w-2,h-2,'#8c929a');back('#6c7279',2);{const bx=x+Math.round(w*.5)-5,by=y+1;if(w>=h){R(bx,by+2,10,h-5,'#6a7a88');R(bx+1,by+3,8,h-7,'#9ec4dc');R(bx+4,by+1,2,2,'#c8ced4');}else{R(x+2,y+Math.round(h*.5)-5,w-5,10,'#6a7a88');R(x+3,y+Math.round(h*.5)-4,w-7,8,'#9ec4dc');R(x+1,y+Math.round(h*.5)-1,2,2,'#c8ced4');}}break;
     case 'tub':R(x,y,w,h,'#9aa2aa');R(x+1,y+1,w-2,h-2,'#f2f5f7');R(x+3,y+3,w-6,h-6,'#8ec0de');R(x+4,y+4,w-10,1,'#b8dcee');break;
     case 'bookcase':R(x,y,w,h,'#3e2a18');R(x+1,y+1,w-2,h-2,'#5e4228');{const bc=['#b04a3a','#3a6aa0','#c8a038','#4a8a52','#7a4a8a'];
       if(long){for(let i=0;i<w-3;i+=2)R(x+2+i,y+1,1,h-2,bc[(i/2+sd)%5|0]);}else{for(let i=0;i<h-3;i+=2)R(x+1,y+2+i,w-2,1,bc[(i/2+sd)%5|0]);}}break;
