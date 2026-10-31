@@ -481,6 +481,12 @@ body.haschat #missions{right:140px}
 #menu .menu-row .menu-btn{flex:1;min-width:0;font-size:9px;letter-spacing:0;padding-left:6px;padding-right:6px}
 #menu .menu-row .menu-btn::before{display:none!important}
 .ach-sum{font:9px/1.4 var(--f-px,"Courier New",monospace);color:var(--c-amber,#C79A54);margin:0 0 6px}
+.ach-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 8px;text-align:center}
+@media (max-width:560px){.ach-stats{grid-template-columns:repeat(2,1fr)}}
+.ach-stats div{background:var(--c-panel,#20242c);border:2px solid var(--c-line,#3a3f4a);padding:5px 4px}
+.ach-stats b{display:block;font:11px/1.3 var(--f-px,"Courier New",monospace);color:var(--c-amber,#C79A54)}
+.ach-stats span{font:9px/1.3 "Courier New",monospace;color:var(--c-dim,#9a9684)}
+.ach-title2{font:9px/1.4 var(--f-px,"Courier New",monospace);color:var(--c-cream,#eee9d0);margin:2px 0 6px}
 .ach-list{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;flex:1;text-align:left}
 @media (max-width:560px){.ach-list{grid-template-columns:1fr}}
 .ach-row{display:flex;align-items:center;gap:8px;background:var(--c-panel,#20242c);border:2px solid var(--c-line,#3a3f4a);padding:6px 8px}
@@ -688,6 +694,8 @@ body.haschat #missions{right:140px}
 <div id="achscreen" class="screen hide">
   <div class="card">
     <h2>CONQUISTAS</h2>
+    <div class="ach-title2">ESTATÍSTICAS</div>
+    <div class="ach-stats" id="achStats"></div>
     <div class="ach-sum" id="achSum"></div>
     <div class="ach-list" id="achList"></div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">
@@ -5043,6 +5051,7 @@ function newGame(){
       walk:0,inside:null,inVehicle:null};
     pushOut(P,P.r);
     populate();
+    statBump('games');
     pings=[];pingCD=0;T=0;kills=0;shake=0;flash=0;spawnTimer=3;dark=0;day=1;update._lastDay=1;atkHeld=false;sprintHeld=false;
     touchGas=0;touchSteer=0;stepT=0;
     MP.active=false;remotePlayers={};
@@ -5121,7 +5130,12 @@ function saveGame(){
   }catch(e){ console.warn('[save]',e); return false; }
 }
 /* o save só vale se o mundo tem o mesmo tamanho de quando foi salvo (a geração depende dele) */
-function saveWorldOk(d){return !!d&&!!d.map&&d.ws===Math.round(3400*(WORLD_S[d.map]||1)/50)*50;}
+function saveWorldOk(d){
+  if(!d||!d.map)return false;
+  const base=Math.round(3400*(WORLD_S[d.map]||1)/50)*50;
+  /* a cidade tem a margem da direita aparada depois de gerada (ver genOrla), entao o WW salvo pode ser menor que o tamanho-base; a geracao continua sendo a mesma */
+  return d.ws===base||(d.map==='city'&&d.ws<=base&&d.ws>=base-700);
+}
 function readSave(n){
   let d=null;
   try{
@@ -5129,7 +5143,7 @@ function readSave(n){
     d=JSON.parse(raw);
     const ok=d && d.v===SAVE_VER && saveWorldOk(d) && MAP_NAMES[d.map] && Number.isFinite(d.seed) && d.seed>0 && Number.isFinite(d.T) && d.P && Number.isFinite(d.P.hp) && d.P.hp>0
       && Array.isArray(d.trees)&&Array.isArray(d.rocks)&&Array.isArray(d.items)&&Array.isArray(d.zombies)&&Array.isArray(d.vehicles)&&Array.isArray(d.animals)&&Array.isArray(d.fires);
-    if(!ok){ clearSave(n); return null; }
+    if(!ok){ toast('Save do slot '+n+' incompatível com esta versão'); return null; }   // não apaga: o jogador pode recuperar com a versão certa
     return d;
   }catch(e){ clearSave(n); return null; }
 }
@@ -5821,6 +5835,7 @@ function showDeathScreen(canRespawn){
 function die(){
   if(!P || P.dead) return;
   closeWeaponWheel();closeChat();
+  statBump('deaths');
   P.sleeping=null;SLP.fade=0;P.hp=0;P.dead=true;P.fish=null;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;
   if(P.inVehicle){ try{exitVehicle();}catch(e){} }
   restoreWalkHUD();
@@ -5884,7 +5899,7 @@ function respawnPlayer(){
   try{ if(MP.conn&&MP.conn.open) MP.conn.send({type:'playerRespawned', id:myNetId(), hp:P.hp}); }catch(e){}
 }
 let floaters=[];
-let weatherAcc=0;
+let weatherAcc=0,splashAcc=0,vapor=[],vaporT=0;
 function addFloater(x,y,txt,col){
   floaters.push({x,y,txt:String(txt),col:col||'#ffe0a0',t:0.9,vy:-28});
   if(floaters.length>24) floaters.shift();
@@ -6396,7 +6411,11 @@ function tempTick(dt){
   if(!Number.isFinite(P.temp)) P.temp=0;
   { // água do lago/oásis: ficar dentro vai molhando e esfriando aos poucos; fora, seca devagar
     const inW=!P.inVehicle&&pointInLake(P.x,P.y), snow=selectedMap==='snow';
-    P.wet=clamp((P.wet||0)+(inW?dt/(snow?16:26):-dt/(snow?55:30)),0,1);
+    const sheltered=!!(P.inVehicle||bldAt(P.x,P.y)||nearTent(P.x,P.y,34));
+    const rainWet=!inW&&weather==='rain'&&!sheltered;                       // chuva molha quem esta ao relento
+    let nearFire=false;for(const c of campfires){if(Math.hypot(c.x-P.x,c.y-P.y)<70){nearFire=true;break;}}
+    const dry=(snow?55:30)/(nearFire?3:1);                                   // perto da fogueira seca bem mais rapido
+    P.wet=clamp((P.wet||0)+(inW?dt/(snow?16:26):(rainWet?dt/(snow?60:90):-dt/dry)),0,1);
     P._inW=inW;
   }
   P.temp+=(envTemp()-P.temp)*Math.min(1,dt/((P._inW&&selectedMap==='snow')?14:40));
@@ -6818,6 +6837,7 @@ function updateZ(z,dt){
 function update(dt){
   if(!P||!isFinite(dt))return;
   T+=dt;
+  statTick(dt);
   const hr=START_HOUR+T/DAY_SECONDS*24;
   dark=darkness(hr%24);
   day=Math.floor(hr/24)+1;
@@ -6855,6 +6875,20 @@ function update(dt){
   } else if(weatherParticles.length){
     weatherParticles.length=0;
   }
+  // chuva: respingos no chao; frio: vapor da respiracao
+  if(weather==='rain'){
+    const pfr=perf();splashAcc=Math.min(6,splashAcc+(pfr.weatherSpawn||.4)*dt*50);
+    while(splashAcc>=1){splashAcc-=1;if(parts.length>=(pfr.partsCap||120))break;
+      parts.push({x:camX+rnd(0,W/Z),y:camY+rnd(0,H/Z),vx:rnd(-14,14),vy:rnd(-42,-22),t:rnd(.14,.24),c:'rgba(170,200,230,.75)',g:1});}
+  }
+  vaporT-=dt;
+  if(vaporT<=0&&P&&!P.dead&&P.temp<-14&&!P.inVehicle&&!bldAt(P.x,P.y)){
+    vaporT=P.moving?1.3:2.2;
+    const fx=Math.cos(P.face||0);
+    vapor.push({x:P.x+fx*6,y:P.y-15,vx:fx*8,t:0});
+  }
+  for(const v of vapor){v.t+=dt;v.x+=v.vx*dt;v.y-=10*dt;}
+  vapor=vapor.filter(v=>v.t<.9);
   // Chuva apaga fogueiras gradualmente
   if(weather==='rain' && campfires.length && (!MP.active||MP.isHost)){ // só o anfitrião apaga fogueiras (o convidado recebe o evento)
     for(let i=campfires.length-1;i>=0;i--){
@@ -11255,6 +11289,7 @@ function render(){
     ctx.fillStyle=weather==='rain'?'rgba(140,180,220,0.65)':(weather==='sand'?'rgba(214,178,110,0.8)':'rgba(240,248,255,0.85)');
     for(const wp of weatherParticles)if(wp.x>=camX-10&&wp.x<=camX+W/Z+10&&wp.y>=camY-10&&wp.y<=camY+H/Z+10)R(wp.x,wp.y,wp.sz,weather==='rain'?wp.sz*5:wp.sz,ctx.fillStyle);
   }
+  for(const v of vapor){const a=.85*(1-v.t/.9);ctx.globalAlpha=a;const sz=3+Math.round(v.t*4);R(v.x-1,v.y-1,sz+2,sz+2,'#9fb2c6');R(v.x,v.y,sz,sz,'#f4f8fc');ctx.globalAlpha=1;}
   drawFishing();
   if(CFG.tracers){
     for(const t of tracers){
@@ -11418,7 +11453,30 @@ function achSet(stat,v){
   if(!(v>(ACHD.s[stat]||0)))return;
   ACHD.s[stat]=v;achSave();achCheck(stat);
 }
+/* ---- Estatisticas de todas as partidas (guardadas junto das conquistas) ---- */
+let _statAcc=0,_statPx=null,_statPy=null,_statSaveT=0;
+function statTick(dt){
+  if(!P||P.dead)return;
+  ACHD.s.playSec=(ACHD.s.playSec||0)+dt;
+  if(_statPx!==null){const d=Math.hypot(P.x-_statPx,P.y-_statPy);if(d<60)ACHD.s.dist=(ACHD.s.dist||0)+d;}  // ignora teleportes (respawn, carregar save)
+  _statPx=P.x;_statPy=P.y;
+  _statSaveT+=dt;if(_statSaveT>15){_statSaveT=0;achSave();}
+}
+function statBump(k){ACHD.s[k]=(ACHD.s[k]||0)+1;achSave();_statPx=null;}
+function fmtDur(sec){sec=Math.floor(sec);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60);return h>0?h+'h '+m+'min':m+'min '+(sec%60)+'s';}
+function renderStats(){
+  const el=document.getElementById('achStats');if(!el)return;
+  const s=ACHD.s,best=Math.max(+(LSget()||0),0);
+  const rows=[
+    [s.games||0,'Partidas'],[s.deaths||0,'Mortes'],[fmtDur(s.playSec||0),'Tempo jogado'],
+    [fmtDur(best),'Maior sobrevivência'],['Dia '+(s.maxDay||0),'Maior dia'],[Math.round((s.dist||0)/50)+' m','Distância a pé'],
+    [s.kill||0,'Zumbis mortos'],[s.killAnimal||0,'Animais caçados'],[s.fish||0,'Peixes pescados'],
+    [s.get_wood||0,'Madeira coletada'],[s.cook||0,'Alimentos cozidos'],[s.craft||0,'Itens fabricados']
+  ];
+  el.innerHTML=rows.map(r=>'<div><b>'+r[0]+'</b><span>'+r[1]+'</span></div>').join('');
+}
 function renderAch(){
+  try{renderStats();}catch(e){}
   const list=document.getElementById('achList'),sum=document.getElementById('achSum');if(!list)return;
   let got=0,h='';
   for(const a of ACH){
