@@ -5899,7 +5899,7 @@ function respawnPlayer(){
   try{ if(MP.conn&&MP.conn.open) MP.conn.send({type:'playerRespawned', id:myNetId(), hp:P.hp}); }catch(e){}
 }
 let floaters=[];
-let weatherAcc=0;
+let weatherAcc=0,splashAcc=0,vapor=[],vaporT=0;
 function addFloater(x,y,txt,col){
   floaters.push({x,y,txt:String(txt),col:col||'#ffe0a0',t:0.9,vy:-28});
   if(floaters.length>24) floaters.shift();
@@ -6411,7 +6411,11 @@ function tempTick(dt){
   if(!Number.isFinite(P.temp)) P.temp=0;
   { // água do lago/oásis: ficar dentro vai molhando e esfriando aos poucos; fora, seca devagar
     const inW=!P.inVehicle&&pointInLake(P.x,P.y), snow=selectedMap==='snow';
-    P.wet=clamp((P.wet||0)+(inW?dt/(snow?16:26):-dt/(snow?55:30)),0,1);
+    const sheltered=!!(P.inVehicle||bldAt(P.x,P.y)||nearTent(P.x,P.y,34));
+    const rainWet=!inW&&weather==='rain'&&!sheltered;                       // chuva molha quem esta ao relento
+    let nearFire=false;for(const c of campfires){if(Math.hypot(c.x-P.x,c.y-P.y)<70){nearFire=true;break;}}
+    const dry=(snow?55:30)/(nearFire?3:1);                                   // perto da fogueira seca bem mais rapido
+    P.wet=clamp((P.wet||0)+(inW?dt/(snow?16:26):(rainWet?dt/(snow?60:90):-dt/dry)),0,1);
     P._inW=inW;
   }
   P.temp+=(envTemp()-P.temp)*Math.min(1,dt/((P._inW&&selectedMap==='snow')?14:40));
@@ -6871,6 +6875,20 @@ function update(dt){
   } else if(weatherParticles.length){
     weatherParticles.length=0;
   }
+  // chuva: respingos no chao; frio: vapor da respiracao
+  if(weather==='rain'){
+    const pfr=perf();splashAcc=Math.min(6,splashAcc+(pfr.weatherSpawn||.4)*dt*50);
+    while(splashAcc>=1){splashAcc-=1;if(parts.length>=(pfr.partsCap||120))break;
+      parts.push({x:camX+rnd(0,W/Z),y:camY+rnd(0,H/Z),vx:rnd(-14,14),vy:rnd(-42,-22),t:rnd(.14,.24),c:'rgba(170,200,230,.75)',g:1});}
+  }
+  vaporT-=dt;
+  if(vaporT<=0&&P&&!P.dead&&P.temp<-14&&!P.inVehicle&&!bldAt(P.x,P.y)){
+    vaporT=P.moving?1.3:2.2;
+    const fx=Math.cos(P.face||0);
+    vapor.push({x:P.x+fx*6,y:P.y-15,vx:fx*8,t:0});
+  }
+  for(const v of vapor){v.t+=dt;v.x+=v.vx*dt;v.y-=10*dt;}
+  vapor=vapor.filter(v=>v.t<.9);
   // Chuva apaga fogueiras gradualmente
   if(weather==='rain' && campfires.length && (!MP.active||MP.isHost)){ // só o anfitrião apaga fogueiras (o convidado recebe o evento)
     for(let i=campfires.length-1;i>=0;i--){
@@ -11271,6 +11289,7 @@ function render(){
     ctx.fillStyle=weather==='rain'?'rgba(140,180,220,0.65)':(weather==='sand'?'rgba(214,178,110,0.8)':'rgba(240,248,255,0.85)');
     for(const wp of weatherParticles)if(wp.x>=camX-10&&wp.x<=camX+W/Z+10&&wp.y>=camY-10&&wp.y<=camY+H/Z+10)R(wp.x,wp.y,wp.sz,weather==='rain'?wp.sz*5:wp.sz,ctx.fillStyle);
   }
+  for(const v of vapor){const a=.85*(1-v.t/.9);ctx.globalAlpha=a;const sz=3+Math.round(v.t*4);R(v.x-1,v.y-1,sz+2,sz+2,'#9fb2c6');R(v.x,v.y,sz,sz,'#f4f8fc');ctx.globalAlpha=1;}
   drawFishing();
   if(CFG.tracers){
     for(const t of tracers){
