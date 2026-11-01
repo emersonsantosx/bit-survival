@@ -2,6 +2,9 @@
    Ordem importa: as RUAS nascem primeiro e os prédios só ocupam o interior dos quarteirões,
    então nenhuma rua atravessa casa. Prédios ficam em fileiras com vão mínimo para passar a pé,
    e as portas (sempre no lado sul) abrem para um vão livre. */
+/* quarteiroes de terra e grama (pracas, parques e lotes vazios): os unicos lugares onde da para arar na cidade. Guardados sem sortear nada. */
+let cityGardens=[];
+function inCityGarden(x,y){for(const g of cityGardens)if(x>g.x&&x<g.x+g.w&&y>g.y&&y<g.y+g.h)return true;return false;}
 function onCityRoad(x,y,m){
   for(const r of roads){ if(x>r.x-m&&x<r.x+r.w+m&&y>r.y-m&&y<r.y+r.h+m) return true; }
   return false;
@@ -124,6 +127,8 @@ function genCity(){
     else if(d<.75){ const q=_rng(); b.zone=q<.4?'com':q<.8?'res':'ind'; }
     else b.zone=_rng()<.55?'res':'ind';
   }
+  cityGardens=[];
+  for(const b of blocks)if(b.zone==='crash'||b.zone==='park'||b.zone==='empty')cityGardens.push({x:b.bx+14,y:b.by+14,w:b.bw-28,h:b.bh-28});
   for(const b of blocks){
     if(b.zone==='crash') cityPark(b.bx,b.by,b.bw,b.bh,b.cx,b.cy,95);
     else if(b.zone==='park') cityPark(b.bx,b.by,b.bw,b.bh);

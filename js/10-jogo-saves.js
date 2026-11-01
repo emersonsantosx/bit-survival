@@ -85,6 +85,7 @@ function saveGame(){
       decals:decals.map(d=>[_q(d.x,1),_q(d.y,1),_q(d.l,1)]),
       chests:chestList.map(c=>c.open?1:0), rl:lootStatePack(),
       ice:(()=>{const o=[];lakes.forEach((l,i)=>{if(l.holes)for(const h of l.holes)o.push([i,h.x,h.y]);});return o;})(),
+      plots:plotsPack(),gh:ghPack(),
       doors:(()=>{const o=[];blds.forEach((b,bi)=>{if(b.doors)b.doors.forEach((d,di)=>{if(d.open)o.push([bi,di,d.open]);});});return o;})()
     };
     localStorage.setItem(slotKey(curSlot),JSON.stringify(data));
@@ -160,6 +161,7 @@ function continueGame(n){
     if(Array.isArray(d.chests))d.chests.forEach((v,i)=>{if(chestList[i]&&v)chestList[i].open=true;});
     lootStateLoad(d.rl);
     if(Array.isArray(d.ice))for(const a of d.ice){const l=Array.isArray(a)&&lakes[a[0]];if(l&&l.frozen&&Number.isFinite(a[1])&&Number.isFinite(a[2])){if(!l.holes)l.holes=[];l.holes.push({x:a[1],y:a[2],r:16});}}
+    plotsLoad(d.plots);ghLoad(d.gh);
     if(Array.isArray(d.doors))for(const a of d.doors){const bb=Array.isArray(a)&&blds[a[0]],dd=bb&&bb.doors&&bb.doors[a[1]];if(dd&&(a[2]===1||a[2]===2)){dd.open=a[2];if(a[2]===2)dd.hp=0;}}
     if(P){P.hold=null;}EAT=null;eatLock=false;
     decals=(d.decals||[]).map(a=>({x:a[0],y:a[1],l:Number.isFinite(a[2])?a[2]:20})).filter(a=>a.l>0);
@@ -252,7 +254,7 @@ function discardItem(i){
   beep(280,.1,'triangle',.06,-80);
   for(let k=0;k<4;k++)parts.push({x:dx,y:dy,vx:rnd(-20,20),vy:rnd(-30,0),t:.4,c:'#a0a0a0'});
 }
-const EATABLE=it=>it==='food'||isFishItem(it)||it==='cookedfish'||it==='meat'||it==='cookedmeat'||it==='corn'||it==='cookedcorn';
+const EATABLE=it=>it==='food'||isFishItem(it)||it==='cookedfish'||it==='meat'||it==='cookedmeat'||it==='corn'||it==='cookedcorn'||it==='potato'||it==='bakedpotato'||it==='melon';
 let EAT=null,eatLock=false;
 /* aplica o efeito de um item; devolve true se foi usado */
 function applyUse(it){
@@ -263,6 +265,9 @@ function applyUse(it){
   else if(it==='meat'){if(P.food<95){P.food=Math.min(100,P.food+25);ok=true;if(Math.random()<.35){P.sick=25;toast('Carne crua: você passou mal!');}else toast('Carne crua... melhor assar');}}
   else if(it==='cookedmeat'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+10);P.food=Math.min(100,P.food+60);P.hp=Math.min(100,P.hp+8);ok=true;toast('Carne assada! +8 HP');}}
   else if(it==='corn'){if(P.food<95){P.food=Math.min(100,P.food+14);ok=true;toast('Milho cru... melhor assar');}}
+  else if(it==='potato'){if(P.food<95){P.food=Math.min(100,P.food+8);ok=true;toast('Batata crua... melhor assar');}}
+  else if(it==='bakedpotato'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+4);P.food=Math.min(100,P.food+28);P.hp=Math.min(100,P.hp+2);ok=true;toast('Batata assada! +2 HP');}}
+  else if(it==='melon'){if(P.food<98||P.water<98){P.food=Math.min(100,P.food+10);P.water=Math.min(100,P.water+22);ok=true;toast('Melancia fresca!');}}
   else if(it==='cookedcorn'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+6);P.food=Math.min(100,P.food+32);P.hp=Math.min(100,P.hp+3);ok=true;toast('Milho assado! +3 HP');}}
   else if(it==='water'){if(P.water<95){P.water=Math.min(100,P.water+40);ok=true;toast('Você bebeu água');}}
   else if(it==='bandage'){if(P.bleed||P.hp<95){P.bleed=false;P.hp=Math.min(100,P.hp+10);ok=true;toast('Bandagem usada');track('use_bandage');}}
@@ -358,7 +363,7 @@ function cycleWeapon(){
   const i=l.indexOf(P.weapon);P.weapon=l[(Math.max(-1,i)+1)%l.length];
   beep(300,.05,'square',.04);updateWeaponHud();     // o botão de trocar arma já mostra a arma: sem aviso no topo
 }
-const WEAPON_ICON={fists:'fists',bat:'bat',axe:'axe',pickaxe:'pickaxe',katana:'katana',spear:'spear',bow:'bow',pistol:'pistol',smg:'smg',shotgun:'shotgun',rifle:'rifle',fishingrod:'rod'};
+const WEAPON_ICON={hoe:'hoe',fists:'fists',bat:'bat',axe:'axe',pickaxe:'pickaxe',katana:'katana',spear:'spear',bow:'bow',pistol:'pistol',smg:'smg',shotgun:'shotgun',rifle:'rifle',fishingrod:'rod'};
 let weaponWheelOpen=false, weaponWheelOpenedAt=0;
 function updateWeaponHud(){const el=$('wpn'),sw=$('swap');if(el)el._sig=null;if(sw)sw._sig=null;}   // o HUD redesenha a arma no próximo quadro
 function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
@@ -460,6 +465,7 @@ function pickTarget(){
   const rectD=(x,y,w,h)=>{const cx=clamp(P.x,x,x+w),cy=clamp(P.y,y,y+h);return {d:Math.max(0,Math.hypot(P.x-cx,P.y-cy)-P.r),px:cx,py:cy};};
   const it=nearestItem();if(it)add({k:'item',d:Math.max(0,Math.hypot(it.x-P.x,it.y-P.y)-P.r-2),b:0,it},it.x,it.y,'i'+it.x+','+it.y+it.t);
   const ch=nearestChest();if(ch)add({k:'chest',d:Math.max(0,Math.hypot(ch.x-P.x,ch.y-P.y)-P.r-3),b:0,ch},ch.x,ch.y,'c'+ch.x+','+ch.y);
+  for(const q of plotCands())add(q,q.px,q.py,q.key);
   for(const q of doorCands())add({k:'door',d:q.ed,b:-3,dr:q.dr},q.px,q.py,'d'+q.dr.bi+'.'+q.dr.di);
   const tap=nearestFurn(['ksink','sink'],14);
   if(tap){const r=rectD(tap.x,tap.y,tap.w,tap.h);add({k:'tap',d:r.d,b:0,tap},r.px,r.py,'t'+tap.x+','+tap.y);}
@@ -616,6 +622,7 @@ function cookOf(t){
   if(isFishItem(t))return {out:'cookedfish',n:(FISH[ITEMS[t].fish]||{yield:1}).yield};
   if(t==='meat')return {out:'cookedmeat',n:1};
   if(t==='corn')return {out:'cookedcorn',n:1};
+  if(t==='potato')return {out:'bakedpotato',n:1};
   return null;
 }
 function pickup(){
@@ -653,6 +660,7 @@ function pickup(){
     if(st){toast('Segure carne, peixe ou milho crus para assar no fogão');return;}
   }
   if(TG&&TG.k==='chest'){openChest(TG.ch,false);return;}
+  if(TG&&TG.k==='plot'){plotDo(TG);return;}
   if(TG&&TG.k==='door'){setDoor(TG.dr,TG.dr.open?0:1);return;}
   if(TG&&TG.k==='bed'){const sp=findSleepSpot();if(sp){trySleep(sp);return;}}
   // Pesca no lago (só Floresta/Neve) — inventário local de cada player (sem sync de item no chão)
@@ -720,7 +728,7 @@ function pickup(){
       for(let i=0;i<5;i++)parts.push({x:cc.x+rnd(-4,4),y:cc.y-8,vx:rnd(-12,12),vy:rnd(-30,-10),t:.35,c:'#9ad8a0'});
       return;
     }
-    if(cf&&!P.hold&&(firstFishItem()||countInv('meat')>0||countInv('corn')>0)){toast('Segure o alimento cru na mão para assar');return;}
+    if(cf&&!P.hold&&(firstFishItem()||countInv('meat')>0||countInv('corn')>0||countInv('potato')>0)){toast('Segure o alimento cru na mão para assar');return;}
     toast('Nada por perto');return;}
   const t=it.t;
   if(t==='ammo'){const n=rint(5,10);P.ammo+=n;toast('+'+n+' munição');}
@@ -751,7 +759,7 @@ function pickup(){
     if(P.pack){toast('Você já tem uma mochila'+(MP.active?': deixe pro parceiro':''));return;}
     P.pack=true;buildInv();toast('Mochila equipada! Agora você carrega 12 itens');
   }
-  else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='katana'||t==='spear'||t==='fishingrod'){
+  else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='katana'||t==='spear'||t==='fishingrod'||t==='hoe'){
     if((P.meleeWeapons||[]).includes(t) || P.melee===t){
       toast('Você já tem '+ITEMS[t].n+(MP.active?': deixe pro parceiro':'')); return;
     }

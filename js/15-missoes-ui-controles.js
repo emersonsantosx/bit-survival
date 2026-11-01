@@ -413,6 +413,7 @@ on('craftclose','click',closeCraft);
 /* ============ TELA DO INVENTÁRIO ============ */
 let invSel=0;
 const IDESC={
+  hoe:'Enxada. Equipe e use ARAR para preparar um canteiro. Também serve como arma fraca.',potato:'Batata crua. Recupera 8 de fome, melhor assar na fogueira.',bakedpotato:'Batata assada. Recupera 28 de fome e 2 de vida.',melon:'Melancia. Recupera 10 de fome e 22 de sede.',seed_potato:'Sementes de batata. Vingam na floresta e na cidade (e em qualquer lugar numa estufa).',seed_melon:'Sementes de melancia. Só vingam no deserto (ou numa estufa).',seed_corn:'Sementes de milho. Plante em um canteiro arado e regue de vez em quando.',
   food:'Feijão enlatado. Recupera 35 de fome.',water:'Garrafa de água. Recupera 40 de sede.',fish:'Peixe cru. Recupera 30 de fome, melhor assar na fogueira.',
   cookedfish:'Peixe assado. Recupera 55 de fome e 5 de vida.',meat:'Carne crua. Recupera 25 de fome, melhor assar na fogueira.',cookedmeat:'Carne assada. Recupera 60 de fome e 8 de vida.',turban:'Turbante do templo. Vestido, reduz o calor do deserto em cerca de um terço.',corn:'Milho do milharal. Recupera 14 de fome. Segure na mão perto da fogueira para assar.',cookedcorn:'Milho assado. Recupera 32 de fome e 3 de vida.',
   wood:'Material de crafting. Abra o crafting para usar.',stone:'Material de crafting. Abra o crafting para usar.',cloth:'Tecido. Usado para fabricar bandagem e mochila.',
@@ -515,7 +516,7 @@ function refreshInvScr(){
     return;
   }
   const it=ITEMS[sl.t];
-  const usable=isFishItem(sl.t)||['food','water','cookedfish','meat','cookedmeat','corn','cookedcorn','bandage','medkit'].includes(sl.t);
+  const usable=isFishItem(sl.t)||['food','water','cookedfish','meat','cookedmeat','corn','cookedcorn','potato','bakedpotato','melon','bandage','medkit'].includes(sl.t);
   d.innerHTML='<div class="ico">'+pxFit(it.e,48,44)+'</div><div class="nm">'+it.n.toUpperCase()+'</div><div class="qt">x'+sl.n+'</div><div class="ds">'+(IDESC[sl.t]||(FISH[it.fish]?'Peixe cru. Recupera '+FISH[it.fish].food+' de fome, melhor assar na fogueira (rende '+FISH[it.fish].yield+' '+(FISH[it.fish].yield>1?'porções':'porção')+').':''))+'</div>'+
     '<div class="ibtns"><button class="ibtn use" id="ibUse"'+(usable?'':' disabled')+'>'+(EATABLE(sl.t)?(P.hold===sl.t?'GUARDAR':'SEGURAR'):'USAR')+'</button><button class="ibtn" id="ibDrop">SOLTAR</button>'+(sl.n>1?'<button class="ibtn" id="ibAll">TUDO</button>':'')+'</div>';
   const ok=()=>performance.now()>=craftReadyAt;
