@@ -669,7 +669,6 @@ function updateP(dt){
   }
   P.x=clamp(P.x,8,WW-8);P.y=clamp(P.y,8,WH-8);
   pushOut(P,P.r);
-  if(P._doorF===DOORF&&P._door&&!P._door.open&&(P.moving||joy.active))setDoor(P._door,1);   // encostou andando: abre a porta
   iceTick(dt);
   // Never switch to interior camera while driving — keeps world visible & exit orientation clear
   P.inside=null;
@@ -1029,7 +1028,7 @@ function update(dt){
           for(let k=0;k<30;k++){
             const a=rnd(0,6.283),dist=rnd(320,640);
             const x=sx+Math.cos(a)*dist,y=sy+Math.sin(a)*dist;
-            if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12)||inAnyView(x,y,140))continue;
+            if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12)||bldNear(x,y,18)||inAnyView(x,y,140))continue;
             spawnZ(x,y);
             spawned++;
             break;
@@ -1040,7 +1039,7 @@ function update(dt){
           for(let n=0;n<Math.min(3,dd.cap-zombies.length);n++){
             const a=rnd(0,6.283),dist=rnd(280,480);
             const x=sx+Math.cos(a)*dist,y=sy+Math.sin(a)*dist;
-            if(x>40&&y>40&&x<WW-40&&y<WH-40&&!solidPoint(x,y,12)&&!inAnyView(x,y,140)) spawnZ(x,y);
+            if(x>40&&y>40&&x<WW-40&&y<WH-40&&!solidPoint(x,y,12)&&!bldNear(x,y,18)&&!inAnyView(x,y,140)) spawnZ(x,y);
           }
         }
       }
@@ -1053,7 +1052,7 @@ function update(dt){
         for(let n=0;n<burst;n++){
           const a=rnd(0,6.283),dist=rnd(360,620);
           const x=P.x+Math.cos(a)*dist,y=P.y+Math.sin(a)*dist;
-          if(x>40&&y>40&&x<WW-40&&y<WH-40&&!solidPoint(x,y,12)&&!inAnyView(x,y,140)) spawnZ(x,y, pickZombieKind());
+          if(x>40&&y>40&&x<WW-40&&y<WH-40&&!solidPoint(x,y,12)&&!bldNear(x,y,18)&&!inAnyView(x,y,140)) spawnZ(x,y, pickZombieKind());
         }
       }
     }
@@ -1266,7 +1265,7 @@ function updateHud(force){
   else if((P._scap||100)<65){st='FRACO';stk='stam';}
   if(!st&&MP.active&&MP.isHost&&MP.guestAway)st='CONVIDADO OFFLINE';
   const stat=$('stat');if(stat){stat.textContent=st;stat.style.opacity=st?'1':'0';stat.className=stk?'s-'+stk:'';} // a cor do aviso segue a cor da barra correspondente
-  const PICK_ICON={FECHAR:'c_door',ABRIR:'c_chest',PEGAR:'c_hand','ÁGUA':'drop',ASSAR:'c_flame',ENTRAR:'c_door',DORMIR:'c_bed',LEVANTAR:'c_bed'};
+  const PICK_ICON={FECHAR:'c_door',PORTA:'c_door',ABRIR:'c_chest',PEGAR:'c_hand','ÁGUA':'drop',ASSAR:'c_flame',ENTRAR:'c_door',DORMIR:'c_bed',LEVANTAR:'c_bed'};
   {const at=$('atk'),want=P.hold?'c_eat':'c_atk';
    if(at&&at.dataset.ic!==want){at.dataset.ic=want;at.setAttribute('aria-label',P.hold?'Comer':'Atacar');at.innerHTML=pxIcon(want,4);}}
   let canInteract=false,btnText='PEGAR';
@@ -1283,9 +1282,9 @@ function updateHud(force){
   }
   if(P.sleeping){canInteract=true;btnText='LEVANTAR';}
   else if(!nearestItem()&&findSleepSpot()){canInteract=true;btnText='DORMIR';}
-  else if(!nearestItem()&&btnText==='PEGAR'&&nearOpenDoor()){canInteract=true;btnText='FECHAR';}
+  else if(!nearestItem()&&btnText==='PEGAR'&&nearDoorAct()){canInteract=true;btnText=nearDoorAct().open?'FECHAR':'PORTA';}
   const pick_=$('pick');
-  if(pick_){if(pick_.dataset.st!==btnText){pick_.dataset.st=btnText;pick_.setAttribute('aria-label',btnText==='ABRIR'?'Abrir baú':btnText==='ÁGUA'?'Beber água':btnText==='ASSAR'?'Assar':btnText==='ENTRAR'?'Entrar':btnText==='FECHAR'?'Fechar porta':btnText==='DORMIR'?'Dormir':btnText==='LEVANTAR'?'Levantar':'Pegar');pick_.innerHTML=pxIcon(PICK_ICON[btnText]||'c_hand',3);}
+  if(pick_){if(pick_.dataset.st!==btnText){pick_.dataset.st=btnText;pick_.setAttribute('aria-label',btnText==='ABRIR'?'Abrir baú':btnText==='ÁGUA'?'Beber água':btnText==='ASSAR'?'Assar':btnText==='ENTRAR'?'Entrar':btnText==='FECHAR'?'Fechar porta':btnText==='PORTA'?'Abrir porta':btnText==='DORMIR'?'Dormir':btnText==='LEVANTAR'?'Levantar':'Pegar');pick_.innerHTML=pxIcon(PICK_ICON[btnText]||'c_hand',3);}
     pick_.classList.toggle('hot',canInteract);}
 }
 

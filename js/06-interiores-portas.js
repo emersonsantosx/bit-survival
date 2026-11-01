@@ -127,12 +127,28 @@ function mkDoors(b){
   b.doors=[{bi,di:0,r:{x:b.doorX,y:b.y+b.h-WT,w:b.door,h:WT},front:1,v:0,open:0,hp:1}];
   for(const g of b.gaps)b.doors.push({bi,di:b.doors.length,r:g.r,v:g.v?1:0,open:0,hp:1});
 }
+/* a batida nas portas so se ouve no comodo da porta (um dos dois lados dela); a entrada vale para quem esta dentro da casa */
+function doorHearable(d){
+  if(!P||P.dead)return false;
+  const b=blds[d.bi];if(!b||P.inside!==b)return false;
+  const cx=d.r.x+d.r.w/2,cy=d.r.y+d.r.h/2,o=d.v?[IWT/2+3,0]:[0,IWT/2+3];
+  const dr=[],pr=[];
+  roomsAt(b,cx-o[0],cy-o[1],dr);if(!d.front)roomsAt(b,cx+o[0],cy+o[1],dr);else{dr.length=0;roomsAt(b,cx,cy-o[1],dr);}
+  roomsAt(b,P.x,P.y-2,pr);
+  for(const r of pr)if(dr.includes(r))return true;
+  return false;
+}
 function doorSound(d,k){
   const x=d.r.x+d.r.w/2,y=d.r.y+d.r.h/2,dist=P?Math.hypot(P.x-x,P.y-y):0;if(dist>420)return;
   const v=.05*(1-dist/420);
   if(k==='open')beep(150,.14,'sawtooth',v,-70,'amb');else if(k==='close')beep(110,.08,'square',v*1.2,-30,'amb');
-  else if(k==='hit')beep(85+Math.random()*25,.08,'square',v*1.6,-20,'amb');
-  else if(k==='break'){beep(70,.25,'sawtooth',v*2,-40,'amb');beep(200,.1,'square',v*1.5,-90,'amb');}
+  else if(k==='hit'||k==='break'){
+    if(!doorHearable(d))return;
+    const q=.1*(1-Math.min(dist,160)/200);   // pancada grave e abafada: seio baixo + estalo de madeira grosso
+    if(k==='hit'){beep(52+Math.random()*12,.22,'sine',q*2.2,-14,'amb');beep(95,.12,'triangle',q*1.2,-40,'amb');}
+    else{beep(44,.5,'sine',q*3,-12,'amb');beep(80,.3,'triangle',q*1.8,-30,'amb');beep(140,.15,'triangle',q,-70,'amb');}
+    try{if(AC){const vol=volFor('amb');if(vol>0)gunNoise(AC.currentTime,k==='hit'?.14:.3,'lowpass',k==='hit'?180:260,.7,.16*vol*(1-Math.min(dist,160)/200));}}catch(e){}
+  }
 }
 function setDoor(d,st,remote){
   if(d.open===st)return;
@@ -150,14 +166,16 @@ function zBreakDoor(z,d,dt){
     for(let i=0;i<2;i++)parts.push({x:d.r.x+rnd(0,d.r.w),y:d.r.y+rnd(0,d.r.h),vx:rnd(-20,20),vy:rnd(-30,-5),t:.35,c:'#8a6a44'});}
   if(d.hp<=0)setDoor(d,2);
 }
-function nearOpenDoor(){
+/* porta ao alcance do botao: fechada (encostado nela) para ABRIR, ou aberta (sem estar parado na passagem) para FECHAR */
+function nearDoorAct(){
   if(!P||P.inVehicle)return null;
   let best=null,bd=26;
   for(const b of blds){
     if(P.x<b.x-30||P.x>b.x+b.w+30||P.y<b.y-30||P.y>b.y+b.h+30||!b.doors)continue;
     for(const d of b.doors){
-      if(d.open!==1)continue;
+      if(d.open===2)continue;
       const cx=clamp(P.x,d.r.x,d.r.x+d.r.w),cy=clamp(P.y,d.r.y,d.r.y+d.r.h),dd=Math.hypot(P.x-cx,P.y-cy);
+      if(d.open===0){if(dd<bd&&dd<=P.r+8){best=d;bd=dd;}continue;}
       if(dd<bd&&dd>P.r+1.5){
         let blocked=false;for(const z of zombies)if(!z.dead&&Math.abs(z.x-cx)<z.r+d.r.w/2&&Math.abs(z.y-cy)<z.r+d.r.h/2+2){blocked=true;break;}
         if(!blocked){best=d;bd=dd;}

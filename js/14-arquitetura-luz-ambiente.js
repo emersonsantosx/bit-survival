@@ -584,16 +584,6 @@ function ambGust(d,f0,f1,v,type,q){
   }catch(e){}
 }
 function ambTone(f,d,type,v,slide){const k=ambVol();if(k<=0)return;beep(f,d,type,v*k,slide,'amb');}
-function ambWhistle(d,f0,f1,v){   // assobio do vento (tom fino, nada de chiado que lembra onda)
-  if(!AC)return;const vol=volFor('amb')*ambVol();if(vol<=0||v<=0)return;
-  try{
-    const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain(),lf=AC.createOscillator(),lg=AC.createGain();
-    o.type='sine';o.frequency.setValueAtTime(f0,t);o.frequency.linearRampToValueAtTime(f1,t+d);
-    lf.frequency.value=4.5;lg.gain.value=f0*.015;lf.connect(lg);lg.connect(o.frequency);
-    g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v*vol,t+d*.35);g.gain.linearRampToValueAtTime(.0001,t+d);
-    o.connect(g);g.connect(AOUT);o.start(t);lf.start(t);o.stop(t+d+.05);lf.stop(t+d+.05);
-  }catch(e){}
-}
 function ambRustle(n,v){for(let i=0;i<n;i++)setTimeout(()=>ambGust(.04,3500+Math.random()*2500,5000,v,'highpass',.8),i*(60+Math.random()*90));}
 const iceFx=[];
 function ambLife(dt){
@@ -604,10 +594,9 @@ function ambLife(dt){
   if(AMB.wind<=0){
     if(m==='forest'){AMB.wind=rnd(7,14);ambRustle(6+((Math.random()*6)|0),.03);}                                  // folhas farfalhando
     else if(m==='snow'){
-      if(blizzK>.35){AMB.wind=rnd(1.6,3);ambWhistle(rnd(2.4,3.6),520,760,.07*blizzK);ambWhistle(rnd(2.4,3.6),380,560,.05*blizzK);}
-      else{AMB.wind=rnd(6,12);ambWhistle(rnd(2.5,4),480,620,.03);}
+      AMB.wind=blizzK>.35?rnd(1.6,3):rnd(6,12);   // sem som de vento na neve
     }
-    else if(m==='desert'){AMB.wind=weather==='sand'?rnd(2,4):rnd(8,14);ambWhistle(rnd(2.5,4),220,300,weather==='sand'?.06:.025);}
+    else if(m==='desert'){AMB.wind=weather==='sand'?rnd(2,4):rnd(8,14);}
     else{AMB.wind=rnd(14,26);}
   }
   // grilos e coruja (noite)

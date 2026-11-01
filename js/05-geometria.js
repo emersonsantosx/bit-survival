@@ -570,6 +570,11 @@ function losClear(x1,y1,x2,y2){ return !wallBlocks(x1,y1,x2,y2); } // teste exat
 
 
 /* ===== Navegação: zumbi entra/sai de prédios pela PORTA e contorna quinas ===== */
+/* ponto dentro (ou colado em) algum prédio? usado para os zumbis nascerem só no campo aberto */
+function bldNear(x,y,pad){
+  for(let i=0;i<blds.length;i++){const b=blds[i];if(x>b.x-pad&&x<b.x+b.w+pad&&y>b.y-pad&&y<b.y+b.h+pad)return true;}
+  return false;
+}
 function bldAt(x,y){
   for(let i=0;i<blds.length;i++){const b=blds[i];if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h)return b;}
   return null;
