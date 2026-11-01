@@ -15,14 +15,14 @@ const MAPS = ['forest', 'snow', 'desert', 'city'];
     const errs = [];
     pg.on('pageerror', e => errs.push(e.message));
     pg.on('dialog', d => { errs.push('dialog: ' + d.message()); d.dismiss(); });
-    await pg.goto('file://' + file); await pg.waitForTimeout(400);
+    await pg.goto('file://' + file); await pg.waitForFunction(() => typeof newGame === 'function' && typeof refreshContinue === 'function' && document.readyState === 'complete');
     const antes = await pg.evaluate((m) => {
       localStorage.clear(); selectedMap = m; pendingSlot = 1; showScreen(null); newGame();
       P.x += 40; P.y += 25; P.hp = 77; T = 123;
       saveGame();
       return { x: Math.round(P.x), y: Math.round(P.y), trees: trees.length, seed: worldSeed, ws: WW };
     }, map);
-    await pg.reload(); await pg.waitForTimeout(400);
+    await pg.reload(); await pg.waitForFunction(() => typeof newGame === 'function' && typeof refreshContinue === 'function' && document.readyState === 'complete');
     const menu = await pg.evaluate(() => { refreshContinue(); return document.getElementById('menu').classList.contains('hasSave'); });
     ok(menu, map + ': botao CONTINUAR aparece apos recarregar');
     const depois = await pg.evaluate(() => {
