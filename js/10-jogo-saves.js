@@ -256,6 +256,18 @@ function discardItem(i){
 }
 const EATABLE=it=>it==='food'||isFishItem(it)||it==='cookedfish'||it==='meat'||it==='cookedmeat'||it==='corn'||it==='cookedcorn'||it==='potato'||it==='bakedpotato'||it==='melon';
 let EAT=null,eatLock=false;
+/* comer uma colheita devolve 1 semente da mesma planta (o jogador nao fabrica sementes no crafting) */
+const SEED_OF={corn:'seed_corn',cookedcorn:'seed_corn',potato:'seed_potato',bakedpotato:'seed_potato',melon:'seed_melon'};
+let seedGain=null;
+function giveSeedFor(){
+  const sd=seedGain;seedGain=null;if(!sd||!P)return;
+  const el=$('toast'),base=el&&el.classList.contains('show')?el.textContent:'';
+  if(addItem(sd)){toast((base?base+' · ':'')+'+1 '+ITEMS[sd].n.toLowerCase().replace('sementes de ','semente de '));}
+  else{   // sem espaco: a semente cai aos pes
+    const it={t:sd,x:P.x+rnd(-6,6),y:P.y+rnd(2,8)};items.push(it);if(MP.active)sendEvt('itemAdded',{t:it.t,x:it.x,y:it.y});
+    toast((base?base+' · ':'')+'a semente caiu no chão (inventário cheio)');
+  }
+}
 /* aplica o efeito de um item; devolve true se foi usado */
 function applyUse(it){
   let ok=false;
@@ -272,6 +284,7 @@ function applyUse(it){
   else if(it==='water'){if(P.water<95){P.water=Math.min(100,P.water+40);ok=true;toast('Você bebeu água');}}
   else if(it==='bandage'){if(P.bleed||P.hp<95){P.bleed=false;P.hp=Math.min(100,P.hp+10);ok=true;toast('Bandagem usada');track('use_bandage');}}
   else if(it==='medkit'){if(P.bleed||P.hp<90||P.sick>0){P.bleed=false;P.sick=0;P.hp=Math.min(100,P.hp+50);ok=true;toast('Kit médico usado');}}
+  seedGain=(ok&&SEED_OF[it])||null;   // entregue depois que o item sai do inventario (abre vaga)
   return ok;
 }
 function consumeOne(it){
@@ -308,6 +321,7 @@ function useItem(i){
   if(!ok){toast('Não precisa agora');return;}
   slot.n--;
   if(slot.n<=0)P.inv.splice(i,1);
+  giveSeedFor();
   buildInv();
   beep(520,.1,'sine',.06,200);
 }
@@ -329,7 +343,7 @@ function eatTick(dt){
   if(EAT.t>=EAT.dur){
     const it=P.hold;EAT=null;eatLock=true;
     if(applyUse(it)){
-      consumeOne(it);
+      consumeOne(it);giveSeedFor();
       beep(520,.1,'sine',.06,200);
       if(countInv(it)<=0){P.hold=null;buildInv();}
     }
