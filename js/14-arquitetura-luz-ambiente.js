@@ -584,7 +584,6 @@ function ambGust(d,f0,f1,v,type,q){
   }catch(e){}
 }
 function ambTone(f,d,type,v,slide){const k=ambVol();if(k<=0)return;beep(f,d,type,v*k,slide,'amb');}
-function ambRustle(n,v){for(let i=0;i<n;i++)setTimeout(()=>ambGust(.04,3500+Math.random()*2500,5000,v,'highpass',.8),i*(60+Math.random()*90));}
 const iceFx=[];
 function ambLife(dt){
   if(!P||P.dead||!AC||state==='menu')return;
@@ -592,7 +591,7 @@ function ambLife(dt){
   const hod=SUN.h,night=dark>.55,m=selectedMap,rain=weather==='rain';
   // vento (copas na floresta, uivo na neve, areia no deserto)
   if(AMB.wind<=0){
-    if(m==='forest'){AMB.wind=rnd(7,14);ambRustle(6+((Math.random()*6)|0),.03);}                                  // folhas farfalhando
+    if(m==='forest'){AMB.wind=rnd(7,14);}                                  // sem som de folhas
     else if(m==='snow'){
       AMB.wind=blizzK>.35?rnd(1.6,3):rnd(6,12);   // sem som de vento na neve
     }
