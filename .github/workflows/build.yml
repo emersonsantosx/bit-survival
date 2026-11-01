@@ -30,7 +30,10 @@ jobs:
           cordova create projeto com.bitsurvival.game "Project: Bit Survival"
           cd projeto
           rm -rf www/*
-          cp -r ../index.html www/
+          # o jogo agora e dividido em index.html + css/ + js/: copia tudo para o app
+          cp ../index.html www/
+          cp -r ../css www/css
+          cp -r ../js www/js
           cp ../config.xml .
           # Copia o ícone para a raiz do projeto Cordova
           cp ../icon.png .
