@@ -423,7 +423,7 @@ function lmCurse(c){
   kinds.forEach((k,i)=>{
     for(let t=0;t<40;t++){
       const a=rnd(0,6.283),d=rnd(110,420),x=c.x+Math.cos(a)*d,y=c.y+Math.sin(a)*d;
-      if(x<40||y<40||x>WW-40||y>WH-40||solidPoint(x,y,12)||inAnyView(x,y,100))continue;
+      if(x<40||y<40||x>WW-40||y>WH-40||solidPoint(x,y,12)||bldNear(x,y,18)||inAnyView(x,y,100))continue;
       spawnZ(x,y,k);const z=zombies[zombies.length-1];if(z){z.alert=9;z.tx=c.x;z.ty=c.y;}
       break;
     }

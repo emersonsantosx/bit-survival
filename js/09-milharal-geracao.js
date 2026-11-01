@@ -948,18 +948,14 @@ function populate(){
   // Mais zumbis iniciais na cidade
   const cityBonus=selectedMap==='city'?1.35:1;
   const ini=(MAPDIFF[selectedMap]||MAPDIFF.forest).init;
-  for(const b of blds){
-    if(!b) continue;
-    const n=rint(0, Math.round((b.type==='mil'?5:2)*cityBonus));
-    for(let i=0;i<n;i++){if(Math.random()>ini)continue;const pt=bldSpawnPoint(b);if(pt)spawnZ(pt.x,pt.y);}
-  }
+  // os zumbis nascem só no mapa aberto, nunca dentro das casas
   for(const t of towns){
     if(!t) continue;
     const around=Math.round(6*cityBonus);
     for(let i=0;i<around;i++)for(let k=0;k<10;k++){
       if(Math.random()>ini)break;
       const x=t.x+rnd(-280,280),y=t.y+rnd(-280,280);
-      if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12))continue;
+      if(x<30||y<30||x>WW-30||y>WH-30||solidPoint(x,y,12)||bldNear(x,y,18))continue;
       spawnZ(x,y);break;
     }
   }
@@ -968,7 +964,7 @@ function populate(){
   while(c<openCap&&g<600*WAREA){
     g++;
     const x=rnd(40,WW-40),y=rnd(40,WH-40);
-    if(Math.hypot(x-P.x,y-P.y)<500||solidPoint(x,y,12))continue;
+    if(Math.hypot(x-P.x,y-P.y)<500||solidPoint(x,y,12)||bldNear(x,y,18))continue;
     spawnZ(x,y);c++;
   }
 }

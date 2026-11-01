@@ -615,7 +615,7 @@ function pickup(){
   }
   {const ch=nearestChest();if(ch&&!nearestItem()){openChest(ch,false);return;}}
   {const sp=findSleepSpot();if(sp&&!nearestItem()){trySleep(sp);return;}}
-  {const dr=!nearestItem()&&nearOpenDoor();if(dr){setDoor(dr,0);return;}}
+  {const dr=!nearestItem()&&nearDoorAct();if(dr){setDoor(dr,dr.open?0:1);return;}}
   // Pesca no lago (só Floresta/Neve) — inventário local de cada player (sem sync de item no chão)
   if(ORLA&&inSea(P.x,P.y)&&!nearFountain(P.x,P.y)&&!nearestItem()){ toast('Água salgada, não dá pra beber'); beep(140,.06,'square',.04); return; }
   if((pointInLake(P.x,P.y)||nearFountain(P.x,P.y)) && mapHasLake() && !nearestItem()){ // item solto por perto tem prioridade sobre a água
