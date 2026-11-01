@@ -447,6 +447,44 @@ function nearestFurn(kinds,reach){
   return best;
 }
 function nearestStove(){const f=nearestFurn(['stove'],16);return f?{x:f.x+f.w/2,y:f.y+f.h/2,stove:true}:null;}
+/* ===== O QUE O BOTAO FAZ: sempre o alvo mais PERTO do personagem =====
+   Concorrem: item no chao, baú, cama/barraca, porta (abrir/fechar), torneira e veiculo. Distancia ate a borda do objeto;
+   num empate (menos de 3 px) vale a ordem porta > baú > item > torneira > cama > veiculo. */
+/* Alvo do botao de interagir: o que estiver MAIS PERTO do personagem (medido da borda dele ate a borda do alvo, igual para todos),
+   com um pequeno desempate pela direcao em que ele olha (o que esta de frente vence o que esta nas costas).
+   A porta ganha um bonus (e fina e a pessoa encosta nela de proposito) e o alvo anterior ganha folga para o botao nao ficar trocando. */
+function pickTarget(){
+  if(!P||P.dead||P.inVehicle)return null;
+  const c=[];
+  const add=(o,px,py,key)=>{o.key=key;o.px=px;o.py=py;c.push(o);};
+  const rectD=(x,y,w,h)=>{const cx=clamp(P.x,x,x+w),cy=clamp(P.y,y,y+h);return {d:Math.max(0,Math.hypot(P.x-cx,P.y-cy)-P.r),px:cx,py:cy};};
+  const it=nearestItem();if(it)add({k:'item',d:Math.max(0,Math.hypot(it.x-P.x,it.y-P.y)-P.r-2),b:0,it},it.x,it.y,'i'+it.x+','+it.y+it.t);
+  const ch=nearestChest();if(ch)add({k:'chest',d:Math.max(0,Math.hypot(ch.x-P.x,ch.y-P.y)-P.r-3),b:0,ch},ch.x,ch.y,'c'+ch.x+','+ch.y);
+  for(const q of doorCands())add({k:'door',d:q.ed,b:-3,dr:q.dr},q.px,q.py,'d'+q.dr.bi+'.'+q.dr.di);
+  const tap=nearestFurn(['ksink','sink'],14);
+  if(tap){const r=rectD(tap.x,tap.y,tap.w,tap.h);add({k:'tap',d:r.d,b:0,tap},r.px,r.py,'t'+tap.x+','+tap.y);}
+  if(P.inside&&P.inside.furn)for(const f of P.inside.furn){
+    if(!SLEEP_BED[f.k])continue;
+    const r=rectD(f.x,f.y,f.w,f.h);
+    if(r.d<17)add({k:'bed',d:r.d,b:0},r.px,r.py,'b'+f.x+','+f.y);
+  }
+  for(const t of tents){const d=Math.hypot(t.x-P.x,t.y-P.y);if(d<40)add({k:'bed',d:Math.max(0,d-12-P.r),b:0},t.x,t.y,'b'+t.x+','+t.y);}
+  for(const v of vehicles){
+    if(Math.hypot(v.x-P.x,v.y-P.y)>=36)continue;
+    vehHalf(v);const r=rectD(v.x-v._hx,v.y-v._hy,v._hx*2,v._hy*2);
+    add({k:'veh',d:r.d,b:0,v},r.px,r.py,'v'+v.id);
+  }
+  if(!c.length){P._ptKey=null;return null;}
+  let best=null,bs=1e9;
+  for(const a of c){
+    let turn=0;
+    if(a.d>1){const ang=Math.atan2(a.py-P.y,a.px-P.x);turn=(1-Math.cos(ang-P.face))*2.5;}   // 0 de frente, 5 nas costas
+    a.s=a.d+turn+a.b-(a.key===P._ptKey?3:0);
+    if(a.s<bs){bs=a.s;best=a;}
+  }
+  P._ptKey=best.key;
+  return best;
+}
 function nearestCampfire(){
   let b=null,bd=42;
   for(const c of campfires){const d=Math.hypot(c.x-P.x,c.y-P.y);if(d<bd){bd=d;b=c;}}
@@ -602,7 +640,8 @@ function pickup(){
     for(let i=0;i<8;i++)parts.push({x:cf.x+rnd(-8,8),y:cf.y-6,vx:rnd(-20,20),vy:rnd(-60,-20),t:.6,c:'#ffd27a'});
     return;
   }
-  {const tap=!nearestItem()&&nearestFurn(['ksink','sink'],14);   // torneira da pia (cozinha e banheiro): bebe direto ou enche uma garrafa
+  const TG=pickTarget();   // alvo mais perto do personagem (porta, cama, baú, torneira, item ou veiculo)
+  {const tap=TG&&TG.k==='tap'&&TG.tap;   // torneira da pia (cozinha e banheiro): bebe direto ou enche uma garrafa
     if(tap){
       if(P.water<97){P.water=Math.min(100,P.water+14);toast('Você bebeu água da torneira');}
       else{if(!addItem('water')){toast('Sede saciada · inventário cheio');return;}toast('Garrafa enchida na torneira');}
@@ -610,15 +649,15 @@ function pickup(){
       for(let i=0;i<5;i++)parts.push({x:tap.x+tap.w/2+rnd(-4,4),y:tap.y+tap.h/2,vx:rnd(-10,10),vy:rnd(-30,-10),t:.35,c:'#8cc8f0'});
       return;
     }
-    const st=!nearestItem()&&!P.hold&&nearestStove();
+    const st=!TG&&!P.hold&&nearestStove();
     if(st){toast('Segure carne, peixe ou milho crus para assar no fogão');return;}
   }
-  {const ch=nearestChest();if(ch&&!nearestItem()){openChest(ch,false);return;}}
-  {const sp=findSleepSpot();if(sp&&!nearestItem()){trySleep(sp);return;}}
-  {const dr=!nearestItem()&&nearDoorAct();if(dr){setDoor(dr,dr.open?0:1);return;}}
+  if(TG&&TG.k==='chest'){openChest(TG.ch,false);return;}
+  if(TG&&TG.k==='door'){setDoor(TG.dr,TG.dr.open?0:1);return;}
+  if(TG&&TG.k==='bed'){const sp=findSleepSpot();if(sp){trySleep(sp);return;}}
   // Pesca no lago (só Floresta/Neve) — inventário local de cada player (sem sync de item no chão)
-  if(ORLA&&inSea(P.x,P.y)&&!nearFountain(P.x,P.y)&&!nearestItem()){ toast('Água salgada, não dá pra beber'); beep(140,.06,'square',.04); return; }
-  if((pointInLake(P.x,P.y)||nearFountain(P.x,P.y)) && mapHasLake() && !nearestItem()){ // item solto por perto tem prioridade sobre a água
+  if(ORLA&&inSea(P.x,P.y)&&!nearFountain(P.x,P.y)&&!TG){ toast('Água salgada, não dá pra beber'); beep(140,.06,'square',.04); return; }
+  if((pointInLake(P.x,P.y)||nearFountain(P.x,P.y)) && mapHasLake() && !TG){ // item solto por perto tem prioridade sobre a água
     if(P.water<97){
       P.water=Math.min(100,P.water+14);
       toast(selectedMap==='city'?'Você bebeu água da fonte':selectedMap==='snow'?'Você bebeu água gelada do lago':(selectedMap==='desert'?'Você bebeu água do oásis':'Você bebeu água do lago'));
@@ -637,7 +676,8 @@ function pickup(){
   let nv=null,ndCar=36;
   for(const v of vehicles){const d=Math.hypot(v.x-P.x,v.y-P.y);if(d<ndCar){ndCar=d;nv=v;}}
   const dItem=it?Math.hypot(it.x-P.x,it.y-P.y):1e9;
-  const preferItem=it && dItem<=24 && dItem<=ndCar;
+  const preferItem=TG&&TG.k==='item'?true:(TG&&TG.k==='veh'?false:(it && dItem<=24 && dItem<=ndCar));
+  if(TG&&TG.k==='veh'){nv=TG.v;ndCar=0;}
 
   if(nv && !preferItem){
     if(!nv.looted){

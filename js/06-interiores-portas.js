@@ -166,23 +166,24 @@ function zBreakDoor(z,d,dt){
     for(let i=0;i<2;i++)parts.push({x:d.r.x+rnd(0,d.r.w),y:d.r.y+rnd(0,d.r.h),vx:rnd(-20,20),vy:rnd(-30,-5),t:.35,c:'#8a6a44'});}
   if(d.hp<=0)setDoor(d,2);
 }
-/* porta ao alcance do botao: fechada (encostado nela) para ABRIR, ou aberta (sem estar parado na passagem) para FECHAR */
-function nearDoorAct(){
-  if(!P||P.inVehicle)return null;
-  let best=null,bd=26;
+/* portas ao alcance do botao: fechada (colado nela) para ABRIR, ou aberta (sem estar parado na passagem) para FECHAR.
+   Devolve todas com a distancia da borda do personagem ate a porta (0 = encostado); quem escolhe e o pickTarget, que compara com cama, bau, item etc. */
+function doorCands(){
+  const out=[];
+  if(!P||P.inVehicle)return out;
   for(const b of blds){
     if(P.x<b.x-30||P.x>b.x+b.w+30||P.y<b.y-30||P.y>b.y+b.h+30||!b.doors)continue;
     for(const d of b.doors){
       if(d.open===2)continue;
-      const cx=clamp(P.x,d.r.x,d.r.x+d.r.w),cy=clamp(P.y,d.r.y,d.r.y+d.r.h),dd=Math.hypot(P.x-cx,P.y-cy);
-      if(d.open===0){if(dd<bd&&dd<=P.r+8){best=d;bd=dd;}continue;}
-      if(dd<bd&&dd>P.r+1.5){
+      const cx=clamp(P.x,d.r.x,d.r.x+d.r.w),cy=clamp(P.y,d.r.y,d.r.y+d.r.h),dd=Math.hypot(P.x-cx,P.y-cy),ed=Math.max(0,dd-P.r);
+      if(d.open===0){if(ed<=8)out.push({dr:d,ed,px:cx,py:cy});continue;}
+      if(dd>P.r+1.5&&ed<=20){
         let blocked=false;for(const z of zombies)if(!z.dead&&Math.abs(z.x-cx)<z.r+d.r.w/2&&Math.abs(z.y-cy)<z.r+d.r.h/2+2){blocked=true;break;}
-        if(!blocked){best=d;bd=dd;}
+        if(!blocked)out.push({dr:d,ed,px:cx,py:cy});
       }
     }
   }
-  return best;
+  return out;
 }
 function drawDoors(b){
   if(!b.doors)return;
