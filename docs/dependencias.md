@@ -12,17 +12,17 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 02-audio | 64 | 32 | 30 | 2 | 5 | 12 |
 | 03-dados | 46 | 34 | 11 | 1 | 2 | 12 |
 | 04-estado | 83 | 78 | 5 | 0 | 6 | 14 |
-| 05-geometria | 58 | 40 | 17 | 1 | 11 | 10 |
-| 06-interiores-portas | 31 | 16 | 15 | 0 | 8 | 6 |
+| 05-geometria | 58 | 40 | 17 | 1 | 10 | 10 |
+| 06-interiores-portas | 31 | 16 | 15 | 0 | 7 | 6 |
 | 07-loot-mapa | 65 | 30 | 32 | 3 | 13 | 8 |
-| 08-cidade-vilas-marcos | 37 | 17 | 19 | 1 | 12 | 9 |
-| 09-milharal-geracao | 63 | 35 | 28 | 0 | 13 | 8 |
-| 10-jogo-saves | 81 | 56 | 25 | 0 | 14 | 8 |
-| 11-pesca-update | 27 | 10 | 17 | 0 | 14 | 9 |
-| 12-crafting-multiplayer | 40 | 17 | 23 | 0 | 14 | 11 |
-| 13-render-personagens | 96 | 47 | 49 | 0 | 13 | 10 |
-| 14-arquitetura-luz-ambiente | 84 | 15 | 69 | 0 | 12 | 9 |
-| 15-missoes-ui-controles | 75 | 17 | 56 | 2 | 10 | 9 |
+| 08-cidade-vilas-marcos | 37 | 17 | 19 | 1 | 11 | 9 |
+| 09-milharal-geracao | 63 | 35 | 28 | 0 | 12 | 8 |
+| 10-jogo-saves | 81 | 56 | 25 | 0 | 13 | 8 |
+| 11-pesca-update | 27 | 10 | 17 | 0 | 13 | 9 |
+| 12-crafting-multiplayer | 40 | 17 | 23 | 0 | 13 | 11 |
+| 13-render-personagens | 96 | 47 | 49 | 0 | 12 | 10 |
+| 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 12 | 0 |
+| 15-missoes-ui-controles | 75 | 17 | 56 | 2 | 9 | 9 |
 | 16-orientacao | 0 | 0 | 0 | 0 | 3 | 0 |
 | 17-arte-menu | 0 | 0 | 0 | 0 | 0 | 0 |
 
@@ -34,17 +34,17 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 02-audio | 25 | . |  | 38 | 4 |  |  | 1 | 1 |  |  |  |  |  |  |  |  |
 | 03-dados | 1 |  | . | 18 |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 04-estado | 23 | 1 | 3 | . |  |  |  |  |  | 3 |  | 2 |  |  | 2 |  |  |
-| 05-geometria | 118 | 7 | 27 | 147 | . | 6 |  | 5 | 9 |  | 2 | 1 | 11 | 11 |  |  |  |
-| 06-interiores-portas | 42 | 11 | 4 | 32 | 1 | . |  |  |  |  |  | 1 | 30 | 2 |  |  |  |
+| 05-geometria | 118 | 7 | 27 | 147 | . | 6 |  | 5 | 9 |  | 2 | 1 | 11 |  |  |  |  |
+| 06-interiores-portas | 42 | 11 | 4 | 32 | 1 | . |  |  |  |  |  | 1 | 30 |  |  |  |  |
 | 07-loot-mapa | 147 | 3 | 32 | 131 | 2 | 7 | . | 14 | 19 | 3 | 5 | 1 | 5 |  | 2 |  |  |
-| 08-cidade-vilas-marcos | 117 | 3 | 17 | 127 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 | 1 | 1 |  |  |
-| 09-milharal-geracao | 203 | 10 | 87 | 266 | 40 |  | 1 | 23 | . | 3 | 3 | 6 | 126 | 2 | 1 |  |  |
-| 10-jogo-saves | 86 | 49 | 44 | 562 | 15 | 2 | 10 | 10 | 7 | . | 79 | 24 | 9 | 1 | 17 |  |  |
-| 11-pesca-update | 224 | 37 | 47 | 795 | 58 | 2 | 3 | 4 | 19 | 57 | . | 13 | 14 | 11 | 4 |  |  |
-| 12-crafting-multiplayer | 55 | 31 | 26 | 568 | 12 | 1 | 6 | 5 | 11 | 17 | 32 | . | 18 | 1 | 10 |  |  |
-| 13-render-personagens | 320 | 39 | 20 | 250 | 12 | 22 | 2 | 2 |  | 4 | 8 | 2 | . | 60 | 1 |  |  |
+| 08-cidade-vilas-marcos | 117 | 3 | 17 | 127 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |
+| 09-milharal-geracao | 203 | 10 | 87 | 266 | 40 |  | 1 | 23 | . | 3 | 3 | 6 | 126 |  | 1 |  |  |
+| 10-jogo-saves | 86 | 49 | 44 | 562 | 15 | 2 | 10 | 10 | 7 | . | 79 | 24 | 9 |  | 17 |  |  |
+| 11-pesca-update | 224 | 37 | 47 | 795 | 58 | 2 | 3 | 4 | 19 | 57 | . | 13 | 14 |  | 4 |  |  |
+| 12-crafting-multiplayer | 55 | 31 | 26 | 568 | 12 | 1 | 6 | 5 | 11 | 17 | 32 | . | 18 |  | 10 |  |  |
+| 13-render-personagens | 320 | 39 | 20 | 250 | 12 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |
 | 14-arquitetura-luz-ambiente | 567 | 13 | 16 | 288 | 12 |  | 8 | 4 | 23 | 6 | 3 | 1 | 153 | . |  |  |  |
-| 15-missoes-ui-controles | 173 | 51 | 23 | 218 |  |  | 17 |  |  | 51 | 11 | 23 | 5 | 1 | . |  |  |
+| 15-missoes-ui-controles | 173 | 51 | 23 | 218 |  |  | 17 |  |  | 51 | 11 | 23 | 5 |  | . |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |
 
@@ -132,7 +132,6 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **11-pesca-update** (17): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, tickFishing, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, updateP, updateZ
 - **12-crafting-multiplayer** (23): canCraft, craft, handleEvt, loadPeerJS, makeRoomCode, hostRetryTimer, hostOpenPeer, hostSignalRetry, RECONN_MAX_MS, showReconnectUI, updateReconnectUI, hideReconnectUI, mpReconnectFail, mpGuestReconnectAttempt, hostResumeGuest, guestResumed, setupConn, handleNetData, vehSetTarget, applySnapshot, goneList, applyGone, enterMultiplayerGame
 - **13-render-personagens** (49): skinLook, snowOutfit, _shc, Sh, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, TSP, treeSprite, treeShadow, drawOpenVeh, vehDriverLook, drawRider, obsStopDrone, obsStartDrone, obsStatic, obsSpotOk, ...
-- **14-arquitetura-luz-ambiente** (69): _shC, shadeCol, bHash, ARCH, bldLook, rfEdges, rfTex, rfOverlay, RF, rfSnow, rfDisc, rfExtras, bldRoofBuild, drawRoof, bldGroundBuild, drawBldGround, bldFacadeBuild, drawFacade, updateSun, hullPts, bldShadow, GK, MAPG, WEATHG, NIGHTC, ...
 - **15-missoes-ui-controles** (56): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACHD, achSave, achChime, achCheck, achSet, _statPx, _statPy, _statSaveT, fmtDur, renderStats, renderAch, bindSlider, bindToggle, bindSeg, slotMode, slotAsk, slotDateStr, renderSlots, ...
 
 ## Possivelmente mortas (revisar antes de apagar: podem ser chamadas por onclick no HTML ou pelos testes)

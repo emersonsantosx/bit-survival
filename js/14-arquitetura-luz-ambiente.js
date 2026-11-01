@@ -1,3 +1,19 @@
+/* Este arquivo roda dentro de uma funcao propria: tudo o que ele define fica escondido dos outros arquivos,
+   menos a lista abaixo (o que os outros arquivos realmente usam). Para expor mais um nome, acrescente-o aqui. */
+(function(){
+// funcoes (ja existem desde o inicio do bloco)
+window.mkRng=mkRng;
+window.genAmbientProps=genAmbientProps;
+window.shadow=shadow;
+window.addPulse=addPulse;
+window.ambLife=ambLife;
+window.ambFx=ambFx;
+window.updateLighting=updateLighting;
+window.applyBolt=applyBolt;
+window.drawAmbProp=drawAmbProp;
+window.drawIceCracks=drawIceCracks;
+window.lakeGlints=lakeGlints;
+window.render=render;
 /* ============ ARQUITETURA POR MAPA ============
    Cada prédio tem um visual próprio: formato do telhado, material da fachada, janelas, porta, varanda e enfeites.
    O visual sai de uma tabela por mapa e por tipo de prédio, sorteada por um hash da posição do prédio (sem gastar o
@@ -1306,3 +1322,8 @@ function render(){
   }
 }
 
+// constantes e variaveis (expostas depois de criadas)
+window.fracHash=fracHash;
+window.SUN=SUN;
+Object.defineProperty(window,'blizzK',{get:()=>blizzK,set:v=>{blizzK=v;},configurable:true});   // variavel que muda: os outros arquivos sempre leem o valor atual
+})();
