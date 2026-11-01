@@ -1269,20 +1269,18 @@ function updateHud(force){
   {const at=$('atk'),want=P.hold?'c_eat':'c_atk';
    if(at&&at.dataset.ic!==want){at.dataset.ic=want;at.setAttribute('aria-label',P.hold?'Comer':'Atacar');at.innerHTML=pxIcon(want,4);}}
   let canInteract=false,btnText='PEGAR';
-  if(nearestItem())canInteract=true;
-  if((pointInLake(P.x,P.y)||nearFountain(P.x,P.y))&&mapHasLake()&&!nearestItem()){canInteract=true;btnText='ÁGUA';}
+  const TG=pickTarget();   // o botao sempre mostra o alvo mais perto (mesma regra de pickup)
+  if(TG)canInteract=true;
+  if(!TG&&(pointInLake(P.x,P.y)||nearFountain(P.x,P.y))&&mapHasLake()){canInteract=true;btnText='ÁGUA';}
   const cf=nearestCampfire()||nearestStove();
-  if(!nearestItem()&&nearestFurn(['ksink','sink'],14)){canInteract=true;btnText='ÁGUA';}
-  {const _ch=nearestChest();if(_ch&&!nearestItem()){canInteract=true;btnText='ABRIR';}}
-  if(!nearestItem()&&nearestCactus()){canInteract=true;btnText='ÁGUA';}
+  if(TG&&TG.k==='tap'){btnText='ÁGUA';}
+  else if(TG&&TG.k==='chest'){btnText='ABRIR';}
+  else if(TG&&TG.k==='door'){btnText=TG.dr.open?'FECHAR':'PORTA';}
+  else if(TG&&TG.k==='veh'){if(TG.v.looted)btnText='ENTRAR';}
+  if(!TG&&nearestCactus()){canInteract=true;btnText='ÁGUA';}
   if(cf && P.hold && cookOf(P.hold)){canInteract=true;btnText='ASSAR';}
-  for(const v of vehicles){
-    const d=Math.hypot(v.x-P.x,v.y-P.y);
-    if(d<36){canInteract=true;if(v.looted&&btnText==='PEGAR')btnText='ENTRAR';}
-  }
   if(P.sleeping){canInteract=true;btnText='LEVANTAR';}
-  else if(!nearestItem()&&findSleepSpot()){canInteract=true;btnText='DORMIR';}
-  else if(!nearestItem()&&btnText==='PEGAR'&&nearDoorAct()){canInteract=true;btnText=nearDoorAct().open?'FECHAR':'PORTA';}
+  else if(TG&&TG.k==='bed'){btnText='DORMIR';}
   const pick_=$('pick');
   if(pick_){if(pick_.dataset.st!==btnText){pick_.dataset.st=btnText;pick_.setAttribute('aria-label',btnText==='ABRIR'?'Abrir baú':btnText==='ÁGUA'?'Beber água':btnText==='ASSAR'?'Assar':btnText==='ENTRAR'?'Entrar':btnText==='FECHAR'?'Fechar porta':btnText==='PORTA'?'Abrir porta':btnText==='DORMIR'?'Dormir':btnText==='LEVANTAR'?'Levantar':'Pegar');pick_.innerHTML=pxIcon(PICK_ICON[btnText]||'c_hand',3);}
     pick_.classList.toggle('hot',canInteract);}
