@@ -401,10 +401,10 @@ function roomSpawnPoint(b,r){
 }
 /* o que cada movel guarda (chave "comodo:movel" vence a do movel puro); quem nao esta aqui usa a tabela geral do tipo de predio */
 const FLOOT={
-  fridge:{food:6,water:5,meat:1}, ksink:{water:6,food:1}, sink:{water:4,bandage:3},
+  fridge:{food:6,water:5,meat:1}, ksink:{food:1}, sink:{bandage:3},   // sem garrafas de agua: a torneira da pia ja da agua
   medcab:{bandage:6,medkit:4}, 'exam:medcab':{bandage:6,medkit:5}, 'pharmacy:medcab':{bandage:6,medkit:5}, 'pharmacy:shelf':{bandage:6,medkit:4,water:1},
   'waiting:table':{water:3,food:1,bandage:1.5}, 'exam:shelf':{bandage:5,medkit:3},
-  'kitchen:counter':{food:6,water:3}, 'kitchen:shelf':{food:7,water:3}, 'kitchen:table':{food:4,water:3},
+  'kitchen:counter':{food:6,water:3}, 'kitchen:shelf':{food:7,water:3,seed_corn:1,potato:1.2,seed_potato:.5}, 'kitchen:table':{food:4,water:3},
   nightstand:{bandage:2,water:3,food:2,ammo:1,pistol:.15}, wardrobe:{cloth:7,backpack:1,bat:.4,katana:.12}, dresser:{cloth:6,bandage:1},
   bookcase:{cloth:1,food:1,water:1,bandage:1}, 'living:table':{food:3,water:4}, 'living:shelf':{food:2,water:3,bandage:1},
   'storage:crate':{wood:4,stone:3,food:3,water:2,ammo:1.5,arrows:1}, 'storage:shelf':{food:5,water:5,bandage:1.5,medkit:.7,cloth:1},
@@ -414,7 +414,7 @@ const FLOOT={
   'armory:rack':{pistol:4,smg:3,shotgun:2.5,rifle:2,ammo:5}, 'armory:crate':{ammo:9,medkit:2,bandage:2,smg:.8,shotgun:.8}, 'armory:locker':{ammo:5,medkit:2,bandage:2,pistol:1.5},
   workbench:{axe:3,bat:2,stone:3,wood:3,ammo:1.5,arrows:1.5}, 'workshop:shelf':{wood:3,stone:3,ammo:1.5,bandage:1}, 'workshop:crate':{wood:3,stone:3,ammo:2,axe:1},
   pallet:{food:3,water:3,wood:2,stone:2,ammo:1.5,bandage:1,cloth:1.5}, 'hall:aisle':{food:4,water:4,wood:2,stone:1,ammo:1,cloth:1}, 'hall:crate':{food:3,water:2,wood:2,stone:2,ammo:1.5,axe:.7},
-  'stall:crate':{food:3,water:2,wood:3,corn:3,arrows:1},
+  'stall:crate':{food:3,water:2,wood:3,corn:3,arrows:1,seed_corn:2,potato:2,seed_potato:1,melon:1.5,seed_melon:1},
   table:{food:3,water:3}, shelf:{food:4,water:4,bandage:1.2,cloth:1}, counter:{food:4,water:3,ammo:1}, crate:{wood:3,stone:3,food:2,water:2,ammo:1.5}
 };
 function furnLootTable(f,b){

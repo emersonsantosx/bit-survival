@@ -1208,6 +1208,7 @@ function render(){
     const d=Math.hypot(it.x-P.x,it.y-P.y);
     if(d<nd){nd=d;nearIt=it;}
   }
+  drawGreenhouses(vx0,vx1,vy0,vy1);drawPlots(vx0,vx1,vy0,vy1);
   for(const it of items){
     if(it.x<vx0||it.x>vx1||it.y<vy0||it.y>vy1||itemIndoor(it))continue;
     drawItem(it,it===nearIt);
@@ -1223,7 +1224,9 @@ function render(){
   for(const d of decorations)if(d.x>vx0&&d.x<vx1&&d.y>vy0&&d.y<vy1+24)list.push({y:d.y,k:6,o:d});
   for(const r of rocks)if(r.x>vx0&&r.x<vx1&&r.y>vy0&&r.y<vy1+24)list.push({y:r.y,k:3,o:r});
   for(const c of campfires)if(c.x>vx0&&c.x<vx1&&c.y>vy0&&c.y<vy1)list.push({y:c.y,k:4,o:c});
+  for(const p of plotsInView(vx0,vx1,vy0,vy1))if(p.c)list.push({y:p.cy*16+15,k:13,o:p});
   for(const t of tents)if(t.x>vx0-30&&t.x<vx1+30&&t.y>vy0&&t.y<vy1+30)list.push({y:t.y,k:9,o:t});
+  for(const g of ghList())if(g.x+48>vx0&&g.x<vx1&&g.y+48>vy0-10&&g.y<vy1+10)list.push({y:g.y+48,k:14,o:g});
   for(const z of zombies)if(!z.dead&&z.x>vx0&&z.x<vx1&&z.y>vy0&&z.y<vy1)list.push({y:z.y,k:1,o:z});
   for(const a of animals)if(!a.dead&&a.x>vx0&&a.x<vx1&&a.y>vy0&&a.y<vy1)list.push({y:a.y,k:7,o:a});
   drawBirdsGround(vx0,vx1,vy0,vy1,list);
@@ -1252,6 +1255,8 @@ function render(){
     else if(e.k===8){ drawObserver(e.o); }
     else if(e.k===10){ drawScarecrow(e.o); }
     else if(e.k===11){ drawStalk(e.o); }
+    else if(e.k===13){ drawPlant(e.o); }
+    else if(e.k===14){ drawGreenhouseFrame(e.o); }
     else if(e.k===12){ shadow(e.o.x,e.o.y,2*BIRD_SP[e.o.sp].sz,1); drawBirdBody(e.o,e.o.x,e.o.y,false); }
     else if(e.k===1){
       const z=e.o;

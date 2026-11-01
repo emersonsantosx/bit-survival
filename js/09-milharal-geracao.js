@@ -210,6 +210,7 @@ function genWorld(seed) {
   worldFlavor();
   solidGrid=null;SPG=null;FIELD=null;LM=null;chestList=[];   // grades de colisão do mundo anterior não podem vazar para a geração (senão o mesmo seed gera mundos diferentes)
   try {
+  cityGardens=[];ghLoad([]);
   trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];tents=[];spits=[];decorations=[];animals=[];
   cityInter=[];cityCrash=null;lampList=[];ORLA=null;
   plane=null;
@@ -381,7 +382,7 @@ function genWorld(seed) {
   weatherTimer=rnd(120,240);
   weatherParticles=[];
   // Animais por mapa (passivos, caça = comida)
-  animals=[];birds=[];birdsReady=false;flockT=rnd(15,40);
+  plotsLoad([]);animals=[];birds=[];birdsReady=false;flockT=rnd(15,40);
   const animalPlan=
     selectedMap==='forest'?[{k:'deer',n:8},{k:'rabbit',n:12},{k:'boar',n:5}]:
     selectedMap==='snow'?[{k:'rabbit',n:10},{k:'wolf',n:6},{k:'deer',n:4}]:

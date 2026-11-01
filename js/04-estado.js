@@ -34,7 +34,7 @@ function mpSend(data){
 /* Validação básica de pacotes / nomes (anti-lixo) */
 const NET_OK_TYPES=new Set(['worldInit','start','evt','player','snapshot','chat','gameOver','playerDied','playerRespawned','ping','pong']);
 const NET_OK_MAPS=new Set(['forest','desert','snow','city']);
-const NET_OK_EVT=new Set(['mission','treeDmg','rockDmg','itemRemoved','itemAdded','vehicleEnter','vehicleExit','vehicleLooted','shot','spit','campfireAdded','campfireRemoved','yeti','chestOpen','tentAdded','sleepSkip','zombieDmg','animalDmg','vehicleDying','vehicleExploded','vehDmg','ping','bolt','zAtk','aAtk','curse','doorSet','iceBreak']);
+const NET_OK_EVT=new Set(['mission','treeDmg','rockDmg','itemRemoved','itemAdded','vehicleEnter','vehicleExit','vehicleLooted','shot','spit','campfireAdded','campfireRemoved','yeti','chestOpen','tentAdded','sleepSkip','zombieDmg','animalDmg','vehicleDying','vehicleExploded','vehDmg','ping','bolt','zAtk','aAtk','curse','doorSet','plotSet','iceBreak','ghAdd']);
 const NET_OK_IDS=new Set(['host','guest']);
 function sanitizeName(n){
   if(typeof n!=='string') return 'Jogador';
