@@ -228,7 +228,7 @@ const RECIPES=[
   {out:'pickaxe',  need:{wood:2,stone:2}, label:'Picareta',        desc:'Única que quebra pedras (5 golpes). Fura armadura leve (dano 3.5)' },
   {out:'axe',      need:{wood:3,stone:4}, label:'Machado',         desc:'Melhor para cortar árvores: 2 golpes, 4 a 6 madeiras. Arco acerta vários, lento (dano 5.5)' },
   {out:'hoe',      need:{wood:3,stone:2}, label:'Enxada',          desc:'Ara a terra para plantar (fraca como arma, dano 2)' },
-  {out:'fence',     need:{wood:4},           label:'Cerca',           desc:'Só enfeite, não barra ninguém. Equipe e use o botão de construir: borda livre vira cerca (1 madeira), cerca vira portinha, portinha some' },
+  {out:'fence',     need:{wood:4},           label:'Cerca',           desc:'Barra a passagem e nada quebra. Equipe e use o botão de construir: borda livre vira cerca (1 madeira), cerca vira portinha (passa por ela), portinha some' },
   {out:'greenhouse',need:{wood:8,cloth:4},  label:'Estufa',          desc:'Canteiro coberto 3x3: dá para plantar até na neve e cresce mais rápido. Monte ao ar livre' },
   {out:'spear',    need:{wood:4,stone:3}, label:'Lança',           desc:'Perfura em linha e ignora armadura (alcance 40)' },
   {out:'bat',      need:{wood:3},         label:'Taco',            desc:'Atordoa o zumbi, mas fraca contra blindados (dano 2.5)' },

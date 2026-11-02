@@ -421,6 +421,7 @@ function pushOut(e,r){
     for(let cx=cx0;cx<=cx1;cx++)for(let cy=cy0;cy<=cy1;cy++){const a=gm.get((cx+8)*4096+cy+8);if(a)for(let i=0;i<a.length;i++)pushRect(e,r,a[i]);}
   }
   if(FIELD&&FIELD.fence)for(const w of FIELD.fence)pushRect(e,r,w);
+  fenceHit(e,r);
   if(ORLA)orlaHit(e,r);
   for(let i=0;i<blds.length;i++){      // portas fechadas e móveis (só do prédio onde a pessoa está)
     const b=blds[i];

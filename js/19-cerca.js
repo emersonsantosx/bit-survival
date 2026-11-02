@@ -1,4 +1,4 @@
-/* ============ CERCA (so estetica: nao barra jogador, animal nem zumbi, e zumbi nao quebra) ============
+/* ============ CERCA (barra quem anda, menos pela portinha; nada quebra a cerca, nem zumbi) ============
    Peca = pedaco de 16 px na borda entre casas da grade: {x,y,d,g}. d='h' (horizontal, na linha y, coluna x) ou 'v' (vertical, na linha x, fileira y).
    g=0 cerca, g=1 portinha. Com a ferramenta Cerca na mao: borda vazia = cerca (1 madeira), cerca = vira portinha (+1 madeira), portinha = remove (devolve 1 madeira).
    Este arquivo roda dentro de uma funcao propria: so os nomes da lista no fim ficam visiveis para o resto do jogo. */
@@ -50,6 +50,14 @@ function fenceBuild(quiet){
     const f=fenceAt(e.x,e.y,e.d);fences=fences.filter(q=>q!==f);fmap.delete(fkey(f.x,f.y,f.d));send(f,-1);
     addItem('wood');beep(150,.07,'sawtooth',.04,-30);if(!quiet)toast('Portinha removida (+1 madeira)');
   }
+}
+
+/* ---- colisao: cerca fechada empurra para fora (jogador, zumbis e animais); a portinha deixa passar ---- */
+function fenceHit(e,r){
+  if(!fences.length)return;
+  const cx=Math.floor(e.x/CELL),cy=Math.floor(e.y/CELL);
+  for(let i=cx-1;i<=cx+1;i++)for(let j=cy;j<=cy+1;j++){const f=fmap.get('h'+i+','+j);if(f&&!f.g)pushRect(e,r,{x:i*CELL-.5,y:j*CELL-1.5,w:CELL+1,h:3});}
+  for(let i=cx;i<=cx+1;i++)for(let j=cy-1;j<=cy+1;j++){const f=fmap.get('v'+i+','+j);if(f&&!f.g)pushRect(e,r,{x:i*CELL-1.5,y:j*CELL-.5,w:3,h:CELL+1});}
 }
 
 /* ---- desenho ---- */
@@ -110,6 +118,6 @@ function fenceRemote(d){
 }
 function fenceApplySnapshot(a){if(Array.isArray(a))for(const r of a)if(Array.isArray(r))fenceRemote({x:r[0],y:r[1],d:r[2]===1?'v':'h',g:r[3]?1:0});}
 
-window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
+window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
 window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;
 })();
