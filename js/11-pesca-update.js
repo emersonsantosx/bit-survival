@@ -1283,7 +1283,8 @@ function updateHud(force){
   if(cf && P.hold && cookOf(P.hold)){canInteract=true;btnText='ASSAR';}
   if(P.sleeping){canInteract=true;btnText='LEVANTAR';}
   else if(TG&&TG.k==='bed'){btnText='DORMIR';}
-  {const hb=$('hoe');if(hb)hb.classList.toggle('hide',!(P.weapon==='hoe'&&!P.inVehicle&&!P.dead&&!P.sleeping));}   // botao exclusivo de arar (so com a enxada na mao)
+  {const hb=$('hoe');if(hb)hb.classList.toggle('hide',!((P.weapon==='hoe'||P.weapon==='fence')&&!P.inVehicle&&!P.dead&&!P.sleeping));}
+  {const hb=$('hoe'),want=P.weapon==='fence'?'fence':'hoe';if(hb&&hb.dataset.ic!==want){hb.dataset.ic=want;hb.setAttribute('aria-label',want==='fence'?'Construir cerca':'Arar a terra');hb.innerHTML=pxIcon(want,4);}}   // botao de construir: ARAR com a enxada, CERCA com a cerca
   const pick_=$('pick');
   if(pick_){if(pick_.dataset.st!==btnText){pick_.dataset.st=btnText;pick_.setAttribute('aria-label',btnText==='ABRIR'?'Abrir baú':btnText==='ÁGUA'?'Beber água':btnText==='ASSAR'?'Assar':btnText==='ENTRAR'?'Entrar':btnText==='FECHAR'?'Fechar porta':btnText==='PORTA'?'Abrir porta':btnText==='DORMIR'?'Dormir':btnText==='LEVANTAR'?'Levantar':'Pegar');if(plotAria[btnText])pick_.setAttribute('aria-label',plotAria[btnText]);pick_.innerHTML=pxIcon(PICK_ICON[btnText]||'c_hand',3);}
     pick_.classList.toggle('hot',canInteract);}

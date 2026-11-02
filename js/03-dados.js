@@ -65,6 +65,7 @@ PXG.bat=pxLines(11,11,[['l',1,10,9,2,'n',1],['l',8,3,10,1,'n',1],['l',0,10,2,8,'
 PXG.axe=['......sSS..','..ssNNsSSS.','..sSNNSSSWS','..sSNNSSSWS','..ssNNSSSWS','....NNSSSWS','....NNsSSS.','....NN.sS..','....NN.....','....NN.....','....NN.....'];
 PXG.pickaxe=['..SSSSSSS..','.SWWWWWSSS.','SSS.NN..SSS','SS..NN...SS','S...NN....S','....NN.....','....NN.....','....NN.....','....NN.....','....NN.....','....NN.....'];
 PXG.hoe=pxLines(11,11,[['l',1,10,8,3,'N',1],['r',6,1,5,3,'S'],['r',6,1,5,1,'W'],['r',6,4,2,1,'s']]);
+PXG.fence=['.k..k..k..k.','kWk.kWk.kWk.','kWkkkWkkkWkk','kWk.kWk.kWk.','kWkkkWkkkWkk','kWk.kWk.kWk.','kkk.kkk.kkk.'];
 PXG.potato=['..kNNk...','.kNnnNNk.','kNnnNnNNk','kNNnNNnNk','.kNNnNNk.','..kkNkk..'];
 PXG.bakedpotato=['..kAAk...','.kAWWAAk.','kAWWAWAAk','kAAWAAWAk','.kAAWAAk.','..kkAkk..'];
 PXG.melon=['..kggggk..','.kgGGgGgk.','kgGgGGgGgk','kgGGgGGgGk','kgGgGGgGgk','kgGGgGGgGk','.kgGgGgGk.','..kkgggk..'];
@@ -156,6 +157,7 @@ const ITEMS={
   pickaxe:{n:'Picareta',e:'pickaxe'},
   katana:{n:'Katana',e:'katana'},
   hoe:{n:'Enxada',e:'hoe'},
+  fence:{n:'Cerca',e:'fence'},
   seed_corn:{n:'Sementes de milho',e:'seed'},
   potato:{n:'Batata',e:'potato'},bakedpotato:{n:'Batata assada',e:'bakedpotato'},melon:{n:'Melancia',e:'melon'},
   seed_potato:{n:'Sementes de batata',e:'seed'},seed_melon:{n:'Sementes de melancia',e:'seed'},
@@ -211,6 +213,7 @@ const WEAPONS={
   bat:{n:'Taco',dmg:2.5,range:24,cd:.5,kb:105,melee:true,chopRate:0.7,wood:[2,3],stun:.8,arc:1.2},
   axe:{n:'Machado',dmg:5.5,range:26,cd:.85,kb:120,melee:true,chopRate:2,wood:[4,6],arc:2.0},
   pickaxe:{n:'Picareta',dmg:3.5,range:20,cd:.6,kb:100,melee:true,chopRate:0.85,wood:[3,3],mines:true,pierce:true,arc:1.0},
+  fence:{n:'Cerca',dmg:1,range:20,cd:.5,kb:20,melee:true,chopRate:.2,wood:[1,1],arc:1.2},
   hoe:{n:'Enxada',dmg:2,range:22,cd:.55,kb:35,melee:true,chopRate:.3,wood:[1,1],arc:1.2},
   katana:{n:'Katana',dmg:8,range:30,cd:.38,kb:80,melee:true,chopRate:1.2,wood:[3,4],arc:1.6,combo:true},
   spear:{n:'Lança',dmg:4.5,range:40,cd:.7,kb:30,melee:true,chopRate:0.85,wood:[3,3],pierce:true,arc:.3},
@@ -225,6 +228,7 @@ const RECIPES=[
   {out:'pickaxe',  need:{wood:2,stone:2}, label:'Picareta',        desc:'Única que quebra pedras (5 golpes). Fura armadura leve (dano 3.5)' },
   {out:'axe',      need:{wood:3,stone:4}, label:'Machado',         desc:'Melhor para cortar árvores: 2 golpes, 4 a 6 madeiras. Arco acerta vários, lento (dano 5.5)' },
   {out:'hoe',      need:{wood:3,stone:2}, label:'Enxada',          desc:'Ara a terra para plantar (fraca como arma, dano 2)' },
+  {out:'fence',     need:{wood:4},           label:'Cerca',           desc:'Só enfeite, não barra ninguém. Equipe e use o botão de construir: borda livre vira cerca (1 madeira), cerca vira portinha, portinha some' },
   {out:'greenhouse',need:{wood:8,cloth:4},  label:'Estufa',          desc:'Canteiro coberto 3x3: dá para plantar até na neve e cresce mais rápido. Monte ao ar livre' },
   {out:'spear',    need:{wood:4,stone:3}, label:'Lança',           desc:'Perfura em linha e ignora armadura (alcance 40)' },
   {out:'bat',      need:{wood:3},         label:'Taco',            desc:'Atordoa o zumbi, mas fraca contra blindados (dano 2.5)' },
