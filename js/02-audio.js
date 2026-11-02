@@ -144,7 +144,7 @@ function stepSurf(){
   }
   if(selectedMap==='snow'){for(const l of lakes)if(l.frozen&&!l.fountain&&Math.abs(P.x-l.cx)<l.r*1.1&&Math.abs(P.y-l.cy)<l.r*1.1&&iceSolid(l,P.x,P.y))return 'ice';return 'snow';}
   if(selectedMap==='desert')return 'sand';
-  if(selectedMap==='city')return 'pave';
+  if(selectedMap==='city')return inCityGarden(P.x,P.y)?'grass':'pave';
   return 'grass';
 }
 /* Sons de armas de fogo: cada arma tem a sua assinatura.

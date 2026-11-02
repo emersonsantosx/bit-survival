@@ -1283,6 +1283,7 @@ function updateHud(force){
   if(cf && P.hold && cookOf(P.hold)){canInteract=true;btnText='ASSAR';}
   if(P.sleeping){canInteract=true;btnText='LEVANTAR';}
   else if(TG&&TG.k==='bed'){btnText='DORMIR';}
+  {const hb=$('hoe');if(hb)hb.classList.toggle('hide',!(P.weapon==='hoe'&&!P.inVehicle&&!P.dead&&!P.sleeping));}   // botao exclusivo de arar (so com a enxada na mao)
   const pick_=$('pick');
   if(pick_){if(pick_.dataset.st!==btnText){pick_.dataset.st=btnText;pick_.setAttribute('aria-label',btnText==='ABRIR'?'Abrir baú':btnText==='ÁGUA'?'Beber água':btnText==='ASSAR'?'Assar':btnText==='ENTRAR'?'Entrar':btnText==='FECHAR'?'Fechar porta':btnText==='PORTA'?'Abrir porta':btnText==='DORMIR'?'Dormir':btnText==='LEVANTAR'?'Levantar':'Pegar');if(plotAria[btnText])pick_.setAttribute('aria-label',plotAria[btnText]);pick_.innerHTML=pxIcon(PICK_ICON[btnText]||'c_hand',3);}
     pick_.classList.toggle('hot',canInteract);}

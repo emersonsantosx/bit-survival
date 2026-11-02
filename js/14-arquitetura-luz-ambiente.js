@@ -1113,6 +1113,23 @@ function render(){
     }
   }
   ctx.restore();
+  if(selectedMap==='city'&&cityGardens.length){   // gramados: quarteiroes de praca/parque/lote e quintais
+    for(const g of cityGardens){
+      if(g.x>vx1||g.x+g.w<vx0||g.y>vy1||g.y+g.h<vy0)continue;
+      ctx.save();ctx.beginPath();ctx.rect(g.x,g.y,g.w,g.h);ctx.clip();
+      R(g.x,g.y,g.w,g.h,'#386a2c');
+      const gx0=Math.max(Math.floor(g.x/16),Math.floor(vx0/16)),gx1=Math.min(Math.ceil((g.x+g.w)/16),Math.ceil(vx1/16));
+      const gy0=Math.max(Math.floor(g.y/16),Math.floor(vy0/16)),gy1=Math.min(Math.ceil((g.y+g.h)/16),Math.ceil(vy1/16));
+      for(let ty=gy0;ty<gy1;ty++)for(let tx=gx0;tx<gx1;tx++){
+        const v=(((tx*73856093)^(ty*19349663))>>>0)%100,px=tx*16,py=ty*16;
+        if(v<30)R(px,py,16,16,'#356427');
+        else if(v<40)R(px,py,16,16,'#3d7230');
+        else if(v<48){R(px+4,py+4,3,3,'#4a8a3a');R(px+10,py+9,2,2,'#2a5a20');}
+        else if(v<52)R(px+6,py+8,4,2,'#5a9a4a');
+      }
+      ctx.restore();
+    }
+  }
   for(const l of lakes){
     const lr=l.r*1.25;
     if(l.cx+lr>vx0&&l.cx-lr<vx1&&l.cy+lr>vy0&&l.cy-lr<vy1) drawLake(l);
