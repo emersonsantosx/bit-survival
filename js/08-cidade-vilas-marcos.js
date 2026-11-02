@@ -2,7 +2,7 @@
    Ordem importa: as RUAS nascem primeiro e os prédios só ocupam o interior dos quarteirões,
    então nenhuma rua atravessa casa. Prédios ficam em fileiras com vão mínimo para passar a pé,
    e as portas (sempre no lado sul) abrem para um vão livre. */
-/* quarteiroes de terra e grama (pracas, parques e lotes vazios): os unicos lugares onde da para arar na cidade. Guardados sem sortear nada. */
+/* gramados da cidade (pracas, parques, lotes vazios e quintais de casas): desenhados com grama e os unicos lugares onde da para arar. Guardados sem sortear nada. */
 let cityGardens=[];
 function inCityGarden(x,y){for(const g of cityGardens)if(x>g.x&&x<g.x+g.w&&y>g.y&&y<g.y+g.h)return true;return false;}
 function onCityRoad(x,y,m){
@@ -128,12 +128,21 @@ function genCity(){
     else b.zone=_rng()<.55?'res':'ind';
   }
   cityGardens=[];
-  for(const b of blocks)if(b.zone==='crash'||b.zone==='park'||b.zone==='empty')cityGardens.push({x:b.bx+14,y:b.by+14,w:b.bw-28,h:b.bh-28});
+  for(const b of blocks)if(b.zone==='crash'||b.zone==='park'||b.zone==='empty')cityGardens.push({x:b.bx+8,y:b.by+8,w:b.bw-16,h:b.bh-16});
   for(const b of blocks){
     if(b.zone==='crash') cityPark(b.bx,b.by,b.bw,b.bh,b.cx,b.cy,95);
     else if(b.zone==='park') cityPark(b.bx,b.by,b.bw,b.bh);
     else if(b.zone==='empty') cityRubble(b,rint(5,8));                       // lote vazio com entulho
-    else { cityFillBlock(b.bx,b.by,b.bw,b.bh,b.zone); if(b.zone==='ind') cityRubble(b,rint(1,3)); } // pátio industrial
+    else {
+      const n0=blds.length;
+      cityFillBlock(b.bx,b.by,b.bw,b.bh,b.zone); if(b.zone==='ind') cityRubble(b,rint(1,3));
+      /* quintais: algumas casas ganham gramado em volta (sem sortear nada, so um hash da posicao) */
+      for(const h of blds.slice(n0)){
+        if(h.type!=='house'||(((h.x*73856093)^(h.y*19349663))>>>0)%100>=55)continue;
+        const x0=Math.max(b.bx+8,h.x-12),y0=Math.max(b.by+8,h.y-10),x1=Math.min(b.bx+b.bw-8,h.x+h.w+12),y1=Math.min(b.by+b.bh-8,h.y+h.h+18);
+        if(x1-x0>40&&y1-y0>40)cityGardens.push({x:x0,y:y0,w:x1-x0,h:y1-y0});
+      }
+    }
   }
   // bairros (usados para espalhar zumbis iniciais): longe do ponto de partida
   const cand=shuffle(blocks.filter(b=>b!==crash&&Math.hypot(b.cx-crash.cx,b.cy-crash.cy)>520&&b.zone!=='park'&&b.zone!=='empty'));

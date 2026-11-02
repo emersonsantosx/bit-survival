@@ -2,7 +2,7 @@
    Este arquivo roda dentro de uma funcao propria: so os nomes da lista no fim ficam visiveis para o resto do jogo.
    Canteiro = quadrado de 16 px {cx,cy,c,g,w}: c = planta (ou null se so arado), g = tempo de crescimento acumulado (s), w = umidade restante (s). */
 (function(){
-const CELL=16,PLOT_MAX=90;
+const CELL=16,PLOT_MAX=90,FALLOW=DAY_SECONDS;   // FALLOW: tempo que a terra arada vazia leva para voltar ao normal
 /* maps: onde vinga ao ar livre (numa estufa vinga em qualquer mapa). dry: velocidade de crescimento sem agua (1 = nao liga). */
 const CROPS={
   corn:  {n:'Milho',    seed:'seed_corn',  grow:1.5*DAY_SECONDS,yield:['corn',2,3],   seedBack:[1,2],maps:['forest','city','desert'],dry:.25},
@@ -26,7 +26,7 @@ function soilBad(x,y){   // texto do motivo se NAO der para arar ali; null se de
   if(solidPoint(x,y,6))return 'Tem algo no caminho';
   if(onCityRoad(x,y,6))return 'Não dá para arar o asfalto';
   if(selectedMap==='city'&&ORLA&&(onSand(x,y)||onPier(x,y)))return 'Não dá para arar a orla';
-  if(selectedMap==='city'&&!ghAt(x,y)&&!inCityGarden(x,y))return 'Na cidade só dá para arar em praças, parques e lotes vazios';
+  if(selectedMap==='city'&&!ghAt(x,y)&&!(inCityGarden(x,y)&&inCityGarden(x-7,y-7)&&inCityGarden(x+7,y-7)&&inCityGarden(x-7,y+7)&&inCityGarden(x+7,y+7)))return 'Na cidade só dá para arar onde tem grama (parques, lotes e quintais)';
   return null;
 }
 const plotAt=(cx,cy)=>plots.find(p=>p.cx===cx&&p.cy===cy);
@@ -47,11 +47,13 @@ function mark(p){const x=p.cx*CELL+8,y=p.cy*CELL+8;p.nw=nearWater(x,y);p.gh=!!gh
 /* ---- crescimento ---- */
 function plantTick(dt){
   if(!plots.length)return;
+  if(plots.some(p=>!p.c&&(p.e||0)>FALLOW))plots=plots.filter(p=>p.c||(p.e||0)<=FALLOW);
   const rain=weather==='rain',dry=selectedMap==='desert'?2:1;
   for(const p of plots){
     if(p.nw)p.w=Math.max(p.w,DAY_SECONDS*.5);                                  // perto do lago/oasis a terra fica sempre umida
     else if(rain&&!p.gh)p.w=Math.max(p.w,DAY_SECONDS*.6);
     else if(p.w>0)p.w=Math.max(0,p.w-dt*dry*(p.gh?.5:1));                     // na estufa a terra seca mais devagar
+    if(!p.c)p.e=(p.e||0)+dt;else p.e=0;                                         // terra arada sem planta volta a ser terra depois de um tempo
     if(p.c){const cr=CROPS[p.c];if(p.g<cr.grow)p.g=Math.min(cr.grow,p.g+dt*(p.w>0?1:cr.dry)*(p.gh?1.25:1));}   // sem agua cresce mais devagar (conforme a planta)
   }
 }
@@ -72,11 +74,15 @@ function plotCands(){
     else if(p.c&&p.w<DAY_SECONDS*.25&&water)act='REGAR';
     if(act)out.push({k:'plot',act,p,d:ed,b:-2,px:x+8,py:y+8,key:'p'+p.cx+','+p.cy+act});
   }
-  if(P.weapon==='hoe'&&plots.length<PLOT_MAX){   // enxada na mao: oferece arar a casa a frente
-    const f=frontCell();
-    if(!plotAt(f.cx,f.cy))out.push({k:'plot',act:'ARAR',cell:f,d:4,b:3,px:f.cx*CELL+8,py:f.cy*CELL+8,key:'pt'+f.cx+','+f.cy});
-  }
   return out;
+}
+/* botao proprio da enxada: ara a casa a frente (nao disputa mais com itens, portas e camas) */
+function hoeTill(){
+  if(!P||P.dead||P.inVehicle||P.inside||P.weapon!=='hoe')return;
+  const f=frontCell();
+  if(plotAt(f.cx,f.cy)){toast('Essa terra já está arada');return;}
+  if(plots.length>=PLOT_MAX){toast('Terra arada demais: plante ou espere voltar ao normal');return;}
+  plotDo({act:'ARAR',cell:f});
 }
 function send(p){if(MP.active)sendEvt('plotSet',{cx:p.cx,cy:p.cy,c:p.c,g:Math.round(p.g),w:Math.round(p.w)});}
 function puff(x,y,col,n){for(let i=0;i<n;i++)parts.push({x:x+rnd(-6,6),y:y+rnd(-3,3),vx:rnd(-24,24),vy:rnd(-40,-10),t:rnd(.3,.6),c:col});}
@@ -88,7 +94,7 @@ function plotDo(T){
     if(bad){toast(bad);beep(130,.08,'square',.04);return;}
     const p=mark({cx:f.cx,cy:f.cy,c:null,g:0,w:0});plots.push(p);send(p);
     P.swing=Math.max(P.swing||0,.25);beep(110,.1,'triangle',.05,-30);puff(x,y,'#6a4a2c',8);
-    toast('Terra arada! Plante uma semente');return;
+    toast('Terra arada! Plante uma semente (volta ao normal se ficar vazia)');return;
   }
   const p=T.p;if(!p||!plots.includes(p))return;
   if(a==='PLANTAR'){
@@ -218,6 +224,6 @@ function ghBuild(sp){
 const plotAria={ARAR:'Arar a terra',PLANTAR:'Plantar semente',REGAR:'Regar',COLHER:'Colher'};
 
 window.ghPack=ghPack;window.ghLoad=ghLoad;window.ghRemote=ghRemote;window.ghSpot=ghSpot;window.ghBuild=ghBuild;window.drawGreenhouses=drawGreenhouses;window.drawGreenhouseFrame=drawGreenhouseFrame;window.ghList=()=>ghs;window.plotList=()=>plots;
-window.plantTick=plantTick;window.plotCands=plotCands;window.plotDo=plotDo;window.drawPlots=drawPlots;window.plotsInView=plotsInView;window.drawPlant=drawPlant;
+window.plantTick=plantTick;window.hoeTill=hoeTill;window.soilBad=soilBad;window.frontCell=frontCell;window.plotCands=plotCands;window.plotDo=plotDo;window.drawPlots=drawPlots;window.plotsInView=plotsInView;window.drawPlant=drawPlant;
 window.plotsPack=plotsPack;window.plotsLoad=plotsLoad;window.plotRemote=plotRemote;window.plotsApplySnapshot=plotsApplySnapshot;window.plotAria=plotAria;
 })();
