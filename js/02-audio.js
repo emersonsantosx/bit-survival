@@ -65,52 +65,63 @@ function boom(d,v,low,cat){
     s.connect(f);f.connect(g);g.connect(AOUT);s.start();s.stop(AC.currentTime+d);
   }catch(e){}
 }
+/* passos: ruído com ponto de partida aleatório no buffer (antes todo passo começava na mesma amostra e soava como glitch repetido),
+   entrada e saída suaves para não estalar */
+function stepNoise(t0,dur,type,freq,q,v){
+  const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
+  s.buffer=nbuf;s.loop=true;f.type=type;f.frequency.value=freq;f.Q.value=q||.7;
+  const att=Math.min(.012,dur*.3);
+  g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(Math.max(.0002,v),t0+att);
+  g.gain.exponentialRampToValueAtTime(.0002,t0+dur);g.gain.linearRampToValueAtTime(0,t0+dur+.015);
+  s.connect(f);f.connect(g);g.connect(AOUT);
+  s.start(t0,Math.random()*(nbuf.duration-.01));s.stop(t0+dur+.03);
+}
 function footstep(inWater,surf,sprint){
   if(!AC||!nbuf)return;
   const vol=volFor('step')*(sprint?1.3:1);if(vol<=0)return;
   try{
     const t=AC.currentTime,r=Math.random();
     if(inWater){ // chapinhar na água (lago, mar raso)
-      gunNoise(t,.2,'lowpass',720,.8,.05*vol);gunNoise(t+.03,.12,'bandpass',1500+r*600,.8,.02*vol);return;
+      stepNoise(t,.2,'lowpass',720,.8,.05*vol);stepNoise(t+.03,.12,'bandpass',1500+r*600,.8,.02*vol);return;
     }
     if(surf==='ice'){ // gelo firme: toque seco e agudo
-      gunNoise(t,.04,'highpass',3500,.8,.03*vol);gunNoise(t+.01,.06,'bandpass',2600+r*500,1.6,.025*vol);return;
+      stepNoise(t,.04,'highpass',3500,.8,.03*vol);stepNoise(t+.01,.06,'bandpass',2600+r*500,1.6,.025*vol);return;
     }
     if(surf==='snow'){ // neve: crocante, dois estalos abafados
-      gunNoise(t,.05,'highpass',2400,.7,.03*vol*(.8+r*.4));
-      gunNoise(t+.035,.09,'bandpass',1500+r*400,.9,.028*vol);
-      gunNoise(t,.1,'lowpass',500,.7,.02*vol);return;
+      stepNoise(t,.05,'highpass',2400,.7,.03*vol*(.8+r*.4));
+      stepNoise(t+.035,.09,'bandpass',1500+r*400,.9,.028*vol);
+      stepNoise(t,.1,'lowpass',500,.7,.02*vol);return;
     }
     if(surf==='sand'){ // areia: chiado macio e curto
-      gunNoise(t,.15,'bandpass',1000+r*300,.5,.026*vol);
-      gunNoise(t,.12,'lowpass',380,.7,.02*vol);return;
+      stepNoise(t,.15,'bandpass',1000+r*300,.5,.026*vol);
+      stepNoise(t,.12,'lowpass',380,.7,.02*vol);return;
     }
     if(surf==='pave'){ // calçada e asfalto: toque seco
-      gunNoise(t,.04,'bandpass',1700+r*500,2,.03*vol);
+      stepNoise(t,.04,'bandpass',1700+r*500,2,.03*vol);
       gunTone(t,.07,'sine',130+r*20,75,.04*vol);return;
     }
     if(surf==='wood'){ // madeira oca (casas e píer)
       gunTone(t,.09,'sine',150+r*25,85,.05*vol);
-      gunNoise(t,.06,'bandpass',520,1.2,.025*vol);return;
+      stepNoise(t,.06,'bandpass',520,1.2,.025*vol);return;
     }
     if(surf==='tile'){ // azulejo: clique duro e agudo
-      gunNoise(t,.03,'bandpass',2600+r*400,2.5,.03*vol);
+      stepNoise(t,.03,'bandpass',2600+r*400,2.5,.03*vol);
       gunTone(t,.05,'triangle',280+r*30,170,.03*vol);return;
     }
     if(surf==='carpet'){ // carpete: batida abafada
-      gunNoise(t,.07,'lowpass',280,.7,.04*vol);return;
+      stepNoise(t,.07,'lowpass',280,.7,.04*vol);return;
     }
     if(surf==='conc'){ // concreto: seco e um pouco de eco
-      gunNoise(t,.05,'bandpass',1300+r*300,1.6,.03*vol);
+      stepNoise(t,.05,'bandpass',1300+r*300,1.6,.03*vol);
       gunTone(t,.08,'sine',110+r*20,65,.04*vol);return;
     }
     if(surf==='straw'){ // palha
-      gunNoise(t,.1,'bandpass',2000+r*500,.7,.026*vol);gunNoise(t,.08,'lowpass',400,.7,.015*vol);return;
+      stepNoise(t,.1,'bandpass',2000+r*500,.7,.026*vol);stepNoise(t,.08,'lowpass',400,.7,.015*vol);return;
     }
     // grama e terra da floresta: folhas e gravetos
-    gunNoise(t,.09,'bandpass',1100+r*500,.6,.022*vol);
-    gunNoise(t,.07,'lowpass',260,.8,.024*vol);
-    if(r<.25)gunNoise(t+.04,.02,'highpass',4200,.8,.014*vol);   // graveto estalando
+    stepNoise(t,.09,'bandpass',1100+r*500,.6,.022*vol);
+    stepNoise(t,.07,'lowpass',260,.8,.024*vol);
+    if(r<.25)stepNoise(t+.04,.05,'bandpass',3200,1,.01*vol);   // graveto estalando (suave, sem clique)
   }catch(e){}
 }
 /* superfície sob os pés: cada piso e cada mapa soam diferente */
@@ -142,7 +153,7 @@ function gunNoise(t0,dur,type,freq,q,v){
   const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
   s.buffer=nbuf;s.loop=true;f.type=type;f.frequency.value=freq;f.Q.value=q||.7;
   gAtk(g.gain,v,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
-  s.connect(f);f.connect(g);g.connect(AOUT);s.start(t0);s.stop(t0+dur+.02);
+  s.connect(f);f.connect(g);g.connect(AOUT);s.start(t0,Math.random()*(nbuf.duration-.01));s.stop(t0+dur+.02);
 }
 function gunTone(t0,dur,type,f0,f1,v){
   const o=AC.createOscillator(),g=AC.createGain();

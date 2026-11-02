@@ -141,13 +141,14 @@ function drawPlant(p){
     else{R(x-1,y-4,10,3,g1);R(x+1,y-6,3,2,g2);R(x,y-8,9,8,'#3e7a2e');R(x+1,y-9,7,1,'#6fcf6f');for(let k=1;k<9;k+=2)R(x+k-0,y-7,1,6,'#6fcf6f');R(x+3,y-10,2,2,'#5a3a24');}   // melancia listrada
     return;
   }
-  if(st===0){R(x+3,y-3,2,2,g2);R(x+4,y-4,1,1,g1);}
-  else if(st===1){R(x+3,y-7,2,7,g1);R(x,y-6,3,1,g2);R(x+5,y-5,3,1,g2);}
-  else if(st===2){R(x+3,y-11,2,11,g1);R(x-1,y-8,4,1,g2);R(x+5,y-9,4,1,g2);R(x,y-5,3,1,g2);R(x+5,y-4,3,1,g2);}
-  else{
-    R(x+3,y-15,2,15,g1);R(x-1,y-11,4,1,g2);R(x+5,y-12,4,1,g2);R(x-1,y-6,4,1,g2);R(x+5,y-7,4,1,g2);
-    R(x+5,y-10,3,5,'#e8c040');R(x+5,y-10,1,5,'#c89a20');R(x+2,y-17,4,2,'#c8a860');   // espiga e pendao
-  }
+  if(st===0){R(x+3,y-3,2,2,g2);R(x+4,y-4,1,1,g1);return;}
+  /* milho: mesmo pe do milharal, cortado por altura conforme cresce (maduro tem espiga) */
+  const sp=stalkSprite((p.cx+p.cy)&1,st>=3?1:0),hh=st===1?10:st===2?20:32;
+  const sw=st>=3?Math.round(Math.sin(T*1.6+x*.07+y*.05)):0;
+  ctx.imageSmoothingEnabled=false;
+  const f0=ctx.filter;if(!ok)ctx.filter='sepia(.8)';
+  ctx.drawImage(sp,0,32-hh,16,hh,x+4-8+sw,y-hh+1,16,hh);
+  if(!ok)ctx.filter=f0||'none';
 }
 /* estufa: piso de tabuas, moldura de madeira e vidro claro (desenhada junto do chao arado) */
 function drawGreenhouses(vx0,vx1,vy0,vy1){
