@@ -1836,7 +1836,7 @@ function drawItem(it,near){
     case'bat':for(let i=0;i<9;i++)R(x-5+i,y-3+b-(i>>2),2,2,'#b07a40');break;
     case'axe':R(x-5,y-4+b,9,2,'#7a5430');R(x+1,y-8+b,4,5,'#9ab0c0');break;
     case'pickaxe':R(x-5,y-3+b,9,2,'#6a4a30');R(x-4,y-7+b,8,3,'#a8b8c4');break;
-    case'fence':for(let i=0;i<4;i++){R(x-5+i*3,y-6+b,2,6,'#f2efe6');}R(x-5,y-4+b,10,1,'#a8a290');break;
+    case'fence':for(let i=0;i<4;i++){R(x-5+i*3,y-6+b,2,6,'#9a6a3a');}R(x-5,y-4+b,10,1,'#5a3c20');break;
     case'hoe':for(let i=0;i<10;i++)R(x-5+i,y-3+b-(i>>2),1,1,'#8a6a3a');R(x+3,y-7+b,4,3,'#c0c8d4');break;
     case'katana':R(x-5,y-3+b,2,2,'#2a2a30');for(let i=0;i<10;i++)R(x-3+i,y-3+b-(i>7?1:0),1,1,i>7?'#f0f0f8':'#c8d0dc');break;
     case'spear':for(let i=0;i<11;i++)R(x-5+i,y-3+b,1,1,'#8a6a3a');R(x+6,y-4+b,3,3,'#c0c8d4');break;

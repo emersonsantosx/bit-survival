@@ -30,8 +30,9 @@ function edgeBad(e){   // motivo se NAO der para por cerca ali; null se der
 /* o que o botao faz na borda da frente: 'FENCE' poe cerca, 'GATE' troca por portinha, 'REMOVE' tira a portinha */
 function fenceIntent(){
   const e=frontEdge(),f=fenceAt(e.x,e.y,e.d);
+  if(f&&f.s)return {e,act:'FIXED',bad:'Essa cerca não dá para mexer'};
   if(f)return f.g?{e,act:'REMOVE'}:{e,act:'GATE',cost:1,bad:countInv('wood')<1?'Falta madeira':null};
-  const bad=fences.length>=FENCE_MAX?'Cercas demais':countInv('wood')<1?'Falta madeira':edgeBad(e);
+  const bad=fences.filter(q=>!q.s).length>=FENCE_MAX?'Cercas demais':countInv('wood')<1?'Falta madeira':edgeBad(e);
   return {e,act:'FENCE',cost:1,bad};
 }
 function send(f,g){if(MP.active)sendEvt('fenceSet',{x:f.x,y:f.y,d:f.d,g});}
@@ -63,9 +64,9 @@ function fenceHit(e,r){
 /* ---- desenho ---- */
 function fencesInView(vx0,vx1,vy0,vy1){return fences.filter(f=>{const x=f.x*CELL,y=f.y*CELL;return x+CELL>vx0&&x-CELL<vx1&&y+CELL>vy0-12&&y-CELL<vy1+12;});}
 function fenceDepth(f){return f.d==='h'?f.y*CELL:f.y*CELL+CELL-1;}
-const WH1='#f2efe6',WH2='#cfc9b8',WH3='#a8a290';
+const PAL_W=['#f2efe6','#cfc9b8','#a8a290'],PAL_B=['#9a6a3a','#7a5230','#5a3c20'];   // branca (casas da cidade) e marrom (construida pelo jogador)
 function drawFence(f){
-  const x=f.x*CELL,y=f.y*CELL;
+  const x=f.x*CELL,y=f.y*CELL,WH1=(f.s?PAL_W:PAL_B)[0],WH2=(f.s?PAL_W:PAL_B)[1],WH3=(f.s?PAL_W:PAL_B)[2];
   if(f.d==='h'){
     if(!f.g){
       for(let k=0;k<4;k++){const px=x+k*4+1;R(px,y-6,2,7,WH1);R(px,y-7,2,1,WH2);R(px+1,y-6,1,7,WH2);}
@@ -99,11 +100,17 @@ function drawFenceGhost(){
 
 /* ---- salvar, carregar e sincronizar ---- */
 const pack=f=>[f.x,f.y,f.d==='h'?0:1,f.g?1:0];
-function fencePack(){return fences.map(pack);}
+function fencePack(){return fences.filter(f=>!f.s).map(pack);}
+/* cercas da cidade (casas): fixas, brancas, nao entram no save (nascem de novo com o mundo) e ninguem mexe nelas */
+function fenceCityClear(){fences=fences.filter(f=>!f.s);reindex();}
+function fenceCityAdd(list){
+  for(const r of list){if(fenceAt(r[0],r[1],r[2]===1?'v':'h'))continue;fences.push({x:r[0],y:r[1],d:r[2]===1?'v':'h',g:r[3]?1:0,s:1});}
+  reindex();
+}
 function fenceLoad(a){
-  fences=[];
+  fences=fences.filter(f=>f.s);
   if(Array.isArray(a))for(const r of a){
-    if(!Array.isArray(r)||!Number.isFinite(r[0])||!Number.isFinite(r[1])||fences.length>=FENCE_MAX)continue;
+    if(!Array.isArray(r)||!Number.isFinite(r[0])||!Number.isFinite(r[1])||fences.length>=FENCE_MAX+2000||fenceAt(Math.round(r[0]),Math.round(r[1]),r[2]===1?'v':'h'))continue;
     fences.push({x:Math.round(r[0]),y:Math.round(r[1]),d:r[2]===1?'v':'h',g:r[3]?1:0});
   }
   reindex();
@@ -111,13 +118,14 @@ function fenceLoad(a){
 function fenceRemote(d){
   if(!d||!Number.isFinite(d.x)||!Number.isFinite(d.y)||(d.d!=='h'&&d.d!=='v'))return;
   const f=fenceAt(d.x,d.y,d.d);
+  if(f&&f.s)return;
   if(d.g===-1){if(f){fences=fences.filter(q=>q!==f);fmap.delete(fkey(f.x,f.y,f.d));}return;}
   if(f){f.g=d.g?1:0;return;}
-  if(fences.length>=FENCE_MAX)return;
+  if(fences.length>=FENCE_MAX+2000)return;
   const n={x:Math.round(d.x),y:Math.round(d.y),d:d.d,g:d.g?1:0};fences.push(n);fmap.set(fkey(n.x,n.y,n.d),n);
 }
 function fenceApplySnapshot(a){if(Array.isArray(a))for(const r of a)if(Array.isArray(r))fenceRemote({x:r[0],y:r[1],d:r[2]===1?'v':'h',g:r[3]?1:0});}
 
-window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
+window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
 window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;
 })();

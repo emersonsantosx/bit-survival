@@ -3,7 +3,7 @@
    então nenhuma rua atravessa casa. Prédios ficam em fileiras com vão mínimo para passar a pé,
    e as portas (sempre no lado sul) abrem para um vão livre. */
 /* gramados da cidade (pracas, parques e lotes vazios): desenhados com grama e os unicos lugares onde da para arar. Guardados sem sortear nada. */
-let cityGardens=[];
+let cityGardens=[],cityYards=[];   // cityYards: terrenos cercados das casas (carros e itens nao nascem em cima)
 function inCityGarden(x,y){for(const g of cityGardens)if(x>g.x&&x<g.x+g.w&&y>g.y&&y<g.y+g.h)return true;return false;}
 function onCityRoad(x,y,m){
   for(const r of roads){ if(x>r.x-m&&x<r.x+r.w+m&&y>r.y-m&&y<r.y+r.h+m) return true; }
@@ -134,14 +134,33 @@ function genCity(){
     else if(b.zone==='park') cityPark(b.bx,b.by,b.bw,b.bh);
     else if(b.zone==='empty') cityRubble(b,rint(5,8));                       // lote vazio com entulho
     else {
+      const n0=blds.length;
       cityFillBlock(b.bx,b.by,b.bw,b.bh,b.zone); if(b.zone==='ind') cityRubble(b,rint(1,3));
+      for(const h of blds.slice(n0)) cityHouseFence(h,b);
     }
   }
   // bairros (usados para espalhar zumbis iniciais): longe do ponto de partida
   const cand=shuffle(blocks.filter(b=>b!==crash&&Math.hypot(b.cx-crash.cx,b.cy-crash.cy)>520&&b.zone!=='park'&&b.zone!=='empty'));
   for(let k=0;k<Math.min(Math.round(12*WAREA*.7),cand.length);k++) towns.push({x:cand[k].cx,y:cand[k].cy,mil:cand[k].zone==='mil'});
 }
+/* cerquinha branca em volta de algumas casas (estilo americano), com portinha na frente da porta. So um hash da posicao: nao sorteia nada. */
+function cityHouseFence(h,b){
+  if(h.type!=='house'||(((h.x*73856093)^(h.y*19349663))>>>0)%100>=55)return;
+  const X0=Math.floor((h.x-10)/16),Y0=Math.floor((h.y-10)/16),X1=Math.ceil((h.x+h.w+10)/16),Y1=Math.ceil((h.y+h.h+12)/16);
+  const L=[],mids=[];
+  for(let i=X0;i<X1;i++){L.push([i,Y0,0,0]);L.push([i,Y1,0,0]);mids.push([i*16+8,Y0*16],[i*16+8,Y1*16]);}
+  for(let j=Y0;j<Y1;j++){L.push([X0,j,1,0]);L.push([X1,j,1,0]);mids.push([X0*16,j*16+8],[X1*16,j*16+8]);}
+  for(const m of mids){
+    if(m[0]<b.bx+6||m[0]>b.bx+b.bw-6||m[1]<b.by+6||m[1]>b.by+b.bh-6)return;
+    if(onCityRoad(m[0],m[1],4))return;
+    for(const o of blds)if(o!==h&&m[0]>o.x-8&&m[0]<o.x+o.w+8&&m[1]>o.y-8&&m[1]<o.y+o.h+8)return;
+  }
+  const gc=Math.min(X1-1,Math.max(X0,Math.floor((h.doorX+h.door/2)/16)));
+  const g=L.find(q=>q[2]===0&&q[1]===Y1&&q[0]===gc);if(g)g[3]=1;   // portinha em frente da porta (lado sul)
+  fenceCityAdd(L);cityYards.push({x:X0*16-6,y:Y0*16-6,w:(X1-X0)*16+12,h:(Y1-Y0)*16+12});
+}
 function cityFree(x,y,hw,hh){
+  for(const q of cityYards) if(x+hw>q.x&&x-hw<q.x+q.w&&y+hh>q.y&&y-hh<q.y+q.h) return false;
   for(const b of blds) if(x+hw>b.x-6&&x-hw<b.x+b.w+6&&y+hh>b.y-6&&y-hh<b.y+b.h+6) return false;
   for(const v of vehicles) if(Math.abs(v.x-x)<hw+22&&Math.abs(v.y-y)<hh+22) return false;
   return !onCityRoad(x,y,Math.max(hw,hh));
