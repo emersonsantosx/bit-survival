@@ -565,7 +565,8 @@ function holdBtn(id,down,up){
 holdBtn('atk',()=>{atkHeld=true;attack();},()=>{atkHeld=false;});
 holdBtn('run',()=>{sprintHeld=true;},()=>{sprintHeld=false;});
 holdBtn('pick',()=>pickup());
-holdBtn('hoe',()=>{if(window.hoeTill)hoeTill();});
+let hoeRep=null;   // segurar o botao de arar repete em linha enquanto anda
+holdBtn('hoe',()=>{if(!window.hoeTill)return;hoeTill();clearInterval(hoeRep);hoeRep=setInterval(()=>hoeTill(true),260);},()=>{clearInterval(hoeRep);hoeRep=null;});
 const swapBtn=$('swap');
 let swapPressTimer=null,swapPressActive=false,swapLongTriggered=false,swapPressPointer=null;
 function cancelSwapPress(){
