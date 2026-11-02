@@ -77,12 +77,12 @@ function plotCands(){
   return out;
 }
 /* botao proprio da enxada: ara a casa a frente (nao disputa mais com itens, portas e camas) */
-function hoeTill(){
+function hoeTill(quiet){
   if(!P||P.dead||P.inVehicle||P.inside||P.weapon!=='hoe')return;
   const f=frontCell();
-  if(plotAt(f.cx,f.cy)){toast('Essa terra já está arada');return;}
-  if(plots.length>=PLOT_MAX){toast('Terra arada demais: plante ou espere voltar ao normal');return;}
-  plotDo({act:'ARAR',cell:f});
+  if(plotAt(f.cx,f.cy)){if(!quiet)toast('Essa terra já está arada');return;}
+  if(plots.length>=PLOT_MAX){if(!quiet)toast('Terra arada demais: plante ou espere voltar ao normal');return;}
+  plotDo({act:'ARAR',cell:f,quiet});
 }
 function send(p){if(MP.active)sendEvt('plotSet',{cx:p.cx,cy:p.cy,c:p.c,g:Math.round(p.g),w:Math.round(p.w)});}
 function puff(x,y,col,n){for(let i=0;i<n;i++)parts.push({x:x+rnd(-6,6),y:y+rnd(-3,3),vx:rnd(-24,24),vy:rnd(-40,-10),t:rnd(.3,.6),c:col});}
@@ -91,7 +91,7 @@ function plotDo(T){
   if(a==='ARAR'){
     const f=T.cell,x=f.cx*CELL+8,y=f.cy*CELL+8,bad=soilBad(x,y);
     if(plotAt(f.cx,f.cy))return;
-    if(bad){toast(bad);beep(130,.08,'square',.04);return;}
+    if(bad){if(!T.quiet){toast(bad);beep(130,.08,'square',.04);}return;}
     const p=mark({cx:f.cx,cy:f.cy,c:null,g:0,w:0});plots.push(p);send(p);
     P.swing=Math.max(P.swing||0,.25);beep(110,.1,'triangle',.05,-30);puff(x,y,'#6a4a2c',8);
     toast('Terra arada! Plante uma semente (volta ao normal se ficar vazia)');return;
@@ -129,6 +129,23 @@ function drawPlots(vx0,vx1,vy0,vy1){   // so o chao arado (as plantas entram na 
     R(x+1,y+1,CELL-2,1,wet?'#4a3320':'#6a4a2c');
     for(let r=3;r<CELL-2;r+=4)R(x+2,y+r,CELL-4,1,wet?'#2a1c0e':'#46301a');
   }
+  drawGhost();
+}
+/* ---- fantasma de construcao: com a enxada na mao mostra no chao a casa que sera arada (verde = pode, vermelho = nao pode) ---- */
+function ghostFor(){
+  if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||P.weapon!=='hoe')return null;
+  const f=frontCell();
+  if(plotAt(f.cx,f.cy))return null;                                   // ja arada: nada a mostrar
+  const bad=plots.length>=PLOT_MAX?'Terra arada demais':soilBad(f.cx*CELL+8,f.cy*CELL+8);
+  return {cx:f.cx,cy:f.cy,ok:!bad,why:bad};
+}
+function drawGhost(){
+  const g=ghostFor();if(!g)return;
+  const x=g.cx*CELL,y=g.cy*CELL,a=.55+.2*Math.sin(T*6),c=g.ok?'110,220,110':'230,90,80';
+  ctx.fillStyle='rgba('+c+','+(a*.45).toFixed(2)+')';ctx.fillRect(x,y,CELL,CELL);
+  ctx.fillStyle='rgba('+c+','+a.toFixed(2)+')';
+  ctx.fillRect(x,y,CELL,1);ctx.fillRect(x,y+CELL-1,CELL,1);ctx.fillRect(x,y,1,CELL);ctx.fillRect(x+CELL-1,y,1,CELL);
+  if(!g.ok){ctx.fillRect(x+3,y+3,2,2);ctx.fillRect(x+CELL-5,y+3,2,2);ctx.fillRect(x+CELL-5,y+CELL-5,2,2);ctx.fillRect(x+3,y+CELL-5,2,2);ctx.fillRect(x+7,y+7,2,2);}
 }
 function drawPlant(p){
   const st=stage(p);if(st<0)return;
@@ -225,6 +242,6 @@ function ghBuild(sp){
 const plotAria={ARAR:'Arar a terra',PLANTAR:'Plantar semente',REGAR:'Regar',COLHER:'Colher'};
 
 window.ghPack=ghPack;window.ghLoad=ghLoad;window.ghRemote=ghRemote;window.ghSpot=ghSpot;window.ghBuild=ghBuild;window.drawGreenhouses=drawGreenhouses;window.drawGreenhouseFrame=drawGreenhouseFrame;window.ghList=()=>ghs;window.plotList=()=>plots;
-window.plantTick=plantTick;window.hoeTill=hoeTill;window.soilBad=soilBad;window.frontCell=frontCell;window.plotCands=plotCands;window.plotDo=plotDo;window.drawPlots=drawPlots;window.plotsInView=plotsInView;window.drawPlant=drawPlant;
+window.plantTick=plantTick;window.hoeTill=hoeTill;window.ghostFor=ghostFor;window.soilBad=soilBad;window.frontCell=frontCell;window.plotCands=plotCands;window.plotDo=plotDo;window.drawPlots=drawPlots;window.plotsInView=plotsInView;window.drawPlant=drawPlant;
 window.plotsPack=plotsPack;window.plotsLoad=plotsLoad;window.plotRemote=plotRemote;window.plotsApplySnapshot=plotsApplySnapshot;window.plotAria=plotAria;
 })();
