@@ -140,7 +140,10 @@ function genCity(){
       for(const h of blds.slice(n0)){
         if(h.type!=='house'||(((h.x*73856093)^(h.y*19349663))>>>0)%100>=55)continue;
         const x0=Math.max(b.bx+8,h.x-12),y0=Math.max(b.by+8,h.y-10),x1=Math.min(b.bx+b.bw-8,h.x+h.w+12),y1=Math.min(b.by+b.bh-8,h.y+h.h+18);
-        if(x1-x0>40&&y1-y0>40)cityGardens.push({x:x0,y:y0,w:x1-x0,h:y1-y0});
+        if(x1-x0<=40||y1-y0<=40)continue;
+        /* grama so em volta da casa (nunca por baixo dela): quatro faixas */
+        const hy0=h.y,hy1=h.y+h.h,hx0=h.x,hx1=h.x+h.w,add=(x,y,w,hh)=>{if(w>2&&hh>2)cityGardens.push({x,y,w,h:hh});};
+        add(x0,y0,x1-x0,hy0-y0);add(x0,hy1,x1-x0,y1-hy1);add(x0,hy0,hx0-x0,h.h);add(hx1,hy0,x1-hx1,h.h);
       }
     }
   }

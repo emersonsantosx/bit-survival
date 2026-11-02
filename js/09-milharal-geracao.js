@@ -448,6 +448,7 @@ function paintMapBase(g,s){
     g.fillStyle='#e0cb92';g.fillRect(0,(o.sea-o.sandW)*s,Math.ceil(WW*s),Math.ceil(o.sandW*s)+1);
     g.fillStyle='#2a8fb8';g.fillRect(0,o.sea*s,Math.ceil(WW*s),Math.ceil((WH-o.sea)*s)+1);
   }
+  if(M==='city'&&cityGardens.length){g.fillStyle='#4f9a3c';for(const q of cityGardens)g.fillRect(Math.floor(q.x*s),Math.floor(q.y*s),Math.max(1,Math.ceil(q.w*s)),Math.max(1,Math.ceil(q.h*s)));}   // gramados
   g.fillStyle=C.road;
   for(const r of roads)g.fillRect(r.x*s,r.y*s,Math.max(1,r.w*s),Math.max(1,r.h*s));
   if(FIELD){g.fillStyle='#d9b84a';g.fillRect(FIELD.x*s,FIELD.y*s,Math.max(2,FIELD.w*s),Math.max(2,FIELD.h*s));}
