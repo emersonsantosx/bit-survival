@@ -502,6 +502,11 @@ function pickTarget(){
     a.s=a.d+turn+a.b-(a.key===P._ptKey?3:0);
     if(a.s<bs){bs=a.s;best=a;}
   }
+  /* itens no chão têm prioridade sobre dormir, porta e água (pia/torneira) */
+  if(best.k==='door'||best.k==='bed'||best.k==='tap'){
+    let bi=null;for(const a of c)if(a.k==='item'&&(!bi||a.s<bi.s))bi=a;
+    if(bi)best=bi;
+  }
   P._ptKey=best.key;
   return best;
 }
