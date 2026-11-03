@@ -109,25 +109,31 @@ const RF={
     q(0,0,w,rg,shadeCol(c,.1));q(0,rg,w,h-rg,shadeCol(c,-.12));
     rfTex(q,0,1,w,rg-2,L,'h',H(2));rfTex(q,0,rg+2,w,h-rg-4,L,'h',H(3));
     q(0,rg-1,w,2,shadeCol(c,.3));q(0,rg+1,w,1,shadeCol(c,-.32));
-    rfEdges(q,w,h,c);L._rg=rg;
+    for(let x=0;x<w;x+=7)q(x,rg-1,1,3,'rgba(0,0,0,.22)');         // telhas de cumeeira
+    rfEdges(q,w,h,c);q(0,h-4,w,2,'rgba(0,0,0,.14)');L._rg=rg;
   },
   gableV(q,w,h,L,H){
     const c=L.roof,rg=Math.round(w*(.42+H(1)*.16));
     q(0,0,rg,h,shadeCol(c,.1));q(rg,0,w-rg,h,shadeCol(c,-.14));
     rfTex(q,1,0,rg-2,h,L,'v',H(2));rfTex(q,rg+2,0,w-rg-4,h,L,'v',H(3));
     q(rg-1,0,2,h,shadeCol(c,.3));q(rg+1,0,1,h,shadeCol(c,-.32));
+    for(let y=0;y<h;y+=7)q(rg-1,y,3,1,'rgba(0,0,0,.22)');
     rfEdges(q,w,h,c);L._rg=rg;
   },
   hip(q,w,h,L,H){
-    const c=L.roof,m=Math.floor(Math.min(w,h)/2);
-    for(let k=0;k<m;k++){
-      q(k,k,w-2*k,1,shadeCol(c,.14));q(k,h-1-k,w-2*k,1,shadeCol(c,-.2));
-      q(k,k,1,h-2*k,shadeCol(c,-.02));q(w-1-k,k,1,h-2*k,shadeCol(c,-.12));
-      if(k%4===3){const dk='rgba(0,0,0,.16)';q(k,k,w-2*k,1,dk);q(k,h-1-k,w-2*k,1,dk);q(k,k,1,h-2*k,dk);q(w-1-k,k,1,h-2*k,dk);}
-      q(k,k,1,1,shadeCol(c,.3));q(w-1-k,k,1,1,shadeCol(c,.2));q(k,h-1-k,1,1,shadeCol(c,-.3));q(w-1-k,h-1-k,1,1,shadeCol(c,-.35));
+    /* quatro águas de verdade: duas faces trapezoidais (frente e fundo) e dois triângulos laterais, unidos por rincões diagonais e uma cumeeira */
+    const c=L.roof,m=Math.floor(Math.min(w,h)/2),dk='rgba(0,0,0,.17)';
+    for(let y=0;y<h;y++){
+      const d=Math.min(Math.min(y,h-1-y),m),top=y<h/2;
+      q(d,y,w-2*d,1,shadeCol(c,top?.14:-.2));
+      q(0,y,d,1,shadeCol(c,-.02));q(w-d,y,d,1,shadeCol(c,-.14));
+      if(y%4===3&&w-2*d>0)q(d,y,w-2*d,1,dk);                       // fiadas das águas de cima e de baixo
+      q(d,y,1,1,shadeCol(c,.34));q(w-1-d,y,1,1,shadeCol(c,-.3));    // rincões diagonais
     }
+    for(let x=3;x<m;x+=4){q(x,x+1,1,Math.max(0,h-2*x-2),dk);q(w-1-x,x+1,1,Math.max(0,h-2*x-2),dk);}   // fiadas das águas laterais
     const gw=w-2*m,gh=h-2*m;
-    if(gw>0&&gh>0)q(m,m,gw,gh,shadeCol(c,.22));   // cumeeira: com altura/largura ímpar sobrava uma linha transparente no meio do telhado
+    if(gw>0&&gh>0){q(m,m,gw,gh,shadeCol(c,.28));q(m,m,gw,1,shadeCol(c,.42));if(gw>gh)for(let x=m;x<m+gw;x+=6)q(x,m,1,gh,'rgba(0,0,0,.2)');}
+    q(0,h-2,w,2,shadeCol(c,-.45));q(0,0,w,1,shadeCol(c,.3));       // beiral
   },
   cross(q,w,h,L,H){
     RF.gableH(q,w,h,L,H);
@@ -145,6 +151,7 @@ const RF={
     for(let i=0,n=Math.round(w*h/34);i<n;i++)q(r()*w,r()*h,1,1,r()<.5?'rgba(255,255,255,.1)':'rgba(0,0,0,.14)');
     q(0,0,w,2,shadeCol(c,.22));q(0,0,2,h,shadeCol(c,.12));q(w-2,0,2,h,shadeCol(c,-.12));q(0,h-3,w,3,shadeCol(c,-.32));
     q(2,2,w-4,1,'rgba(0,0,0,.22)');q(2,2,1,h-5,'rgba(0,0,0,.16)');
+    for(let x=22;x<w-6;x+=24){q(x,3,1,h-7,'rgba(0,0,0,.1)');q(x+1,3,1,h-7,'rgba(255,255,255,.05)');}   // emendas das mantas
     if(selectedMap==='desert'){cut(0,0,2,2);cut(w-2,0,2,2);cut(0,h-2,2,2);cut(w-2,h-2,2,2);}
   },
   flatStep(q,w,h,L,H,cut){

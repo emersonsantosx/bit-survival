@@ -5,7 +5,7 @@ html,body{margin:0;width:100%;height:100%;background:#0b100b;overflow:hidden;ove
 #hud *{pointer-events:none}
 #hud button{pointer-events:auto}
 /* HUD oculta: esconde só as barras e textos. Botões de ação e inventário ficam SEMPRE visíveis (senão o celular fica injogável). */
-body.nohud #bars,body.nohud #wpn,body.nohud #clk,body.nohud #kl,body.nohud #missions{display:none!important}
+body.nohud #bars,body.nohud #wpn,body.nohud #twn,body.nohud #clk,body.nohud #kl,body.nohud #missions{display:none!important}
 body.nomap #mm{display:none!important}
 #hud #mm{pointer-events:auto;cursor:pointer;touch-action:manipulation}
 #bigmap{position:fixed;inset:0;z-index:1200;background:rgba(6,10,6,.96);display:flex;align-items:center;justify-content:center}
@@ -121,8 +121,10 @@ body.nomap #mm{display:none!important}
 .btn.hot{border-color:#ffd84a;box-shadow:0 0 10px #ffd84a;color:#ffd84a}
 #atk{right:16px;bottom:22px;width:88px;height:88px;font-size:15px;background:rgba(160,30,30,.6)}
 #pick{right:118px;bottom:26px;width:64px;height:64px}
-#tools{right:190px;bottom:96px;width:52px;height:52px;border-color:#c9a54a}
-#tools.act{background:rgba(201,165,74,.45);box-shadow:0 0 8px #c9a54a}
+#tools{right:190px;bottom:96px;width:52px;height:52px}
+#tools.act{border-color:#ff9a2e;background:rgba(255,140,30,.42);box-shadow:0 0 8px #ff9a2e}
+#twn{position:absolute;right:216px;bottom:156px;transform:translateX(50%);font-size:11px;font-weight:bold;background:rgba(0,0,0,.6);padding:3px 8px;border:1px solid rgba(255,154,46,.7);border-radius:8px;white-space:nowrap;pointer-events:none;opacity:0}
+#twn.chg{animation:wpnshow 1.8s ease-out}
 #hoe{right:190px;bottom:26px;width:64px;height:64px;border-color:#c9a54a}
 #run{right:28px;bottom:122px;width:64px;height:64px}
 #swap{right:100px;bottom:102px;width:58px;height:58px}

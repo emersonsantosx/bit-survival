@@ -381,7 +381,7 @@ function cycleTool(){
   const i=P.tool?l.indexOf(P.tool):-1;
   P.tool=i+1<l.length?l[i+1]:null;   // none -> t1 -> t2 -> ... -> none (volta as armas)
   beep(P.tool?360:260,.06,'square',.045);
-  if(P.tool)toast('Construção: '+ITEMS[P.tool].n);else toast('Construção guardada');
+  const tw=$('twn');if(tw){tw.textContent=P.tool?ITEMS[P.tool].n:'Guardado';tw.classList.remove('chg');void tw.offsetWidth;tw.classList.add('chg');}
 }
 function addMeleeWeapon(key){
   if(BUILD_TOOLS.includes(key)){addTool(key);return;}
