@@ -41,7 +41,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 07-loot-mapa | 147 | 3 | 32 | 131 | 2 | 7 | . | 14 | 19 | 3 | 5 | 1 | 5 |  | 2 |  |  |  |  |
 | 08-cidade-vilas-marcos | 117 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |
 | 09-milharal-geracao | 203 | 10 | 87 | 266 | 40 |  | 1 | 29 | . | 3 | 3 | 6 | 126 |  | 1 |  |  |  |  |
-| 10-jogo-saves | 89 | 50 | 46 | 618 | 15 | 2 | 10 | 10 | 7 | . | 86 | 25 | 9 |  | 17 |  |  |  |  |
+| 10-jogo-saves | 90 | 50 | 46 | 618 | 15 | 2 | 10 | 10 | 7 | . | 84 | 25 | 9 |  | 17 |  |  |  |  |
 | 11-pesca-update | 227 | 37 | 49 | 808 | 58 | 2 | 3 | 4 | 19 | 58 | . | 13 | 14 |  | 4 |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 35 | 27 | 573 | 12 | 1 | 6 | 5 | 11 | 21 | 36 | . | 18 |  | 10 |  |  |  |  |
 | 13-render-personagens | 320 | 39 | 20 | 250 | 12 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |
@@ -69,7 +69,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | WH | let | 03-dados:2 | 12 | 75 |
 | items | let | 04-estado:9 | 12 | 54 |
 | sendEvt | funcao | 12-crafting-multiplayer:100 | 12 | 48 |
-| toast | funcao | 11-pesca-update:1221 | 11 | 170 |
+| toast | funcao | 11-pesca-update:1221 | 11 | 168 |
 | weather | let | 04-estado:5 | 11 | 87 |
 | parts | let | 04-estado:9 | 11 | 60 |
 | zombies | let | 04-estado:9 | 11 | 58 |
@@ -97,7 +97,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | pick | const | 01-base:18 | 7 | 22 |
 | tents | let | 04-estado:9 | 7 | 20 |
 | track | funcao | 15-missoes-ui-controles:60 | 7 | 12 |
-| $ | const | 01-base:2 | 6 | 139 |
+| $ | const | 01-base:2 | 6 | 140 |
 | Z | let | 01-base:47 | 6 | 99 |
 | plane | let | 04-estado:12 | 6 | 62 |
 | ITEMS | const | 03-dados:136 | 6 | 55 |
