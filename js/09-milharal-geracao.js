@@ -453,6 +453,11 @@ function paintMapBase(g,s){
     g.fillStyle='#2a8fb8';g.fillRect(0,o.sea*s,Math.ceil(WW*s),Math.ceil((WH-o.sea)*s)+1);
   }
   if(M==='city'&&cityGardens.length){g.fillStyle='#4f9a3c';for(const q of cityGardens)g.fillRect(Math.floor(q.x*s),Math.floor(q.y*s),Math.max(1,Math.ceil(q.w*s)),Math.max(1,Math.ceil(q.h*s)));}   // gramados
+  if(M==='city'&&cityYards.length){   // quintais das casas: gramado mais claro, caminho e cerquinha branca (a casa e desenhada por cima)
+    g.fillStyle='#78c254';for(const q of cityYards)g.fillRect(Math.floor((q.x+6)*s),Math.floor((q.y+6)*s),Math.max(2,Math.ceil((q.w-12)*s)),Math.max(2,Math.ceil((q.h-12)*s)));
+    g.fillStyle='#d8d2c0';for(const q of cityPaths)g.fillRect(Math.floor(q.x*s),Math.floor(q.y*s),Math.max(1,Math.ceil(q.w*s)),Math.max(1,Math.ceil(q.h*s)));
+    g.strokeStyle='#f4f4ee';g.lineWidth=1;for(const q of cityYards)g.strokeRect(Math.floor((q.x+6)*s)+.5,Math.floor((q.y+6)*s)+.5,Math.max(2,Math.ceil((q.w-12)*s))-1,Math.max(2,Math.ceil((q.h-12)*s))-1);
+  }
   g.fillStyle=C.road;
   for(const r of roads)g.fillRect(r.x*s,r.y*s,Math.max(1,r.w*s),Math.max(1,r.h*s));
   if(FIELD){g.fillStyle='#d9b84a';g.fillRect(FIELD.x*s,FIELD.y*s,Math.max(2,FIELD.w*s),Math.max(2,FIELD.h*s));}
