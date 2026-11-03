@@ -13,7 +13,7 @@ window.applyBolt=applyBolt;
 window.drawAmbProp=drawAmbProp;
 window.drawIceCracks=drawIceCracks;
 window.lakeGlints=lakeGlints;
-window.render=render;
+window.render=render;window.bldRoofBuild=bldRoofBuild;
 /* ============ ARQUITETURA POR MAPA ============
    Cada prédio tem um visual próprio: formato do telhado, material da fachada, janelas, porta, varanda e enfeites.
    O visual sai de uma tabela por mapa e por tipo de prédio, sorteada por um hash da posição do prédio (sem gastar o
@@ -206,10 +206,19 @@ function rfSnow(q,w,h,L,H,lite){
 function rfDisc(q,cx,cy,rd,col){for(let y=-rd;y<=rd;y++){const hf=Math.floor(Math.sqrt(rd*rd-y*y+.5));q(cx-hf,cy+y,hf*2+1,1,col);}}
 function rfExtras(q,w,h,L,H,snowNow){
   const used=L._blk?[L._blk.slice()]:[];let sd=0;
+  /* nada de equipamento em cima da cumeeira ou das diagonais do telhado: cada peca fica inteira numa agua so (telhados de duas aguas e de quatro aguas) */
+  const hipM=Math.floor(Math.min(w,h)/2);
+  const facet=(px,py)=>{const d=[py,h-py,px,w-px];let k=0;for(let i=1;i<4;i++)if(d[i]<d[k])k=i;return k;};
+  const facetOk=(ex,ey,ew,eh)=>{
+    if(L.shape==='hip'){const f=facet(ex,ey);return f===facet(ex+ew,ey)&&f===facet(ex,ey+eh)&&f===facet(ex+ew,ey+eh)}
+    if(L.shape==='gableH'||L.shape==='cross'||L.shape==='shed'){const rg=L._rg;if(!rg)return true;return ey+eh<rg-2||ey>rg+2;}
+    if(L.shape==='gableV'){const rg=L._rg;if(!rg)return true;return ex+ew<rg-2||ex>rg+2;}
+    return true;
+  };
   const spot=(ew,eh,y0,y1)=>{
     for(let t=0;t<8;t++){
       const ex=Math.round(5+H(40+sd*8+t)*Math.max(1,w-ew-10)),ey=Math.round(y0+H(44+sd*8+t)*Math.max(1,y1-eh-y0));
-      if(used.every(u=>ex>u[0]+u[2]+2||ex+ew+2<u[0]||ey>u[1]+u[3]+2||ey+eh+2<u[1])){used.push([ex,ey,ew,eh]);return [ex,ey];}
+      if(facetOk(ex,ey,ew,eh)&&used.every(u=>ex>u[0]+u[2]+2||ex+ew+2<u[0]||ey>u[1]+u[3]+2||ey+eh+2<u[1])){used.push([ex,ey,ew,eh]);return [ex,ey];}
     }
     return null;
   };
@@ -1128,6 +1137,24 @@ function render(){
         else if(v<52)R(px+6,py+8,4,2,'#5a9a4a');
       }
       ctx.restore();
+    }
+    for(const q of cityPaths){   // caminhos de pedra do portao ate a porta
+      if(q.x>vx1||q.x+q.w<vx0||q.y>vy1||q.y+q.h<vy0)continue;
+      R(q.x,q.y,q.w,q.h,'#b4afa2');
+      for(let yy=q.y+4;yy<q.y+q.h;yy+=5)R(q.x,yy,q.w,1,'#9a958a');
+      R(q.x,q.y,1,q.h,'#c8c4b8');R(q.x+q.w-1,q.y,1,q.h,'#8c887e');
+    }
+    for(const d of cityDecor){
+      if(d.x>vx1+10||d.x<vx0-10||d.y>vy1+10||d.y<vy0-12)continue;
+      if(d.t==='bush'){
+        const c=[['#2d6428','#3f8a38','#58a84a'],['#2a5c30','#3a7a42','#52964f'],['#35682a','#4a8f3a','#76b24c']][d.c%3];
+        R(d.x-5,d.y-1,10,5,'rgba(0,0,0,.22)');R(d.x-5,d.y-4,10,6,c[0]);R(d.x-4,d.y-6,8,5,c[1]);R(d.x-3,d.y-6,3,2,c[2]);R(d.x+1,d.y-3,2,2,c[2]);
+      }else if(d.t==='flower'){
+        const c=['#e8607a','#f0d048','#f4f0f4','#b078d8'][d.c%4];
+        R(d.x,d.y,1,3,'#3a7a30');R(d.x-1,d.y-2,3,2,c);R(d.x,d.y-3,1,1,'#f4d870');
+      }else{   // caixa de correio
+        R(d.x,d.y-2,2,8,'#6a4a2a');R(d.x-3,d.y-7,8,5,['#3a5a9a','#a83a30','#3a3a40'][d.c%3]);R(d.x-3,d.y-7,8,1,'rgba(255,255,255,.3)');R(d.x+4,d.y-9,1,4,'#d03a30');R(d.x-2,d.y-4,1,1,'#f0f0e0');
+      }
     }
   }
   for(const l of lakes){

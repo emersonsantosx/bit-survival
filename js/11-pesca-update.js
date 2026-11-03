@@ -1266,7 +1266,7 @@ function updateHud(force){
   else if((P._scap||100)<65){st='FRACO';stk='stam';}
   if(!st&&MP.active&&MP.isHost&&MP.guestAway)st='CONVIDADO OFFLINE';
   const stat=$('stat');if(stat){stat.textContent=st;stat.style.opacity=st?'1':'0';stat.className=stk?'s-'+stk:'';} // a cor do aviso segue a cor da barra correspondente
-  const PICK_ICON={ARAR:'c_hand',PLANTAR:'c_hand',COLHER:'c_hand',REGAR:'drop',FECHAR:'c_door',PORTA:'c_door',ABRIR:'c_chest',PEGAR:'c_hand','ÁGUA':'drop',ASSAR:'c_flame',ENTRAR:'c_door',DORMIR:'c_bed',LEVANTAR:'c_bed'};
+  const PICK_ICON={ARAR:'c_hand',PLANTAR:'c_hand',COLHER:'c_hand',REGAR:'drop',FECHAR:'c_door',PORTA:'c_door','PORTÃO':'c_door',ABRIR:'c_chest',PEGAR:'c_hand','ÁGUA':'drop',ASSAR:'c_flame',ENTRAR:'c_door',DORMIR:'c_bed',LEVANTAR:'c_bed'};
   {const at=$('atk'),want=P.hold?'c_eat':'c_atk';
    if(at&&at.dataset.ic!==want){at.dataset.ic=want;at.setAttribute('aria-label',P.hold?'Comer':'Atacar');at.innerHTML=pxIcon(want,4);}}
   let canInteract=false,btnText='PEGAR';
@@ -1277,6 +1277,7 @@ function updateHud(force){
   if(TG&&TG.k==='tap'){btnText='ÁGUA';}
   else if(TG&&TG.k==='chest'){btnText='ABRIR';}
   else if(TG&&TG.k==='door'){btnText=TG.dr.open?'FECHAR':'PORTA';}
+  else if(TG&&TG.k==='fgate'){btnText=TG.f.o?'FECHAR':'PORTÃO';}
   else if(TG&&TG.k==='plot'){btnText=TG.act;}
   else if(TG&&TG.k==='veh'){if(TG.v.looted)btnText='ENTRAR';}
   if(!TG&&nearestCactus()){canInteract=true;btnText='ÁGUA';}
@@ -1286,7 +1287,7 @@ function updateHud(force){
   {const hb=$('hoe');if(hb)hb.classList.toggle('hide',!((P.weapon==='hoe'||P.weapon==='fence')&&!P.inVehicle&&!P.dead&&!P.sleeping));}
   {const hb=$('hoe'),want=P.weapon==='fence'?'fence':'hoe';if(hb&&hb.dataset.ic!==want){hb.dataset.ic=want;hb.setAttribute('aria-label',want==='fence'?'Construir cerca':'Arar a terra');hb.innerHTML=pxIcon(want,4);}}   // botao de construir: ARAR com a enxada, CERCA com a cerca
   const pick_=$('pick');
-  if(pick_){if(pick_.dataset.st!==btnText){pick_.dataset.st=btnText;pick_.setAttribute('aria-label',btnText==='ABRIR'?'Abrir baú':btnText==='ÁGUA'?'Beber água':btnText==='ASSAR'?'Assar':btnText==='ENTRAR'?'Entrar':btnText==='FECHAR'?'Fechar porta':btnText==='PORTA'?'Abrir porta':btnText==='DORMIR'?'Dormir':btnText==='LEVANTAR'?'Levantar':'Pegar');if(plotAria[btnText])pick_.setAttribute('aria-label',plotAria[btnText]);pick_.innerHTML=pxIcon(PICK_ICON[btnText]||'c_hand',3);}
+  if(pick_){if(pick_.dataset.st!==btnText){pick_.dataset.st=btnText;pick_.setAttribute('aria-label',btnText==='ABRIR'?'Abrir baú':btnText==='ÁGUA'?'Beber água':btnText==='ASSAR'?'Assar':btnText==='ENTRAR'?'Entrar':btnText==='FECHAR'?'Fechar porta':btnText==='PORTA'?'Abrir porta':btnText==='PORTÃO'?'Abrir portão':btnText==='DORMIR'?'Dormir':btnText==='LEVANTAR'?'Levantar':'Pegar');if(plotAria[btnText])pick_.setAttribute('aria-label',plotAria[btnText]);pick_.innerHTML=pxIcon(PICK_ICON[btnText]||'c_hand',3);}
     pick_.classList.toggle('hot',canInteract);}
 }
 

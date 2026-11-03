@@ -3,7 +3,8 @@
    então nenhuma rua atravessa casa. Prédios ficam em fileiras com vão mínimo para passar a pé,
    e as portas (sempre no lado sul) abrem para um vão livre. */
 /* gramados da cidade (pracas, parques e lotes vazios): desenhados com grama e os unicos lugares onde da para arar. Guardados sem sortear nada. */
-let cityGardens=[],cityYards=[];   // cityYards: terrenos cercados das casas (carros e itens nao nascem em cima)
+let cityGardens=[],cityYards=[],cityPaths=[],cityDecor=[];   // cityYards: terrenos cercados das casas (carros e itens nao nascem em cima)
+function onCityPath(x,y){for(const g of cityPaths)if(x>g.x-1&&x<g.x+g.w+1&&y>g.y-1&&y<g.y+g.h+1)return true;return false;}
 function inCityGarden(x,y){for(const g of cityGardens)if(x>g.x&&x<g.x+g.w&&y>g.y&&y<g.y+g.h)return true;return false;}
 function onCityRoad(x,y,m){
   for(const r of roads){ if(x>r.x-m&&x<r.x+r.w+m&&y>r.y-m&&y<r.y+r.h+m) return true; }
@@ -158,6 +159,20 @@ function cityHouseFence(h,b){
   const gc=Math.min(X1-1,Math.max(X0,Math.floor((h.doorX+h.door/2)/16)));
   const g=L.find(q=>q[2]===0&&q[1]===Y1&&q[0]===gc);if(g)g[3]=1;   // portinha em frente da porta (lado sul)
   fenceCityAdd(L);cityYards.push({x:X0*16-6,y:Y0*16-6,w:(X1-X0)*16+12,h:(Y1-Y0)*16+12});
+  /* gramado em volta da casa (quatro faixas, nunca por baixo dela), caminho do portao ate a porta, arbustos, flores e caixa de correio.
+     Tudo por hash da posicao: nao sorteia nada. */
+  const x0=X0*16,y0=Y0*16,x1=X1*16,y1=Y1*16,hx=h.x,hy=h.y,hx1=h.x+h.w,hy1=h.y+h.h;
+  const lawn=(x,y,w,hh)=>{if(w>2&&hh>2)cityGardens.push({x,y,w,h:hh});};
+  lawn(x0,y0,x1-x0,hy-y0);lawn(x0,hy1,x1-x0,y1-hy1);lawn(x0,hy,hx-x0,h.h);lawn(hx1,hy,x1-hx1,h.h);
+  const gx=gc*16+8,dc=Math.round(h.doorX+h.door/2),py0=hy1+5;
+  cityPaths.push({x:gx-6,y:py0,w:12,h:y1-py0});
+  if(Math.abs(gx-dc)>3)cityPaths.push({x:Math.min(gx,dc)-6,y:py0,w:Math.abs(gx-dc)+12,h:10});
+  const hh=k=>(((h.x*73856093)^(h.y*19349663)^(k*83492791))>>>0)%1000/1000;
+  let k=0;
+  for(let bx=x0+12;bx<x1-8;bx+=20,k++){if(Math.abs(bx-gx)<16||hh(k)<.3)continue;cityDecor.push({x:bx,y:y1-6,t:'bush',c:Math.floor(hh(k+50)*3)});}
+  for(let by=hy+14;by<hy1-8;by+=26,k++){if(hh(k)<.45)continue;cityDecor.push({x:x0+7,y:by,t:'bush',c:Math.floor(hh(k+50)*3)});if(hh(k+9)<.7)cityDecor.push({x:x1-7,y:by,t:'bush',c:Math.floor(hh(k+60)*3)});}
+  for(let i=0;i<5;i++){const fx=Math.round(hx+6+hh(70+i)*(h.w-12)),fy=hy1+7+Math.floor(hh(80+i)*8);if(cityPaths.some(q=>fx>q.x-3&&fx<q.x+q.w+3&&fy>q.y-3&&fy<q.y+q.h+3))continue;cityDecor.push({x:fx,y:fy,t:'flower',c:Math.floor(hh(90+i)*4)});}
+  cityDecor.push({x:(gc+1)*16+10,y:y1+7,t:'mail',c:Math.floor(hh(99)*3)});
 }
 function cityFree(x,y,hw,hh){
   for(const q of cityYards) if(x+hw>q.x&&x-hw<q.x+q.w&&y+hh>q.y&&y-hh<q.y+q.h) return false;
