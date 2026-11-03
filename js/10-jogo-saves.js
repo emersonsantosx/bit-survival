@@ -366,7 +366,8 @@ function weaponList(){
   return l;
 }
 /* ferramentas de construcao (enxada, cerca, portao): nao entram no arsenal das armas, tem botao proprio na HUD */
-const BUILD_TOOLS=['hoe','fence','gate'];
+const BUILD_TOOLS=['hoe','fence','gate','wall','door'];
+const FENCE_ICON={fence:'fence',gate:'gate',wall:'wall',door:'door'};   // ferramentas que usam a borda da grade (modulo 19-cerca)
 function toolList(){return Array.isArray(P?.tools)?P.tools.filter(k=>BUILD_TOOLS.includes(k)):[];}
 function addTool(key){
   if(!P||!BUILD_TOOLS.includes(key))return;
@@ -397,7 +398,7 @@ function cycleWeapon(){
   const i=l.indexOf(P.weapon);P.weapon=l[(Math.max(-1,i)+1)%l.length];
   beep(300,.05,'square',.04);updateWeaponHud();     // o botão de trocar arma já mostra a arma: sem aviso no topo
 }
-const WEAPON_ICON={hoe:'hoe',fence:'fence',gate:'gate',fists:'fists',bat:'bat',axe:'axe',pickaxe:'pickaxe',katana:'katana',spear:'spear',bow:'bow',pistol:'pistol',smg:'smg',shotgun:'shotgun',rifle:'rifle',fishingrod:'rod'};
+const WEAPON_ICON={hoe:'hoe',fence:'fence',gate:'gate',wall:'wall',door:'door',fists:'fists',bat:'bat',axe:'axe',pickaxe:'pickaxe',katana:'katana',spear:'spear',bow:'bow',pistol:'pistol',smg:'smg',shotgun:'shotgun',rifle:'rifle',fishingrod:'rod'};
 let weaponWheelOpen=false, weaponWheelOpenedAt=0;
 function updateWeaponHud(){const el=$('wpn'),sw=$('swap');if(el)el._sig=null;if(sw)sw._sig=null;}   // o HUD redesenha a arma no próximo quadro
 function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
@@ -800,7 +801,7 @@ function pickup(){
     if(P.pack){toast('Você já tem uma mochila'+(MP.active?': deixe pro parceiro':''));return;}
     P.pack=true;buildInv();toast('Mochila equipada! Agora você carrega 12 itens');
   }
-  else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='katana'||t==='spear'||t==='fishingrod'||t==='hoe'||t==='fence'||t==='gate'){
+  else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='katana'||t==='spear'||t==='fishingrod'||BUILD_TOOLS.includes(t)){
     if((P.meleeWeapons||[]).includes(t) || P.melee===t || toolList().includes(t)){
       toast('Você já tem '+ITEMS[t].n+(MP.active?': deixe pro parceiro':'')); return;
     }

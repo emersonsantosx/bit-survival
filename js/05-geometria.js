@@ -481,7 +481,7 @@ function wallBlockerAt(x1,y1,x2,y2){
   }
   return null;
 }
-function wallBlocks(x1,y1,x2,y2){ return wallBlockerAt(x1,y1,x2,y2)!==null; }
+function wallBlocks(x1,y1,x2,y2){ return wallBlockerAt(x1,y1,x2,y2)!==null||(window.playerWallBlocks&&playerWallBlocks(x1,y1,x2,y2)); }
 function castRay(x,y,ang,maxd){
   const cx=Math.cos(ang),cy=Math.sin(ang);
   // Finer step + larger hit radius so firearms reliably hit (esp. multiplayer guest)

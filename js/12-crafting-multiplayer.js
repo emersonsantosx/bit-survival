@@ -5,7 +5,7 @@ function craft(r){
   if(!canCraft(r)){toast('Recursos insuficientes');beep(120,.1,'square',.05);return;}
   const out=r.out;
   // Não gasta recursos para fabricar uma arma que já está no arsenal
-  if(['pickaxe','axe','katana','spear','bat','fishingrod','hoe','fence','gate'].includes(out)&&((P.meleeWeapons||[]).includes(out)||P.melee===out||toolList().includes(out))){
+  if(['pickaxe','axe','katana','spear','bat','fishingrod','hoe','fence','gate','wall','door'].includes(out)&&((P.meleeWeapons||[]).includes(out)||P.melee===out||toolList().includes(out))){
     toast('Você já tem: '+ITEMS[out].n);beep(120,.1,'square',.05);return;
   }
   if(out==='bow'&&P.firearms.bow){toast('Você já tem um arco');beep(120,.1,'square',.05);return;}
@@ -21,7 +21,7 @@ function craft(r){
     if(!tp){toast(P.inside?'Monte a barraca ao ar livre':'Sem espaço para a barraca aqui');beep(120,.1,'square',.05);return;}
     P._tp=tp;
   }
-  if(out!=='campfire'&&out!=='tent'&&out!=='greenhouse'&&!['pickaxe','axe','katana','spear','bow','arrows','bat','fishingrod','hoe','fence','gate'].includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
+  if(out!=='campfire'&&out!=='tent'&&out!=='greenhouse'&&!['pickaxe','axe','katana','spear','bow','arrows','bat','fishingrod','hoe','fence','gate','wall','door'].includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
   for(const k in r.need)removeInv(k,r.need[k]);
   if(out==='greenhouse'){
     const sp=P._gh||ghSpot();P._gh=null;
@@ -49,7 +49,7 @@ function craft(r){
     pushOut(P,P.r);
     toast('Fogueira acesa!');buildSound();boom(.3,.15,400);
     for(let i=0;i<15;i++)parts.push({x:cx,y:cy-4,vx:rnd(-30,30),vy:rnd(-70,-20),t:rnd(.5,1),c:'#ffb040'});
-  }else if(out==='pickaxe'||out==='axe'||out==='katana'||out==='spear'||out==='bat'||out==='fishingrod'||out==='hoe'||out==='fence'||out==='gate'){
+  }else if(out==='pickaxe'||out==='axe'||out==='katana'||out==='spear'||out==='bat'||out==='fishingrod'||out==='hoe'||BUILD_TOOLS.includes(out)){
     if(BUILD_TOOLS.includes(out)){addTool(out);toast('Fabricou: '+ITEMS[out].n+'! Use o botão de construção (ao lado do de pegar).');buildSound();}
     else{addMeleeWeapon(out);P.weapon=out;updateWeaponHud();
     toast(out==='fishingrod'?'Fabricou: Vara de Pesca! Mire no lago e use ATACAR.':'Fabricou: '+ITEMS[out].n+'! Arma adicionada ao arsenal.');buildSound();}
