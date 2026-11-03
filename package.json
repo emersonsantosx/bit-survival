@@ -4,10 +4,9 @@
   "private": true,
   "description": "Bit Survival: jogo de sobrevivencia 2D em pixel art (HTML, CSS e JS puros)",
   "scripts": {
-    "test": "node tests/teste-saves.js && node tests/teste-pick.js",
+    "test": "node tests/todos.js",
     "instalar-navegador": "npx playwright install chromium",
-    "test:saves": "node tests/teste-saves.js",
-    "test:pick": "node tests/teste-pick.js"
+    "test:saves": "node tests/teste-saves.js"
   },
   "devDependencies": {
     "playwright": "^1.50.0"
