@@ -409,7 +409,11 @@ function bldFacadeBuild(b,night){
   }else if(tp==='mil'){
     q(dl-1,2,dw+2,fh-2,'#2a3028');q(dl,3,dw,fh-3,'#4a5248');for(let x=0;x<dw;x+=4)q(dl+x,3,2,2,'#d0b030');q(dl+dw-4,8,2,1,'#c9a54a');
   }else{
-    q(dl-1,2,dw+2,fh-2,L.trim);q(dl,3,dw,fh-3,'#241810');q(dl,3,3,fh-3,L.door);q(dl+2,8,1,1,'#c9a54a');
+    /* porta fechada de madeira inteira: moldura clara, folha com painéis e maçaneta (a aberta vira um vão escuro, ver drawFacade) */
+    const dk=shadeCol(L.door,-.3),hw=Math.floor(dw/2);
+    q(dl-1,2,dw+2,fh-2,L.trim);q(dl,3,dw,fh-3,L.door);
+    q(dl+1,4,hw-2,3,dk);q(dl+hw+1,4,dw-hw-2,3,dk);q(dl+1,8,hw-2,fh-9,dk);q(dl+hw+1,8,dw-hw-2,fh-9,dk);
+    q(dl,3,dw,1,'rgba(255,255,255,.22)');q(dl+hw,3,1,fh-3,'rgba(0,0,0,.35)');q(dl+hw-2,fh-6,2,2,'#e0c050');
   }
   if(tp==='shop'&&L.win!=='awning'&&L.win!=='glass')q(dl-1,1,dw+2,1,L.acc);
   if(selectedMap==='city'&&bHash(b,95)<.4){   // pichações na fachada
@@ -434,7 +438,7 @@ function drawFacade(b){
   if(!b._fcd||b._fcN!==nt)bldFacadeBuild(b,nt);
   const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
   ctx.drawImage(b._fcd,b.x,b.y+b.h-13);
-  {const fd=b.doors&&b.doors[0];if(fd&&fd.open){ctx.fillStyle='#120c08';ctx.fillRect(b.doorX,b.y+b.h-10,b.door,10);if(fd.open===2){ctx.fillStyle='#6a4a2c';ctx.fillRect(b.doorX+1,b.y+b.h-4,4,2);ctx.fillRect(b.doorX+b.door-6,b.y+b.h-2,4,1);}else{ctx.fillStyle='#8a6a44';ctx.fillRect(b.doorX,b.y+b.h-10,2,10);}}}
+  {const fd=b.doors&&b.doors[0];if(fd&&fd.open){ctx.fillStyle='#0c0705';ctx.fillRect(b.doorX,b.y+b.h-10,b.door,10);ctx.fillStyle='rgba(150,100,50,.55)';ctx.fillRect(b.doorX,b.y+b.h-2,b.door,2);ctx.fillStyle='rgba(255,215,140,.16)';ctx.fillRect(b.doorX+2,b.y+b.h,b.door-4,3);ctx.fillStyle='#000';ctx.fillRect(b.doorX-1,b.y+b.h-10,1,10);ctx.fillRect(b.doorX+b.door,b.y+b.h-10,1,10);if(fd.open===2){ctx.fillStyle='#6a4a2c';ctx.fillRect(b.doorX+1,b.y+b.h-4,4,2);ctx.fillRect(b.doorX+b.door-6,b.y+b.h-2,4,1);}else{ctx.fillStyle='#8a6a44';ctx.fillRect(b.doorX,b.y+b.h-10,3,10);ctx.fillStyle='#a88458';ctx.fillRect(b.doorX,b.y+b.h-10,1,10);ctx.fillStyle='#e0c050';ctx.fillRect(b.doorX+1,b.y+b.h-5,1,2);}}}
   ctx.imageSmoothingEnabled=sm;
 }
 /* ============ ILUMINAÇÃO v2 ============
@@ -1040,7 +1044,7 @@ function render(){
       if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
     }
     for(const an of animals)if(!an.dead&&an.x>=b.x&&an.x<=b.x+b.w&&an.y>=b.y&&an.y<=b.y+b.h&&seeIn(b,an.x,an.y))drawAnimal(an);
-    if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.hold?null:P.weapon,hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
+    if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
     for(const z of zombies)if(!z.dead&&z.x>=b.x&&z.x<=b.x+b.w&&z.y>=b.y&&z.y<=b.y+b.h&&seeIn(b,z.x,z.y)){
       human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,zv:z.si|0,moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,yeti:z.kind===9,bloater:z.bloater||z.kind===7});
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
@@ -1270,7 +1274,7 @@ function render(){
   for(const c of campfires)if(c.x>vx0&&c.x<vx1&&c.y>vy0&&c.y<vy1)list.push({y:c.y,k:4,o:c});
   for(const p of plotsInView(vx0,vx1,vy0,vy1))if(p.c)list.push({y:p.cy*16+15,k:13,o:p});
   for(const f of fencesInView(vx0,vx1,vy0,vy1))list.push({y:fenceDepth(f),k:15,o:f});
-  if(P&&(P.weapon==='fence'||P.weapon==='gate'))list.push({y:1e9,k:16,o:null});   // fantasma da cerca por cima de tudo
+  if(P&&(P.tool==='fence'||P.tool==='gate'))list.push({y:1e9,k:16,o:null});   // fantasma da cerca por cima de tudo
   for(const t of tents)if(t.x>vx0-30&&t.x<vx1+30&&t.y>vy0&&t.y<vy1+30)list.push({y:t.y,k:9,o:t});
   for(const g of ghList())if(g.x+48>vx0&&g.x<vx1&&g.y+48>vy0-10&&g.y<vy1+10)list.push({y:g.y+48,k:14,o:g});
   for(const z of zombies)if(!z.dead&&z.x>vx0&&z.x<vx1&&z.y>vy0&&z.y<vy1)list.push({y:z.y,k:1,o:z});
@@ -1320,7 +1324,7 @@ function render(){
         if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
       }
     }else{
-      if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.hold?null:P.weapon,hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
+      if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
     }
   }
   for(const b of blds)if(vis(b)&&b.roofA>.02){drawRoof(b);bldTopFx(b);}
