@@ -1,6 +1,6 @@
 /* ============ CERCA E PORTAO (estilo Minecraft: pecas separadas, bate para desmontar, nada de zumbi quebrando) ============
    Peca = pedaco de 16 px na borda entre casas da grade: {x,y,d,g,o}. d='h' (horizontal, na linha y, coluna x) ou 'v' (vertical, na linha x, fileira y).
-   g=0 cerca, g=1 portao (o=1 aberto). Ferramenta Cerca poe cerca (1 madeira); ferramenta Portao poe portao (2 madeiras) ou troca uma cerca por ele.
+   g=0 cerca, g=1 portao (o=1 aberto). Ferramenta Cerca poe cerca (1 madeira rende 2 pecas); ferramenta Portao poe portao (1 madeira) ou troca uma cerca por ele.
    Quem anda bate na peca com qualquer arma para desmontar (machado e mais rapido) e recupera a madeira. Zumbi nao quebra nada.
    Tambem da para quebrar alguns objetos do mapa (bancos, caixotes, toras, placas...), menos predios, carros e coisas fundamentais.
    Este arquivo roda dentro de uma funcao propria: so os nomes da lista no fim ficam visiveis para o resto do jogo. */
@@ -31,26 +31,28 @@ function edgeBad(e){   // motivo se NAO der para por cerca ali; null se der
 }
 /* o que o botao faz na borda da frente: FENCE poe cerca, GATE poe portao, REPLACE troca a cerca por portao */
 function fenceIntent(){
-  const e=frontEdge(),f=fenceAt(e.x,e.y,e.d),gateTool=P.weapon==='gate',cost=gateTool?2:1;
+  const e=frontEdge(),f=fenceAt(e.x,e.y,e.d),gateTool=P.tool==='gate',cost=1;   // portao: 1 madeira; cerca: 1 madeira rende 2 pecas
+  const lack=gateTool?countInv('wood')<1:!(P._fcred>0)&&countInv('wood')<1;
   if(f){
     if(f.s)return {e,act:'FIXED',bad:'Essa cerca é da cidade: bata nela para desmontar'};
-    if(gateTool&&!f.g)return {e,act:'REPLACE',cost,bad:countInv('wood')<cost?'Falta madeira':null};
+    if(gateTool&&!f.g)return {e,act:'REPLACE',cost,bad:countInv('wood')<1?'Falta madeira':null};
     return {e,act:'FIXED',bad:f.g?'Já tem um portão aqui (bata para desmontar)':'Já tem uma cerca aqui (bata para desmontar)'};
   }
-  const bad=fences.filter(q=>!q.s).length>=FENCE_MAX?'Cercas demais':countInv('wood')<cost?'Falta madeira':edgeBad(e);
+  const bad=fences.filter(q=>!q.s).length>=FENCE_MAX?'Cercas demais':lack?'Falta madeira':edgeBad(e);
   return {e,act:gateTool?'GATE':'FENCE',cost,bad};
 }
 function send(f,g){if(MP.active)sendEvt('fenceSet',{x:f.x,y:f.y,d:f.d,g,o:f.o?1:0});}
 function fenceBuild(quiet){
-  if(!P||P.dead||P.inVehicle||P.inside||(P.weapon!=='fence'&&P.weapon!=='gate'))return;
+  if(!P||P.dead||P.inVehicle||P.inside||(P.tool!=='fence'&&P.tool!=='gate'))return;
   const it=fenceIntent(),e=it.e;
   if(it.bad){if(!quiet){toast(it.bad);beep(130,.08,'square',.04);}return;}
   const m=mid(e);
   if(it.act==='REPLACE'){
-    removeInv('wood',it.cost);const f=fenceAt(e.x,e.y,e.d);f.g=1;f.o=0;f.hp=undefined;send(f,1);addItem('wood');   // a cerca trocada devolve 1 madeira
+    removeInv('wood',1);const f=fenceAt(e.x,e.y,e.d);f.g=1;f.o=0;f.hp=undefined;send(f,1);
     beep(260,.07,'triangle',.05,60);return;
   }
-  removeInv('wood',it.cost);const f={x:e.x,y:e.y,d:e.d,g:it.act==='GATE'?1:0,o:0};fences.push(f);fmap.set(fkey(f.x,f.y,f.d),f);send(f,f.g);
+  if(it.act==='GATE')removeInv('wood',1);else{if(!(P._fcred>0)){removeInv('wood',1);P._fcred=2;}P._fcred--;}
+  const f={x:e.x,y:e.y,d:e.d,g:it.act==='GATE'?1:0,o:0};fences.push(f);fmap.set(fkey(f.x,f.y,f.d),f);send(f,f.g);
   beep(200,.06,'triangle',.05,-40);for(let i=0;i<4;i++)parts.push({x:m.x+rnd(-5,5),y:m.y+rnd(-2,2),vx:rnd(-12,12),vy:rnd(-24,-6),t:.3,c:'#e8e4d8'});
 }
 
@@ -119,7 +121,7 @@ function structHit(st,w){
   if(o.hp>0)return;
   const key=st.kind==='f'?fk(o):dk(o);
   let wood=0,nm='';
-  if(st.kind==='f'){wood=o.g?2:1;nm=o.g?'Portão':'Cerca';}
+  if(st.kind==='f'){wood=o.g?1:((P._fbk=(P._fbk||0)+1)%2===0?1:0);nm=o.g?'Portão':'Cerca';}   // cerca: 1 madeira a cada 2 desmontadas (custou meia madeira)
   else{const b=BREAK[o.type];wood=rint(b.wood[0],b.wood[1]);nm=b.n;}
   removeKey(key);if(st.kind==='d'||o.s)broken.add(key);
   if(MP.active)sendEvt('structBreak',{k:key});
@@ -179,7 +181,7 @@ function drawFence(f){
 }
 /* fantasma das ferramentas Cerca e Portao: verde = poe, azul = troca a cerca por portao, vermelho = nao pode */
 function drawFenceGhost(){
-  if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||(P.weapon!=='fence'&&P.weapon!=='gate'))return;
+  if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||(P.tool!=='fence'&&P.tool!=='gate'))return;
   const it=fenceIntent(),e=it.e,x=e.x*CELL,y=e.y*CELL,a=.6+.25*Math.sin(T*6);
   const c=it.bad?'230,90,80':it.act==='REPLACE'?'110,170,240':'110,220,110';
   ctx.fillStyle='rgba('+c+','+a.toFixed(2)+')';

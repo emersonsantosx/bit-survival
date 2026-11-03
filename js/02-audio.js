@@ -4,6 +4,10 @@ let AC=null,muted=false,nbuf=null,AOUT=null;
 function gAtk(param,v,t){param.setValueAtTime(.0001,t);param.linearRampToValueAtTime(Math.max(.0002,v),t+.004);}
 let ambientSrc=null,ambientGain=null,rainNoise=null;
 let heartbeatT=0;
+let ACT=0;                                   // fontes de som tocando agora
+const sndBusy=n=>ACT>(n||60);                // muita coisa tocando: sons secundarios esperam
+const _sndT={};
+function sndThrottle(key,ms){const t=performance.now();if(t-(_sndT[key]||-1e9)<ms)return false;_sndT[key]=t;return true;}   // true = pode tocar
 function aud(){
   try{
     if(!AC){
@@ -11,6 +15,10 @@ function aud(){
       /* limitador geral: vários sons ao mesmo tempo somavam acima do máximo e estalavam (clipping) */
       const lim=AC.createDynamicsCompressor();
       lim.threshold.value=-14;lim.knee.value=10;lim.ratio.value=12;lim.attack.value=.002;lim.release.value=.18;
+      /* conta as fontes de som ativas: com muitos zumbis apanhando ao mesmo tempo os sons se empilhavam, estouravam o limite e davam glitch */
+      {const co=AC.createOscillator.bind(AC),cb=AC.createBufferSource.bind(AC);
+       AC.createOscillator=()=>{const o=co();ACT++;o.addEventListener('ended',()=>{ACT--;});return o;};
+       AC.createBufferSource=()=>{const o=cb();ACT++;o.addEventListener('ended',()=>{ACT--;});return o;};}
       const mg=AC.createGain();mg.gain.value=.9;
       lim.connect(mg);mg.connect(AC.destination);AOUT=lim;
       const n=Math.floor(AC.sampleRate*0.3);
@@ -238,6 +246,7 @@ function chopStone(){
 }
 function hitConfirm(){
   // Feedback de acerto — clique metálico curto
+  if(sndBusy(70)||!sndThrottle('hitConfirm',70))return;
   beep(880,.04,'square',.04, -200);
   beep(420,.06,'triangle',.035);
 }
@@ -251,7 +260,7 @@ function animalGrowl(aggro){
   else beep(220,.12,'triangle',.03,-40);
 }
 function hitFlesh(){
-  if(!AC||!nbuf)return;
+  if(!AC||!nbuf||sndBusy(70)||!sndThrottle('hitFlesh',45))return;
   const vol=volFor('sfx');if(vol<=0)return;
   try{
     const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
@@ -266,7 +275,7 @@ function hitFlesh(){
    voice(): sintetizador simples (tom + vibrato + tremolo + ruido filtrado) com volume e posicao (esq/dir) */
 const VOICE_BOOST=4; // celular quase nao reproduz graves: vozes mais fortes + harmonicos
 function voice(o){
-  if(!AC||!nbuf)return;
+  if(!AC||!nbuf||sndBusy(56))return;
   const vol=volFor('sfx')*(o.gain==null?1:o.gain)*VOICE_BOOST;if(vol<=0.002)return;
   const reps=o.rep||1;
   for(let k=0;k<reps;k++){
@@ -338,6 +347,7 @@ function creatureGain(x,y,range){
   return {gain:g,pan:Math.max(-.9,Math.min(.9,(x-P.x)/180))};
 }
 function zombieVoice(z,act){
+  if(act!=='idle'&&!sndThrottle('zv_'+act,act==='attack'?70:90))return;   // varios zumbis levando tiro no mesmo instante: uma voz so
   const sp=creatureGain(z.x,z.y,380);if(!sp||sp.gain<.05)return;
   const b=ZVB[z.kind|0]||ZVB[0],o=Object.assign({},b,{gain:sp.gain,pan:sp.pan});
   if(act==='attack'){if(o.f0){o.f0*=1.35;o.f1*=1.1;}o.dur*=.5;o.v*=1.5;}
@@ -499,18 +509,16 @@ function heartbeat(){
   if(!AC)return;
   const vol=volFor('sfx');if(vol<=0)return;
   try{
-    const o=AC.createOscillator(),g=AC.createGain();
-    o.type='sine';o.frequency.value=55;
-    g.gain.setValueAtTime(.0001,AC.currentTime);
-    g.gain.linearRampToValueAtTime(.14*vol,AC.currentTime+.02);
-    g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.22);
-    o.connect(g);g.connect(AOUT);o.start();o.stop(AC.currentTime+.25);
-    const o2=AC.createOscillator(),g2=AC.createGain();
-    o2.type='sine';o2.frequency.value=50;
-    g2.gain.setValueAtTime(.0001,AC.currentTime+.16);
-    g2.gain.linearRampToValueAtTime(.1*vol,AC.currentTime+.18);
-    g2.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.4);
-    o2.connect(g2);g2.connect(AOUT);o2.start();o2.stop(AC.currentTime+.42);
+    const t=AC.currentTime;
+    /* "tum-tum": dois baques graves que caem de frequencia. Cada um nasce no seu proprio tempo e com ganho zero (antes o segundo tocava alto desde o inicio e cortava seco = glitch) */
+    const thump=(t0,f0,f1,v,dur)=>{
+      const o=AC.createOscillator(),g=AC.createGain();
+      o.type='sine';o.frequency.setValueAtTime(f0,t0);o.frequency.exponentialRampToValueAtTime(f1,t0+dur);
+      g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(v*vol,t0+.015);g.gain.exponentialRampToValueAtTime(.0002,t0+dur);g.gain.linearRampToValueAtTime(0,t0+dur+.02);
+      o.connect(g);g.connect(AOUT);o.start(t0);o.stop(t0+dur+.04);
+    };
+    thump(t,90,48,.17,.2);
+    thump(t+.17,80,44,.12,.22);
   }catch(e){}
 }
 function startAmbient(){

@@ -79,7 +79,7 @@ function plotCands(){
 }
 /* botao proprio da enxada: ara a casa a frente (nao disputa mais com itens, portas e camas) */
 function hoeTill(quiet){
-  if(!P||P.dead||P.inVehicle||P.inside||P.weapon!=='hoe')return;
+  if(!P||P.dead||P.inVehicle||P.inside||P.tool!=='hoe')return;
   const f=frontCell();
   if(plotAt(f.cx,f.cy)){if(!quiet)toast('Essa terra já está arada');return;}
   if(plots.length>=PLOT_MAX){if(!quiet)toast('Terra arada demais: plante ou espere voltar ao normal');return;}
@@ -134,7 +134,7 @@ function drawPlots(vx0,vx1,vy0,vy1){   // so o chao arado (as plantas entram na 
 }
 /* ---- fantasma de construcao: com a enxada na mao mostra no chao a casa que sera arada (verde = pode, vermelho = nao pode) ---- */
 function ghostFor(){
-  if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||P.weapon!=='hoe')return null;
+  if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||P.tool!=='hoe')return null;
   const f=frontCell();
   if(plotAt(f.cx,f.cy))return null;                                   // ja arada: nada a mostrar
   const bad=plots.length>=PLOT_MAX?'Terra arada demais':soilBad(f.cx*CELL+8,f.cy*CELL+8);
@@ -243,6 +243,7 @@ function ghBuild(sp){
 const plotAria={ARAR:'Arar a terra',PLANTAR:'Plantar semente',REGAR:'Regar',COLHER:'Colher'};
 
 window.ghPack=ghPack;window.ghLoad=ghLoad;window.ghRemote=ghRemote;window.ghSpot=ghSpot;window.ghBuild=ghBuild;window.drawGreenhouses=drawGreenhouses;window.drawGreenhouseFrame=drawGreenhouseFrame;window.ghList=()=>ghs;window.plotList=()=>plots;
+window.GREENHOUSE_OK=()=>selectedMap==='snow';   // estufa so onde nao da para arar ao ar livre
 window.plantTick=plantTick;window.hoeTill=hoeTill;window.ghostFor=ghostFor;window.soilBad=soilBad;window.frontCell=frontCell;window.plotCands=plotCands;window.plotDo=plotDo;window.drawPlots=drawPlots;window.plotsInView=plotsInView;window.drawPlant=drawPlant;
 window.plotsPack=plotsPack;window.plotsLoad=plotsLoad;window.plotRemote=plotRemote;window.plotsApplySnapshot=plotsApplySnapshot;window.plotAria=plotAria;
 })();

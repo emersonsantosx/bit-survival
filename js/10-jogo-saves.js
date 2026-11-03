@@ -170,6 +170,7 @@ function continueGame(n){
     P=Object.assign({x:plane.x+70,y:plane.y,r:5,hp:100,food:85,water:85,stam:100,temp:0,face:Math.PI/2,moving:false,sprint:false,exhausted:false,cd:0,swing:0,flash:0,bleed:false,dead:false,
       weapon:'fists',melee:null,meleeWeapons:[],firearms:{},ammo:0,arrows:0,inv:[],walk:0},d.P,{inside:null,inVehicle:null,dead:false});
     P.hold=null;
+    {if(!Array.isArray(P.tools))P.tools=[];for(const k of BUILD_TOOLS){if((P.meleeWeapons||[]).includes(k)){P.meleeWeapons=P.meleeWeapons.filter(q=>q!==k);if(!P.tools.includes(k))P.tools.push(k);}if(P.melee===k)P.melee=P.meleeWeapons[0]||null;if(P.weapon===k)P.weapon='fists';}if(!toolList().includes(P.tool))P.tool=null;}
     {const sw=k=>k==='sword'?'katana':k;if(Array.isArray(P.meleeWeapons))P.meleeWeapons=P.meleeWeapons.map(sw).filter((k,i,a)=>a.indexOf(k)===i);P.melee=sw(P.melee);P.weapon=sw(P.weapon);}
     if(!Array.isArray(P.inv)) P.inv=[];
     P.inv=P.inv.map(sl=>sl&&sl.t==='sword'?Object.assign({},sl,{t:'katana'}):sl).filter(sl=>sl&&ITEMS[sl.t]&&sl.n>0);
@@ -364,7 +365,26 @@ function weaponList(){
   for(const k in (P?.firearms||{}))if(P.firearms[k]&&WEAPONS[k]?.firearm&&!l.includes(k))l.push(k);
   return l;
 }
+/* ferramentas de construcao (enxada, cerca, portao): nao entram no arsenal das armas, tem botao proprio na HUD */
+const BUILD_TOOLS=['hoe','fence','gate'];
+function toolList(){return Array.isArray(P?.tools)?P.tools.filter(k=>BUILD_TOOLS.includes(k)):[];}
+function addTool(key){
+  if(!P||!BUILD_TOOLS.includes(key))return;
+  if(!Array.isArray(P.tools))P.tools=[];
+  if(!P.tools.includes(key))P.tools.push(key);
+  P.tool=key;if(P.hold)putAwayHold(true);
+}
+function cycleTool(){
+  if(state!=='play'||!P||P.dead)return;
+  const l=toolList();if(!l.length)return;
+  if(P.hold)putAwayHold(true);
+  const i=P.tool?l.indexOf(P.tool):-1;
+  P.tool=i+1<l.length?l[i+1]:null;   // none -> t1 -> t2 -> ... -> none (volta as armas)
+  beep(P.tool?360:260,.06,'square',.045);
+  if(P.tool)toast('Construção: '+ITEMS[P.tool].n);else toast('Construção guardada');
+}
 function addMeleeWeapon(key){
+  if(BUILD_TOOLS.includes(key)){addTool(key);return;}
   if(!P||!WEAPONS[key]?.melee||key==='fists')return;
   if(!Array.isArray(P.meleeWeapons))P.meleeWeapons=[];
   if(!P.meleeWeapons.includes(key))P.meleeWeapons.push(key);
@@ -781,7 +801,7 @@ function pickup(){
     P.pack=true;buildInv();toast('Mochila equipada! Agora você carrega 12 itens');
   }
   else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='katana'||t==='spear'||t==='fishingrod'||t==='hoe'||t==='fence'||t==='gate'){
-    if((P.meleeWeapons||[]).includes(t) || P.melee===t){
+    if((P.meleeWeapons||[]).includes(t) || P.melee===t || toolList().includes(t)){
       toast('Você já tem '+ITEMS[t].n+(MP.active?': deixe pro parceiro':'')); return;
     }
     addMeleeWeapon(t);P.weapon=t;updateWeaponHud();toast('Pegou: '+ITEMS[t].n);

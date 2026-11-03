@@ -5,11 +5,12 @@ function craft(r){
   if(!canCraft(r)){toast('Recursos insuficientes');beep(120,.1,'square',.05);return;}
   const out=r.out;
   // Não gasta recursos para fabricar uma arma que já está no arsenal
-  if(['pickaxe','axe','katana','spear','bat','fishingrod','hoe','fence','gate'].includes(out)&&((P.meleeWeapons||[]).includes(out)||P.melee===out)){
+  if(['pickaxe','axe','katana','spear','bat','fishingrod','hoe','fence','gate'].includes(out)&&((P.meleeWeapons||[]).includes(out)||P.melee===out||toolList().includes(out))){
     toast('Você já tem: '+ITEMS[out].n);beep(120,.1,'square',.05);return;
   }
   if(out==='bow'&&P.firearms.bow){toast('Você já tem um arco');beep(120,.1,'square',.05);return;}
   if(out==='backpack'&&P.pack){toast('Você já tem uma mochila');beep(120,.1,'square',.05);return;}
+  if(out==='greenhouse'&&!GREENHOUSE_OK()){toast('A estufa só é necessária no mapa de neve');beep(120,.1,'square',.05);return;}
   if(out==='greenhouse'){
     const sp=ghSpot();
     if(!sp){toast(P.inside?'Monte a estufa ao ar livre':'Sem espaço livre para a estufa aqui');beep(120,.1,'square',.05);return;}
@@ -49,8 +50,9 @@ function craft(r){
     toast('Fogueira acesa!');buildSound();boom(.3,.15,400);
     for(let i=0;i<15;i++)parts.push({x:cx,y:cy-4,vx:rnd(-30,30),vy:rnd(-70,-20),t:rnd(.5,1),c:'#ffb040'});
   }else if(out==='pickaxe'||out==='axe'||out==='katana'||out==='spear'||out==='bat'||out==='fishingrod'||out==='hoe'||out==='fence'||out==='gate'){
-    addMeleeWeapon(out);P.weapon=out;updateWeaponHud();
-    toast(out==='fishingrod'?'Fabricou: Vara de Pesca! Mire no lago e use ATACAR.':'Fabricou: '+ITEMS[out].n+'! Arma adicionada ao arsenal.');buildSound();
+    if(BUILD_TOOLS.includes(out)){addTool(out);toast('Fabricou: '+ITEMS[out].n+'! Use o botão de construção (ao lado do de pegar).');buildSound();}
+    else{addMeleeWeapon(out);P.weapon=out;updateWeaponHud();
+    toast(out==='fishingrod'?'Fabricou: Vara de Pesca! Mire no lago e use ATACAR.':'Fabricou: '+ITEMS[out].n+'! Arma adicionada ao arsenal.');buildSound();}
   }else if(out==='bow'){
     if(P.firearms.bow){ toast('Você já tem um arco'); }
     else { P.firearms.bow=true; P.arrows=(P.arrows||0)+6; P.weapon='bow'; updateWeaponHud(); toast('Fabricou: Arco (+6 flechas)'); }
@@ -77,13 +79,14 @@ function refreshCraft(){
   for(const r of RECIPES){
     if(r.lake&&!mapHasLake())continue;
     if(r.once&&r.out==='backpack'&&P.pack)continue;
-    const isWeapon=['pickaxe','axe','katana','spear','bow','bat','hoe','fence','gate'].includes(r.out),category=isWeapon||r.out==='arrows'?'weapon':'utility';
+    if(r.out==='greenhouse'&&!GREENHOUSE_OK())continue;
+    const isTool=BUILD_TOOLS.includes(r.out),isWeapon=['pickaxe','axe','katana','spear','bow','bat'].includes(r.out),category=isWeapon||r.out==='arrows'?'weapon':'utility';
     if(craftFilter!=='all'&&craftFilter!==category)continue;
     const ok=canCraft(r);
     const row=document.createElement('div');
     row.className='craft-row '+(ok?'can':'no');
     const cost=Object.entries(r.need).map(([k,v])=>'<span class="cost-chip'+(countInv(k)<v?' lack':'')+'" title="'+(ITEMS[k]?.n||k)+'">'+(ITEMS[k]&&ITEMS[k].e?pxFit(ITEMS[k].e,16,14):(ITEMS[k]?.n||k))+'<b>'+v+'</b></span>').join('');
-    const icon=pxFit(isWeapon||r.out==='arrows'||r.out==='fishingrod'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'arrows':'axe')):(r.out==='bandage'?'bandage':(r.out==='backpack'?'backpack':(r.out==='tent'?'tent':(r.out==='greenhouse'?'greenhouse':'fire')))),30,24);
+    const icon=pxFit(isTool||isWeapon||r.out==='arrows'||r.out==='fishingrod'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'arrows':'axe')):(r.out==='bandage'?'bandage':(r.out==='backpack'?'backpack':(r.out==='tent'?'tent':(r.out==='greenhouse'?'greenhouse':'fire')))),30,24);
     row.innerHTML='<div class="recipe-icon">'+icon+'</div><div class="info"><div class="name">'+r.label+'</div><div class="cost">'+r.desc+'</div><div class="cost">Custo: '+(cost||'nenhum')+'</div><div class="status">'+(ok?pxIcon('check',2)+' Recursos suficientes':'Faltam recursos')+'</div></div>';
     const btn=document.createElement('button');
     btn.textContent='CRIAR';btn.disabled=!ok;
@@ -1013,7 +1016,7 @@ function packMyPlayer(){
   if(!P) return {type:'player',id:myNetId(),name:MP.playerName||'Jogador',x:0,y:0,alive:false};
   const p = {type:'player',id:myNetId(),name:MP.playerName||'Jogador',
     x:Math.round(P.x),y:Math.round(P.y),face:+P.face.toFixed(2),
-    moving:!!P.moving,sprint:!!P.sprint,weapon:P.weapon||'fists',swing:+(P.swing||0).toFixed(2),
+    moving:!!P.moving,sprint:!!P.sprint,weapon:P.tool||P.weapon||'fists',swing:+(P.swing||0).toFixed(2),
     hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle,skin:SKIN_SEL,pk:P.pack?1:0,hold:P.hold||'',fw:Object.keys(P.firearms||{}).filter(k=>P.firearms[k])};
   if(OBS.on&&!P.inside&&!P.inVehicle)p.ob=[Math.round(OBS.x),Math.round(OBS.y),OBS.glitch>0?1:0];
   if(GH.on&&GH.b)p.gh=[GH.b.x|0,GH.b.y|0,Math.round(GH.x),Math.round(GH.y),GH.kill>0?1:0];

@@ -121,6 +121,8 @@ body.nomap #mm{display:none!important}
 .btn.hot{border-color:#ffd84a;box-shadow:0 0 10px #ffd84a;color:#ffd84a}
 #atk{right:16px;bottom:22px;width:88px;height:88px;font-size:15px;background:rgba(160,30,30,.6)}
 #pick{right:118px;bottom:26px;width:64px;height:64px}
+#tools{right:190px;bottom:96px;width:52px;height:52px;border-color:#c9a54a}
+#tools.act{background:rgba(201,165,74,.45);box-shadow:0 0 8px #c9a54a}
 #hoe{right:190px;bottom:26px;width:64px;height:64px;border-color:#c9a54a}
 #run{right:28px;bottom:122px;width:64px;height:64px}
 #swap{right:100px;bottom:102px;width:58px;height:58px}

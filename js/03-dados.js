@@ -65,6 +65,7 @@ PXG.bat=pxLines(11,11,[['l',1,10,9,2,'n',1],['l',8,3,10,1,'n',1],['l',0,10,2,8,'
 PXG.axe=['......sSS..','..ssNNsSSS.','..sSNNSSSWS','..sSNNSSSWS','..ssNNSSSWS','....NNSSSWS','....NNsSSS.','....NN.sS..','....NN.....','....NN.....','....NN.....'];
 PXG.pickaxe=['..SSSSSSS..','.SWWWWWSSS.','SSS.NN..SSS','SS..NN...SS','S...NN....S','....NN.....','....NN.....','....NN.....','....NN.....','....NN.....','....NN.....'];
 PXG.hoe=pxLines(11,11,[['l',1,10,8,3,'N',1],['r',6,1,5,3,'S'],['r',6,1,5,1,'W'],['r',6,4,2,1,'s']]);
+PXG.toolbox=['....kkkk....','...k....k...','kkkkkkkkkkkk','kNNNNNNNNNNk','kNNNkkkNNNNk','kNNNNNNNNNNk','kkkkkkkkkkkk'];
 PXG.gate=['kkkkkkkkkkkk','kNkNkNkNkNkk','kNkNkNkNkNkk','kNNNNNNNNNNk','kNkNkNkNkNkk','kNkNkNkNkNkk','kkkkkkkkkkkk'];
 PXG.fence=['.k..k..k..k.','kNk.kNk.kNk.','kNkkkNkkkNkk','kNk.kNk.kNk.','kNkkkNkkkNkk','kNk.kNk.kNk.','kkk.kkk.kkk.'];
 PXG.potato=['..kNNk...','.kNnnNNk.','kNnnNnNNk','kNNnNNnNk','.kNNnNNk.','..kkNkk..'];
@@ -229,10 +230,10 @@ const WEAPONS={
 const RECIPES=[
   {out:'pickaxe',  need:{wood:2,stone:2}, label:'Picareta',        desc:'Única que quebra pedras (5 golpes). Fura armadura leve (dano 3.5)' },
   {out:'axe',      need:{wood:3,stone:4}, label:'Machado',         desc:'Melhor para cortar árvores: 2 golpes, 4 a 6 madeiras. Arco acerta vários, lento (dano 5.5)' },
-  {out:'hoe',      need:{wood:3,stone:2}, label:'Enxada',          desc:'Ara a terra para plantar (fraca como arma, dano 2)' },
-  {out:'fence',     need:{wood:4},           label:'Cerca',           desc:'Equipe e use o botão de construir: põe uma cerca (1 madeira) na borda da frente. Barra a passagem. Bata nela para desmontar' },
-  {out:'gate',      need:{wood:6},           label:'Portão',          desc:'Equipe e use o botão de construir: põe um portão (2 madeiras), ou troca uma cerca por ele. Abre e fecha com o botão de interagir' },
-  {out:'greenhouse',need:{wood:8,cloth:4},  label:'Estufa',          desc:'Canteiro coberto 3x3: dá para plantar até na neve e cresce mais rápido. Monte ao ar livre' },
+  {out:'hoe',      need:{wood:3,stone:2}, label:'Enxada',          desc:'Ferramenta de construção: ara a terra para plantar' },
+  {out:'fence',     need:{wood:2},           label:'Cerca',           desc:'Ferramenta de construção: põe cerca na borda da frente (1 madeira rende 2 peças). Barra a passagem. Bata nela para desmontar' },
+  {out:'gate',      need:{wood:3},           label:'Portão',          desc:'Ferramenta de construção: põe um portão (1 madeira por peça) ou troca uma cerca por ele. Abre e fecha com o botão de interagir' },
+  {out:'greenhouse',need:{wood:8,cloth:4},  label:'Estufa',          desc:'Só no mapa de neve (onde o chão congelado não dá para arar): canteiro coberto 3x3 que cresce mais rápido. Monte ao ar livre' },
   {out:'spear',    need:{wood:4,stone:3}, label:'Lança',           desc:'Perfura em linha e ignora armadura (alcance 40)' },
   {out:'bat',      need:{wood:3},         label:'Taco',            desc:'Atordoa o zumbi, mas fraca contra blindados (dano 2.5)' },
   {out:'bow',      need:{wood:4,stone:1}, label:'Arco',            desc:'Silencioso, usa flechas (dano 8)' },
