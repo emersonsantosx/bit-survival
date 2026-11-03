@@ -47,7 +47,7 @@ function cityFillBlock(bx,by,bw,bh,zone){
   let y=y0, rows=0;
   while(y<y1-52 && rows<4){
     rows++;
-    const rowH=Math.min(rint(130,215), y1-y);
+    const rowH=Math.min(zone==='res'?rint(170,235):rint(130,215), y1-y);
     if(rowH<76) break;
     let x=x0+rint(0,12);
     while(x<x1-50){
@@ -58,7 +58,7 @@ function cityFillBlock(bx,by,bw,bh,zone){
       addBuilding(Math.round(x), Math.round(y+(rowH-h)), w, h, type); // alinhado embaixo: porta dá para o vão
       x+=w+rint(GAP,GAP+22);
     }
-    y+=rowH+(zone==='res'?rint(84,96):rint(46,58));
+    y+=rowH+(zone==='res'?rint(60,72):rint(46,58));
   }
 }
 /* Entulho/cascalho: pedras em lotes vazios e pátios industriais (fonte de pedra da cidade, longe de portas e passagens) */
@@ -148,10 +148,10 @@ function genCity(){
 /* cerquinha branca em volta de algumas casas (estilo americano), com portinha na frente da porta. So um hash da posicao: nao sorteia nada. */
 function cityHouseFence(h,b){
   if(h.type!=='house'||(((h.x*73856093)^(h.y*19349663))>>>0)%100>=55)return;
-  /* quintal: tenta o maior (2 casas de grade nas laterais e nos fundos, 3 na frente), depois menores, conforme o espaco livre.
+  /* quintal: tenta o maior (2 casas de grade nas laterais, ate 6 nos fundos, 3 na frente), depois menores, conforme o espaco livre.
      Tudo alinhado a grade de 16 px (a mesma dos canteiros), para dar para arar e plantar dentro dele. */
   let X0,Y0,X1,Y1,found=false;
-  for(const [sx,bk,fr] of [[2,2,3],[2,1,2],[1,1,2],[1,1,1]]){
+  for(const [sx,bk,fr] of [[2,6,3],[2,5,3],[2,4,3],[2,3,2],[2,2,2],[1,2,2],[1,1,1]]){
     X0=Math.floor(h.x/16)-sx;Y0=Math.floor(h.y/16)-bk;X1=Math.ceil((h.x+h.w)/16)+sx;Y1=Math.ceil((h.y+h.h)/16)+fr;
     const rx=X0*16-6,ry=Y0*16-6,rw=(X1-X0)*16+12,rh=(Y1-Y0)*16+12;
     if(X0*16<b.bx+6||Y0*16<b.by+6||X1*16>b.bx+b.bw-6||Y1*16>b.by+b.bh-6)continue;
