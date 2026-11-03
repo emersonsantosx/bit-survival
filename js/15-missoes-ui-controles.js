@@ -413,7 +413,7 @@ on('craftclose','click',closeCraft);
 /* ============ TELA DO INVENTÁRIO ============ */
 let invSel=0;
 const IDESC={
-  fence:'Cerca. Barra a passagem (a portinha deixa passar) e não quebra. Equipe e use o botão de construir: borda livre vira cerca (1 madeira), de novo vira portinha, mais uma vez tira.',hoe:'Enxada. Equipe e use o botão de arar para preparar um canteiro. Também serve como arma fraca.',potato:'Batata crua. Recupera 8 de fome, melhor assar na fogueira.',bakedpotato:'Batata assada. Recupera 28 de fome e 2 de vida.',melon:'Melancia. Recupera 10 de fome e 22 de sede.',seed_potato:'Sementes de batata. Vingam na floresta e na cidade (e em qualquer lugar numa estufa). Também vêm de comer batata.',seed_melon:'Sementes de melancia. Só vingam no deserto (ou numa estufa). Também vêm de comer melancia.',seed_corn:'Sementes de milho. Plante em um canteiro arado e regue de vez em quando. Também vêm de comer milho.',
+  fence:'Cerca. Equipe e use o botão de construir para pôr na borda da frente (1 madeira). Barra a passagem. Bata nela para desmontar e recuperar a madeira.',gate:'Portão. Equipe e use o botão de construir (2 madeiras); sobre uma cerca, troca por portão. Abre e fecha com o botão de interagir.',hoe:'Enxada. Equipe e use o botão de arar para preparar um canteiro. Também serve como arma fraca.',potato:'Batata crua. Recupera 8 de fome, melhor assar na fogueira.',bakedpotato:'Batata assada. Recupera 28 de fome e 2 de vida.',melon:'Melancia. Recupera 10 de fome e 22 de sede.',seed_potato:'Sementes de batata. Vingam na floresta e na cidade (e em qualquer lugar numa estufa). Também vêm de comer batata.',seed_melon:'Sementes de melancia. Só vingam no deserto (ou numa estufa). Também vêm de comer melancia.',seed_corn:'Sementes de milho. Plante em um canteiro arado e regue de vez em quando. Também vêm de comer milho.',
   food:'Feijão enlatado. Recupera 35 de fome.',water:'Garrafa de água. Recupera 40 de sede.',fish:'Peixe cru. Recupera 30 de fome, melhor assar na fogueira.',
   cookedfish:'Peixe assado. Recupera 55 de fome e 5 de vida.',meat:'Carne crua. Recupera 25 de fome, melhor assar na fogueira.',cookedmeat:'Carne assada. Recupera 60 de fome e 8 de vida.',turban:'Turbante do templo. Vestido, reduz o calor do deserto em cerca de um terço.',corn:'Milho do milharal. Recupera 14 de fome. Segure na mão perto da fogueira para assar.',cookedcorn:'Milho assado. Recupera 32 de fome e 3 de vida.',
   wood:'Material de crafting. Abra o crafting para usar.',stone:'Material de crafting. Abra o crafting para usar.',cloth:'Tecido. Usado para fabricar bandagem e mochila.',
@@ -566,8 +566,8 @@ holdBtn('atk',()=>{atkHeld=true;attack();},()=>{atkHeld=false;});
 holdBtn('run',()=>{sprintHeld=true;},()=>{sprintHeld=false;});
 holdBtn('pick',()=>pickup());
 let hoeRep=null;   // segurar o botao de arar repete em linha enquanto anda
-const buildNow=q=>{if(P&&P.weapon==='fence'){if(window.fenceBuild)fenceBuild(q);}else if(window.hoeTill)hoeTill(q);};
-holdBtn('hoe',()=>{buildNow(false);clearInterval(hoeRep);hoeRep=setInterval(()=>{if(P&&P.weapon==='fence'&&fenceIntent().act!=='FENCE')return;buildNow(true);},260);},()=>{clearInterval(hoeRep);hoeRep=null;});
+const buildNow=q=>{if(P&&(P.weapon==='fence'||P.weapon==='gate')){if(window.fenceBuild)fenceBuild(q);}else if(window.hoeTill)hoeTill(q);};
+holdBtn('hoe',()=>{buildNow(false);clearInterval(hoeRep);hoeRep=setInterval(()=>{if(P&&(P.weapon==='fence'||P.weapon==='gate')&&fenceIntent().act==='REPLACE')return;buildNow(true);},260);},()=>{clearInterval(hoeRep);hoeRep=null;});
 const swapBtn=$('swap');
 let swapPressTimer=null,swapPressActive=false,swapLongTriggered=false,swapPressPointer=null;
 function cancelSwapPress(){

@@ -5,7 +5,7 @@ function craft(r){
   if(!canCraft(r)){toast('Recursos insuficientes');beep(120,.1,'square',.05);return;}
   const out=r.out;
   // Não gasta recursos para fabricar uma arma que já está no arsenal
-  if(['pickaxe','axe','katana','spear','bat','fishingrod','hoe','fence'].includes(out)&&((P.meleeWeapons||[]).includes(out)||P.melee===out)){
+  if(['pickaxe','axe','katana','spear','bat','fishingrod','hoe','fence','gate'].includes(out)&&((P.meleeWeapons||[]).includes(out)||P.melee===out)){
     toast('Você já tem: '+ITEMS[out].n);beep(120,.1,'square',.05);return;
   }
   if(out==='bow'&&P.firearms.bow){toast('Você já tem um arco');beep(120,.1,'square',.05);return;}
@@ -20,7 +20,7 @@ function craft(r){
     if(!tp){toast(P.inside?'Monte a barraca ao ar livre':'Sem espaço para a barraca aqui');beep(120,.1,'square',.05);return;}
     P._tp=tp;
   }
-  if(out!=='campfire'&&out!=='tent'&&out!=='greenhouse'&&!['pickaxe','axe','katana','spear','bow','arrows','bat','fishingrod','hoe','fence'].includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
+  if(out!=='campfire'&&out!=='tent'&&out!=='greenhouse'&&!['pickaxe','axe','katana','spear','bow','arrows','bat','fishingrod','hoe','fence','gate'].includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
   for(const k in r.need)removeInv(k,r.need[k]);
   if(out==='greenhouse'){
     const sp=P._gh||ghSpot();P._gh=null;
@@ -48,7 +48,7 @@ function craft(r){
     pushOut(P,P.r);
     toast('Fogueira acesa!');buildSound();boom(.3,.15,400);
     for(let i=0;i<15;i++)parts.push({x:cx,y:cy-4,vx:rnd(-30,30),vy:rnd(-70,-20),t:rnd(.5,1),c:'#ffb040'});
-  }else if(out==='pickaxe'||out==='axe'||out==='katana'||out==='spear'||out==='bat'||out==='fishingrod'||out==='hoe'||out==='fence'){
+  }else if(out==='pickaxe'||out==='axe'||out==='katana'||out==='spear'||out==='bat'||out==='fishingrod'||out==='hoe'||out==='fence'||out==='gate'){
     addMeleeWeapon(out);P.weapon=out;updateWeaponHud();
     toast(out==='fishingrod'?'Fabricou: Vara de Pesca! Mire no lago e use ATACAR.':'Fabricou: '+ITEMS[out].n+'! Arma adicionada ao arsenal.');buildSound();
   }else if(out==='bow'){
@@ -77,7 +77,7 @@ function refreshCraft(){
   for(const r of RECIPES){
     if(r.lake&&!mapHasLake())continue;
     if(r.once&&r.out==='backpack'&&P.pack)continue;
-    const isWeapon=['pickaxe','axe','katana','spear','bow','bat','hoe','fence'].includes(r.out),category=isWeapon||r.out==='arrows'?'weapon':'utility';
+    const isWeapon=['pickaxe','axe','katana','spear','bow','bat','hoe','fence','gate'].includes(r.out),category=isWeapon||r.out==='arrows'?'weapon':'utility';
     if(craftFilter!=='all'&&craftFilter!==category)continue;
     const ok=canCraft(r);
     const row=document.createElement('div');
@@ -133,6 +133,8 @@ function handleEvt(kind, data){
     const l=lakes[data.l];if(l&&l.frozen&&Number.isFinite(data.x)&&Number.isFinite(data.y)&&!(l.holes||[]).some(h=>Math.abs(h.x-data.x)<4&&Math.abs(h.y-data.y)<4))addIceHole(l,data.x,data.y,true);
   } else if(kind==='ghAdd'){
     ghRemote(data);
+  } else if(kind==='structBreak'){
+    structRemote(data.k);
   } else if(kind==='fenceSet'){
     fenceRemote(data);
   } else if(kind==='plotSet'){
@@ -763,7 +765,7 @@ function applySnapshot(snap){
     }
     campfires = merged;
   }
-  plotsApplySnapshot(snap.plots);fenceApplySnapshot(snap.fn);if(Array.isArray(snap.gh))for(const a of snap.gh)if(Array.isArray(a))ghRemote({x:a[0],y:a[1]});
+  plotsApplySnapshot(snap.plots);if(Array.isArray(snap.br))for(const k of snap.br)structRemote(k);fenceApplySnapshot(snap.fn);if(Array.isArray(snap.gh))for(const a of snap.gh)if(Array.isArray(a))ghRemote({x:a[0],y:a[1]});
   if(Array.isArray(snap.tents)){
     let ch=false;
     for(const a of snap.tents){if(Array.isArray(a)&&isFiniteNum(a[0])&&isFiniteNum(a[1])&&!tents.some(t=>Math.abs(t.x-a[0])<10&&Math.abs(t.y-a[1])<10)){tents.push({x:a[0],y:a[1]});ch=true;}}
@@ -997,7 +999,7 @@ function packSnapshot(){
     vehicles:vPack,vfull:fullV,
     campfires:campfires.map(c=>({x:Math.round(c.x),y:Math.round(c.y),t:c.t||0,flicker:+(c.flicker||0).toFixed(2)})),
     tents:tents.map(t=>[Math.round(t.x),Math.round(t.y)]),
-    plots:plotsPack(),gh:ghPack(),fn:fencePack(),
+    plots:plotsPack(),gh:ghPack(),fn:fencePack(),br:structPack(),
     sc:SCW.on?1:0,
     bd:packBirds(),
     tg:fullV?goneList(BASE_TREES,trees):undefined,rg:fullV?goneList(BASE_ROCKS,rocks):undefined,tn:fullV?grownPack(trees):undefined,rn:fullV?grownPack(rocks):undefined,

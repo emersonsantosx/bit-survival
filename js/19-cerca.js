@@ -1,6 +1,8 @@
-/* ============ CERCA (barra quem anda, menos pela portinha; nada quebra a cerca, nem zumbi) ============
-   Peca = pedaco de 16 px na borda entre casas da grade: {x,y,d,g}. d='h' (horizontal, na linha y, coluna x) ou 'v' (vertical, na linha x, fileira y).
-   g=0 cerca, g=1 portinha. Com a ferramenta Cerca na mao: borda vazia = cerca (1 madeira), cerca = vira portinha (+1 madeira), portinha = remove (devolve 1 madeira).
+/* ============ CERCA E PORTAO (estilo Minecraft: pecas separadas, bate para desmontar, nada de zumbi quebrando) ============
+   Peca = pedaco de 16 px na borda entre casas da grade: {x,y,d,g,o}. d='h' (horizontal, na linha y, coluna x) ou 'v' (vertical, na linha x, fileira y).
+   g=0 cerca, g=1 portao (o=1 aberto). Ferramenta Cerca poe cerca (1 madeira); ferramenta Portao poe portao (2 madeiras) ou troca uma cerca por ele.
+   Quem anda bate na peca com qualquer arma para desmontar (machado e mais rapido) e recupera a madeira. Zumbi nao quebra nada.
+   Tambem da para quebrar alguns objetos do mapa (bancos, caixotes, toras, placas...), menos predios, carros e coisas fundamentais.
    Este arquivo roda dentro de uma funcao propria: so os nomes da lista no fim ficam visiveis para o resto do jogo. */
 (function(){
 const CELL=16,FENCE_MAX=400;
@@ -27,30 +29,29 @@ function edgeBad(e){   // motivo se NAO der para por cerca ali; null se der
   if(solidPoint(m.x,m.y,3))return 'Tem algo no caminho';
   return null;
 }
-/* o que o botao faz na borda da frente: 'FENCE' poe cerca, 'GATE' troca por portinha, 'REMOVE' tira a portinha */
+/* o que o botao faz na borda da frente: FENCE poe cerca, GATE poe portao, REPLACE troca a cerca por portao */
 function fenceIntent(){
-  const e=frontEdge(),f=fenceAt(e.x,e.y,e.d);
-  if(f&&f.s)return {e,act:'FIXED',bad:'Essa cerca não dá para mexer'};
-  if(f)return f.g?{e,act:'REMOVE'}:{e,act:'GATE',cost:1,bad:countInv('wood')<1?'Falta madeira':null};
-  const bad=fences.filter(q=>!q.s).length>=FENCE_MAX?'Cercas demais':countInv('wood')<1?'Falta madeira':edgeBad(e);
-  return {e,act:'FENCE',cost:1,bad};
+  const e=frontEdge(),f=fenceAt(e.x,e.y,e.d),gateTool=P.weapon==='gate',cost=gateTool?2:1;
+  if(f){
+    if(f.s)return {e,act:'FIXED',bad:'Essa cerca é da cidade: bata nela para desmontar'};
+    if(gateTool&&!f.g)return {e,act:'REPLACE',cost,bad:countInv('wood')<cost?'Falta madeira':null};
+    return {e,act:'FIXED',bad:f.g?'Já tem um portão aqui (bata para desmontar)':'Já tem uma cerca aqui (bata para desmontar)'};
+  }
+  const bad=fences.filter(q=>!q.s).length>=FENCE_MAX?'Cercas demais':countInv('wood')<cost?'Falta madeira':edgeBad(e);
+  return {e,act:gateTool?'GATE':'FENCE',cost,bad};
 }
 function send(f,g){if(MP.active)sendEvt('fenceSet',{x:f.x,y:f.y,d:f.d,g,o:f.o?1:0});}
 function fenceBuild(quiet){
-  if(!P||P.dead||P.inVehicle||P.inside||P.weapon!=='fence')return;
+  if(!P||P.dead||P.inVehicle||P.inside||(P.weapon!=='fence'&&P.weapon!=='gate'))return;
   const it=fenceIntent(),e=it.e;
   if(it.bad){if(!quiet){toast(it.bad);beep(130,.08,'square',.04);}return;}
   const m=mid(e);
-  if(it.act==='FENCE'){
-    removeInv('wood',1);const f={x:e.x,y:e.y,d:e.d,g:0};fences.push(f);fmap.set(fkey(f.x,f.y,f.d),f);send(f,0);
-    beep(200,.06,'triangle',.05,-40);for(let i=0;i<4;i++)parts.push({x:m.x+rnd(-5,5),y:m.y+rnd(-2,2),vx:rnd(-12,12),vy:rnd(-24,-6),t:.3,c:'#e8e4d8'});
-  }else if(it.act==='GATE'){
-    removeInv('wood',1);const f=fenceAt(e.x,e.y,e.d);f.g=1;send(f,1);
-    beep(260,.07,'triangle',.05,60);if(!quiet)toast('Portinha colocada. Use de novo para remover');
-  }else{
-    const f=fenceAt(e.x,e.y,e.d);fences=fences.filter(q=>q!==f);fmap.delete(fkey(f.x,f.y,f.d));send(f,-1);
-    addItem('wood');beep(150,.07,'sawtooth',.04,-30);if(!quiet)toast('Portinha removida (+1 madeira)');
+  if(it.act==='REPLACE'){
+    removeInv('wood',it.cost);const f=fenceAt(e.x,e.y,e.d);f.g=1;f.o=0;f.hp=undefined;send(f,1);addItem('wood');   // a cerca trocada devolve 1 madeira
+    beep(260,.07,'triangle',.05,60);return;
   }
+  removeInv('wood',it.cost);const f={x:e.x,y:e.y,d:e.d,g:it.act==='GATE'?1:0,o:0};fences.push(f);fmap.set(fkey(f.x,f.y,f.d),f);send(f,f.g);
+  beep(200,.06,'triangle',.05,-40);for(let i=0;i<4;i++)parts.push({x:m.x+rnd(-5,5),y:m.y+rnd(-2,2),vx:rnd(-12,12),vy:rnd(-24,-6),t:.3,c:'#e8e4d8'});
 }
 
 /* ---- portinha: abre e fecha com o botao de interagir; fechada barra como a cerca, aberta deixa passar ---- */
@@ -77,6 +78,70 @@ function fenceHit(e,r){
   const cx=Math.floor(e.x/CELL),cy=Math.floor(e.y/CELL);
   for(let i=cx-1;i<=cx+1;i++)for(let j=cy;j<=cy+1;j++){const f=fmap.get('h'+i+','+j);if(f&&!(f.g&&f.o))pushRect(e,r,{x:i*CELL-.5,y:j*CELL-1.5,w:CELL+1,h:3});}
   for(let i=cx;i<=cx+1;i++)for(let j=cy-1;j<=cy+1;j++){const f=fmap.get('v'+i+','+j);if(f&&!(f.g&&f.o))pushRect(e,r,{x:i*CELL-1.5,y:j*CELL-.5,w:3,h:CELL+1});}
+}
+
+/* ---- quebrar: bater com qualquer arma desmonta cerca, portao e alguns objetos; recupera madeira ---- */
+const BREAK={   // hp, madeira devolvida [min,max], som (w=madeira, s=metal/pedra)
+  log:{hp:4,wood:[2,2],n:'Tora'},stump:{hp:3,wood:[1,1],n:'Toco'},frozen_log:{hp:4,wood:[2,2],n:'Tora'},
+  bench:{hp:4,wood:[2,2],n:'Banco'},crate:{hp:3,wood:[1,2],n:'Caixote'},sign:{hp:2,wood:[1,1],n:'Placa'},
+  barrier:{hp:5,wood:[0,0],n:'Barreira',s:1},mailbox:{hp:3,wood:[0,0],n:'Caixa de correio',s:1},trash:{hp:2,wood:[0,0],n:'Lixeira',s:1},
+  cone:{hp:1,wood:[0,0],n:'Cone',s:1},snowman:{hp:2,wood:[0,0],n:'Boneco de neve'}
+};
+const broken=new Set();   // chaves das cercas da cidade e dos objetos do mapa ja destruidos (vai no save)
+const fk=f=>'f:'+f.d+f.x+','+f.y,dk=d=>'d:'+d.x+','+d.y+','+d.type;
+function giveWood(n,x,y){for(let i=0;i<n;i++){if(!addItem('wood')){const it={t:'wood',x:x+rnd(-5,5),y:y+rnd(-3,3)};items.push(it);if(MP.active)sendEvt('itemAdded',{t:it.t,x:it.x,y:it.y});}}}
+function structTarget(w){
+  if(!P||P.dead||P.inVehicle||P.inside)return null;
+  const reach=(w.range||18)+8;let best=null;
+  const consider=(r,o,kind)=>{
+    const px=clamp(P.x,r.x,r.x+r.w),py=clamp(P.y,r.y,r.y+r.h),d=Math.max(0,Math.hypot(P.x-px,P.y-py)-P.r);
+    if(d>reach)return;
+    if(d>3&&Math.abs(wrap(Math.atan2(py-P.y,px-P.x)-P.face))>1.35)return;   // so o que esta a frente
+    if(!best||d<best.d)best={d,o,kind,x:px,y:py};
+  };
+  const cx=Math.floor(P.x/CELL),cy=Math.floor(P.y/CELL);
+  for(let i=cx-3;i<=cx+4;i++)for(let j=cy-3;j<=cy+4;j++)for(const dd of ['h','v']){const f=fmap.get(dd+i+','+j);if(f)consider(gateRect(f),f,'f');}
+  for(const d of decorations){
+    if(!BREAK[d.type]||Math.abs(d.x-P.x)>reach+14||Math.abs(d.y-P.y)>reach+14)continue;
+    consider({x:d.x-6,y:d.y-8,w:12,h:10},d,'d');
+  }
+  return best;
+}
+function structHit(st,w){
+  const o=st.o,hp0=st.kind==='f'?3:BREAK[o.type].hp;
+  if(o.hp===undefined)o.hp=hp0;
+  o.hp-=Math.max(.5,w.chopRate||.5);
+  P.cd=w.cd;P.swing=.18;shake=2;
+  const metal=st.kind==='d'&&BREAK[o.type].s;
+  if(metal)chopStone();else chopWood();
+  for(let i=0;i<5;i++)parts.push({x:st.x,y:st.y-4,vx:rnd(-30,30),vy:rnd(-40,-5),t:.35,c:metal?'#9a9a9a':st.kind==='f'&&o.s?'#e8e4d8':'#9a6a3a'});
+  makeNoise(P.x,P.y,50);
+  if(o.hp>0)return;
+  const key=st.kind==='f'?fk(o):dk(o);
+  let wood=0,nm='';
+  if(st.kind==='f'){wood=o.g?2:1;nm=o.g?'Portão':'Cerca';}
+  else{const b=BREAK[o.type];wood=rint(b.wood[0],b.wood[1]);nm=b.n;}
+  removeKey(key);if(st.kind==='d'||o.s)broken.add(key);
+  if(MP.active)sendEvt('structBreak',{k:key});
+  giveWood(wood,st.x,st.y);
+  toast(nm+' destruído(a)'+(wood?'! +'+wood+' Madeira':''));beep(240,.14,'triangle',.08,-60);
+}
+/* tira o objeto da lista (cerca da cidade, cerca do jogador ou decoracao) */
+function removeKey(key){
+  if(key.charAt(0)==='f'){
+    const m=/^f:([hv])(-?\d+),(-?\d+)$/.exec(key);if(!m)return;
+    const f=fenceAt(+m[2],+m[3],m[1]);if(f){fences=fences.filter(q=>q!==f);fmap.delete(fkey(f.x,f.y,f.d));}
+  }else{
+    const m=/^d:(-?\d+),(-?\d+),(.+)$/.exec(key);if(!m)return;
+    const i=decorations.findIndex(d=>d.x===+m[1]&&d.y===+m[2]&&d.type===m[3]);
+    if(i>=0){decorations.splice(i,1);rebuildSolidGrid();}
+  }
+}
+function structRemote(k){if(typeof k!=='string'||k.length>60)return;broken.add(k);removeKey(k);}
+function structPack(){return [...broken].slice(0,3000);}
+function structLoad(a){   // depois de gerar o mundo e antes de carregar as cercas do jogador
+  broken.clear();
+  if(Array.isArray(a))for(const k of a)if(typeof k==='string'&&k.length<=60){broken.add(k);if(k.charAt(0)==='d'||(k.charAt(0)==='f'&&fmap.get(k.slice(2))&&fmap.get(k.slice(2)).s))removeKey(k);}
 }
 
 /* ---- desenho ---- */
@@ -112,11 +177,11 @@ function drawFence(f){
     }
   }
 }
-/* fantasma da ferramenta Cerca: verde = poe cerca, azul = vira portinha, laranja = tira a portinha, vermelho = nao pode */
+/* fantasma das ferramentas Cerca e Portao: verde = poe, azul = troca a cerca por portao, vermelho = nao pode */
 function drawFenceGhost(){
-  if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||P.weapon!=='fence')return;
+  if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||(P.weapon!=='fence'&&P.weapon!=='gate'))return;
   const it=fenceIntent(),e=it.e,x=e.x*CELL,y=e.y*CELL,a=.6+.25*Math.sin(T*6);
-  const c=it.bad?'230,90,80':it.act==='FENCE'?'110,220,110':it.act==='GATE'?'110,170,240':'240,170,70';
+  const c=it.bad?'230,90,80':it.act==='REPLACE'?'110,170,240':'110,220,110';
   ctx.fillStyle='rgba('+c+','+a.toFixed(2)+')';
   if(e.d==='h'){ctx.fillRect(x,y-1,CELL,3);ctx.fillRect(x,y-7,1,7);ctx.fillRect(x+CELL-1,y-7,1,7);}
   else{ctx.fillRect(x-1,y,3,CELL);ctx.fillRect(x-1,y-6,3,1);ctx.fillRect(x-1,y+CELL-1,3,1);}
@@ -126,7 +191,7 @@ function drawFenceGhost(){
 const pack=f=>[f.x,f.y,f.d==='h'?0:1,f.g?1:0,f.o?1:0];
 function fencePack(){return fences.filter(f=>!f.s).map(pack);}
 /* cercas da cidade (casas): fixas, brancas, nao entram no save (nascem de novo com o mundo) e ninguem mexe nelas */
-function fenceCityClear(){fences=fences.filter(f=>!f.s);reindex();}
+function fenceCityClear(){fences=fences.filter(f=>!f.s);reindex();broken.clear();}
 function fenceCityAdd(list){
   for(const r of list){if(fenceAt(r[0],r[1],r[2]===1?'v':'h'))continue;fences.push({x:r[0],y:r[1],d:r[2]===1?'v':'h',g:r[3]?1:0,s:1});}
   reindex();
@@ -150,6 +215,6 @@ function fenceRemote(d){
 }
 function fenceApplySnapshot(a){if(Array.isArray(a))for(const r of a)if(Array.isArray(r))fenceRemote({x:r[0],y:r[1],d:r[2]===1?'v':'h',g:r[3]?1:0,o:r[4]?1:0});}
 
-window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
+window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
 window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;
 })();
