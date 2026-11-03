@@ -41,8 +41,9 @@ function cityPickType(zone){
   return r<.7?'house':r<.82?'apartment':r<.93?'shop':'garage'; // residencial
 }
 function cityFillBlock(bx,by,bw,bh,zone){
-  const S=14, GAP=40;               // calçada/recuo e vão mínimo entre prédios
-  const x0=bx+S, y0=by+S, x1=bx+bw-S, y1=by+bh-S;
+  const S=14, GAP=zone==='res'?70:40;   // calçada/recuo e vão mínimo entre prédios (bairro residencial: vão maior, cabe quintal)
+  const res=zone==='res';
+  const x0=bx+(res?40:S), y0=by+(res?36:S), x1=bx+bw-(res?40:S), y1=by+bh-(res?56:S);   // bairro residencial: sobra espaço para quintal em volta
   let y=y0, rows=0;
   while(y<y1-52 && rows<4){
     rows++;
@@ -57,7 +58,7 @@ function cityFillBlock(bx,by,bw,bh,zone){
       addBuilding(Math.round(x), Math.round(y+(rowH-h)), w, h, type); // alinhado embaixo: porta dá para o vão
       x+=w+rint(GAP,GAP+22);
     }
-    y+=rowH+rint(46,58);
+    y+=rowH+(zone==='res'?rint(84,96):rint(46,58));
   }
 }
 /* Entulho/cascalho: pedras em lotes vazios e pátios industriais (fonte de pedra da cidade, longe de portas e passagens) */
@@ -147,15 +148,24 @@ function genCity(){
 /* cerquinha branca em volta de algumas casas (estilo americano), com portinha na frente da porta. So um hash da posicao: nao sorteia nada. */
 function cityHouseFence(h,b){
   if(h.type!=='house'||(((h.x*73856093)^(h.y*19349663))>>>0)%100>=55)return;
-  const X0=Math.floor((h.x-10)/16),Y0=Math.floor((h.y-10)/16),X1=Math.ceil((h.x+h.w+10)/16),Y1=Math.ceil((h.y+h.h+12)/16);
-  const L=[],mids=[];
-  for(let i=X0;i<X1;i++){L.push([i,Y0,0,0]);L.push([i,Y1,0,0]);mids.push([i*16+8,Y0*16],[i*16+8,Y1*16]);}
-  for(let j=Y0;j<Y1;j++){L.push([X0,j,1,0]);L.push([X1,j,1,0]);mids.push([X0*16,j*16+8],[X1*16,j*16+8]);}
-  for(const m of mids){
-    if(m[0]<b.bx+6||m[0]>b.bx+b.bw-6||m[1]<b.by+6||m[1]>b.by+b.bh-6)return;
-    if(onCityRoad(m[0],m[1],4))return;
-    for(const o of blds)if(o!==h&&m[0]>o.x-8&&m[0]<o.x+o.w+8&&m[1]>o.y-8&&m[1]<o.y+o.h+8)return;
+  /* quintal: tenta o maior (2 casas de grade nas laterais e nos fundos, 3 na frente), depois menores, conforme o espaco livre.
+     Tudo alinhado a grade de 16 px (a mesma dos canteiros), para dar para arar e plantar dentro dele. */
+  let X0,Y0,X1,Y1,found=false;
+  for(const [sx,bk,fr] of [[2,2,3],[2,1,2],[1,1,2],[1,1,1]]){
+    X0=Math.floor(h.x/16)-sx;Y0=Math.floor(h.y/16)-bk;X1=Math.ceil((h.x+h.w)/16)+sx;Y1=Math.ceil((h.y+h.h)/16)+fr;
+    const rx=X0*16-6,ry=Y0*16-6,rw=(X1-X0)*16+12,rh=(Y1-Y0)*16+12;
+    if(X0*16<b.bx+6||Y0*16<b.by+6||X1*16>b.bx+b.bw-6||Y1*16>b.by+b.bh-6)continue;
+    if(cityYards.some(q=>rx<q.x+q.w&&rx+rw>q.x&&ry<q.y+q.h&&ry+rh>q.y))continue;
+    if(blds.some(o=>o!==h&&rx<o.x+o.w+4&&rx+rw>o.x-4&&ry<o.y+o.h+4&&ry+rh>o.y-4))continue;
+    let ok=true;
+    for(let i=X0;i<=X1&&ok;i++)for(const yy of [Y0*16,Y1*16])if(onCityRoad(i*16,yy,4))ok=false;
+    for(let j=Y0;j<=Y1&&ok;j++)for(const xx of [X0*16,X1*16])if(onCityRoad(xx,j*16,4))ok=false;
+    if(ok){found=true;break;}
   }
+  if(!found)return;
+  const L=[];
+  for(let i=X0;i<X1;i++){L.push([i,Y0,0,0]);L.push([i,Y1,0,0]);}
+  for(let j=Y0;j<Y1;j++){L.push([X0,j,1,0]);L.push([X1,j,1,0]);}
   const gc=Math.min(X1-1,Math.max(X0,Math.floor((h.doorX+h.door/2)/16)));
   const g=L.find(q=>q[2]===0&&q[1]===Y1&&q[0]===gc);if(g)g[3]=1;   // portinha em frente da porta (lado sul)
   fenceCityAdd(L);cityYards.push({x:X0*16-6,y:Y0*16-6,w:(X1-X0)*16+12,h:(Y1-Y0)*16+12});
@@ -170,7 +180,7 @@ function cityHouseFence(h,b){
   const hh=k=>(((h.x*73856093)^(h.y*19349663)^(k*83492791))>>>0)%1000/1000;
   let k=0;
   for(let bx=x0+12;bx<x1-8;bx+=20,k++){if(Math.abs(bx-gx)<16||hh(k)<.3)continue;cityDecor.push({x:bx,y:y1-6,t:'bush',c:Math.floor(hh(k+50)*3)});}
-  for(let by=hy+14;by<hy1-8;by+=26,k++){if(hh(k)<.45)continue;cityDecor.push({x:x0+7,y:by,t:'bush',c:Math.floor(hh(k+50)*3)});if(hh(k+9)<.7)cityDecor.push({x:x1-7,y:by,t:'bush',c:Math.floor(hh(k+60)*3)});}
+  for(let by=hy+14;by<hy1-8;by+=26,k++){if(hh(k)<.45)continue;cityDecor.push({x:x0+4,y:by,t:'bush',c:Math.floor(hh(k+50)*3)});if(hh(k+9)<.7)cityDecor.push({x:x1-4,y:by,t:'bush',c:Math.floor(hh(k+60)*3)});}
   for(let i=0;i<5;i++){const fx=Math.round(hx+6+hh(70+i)*(h.w-12)),fy=hy1+7+Math.floor(hh(80+i)*8);if(cityPaths.some(q=>fx>q.x-3&&fx<q.x+q.w+3&&fy>q.y-3&&fy<q.y+q.h+3))continue;cityDecor.push({x:fx,y:fy,t:'flower',c:Math.floor(hh(90+i)*4)});}
   cityDecor.push({x:(gc+1)*16+10,y:y1+7,t:'mail',c:Math.floor(hh(99)*3)});
 }

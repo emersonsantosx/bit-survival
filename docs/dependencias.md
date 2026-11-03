@@ -39,7 +39,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 05-geometria | 118 | 7 | 27 | 147 | . | 6 |  | 5 | 9 |  | 2 | 1 | 11 |  |  |  |  |  |  |
 | 06-interiores-portas | 42 | 11 | 4 | 32 | 1 | . |  |  |  |  |  | 1 | 30 |  |  |  |  |  |  |
 | 07-loot-mapa | 147 | 3 | 32 | 131 | 2 | 7 | . | 14 | 19 | 3 | 5 | 1 | 5 |  | 2 |  |  |  |  |
-| 08-cidade-vilas-marcos | 117 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |
+| 08-cidade-vilas-marcos | 118 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |
 | 09-milharal-geracao | 203 | 10 | 87 | 266 | 40 |  | 1 | 29 | . | 3 | 3 | 6 | 126 |  | 1 |  |  |  |  |
 | 10-jogo-saves | 90 | 50 | 46 | 618 | 15 | 2 | 10 | 10 | 7 | . | 84 | 25 | 9 |  | 17 |  |  |  |  |
 | 11-pesca-update | 227 | 37 | 49 | 808 | 58 | 2 | 3 | 4 | 19 | 58 | . | 13 | 14 |  | 4 |  |  |  |  |
@@ -81,7 +81,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | animals | let | 04-estado:9 | 9 | 37 |
 | H | let | 01-base:47 | 8 | 100 |
 | W | let | 01-base:47 | 8 | 96 |
-| rint | const | 01-base:17 | 8 | 89 |
+| rint | const | 01-base:17 | 8 | 90 |
 | remotePlayers | let | 04-estado:10 | 8 | 87 |
 | dark | let | 04-estado:13 | 8 | 54 |
 | trees | let | 04-estado:9 | 8 | 43 |
@@ -102,9 +102,9 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | plane | let | 04-estado:12 | 6 | 62 |
 | ITEMS | const | 03-dados:136 | 6 | 55 |
 | rebuildSolidGrid | funcao | 05-geometria:365 | 6 | 16 |
-| onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 6 | 15 |
+| onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 6 | 16 |
 | atkHeld | let | 04-estado:15 | 6 | 14 |
-| vehKind | funcao | 08-cidade-vilas-marcos:338 | 6 | 14 |
+| vehKind | funcao | 08-cidade-vilas-marcos:348 | 6 | 14 |
 | weatherTimer | let | 04-estado:6 | 6 | 13 |
 | sprintHeld | let | 04-estado:15 | 6 | 12 |
 | setRain | funcao | 02-audio:605 | 6 | 11 |
@@ -147,6 +147,6 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - `pingNearest` (funcao, 07-loot-mapa:54)
 - `tryPlaceBuilding` (funcao, 07-loot-mapa:450)
 - `pickCityBuildingType` (funcao, 07-loot-mapa:470)
-- `drawAurora` (funcao, 08-cidade-vilas-marcos:534)
+- `drawAurora` (funcao, 08-cidade-vilas-marcos:544)
 - `dayToast` (funcao, 15-missoes-ui-controles:71)
 - `_statAcc` (let, 15-missoes-ui-controles:128)
