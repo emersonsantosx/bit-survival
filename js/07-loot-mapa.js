@@ -51,7 +51,6 @@ function pingBadgeHit(p){            // p: ponto do toque em pixels do canvas
   return null;
 }
 function allyHasFirearm(t){for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.alive!==false&&Array.isArray(rp.fw)&&rp.fw.includes(t))return true;}return false;}
-function pingNearest(){if(state==='play'&&!P.inVehicle)sendPing(nearestItem());}
 function recvPing(d){
   if(!d||typeof d.t!=='string'||!ITEMS[d.t]||!Number.isFinite(d.x)||!Number.isFinite(d.y))return;
   if(d.x<0||d.y<0||d.x>WW||d.y>WH)return;
@@ -446,38 +445,5 @@ function addBuilding(x,y,w,h,type){
   if(n>0) n+=rint(0,Math.max(0,b.rooms.length-2));
   placeBldLoot(b,n,lootKey);
   if(b.type==='clinic')medicBonus(b);
-}
-function tryPlaceBuilding(cx,cy,type,pad){
-  pad = pad==null ? (selectedMap==='city'?16:34) : pad;
-  let w,h;
-  if(type==='mil'){ w=rint(95,145); h=rint(75,110); }
-  else if(type==='warehouse'){ w=rint(100,170); h=rint(70,125); }
-  else if(type==='apartment'){ w=rint(55,110); h=rint(95,175); }
-  else if(type==='office'){ w=rint(80,140); h=rint(75,130); }
-  else if(type==='garage'){ w=rint(70,120); h=rint(45,75); }
-  else if(type==='clinic'){ w=rint(65,115); h=rint(55,90); }
-  else if(type==='gas'){ w=rint(60,100); h=rint(50,80); }
-  else if(type==='barn'){ w=rint(85,130); h=rint(65,100); }
-  else if(type==='shop'){ w=rint(50,100); h=rint(48,85); }
-  else if(type==='cabin'){ w=rint(48,85); h=rint(45,75); }
-  else { w=rint(48,105); h=rint(48,95); } // casas com mais variação de tamanho
-  const x=Math.round(cx-w/2), y=Math.round(cy-h/2);
-  if(x<40||y<40||x+w>WW-40||y+h>WH-40) return false;
-  if(blds.some(b=>x<b.x+b.w+pad&&x+w+pad>b.x&&y<b.y+b.h+pad&&y+h+pad>b.y)) return false;
-  addBuilding(x,y,w,h,type);
-  return true;
-}
-function pickCityBuildingType(forceMil){
-  if(forceMil) return 'mil';
-  const r=_rng();
-  if(r<0.18) return 'apartment';
-  if(r<0.30) return 'office';
-  if(r<0.42) return 'shop';
-  if(r<0.52) return 'warehouse';
-  if(r<0.60) return 'garage';
-  if(r<0.66) return 'clinic';
-  if(r<0.72) return 'gas';
-  if(r<0.78) return 'mil';
-  return 'house';
 }
 

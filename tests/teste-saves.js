@@ -18,7 +18,13 @@ const MAPS = ['forest', 'snow', 'desert', 'city'];
     await pg.goto('file://' + file); await pg.waitForFunction(() => typeof newGame === 'function' && typeof refreshContinue === 'function' && document.readyState === 'complete');
     const antes = await pg.evaluate((m) => {
       localStorage.clear(); selectedMap = m; pendingSlot = 1; showScreen(null); newGame();
-      P.x += 40; P.y += 25; P.hp = 77; T = 123;
+      // anda para um ponto livre (arvore, pedra ou agua ali fariam o jogo reposicionar o jogador ao carregar, e o teste falharia sem ser bug)
+      const x0 = P.x, y0 = P.y;
+      for (const [dx, dy] of [[40, 25], [-40, 25], [40, -25], [-40, -25], [0, 0]]) {
+        P.x = x0 + dx; P.y = y0 + dy;
+        if (!solidPoint(P.x, P.y, P.r + 14) && !pointInLake(P.x, P.y)) break;
+      }
+      P.hp = 77; T = 123;
       saveGame();
       return { x: Math.round(P.x), y: Math.round(P.y), trees: trees.length, seed: worldSeed, ws: WW };
     }, map);

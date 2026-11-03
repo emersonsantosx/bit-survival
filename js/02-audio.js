@@ -255,10 +255,6 @@ function cookSizzle(){
   boom(.25,.06,1200,'sfx');
   beep(200,.15,'sawtooth',.02);
 }
-function animalGrowl(aggro){
-  if(aggro) beep(90,.2,'sawtooth',.06,40);
-  else beep(220,.12,'triangle',.03,-40);
-}
 function hitFlesh(){
   if(!AC||!nbuf||sndBusy(70)||!sndThrottle('hitFlesh',45))return;
   const vol=volFor('sfx');if(vol<=0)return;
