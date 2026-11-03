@@ -39,8 +39,8 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 05-geometria | 118 | 7 | 27 | 147 | . | 6 |  | 5 | 9 |  | 2 | 1 | 11 |  |  |  |  |  |  |
 | 06-interiores-portas | 42 | 11 | 4 | 32 | 1 | . |  |  |  |  |  | 1 | 30 |  |  |  |  |  |  |
 | 07-loot-mapa | 147 | 3 | 32 | 131 | 2 | 7 | . | 14 | 19 | 3 | 5 | 1 | 5 |  | 2 |  |  |  |  |
-| 08-cidade-vilas-marcos | 117 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |
-| 09-milharal-geracao | 203 | 10 | 87 | 266 | 40 |  | 1 | 29 | . | 3 | 3 | 6 | 126 |  | 1 |  |  |  |  |
+| 08-cidade-vilas-marcos | 119 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |
+| 09-milharal-geracao | 203 | 10 | 87 | 273 | 40 |  | 1 | 31 | . | 3 | 3 | 6 | 126 |  | 1 |  |  |  |  |
 | 10-jogo-saves | 90 | 50 | 46 | 618 | 15 | 2 | 10 | 10 | 7 | . | 84 | 25 | 9 |  | 17 |  |  |  |  |
 | 11-pesca-update | 227 | 37 | 49 | 808 | 58 | 2 | 3 | 4 | 19 | 58 | . | 13 | 14 |  | 4 |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 35 | 27 | 573 | 12 | 1 | 6 | 5 | 11 | 21 | 36 | . | 18 |  | 10 |  |  |  |  |
@@ -61,7 +61,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | P | let | 04-estado:13 | 15 | 1547 |
 | MP | let | 04-estado:18 | 15 | 512 |
 | clamp | const | 01-base:4 | 15 | 96 |
-| selectedMap | let | 04-estado:3 | 14 | 197 |
+| selectedMap | let | 04-estado:3 | 14 | 198 |
 | beep | funcao | 02-audio:42 | 14 | 112 |
 | rnd | const | 01-base:16 | 13 | 374 |
 | T | let | 04-estado:13 | 12 | 104 |
@@ -81,11 +81,11 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | animals | let | 04-estado:9 | 9 | 37 |
 | H | let | 01-base:47 | 8 | 100 |
 | W | let | 01-base:47 | 8 | 96 |
-| rint | const | 01-base:17 | 8 | 89 |
+| rint | const | 01-base:17 | 8 | 91 |
 | remotePlayers | let | 04-estado:10 | 8 | 87 |
 | dark | let | 04-estado:13 | 8 | 54 |
-| trees | let | 04-estado:9 | 8 | 43 |
-| rocks | let | 04-estado:9 | 8 | 43 |
+| trees | let | 04-estado:9 | 8 | 45 |
+| rocks | let | 04-estado:9 | 8 | 45 |
 | campfires | let | 04-estado:9 | 8 | 37 |
 | ORLA | let | 05-geometria:123 | 8 | 36 |
 | pointInLake | funcao | 05-geometria:111 | 8 | 33 |
@@ -102,15 +102,15 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | plane | let | 04-estado:12 | 6 | 62 |
 | ITEMS | const | 03-dados:136 | 6 | 55 |
 | rebuildSolidGrid | funcao | 05-geometria:365 | 6 | 16 |
-| onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 6 | 15 |
+| onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 6 | 16 |
 | atkHeld | let | 04-estado:15 | 6 | 14 |
-| vehKind | funcao | 08-cidade-vilas-marcos:338 | 6 | 14 |
+| vehKind | funcao | 08-cidade-vilas-marcos:348 | 6 | 14 |
 | weatherTimer | let | 04-estado:6 | 6 | 13 |
 | sprintHeld | let | 04-estado:15 | 6 | 12 |
 | setRain | funcao | 02-audio:605 | 6 | 11 |
 | mapHasLake | funcao | 03-dados:260 | 6 | 8 |
 | joy | const | 04-estado:182 | 5 | 51 |
-| decorations | let | 04-estado:9 | 5 | 33 |
+| decorations | let | 04-estado:9 | 5 | 35 |
 | roads | let | 04-estado:9 | 5 | 28 |
 | DAY_SECONDS | const | 03-dados:8 | 5 | 19 |
 | decals | let | 04-estado:9 | 5 | 15 |
@@ -147,6 +147,6 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - `pingNearest` (funcao, 07-loot-mapa:54)
 - `tryPlaceBuilding` (funcao, 07-loot-mapa:450)
 - `pickCityBuildingType` (funcao, 07-loot-mapa:470)
-- `drawAurora` (funcao, 08-cidade-vilas-marcos:534)
+- `drawAurora` (funcao, 08-cidade-vilas-marcos:544)
 - `dayToast` (funcao, 15-missoes-ui-controles:71)
 - `_statAcc` (let, 15-missoes-ui-controles:128)

@@ -405,6 +405,10 @@ function genWorld(seed) {
   genLandmark(seed);
   if(selectedMap==='city')genOrla();
   genAmbientProps(seed);
+  if(selectedMap==='city'&&cityYards.length){   // quintal cercado e livre: sem arvore, pedra, banco ou lixeira no meio (so filtra, nao sorteia nada)
+    const inY=(o,pd)=>cityYards.some(q=>o.x>q.x-pd&&o.x<q.x+q.w+pd&&o.y>q.y-pd&&o.y<q.y+q.h+pd);
+    trees=trees.filter(t=>!inY(t,12));rocks=rocks.filter(t=>!inY(t,6));decorations=decorations.filter(d=>!inY(d,6));
+  }
   rebuildSolidGrid();
   BASE_TREES=trees.map(t=>t.x+','+t.y);BASE_ROCKS=rocks.map(t=>t.x+','+t.y);regrowInit(); // referência para sincronizar o que foi derrubado/quebrado
   buildMinimap();
