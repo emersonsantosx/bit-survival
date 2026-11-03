@@ -25,6 +25,7 @@ function soilBad(x,y){   // texto do motivo se NAO der para arar ali; null se de
   if(pointInLake(x,y)||pointInLake(x+8,y)||pointInLake(x-8,y)||pointInLake(x,y+8)||pointInLake(x,y-8))return 'Não dá para arar na água';
   if(solidPoint(x,y,6))return 'Tem algo no caminho';
   if(onCityRoad(x,y,6))return 'Não dá para arar o asfalto';
+  if(selectedMap==='city'&&(onCityPath(x,y)||onCityPath(x-7,y-7)||onCityPath(x+7,y+7)||onCityPath(x+7,y-7)||onCityPath(x-7,y+7)))return 'Não dá para arar o caminho';
   if(selectedMap==='city'&&ORLA&&(onSand(x,y)||onPier(x,y)))return 'Não dá para arar a orla';
   if(selectedMap==='city'&&!ghAt(x,y)&&!(inCityGarden(x,y)&&inCityGarden(x-7,y-7)&&inCityGarden(x+7,y-7)&&inCityGarden(x-7,y+7)&&inCityGarden(x+7,y+7)))return 'Na cidade só dá para arar onde tem grama (parques, lotes e quintais)';
   return null;

@@ -481,6 +481,7 @@ function pickTarget(){
   const ch=nearestChest();if(ch)add({k:'chest',d:Math.max(0,Math.hypot(ch.x-P.x,ch.y-P.y)-P.r-3),b:0,ch},ch.x,ch.y,'c'+ch.x+','+ch.y);
   for(const q of plotCands())add(q,q.px,q.py,q.key);
   for(const q of doorCands())add({k:'door',d:q.ed,b:-3,dr:q.dr},q.px,q.py,'d'+q.dr.bi+'.'+q.dr.di);
+  for(const q of fenceGateCands())add({k:'fgate',d:q.ed,b:-3,f:q.f},q.px,q.py,'g'+q.f.d+q.f.x+','+q.f.y);
   const tap=nearestFurn(['ksink','sink'],14);
   if(tap){const r=rectD(tap.x,tap.y,tap.w,tap.h);add({k:'tap',d:r.d,b:0,tap},r.px,r.py,'t'+tap.x+','+tap.y);}
   if(P.inside&&P.inside.furn)for(const f of P.inside.furn){
@@ -503,7 +504,7 @@ function pickTarget(){
     if(a.s<bs){bs=a.s;best=a;}
   }
   /* itens no chão têm prioridade sobre dormir, porta e água (pia/torneira) */
-  if(best.k==='door'||best.k==='bed'||best.k==='tap'){
+  if(best.k==='door'||best.k==='fgate'||best.k==='bed'||best.k==='tap'){
     let bi=null;for(const a of c)if(a.k==='item'&&(!bi||a.s<bi.s))bi=a;
     if(bi)best=bi;
   }
@@ -681,6 +682,7 @@ function pickup(){
   if(TG&&TG.k==='chest'){openChest(TG.ch,false);return;}
   if(TG&&TG.k==='plot'){plotDo(TG);return;}
   if(TG&&TG.k==='door'){setDoor(TG.dr,TG.dr.open?0:1);return;}
+  if(TG&&TG.k==='fgate'){fenceToggle(TG.f);return;}
   if(TG&&TG.k==='bed'){const sp=findSleepSpot();if(sp){trySleep(sp);return;}}
   // Pesca no lago (só Floresta/Neve) — inventário local de cada player (sem sync de item no chão)
   if(ORLA&&inSea(P.x,P.y)&&!nearFountain(P.x,P.y)&&!TG){ toast('Água salgada, não dá pra beber'); beep(140,.06,'square',.04); return; }

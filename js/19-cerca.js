@@ -35,7 +35,7 @@ function fenceIntent(){
   const bad=fences.filter(q=>!q.s).length>=FENCE_MAX?'Cercas demais':countInv('wood')<1?'Falta madeira':edgeBad(e);
   return {e,act:'FENCE',cost:1,bad};
 }
-function send(f,g){if(MP.active)sendEvt('fenceSet',{x:f.x,y:f.y,d:f.d,g});}
+function send(f,g){if(MP.active)sendEvt('fenceSet',{x:f.x,y:f.y,d:f.d,g,o:f.o?1:0});}
 function fenceBuild(quiet){
   if(!P||P.dead||P.inVehicle||P.inside||P.weapon!=='fence')return;
   const it=fenceIntent(),e=it.e;
@@ -53,12 +53,30 @@ function fenceBuild(quiet){
   }
 }
 
-/* ---- colisao: cerca fechada empurra para fora (jogador, zumbis e animais); a portinha deixa passar ---- */
+/* ---- portinha: abre e fecha com o botao de interagir; fechada barra como a cerca, aberta deixa passar ---- */
+const gateRect=f=>f.d==='h'?{x:f.x*CELL,y:f.y*CELL-2,w:CELL,h:4}:{x:f.x*CELL-2,y:f.y*CELL,w:4,h:CELL};
+function fenceGateCands(){
+  const out=[];if(!P||P.dead||P.inVehicle||P.inside||!fences.length)return out;
+  const cx=Math.floor(P.x/CELL),cy=Math.floor(P.y/CELL);
+  for(let i=cx-2;i<=cx+3;i++)for(let j=cy-2;j<=cy+3;j++)for(const d of ['h','v']){
+    const f=fmap.get(d+i+','+j);if(!f||!f.g)continue;
+    const r=gateRect(f),px=clamp(P.x,r.x,r.x+r.w),py=clamp(P.y,r.y,r.y+r.h),ed=Math.max(0,Math.hypot(P.x-px,P.y-py)-P.r);
+    if(ed<=12)out.push({f,ed,px,py});
+  }
+  return out;
+}
+function fenceToggle(f){
+  if(!f||!f.g)return;
+  f.o=f.o?0:1;send(f,1);
+  beep(f.o?240:170,.09,'triangle',.05,f.o?60:-60);
+}
+
+/* ---- colisao: cerca fechada empurra para fora (jogador, zumbis e animais); a portinha aberta deixa passar ---- */
 function fenceHit(e,r){
   if(!fences.length)return;
   const cx=Math.floor(e.x/CELL),cy=Math.floor(e.y/CELL);
-  for(let i=cx-1;i<=cx+1;i++)for(let j=cy;j<=cy+1;j++){const f=fmap.get('h'+i+','+j);if(f&&!f.g)pushRect(e,r,{x:i*CELL-.5,y:j*CELL-1.5,w:CELL+1,h:3});}
-  for(let i=cx;i<=cx+1;i++)for(let j=cy-1;j<=cy+1;j++){const f=fmap.get('v'+i+','+j);if(f&&!f.g)pushRect(e,r,{x:i*CELL-1.5,y:j*CELL-.5,w:3,h:CELL+1});}
+  for(let i=cx-1;i<=cx+1;i++)for(let j=cy;j<=cy+1;j++){const f=fmap.get('h'+i+','+j);if(f&&!(f.g&&f.o))pushRect(e,r,{x:i*CELL-.5,y:j*CELL-1.5,w:CELL+1,h:3});}
+  for(let i=cx;i<=cx+1;i++)for(let j=cy-1;j<=cy+1;j++){const f=fmap.get('v'+i+','+j);if(f&&!(f.g&&f.o))pushRect(e,r,{x:i*CELL-1.5,y:j*CELL-.5,w:3,h:CELL+1});}
 }
 
 /* ---- desenho ---- */
@@ -71,6 +89,9 @@ function drawFence(f){
     if(!f.g){
       for(let k=0;k<4;k++){const px=x+k*4+1;R(px,y-6,2,7,WH1);R(px,y-7,2,1,WH2);R(px+1,y-6,1,7,WH2);}
       R(x,y-5,CELL,1,WH3);R(x,y-2,CELL,1,WH3);
+    }else if(f.o){   // portinha aberta: so os dois postes e a folha virada para o lado
+      R(x+1,y-7,2,8,WH1);R(x+CELL-3,y-7,2,8,WH1);R(x+1,y-8,2,1,WH2);R(x+CELL-3,y-8,2,1,WH2);
+      R(x+1,y-13,3,6,WH2);R(x+1,y-13,1,6,WH1);R(x+3,y-12,1,5,WH3);
     }else{   // portinha: moldura com tabuas e travessa em diagonal
       R(x+1,y-7,2,8,WH1);R(x+CELL-3,y-7,2,8,WH1);R(x+1,y-8,2,1,WH2);R(x+CELL-3,y-8,2,1,WH2);
       R(x+3,y-5,CELL-6,5,WH2);R(x+3,y-5,CELL-6,1,WH1);R(x+3,y-1,CELL-6,1,WH1);
@@ -82,6 +103,9 @@ function drawFence(f){
     if(!f.g){
       for(let k=0;k<4;k++){const py=top+k*4+3;R(x-1,py-6,3,7,WH1);R(x-1,py-7,3,1,WH2);R(x+1,py-6,1,7,WH2);}
       R(x,top-4,1,CELL,WH3);R(x,top-1,1,CELL,WH3);
+    }else if(f.o){
+      R(x-1,top-5,3,3,WH1);R(x-1,top+CELL-4,3,3,WH1);
+      R(x-1,top-4,7,2,WH2);R(x-1,top-4,7,1,WH1);
     }else{
       R(x-1,top-5,3,3,WH1);R(x-1,top+CELL-4,3,3,WH1);
       R(x,top-2,1,CELL-3,WH3);R(x-1,top+2,3,8,WH2);R(x-1,top+2,1,8,WH1);R(x+1,top+8,1,2,'#7a5a2a');
@@ -99,7 +123,7 @@ function drawFenceGhost(){
 }
 
 /* ---- salvar, carregar e sincronizar ---- */
-const pack=f=>[f.x,f.y,f.d==='h'?0:1,f.g?1:0];
+const pack=f=>[f.x,f.y,f.d==='h'?0:1,f.g?1:0,f.o?1:0];
 function fencePack(){return fences.filter(f=>!f.s).map(pack);}
 /* cercas da cidade (casas): fixas, brancas, nao entram no save (nascem de novo com o mundo) e ninguem mexe nelas */
 function fenceCityClear(){fences=fences.filter(f=>!f.s);reindex();}
@@ -111,21 +135,21 @@ function fenceLoad(a){
   fences=fences.filter(f=>f.s);
   if(Array.isArray(a))for(const r of a){
     if(!Array.isArray(r)||!Number.isFinite(r[0])||!Number.isFinite(r[1])||fences.length>=FENCE_MAX+2000||fenceAt(Math.round(r[0]),Math.round(r[1]),r[2]===1?'v':'h'))continue;
-    fences.push({x:Math.round(r[0]),y:Math.round(r[1]),d:r[2]===1?'v':'h',g:r[3]?1:0});
+    fences.push({x:Math.round(r[0]),y:Math.round(r[1]),d:r[2]===1?'v':'h',g:r[3]?1:0,o:r[3]&&r[4]?1:0});
   }
   reindex();
 }
 function fenceRemote(d){
   if(!d||!Number.isFinite(d.x)||!Number.isFinite(d.y)||(d.d!=='h'&&d.d!=='v'))return;
   const f=fenceAt(d.x,d.y,d.d);
-  if(f&&f.s)return;
+  if(f&&f.s){if(f.g&&d.o!==undefined)f.o=d.o?1:0;return;}
   if(d.g===-1){if(f){fences=fences.filter(q=>q!==f);fmap.delete(fkey(f.x,f.y,f.d));}return;}
-  if(f){f.g=d.g?1:0;return;}
+  if(f){f.g=d.g?1:0;f.o=f.g&&d.o?1:0;return;}
   if(fences.length>=FENCE_MAX+2000)return;
-  const n={x:Math.round(d.x),y:Math.round(d.y),d:d.d,g:d.g?1:0};fences.push(n);fmap.set(fkey(n.x,n.y,n.d),n);
+  const n={x:Math.round(d.x),y:Math.round(d.y),d:d.d,g:d.g?1:0,o:d.g&&d.o?1:0};fences.push(n);fmap.set(fkey(n.x,n.y,n.d),n);
 }
-function fenceApplySnapshot(a){if(Array.isArray(a))for(const r of a)if(Array.isArray(r))fenceRemote({x:r[0],y:r[1],d:r[2]===1?'v':'h',g:r[3]?1:0});}
+function fenceApplySnapshot(a){if(Array.isArray(a))for(const r of a)if(Array.isArray(r))fenceRemote({x:r[0],y:r[1],d:r[2]===1?'v':'h',g:r[3]?1:0,o:r[4]?1:0});}
 
-window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
+window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
 window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;
 })();
