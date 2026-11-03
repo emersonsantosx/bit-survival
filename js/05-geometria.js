@@ -554,7 +554,6 @@ function vehicleOverlap(v){
   if(plane&&obbHitsRect(cx,cy,c,s,L,W,plane.x-35,plane.y-16,plane.x+35,plane.y+16))cnt++;
   return cnt;
 }
-function vehicleHitsEnv(v){return vehicleOverlap(v)>0;}
 /* qual OUTRO veículo está na frente do carro (a carroceria avançada 3px encosta nele)? serve para o dano da batida */
 function vehicleOtherAt(v,dirSign){
   const f=v.face||0,c=Math.cos(f),s=Math.sin(f),L=(v.w||36)*0.5,W=(v.h||20)*0.46;

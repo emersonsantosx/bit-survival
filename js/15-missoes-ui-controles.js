@@ -68,10 +68,6 @@ function track(ev,n){
     if(MP.active&&MP.connected&&!MS_DEF[ev].local)sendEvt('mission',{i:i,k:s.k,n:n});
   }
 }
-function dayToast(){
-  const nw=ZUNLOCK.filter(u=>u[1]===day).map(u=>u[3]);
-  return 'Dia '+day+': perigo '+dangerName(day)+(nw.length?'. Novo: '+nw.join(' e '):'');
-}
 function dayAdvanced(n){track('dayAdv',n);achSet('maxDay',day);}
 
 /* ---- Conquistas ---- */
@@ -125,7 +121,7 @@ function achSet(stat,v){
   ACHD.s[stat]=v;achSave();achCheck(stat);
 }
 /* ---- Estatisticas de todas as partidas (guardadas junto das conquistas) ---- */
-let _statAcc=0,_statPx=null,_statPy=null,_statSaveT=0;
+let _statPx=null,_statPy=null,_statSaveT=0;
 function statTick(dt){
   if(!P||P.dead)return;
   ACHD.s.playSec=(ACHD.s.playSec||0)+dt;

@@ -97,7 +97,6 @@ PXG.lock=['..kkkk..','.kAAAAk.','.kA..Ak.','.kA..Ak.','kkkkkkkk','kAAAAAAk','kAA
 PXG.backpack=['....kkkk....','...kA..Ak...','..kkkkkkkk..','.kMMMMMMMMk.','kMMMMMMMMMMk','kMMMMMMMMMMk','kMMddddddMMk','kkkkkkkkkkkk','kMMkAAAAkMMk','kMMkAYYAkMMk','kMMkAAAAkMMk','kMMMkkkkMMMk','.kMMMMMMMMk.','..kkkkkkkk..'];
 PXG.arrowright=pxRot(PXG.arrowup);PXG.arrowdown=pxRot(pxRot(PXG.arrowup));PXG.arrowleft=pxRot(pxRot(pxRot(PXG.arrowup)));
 const PXURL={};
-let PXWEATHER='';
 function pxData(name){
   if(PXURL[name])return PXURL[name];
   const g=PXG[name];if(!g)return null;
@@ -294,7 +293,6 @@ const MAPDIFF={
 };
 /* zumbis especiais liberados por dia: [tipo, dia, peso, nome no aviso] */
 const ZUNLOCK=[[5,2,3,'Rastejantes'],[4,2,3,'Cuspidores'],[2,3,3,'Brutamontes'],[6,4,2,'Gritadores'],[7,5,2,'Inchados'],[8,6,2,'Furiosos'],[3,8,.8,'Chefes']];
-function dangerName(d){return d<=2?'BAIXO':d<=4?'MÉDIO':d<=7?'ALTO':d<=11?'MUITO ALTO':'EXTREMO';}
 function dayDiff(){
   const d=Math.max(1, day|0);
   const lv=d-1;
