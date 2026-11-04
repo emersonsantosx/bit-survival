@@ -194,8 +194,8 @@ const isWallAt=(i,j,d)=>{const q=fmap.get(d+i+','+j);return !!q&&q.g>=2;};
 function drawWall(f){
   const x=f.x*CELL,y=f.y*CELL,door=f.g===3;
   if(f.d==='h'){
-    const L=isWallAt(f.x-1,f.y,'h')||isWallAt(f.x,f.y,'v')||isWallAt(f.x,f.y-1,'v'),Rr=isWallAt(f.x+1,f.y,'h')||isWallAt(f.x+1,f.y,'v')||isWallAt(f.x+1,f.y-1,'v');
-    const x0=x-(L?0:3),x1=x+CELL+(Rr?0:3),w=x1-x0,ty=y-WH_;
+    // continua reto: sem folga. Ponta solta, canto ou T: avanca 3 px (meia coluna) e cobre a coluna da parede que chega ali
+    const x0=x-(isWallAt(f.x-1,f.y,'h')?0:3),x1=x+CELL+(isWallAt(f.x+1,f.y,'h')?0:3),w=x1-x0,ty=y-WH_;
     if(door&&f.o){   // aberta: dois batentes, verga e a folha virada para o lado
       R(x0,ty+1,3,WH_+2,WP.post);R(x1-3,ty+1,3,WH_+2,WP.post);R(x0,ty,w,3,WP.top);R(x0,ty+3,w,1,WP.hi);
       R(x+3,ty+5,3,WH_-4,WP.door);R(x+3,ty+5,1,WH_-4,WP.doorHi);R(x+3,y+1,3,1,WP.sh);
@@ -203,19 +203,21 @@ function drawWall(f){
     }
     R(x0,ty+3,w,WH_-1,door?WP.door:WP.a);R(x0,ty,w,3,WP.top);R(x0,ty+3,w,1,WP.hi);
     if(door){R(x0,ty+3,3,WH_-1,WP.post);R(x1-3,ty+3,3,WH_-1,WP.post);R(x0+3,ty+3,w-6,1,WP.hi);for(let px=x0+6;px<x1-3;px+=4)R(px,ty+4,1,WH_-2,WP.seam);R(x1-7,ty+9,2,2,'#e0c050');}
-    else{for(let px=x0+2;px<x1;px+=4){R(px,ty+4,1,WH_-2,WP.seam);R(px+1,ty+4,1,WH_-2,WP.b);}}
+    else{for(let px=x0+2;px<x1;px+=4){R(px,ty+4,1,WH_-2,WP.seam);if(px+1<x1)R(px+1,ty+4,1,WH_-2,WP.b);}}
     R(x0,y+1,w,1,WP.sh);
   }else{
-    const above=isWallAt(f.x,f.y-1,'v'),ty=y-WH_,top=above?y-WH_:y-WH_,x0=x-3;
+    // a coluna so ganha topo (tampo) se for ponta solta. Se vem de cima ou sai de baixo de uma parede horizontal, comeca na linha do chao dela
+    const joined=isWallAt(f.x,f.y-1,'v')||isWallAt(f.x-1,f.y,'h')||isWallAt(f.x,f.y,'h'),ty=y-WH_,x0=x-3,y0=joined?y:ty+3;
     if(door&&f.o){   // aberta: batentes no alto e embaixo e a folha aberta
-      R(x0,y-WH_,6,3,WP.top);R(x0,y+CELL-3,6,3,WP.post);R(x0+1,y-WH_+3,4,WH_-4,WP.post);
-      R(x0-2,y-WH_+3,2,CELL-2,WP.door);R(x0-2,y-WH_+3,1,CELL-2,WP.doorHi);
+      R(x0,y+CELL-3,6,3,WP.post);
+      if(!joined){R(x0,ty,6,3,WP.top);R(x0+1,ty+3,4,WH_-4,WP.post);R(x0-2,ty+3,2,CELL-2,WP.door);R(x0-2,ty+3,1,CELL-2,WP.doorHi);}
+      else{R(x0-2,y,2,CELL-4,WP.door);R(x0-2,y,1,CELL-4,WP.doorHi);}
       return;
     }
-    R(x0,top+3,6,CELL+WH_-3,door?WP.door:WP.a);R(x0+3,top+3,3,CELL+WH_-3,door?WP.door:WP.b);
-    if(!above){R(x0,ty,6,3,WP.top);R(x0,ty+3,6,1,WP.hi);}
-    if(door){R(x0,y+CELL-3,6,3,WP.post);R(x0+3,y+4,2,2,'#e0c050');R(x0,y-WH_+3,6,1,WP.hi);}
-    else{for(let py=top+5+((y/CELL|0)&1)*0;py<y+CELL;py+=4)R(x0,py,6,1,WP.seam);}
+    R(x0,y0,6,y+CELL-y0,door?WP.door:WP.a);R(x0+3,y0,3,y+CELL-y0,door?WP.door:WP.b);
+    if(!joined){R(x0,ty,6,3,WP.top);R(x0,ty+3,6,1,WP.hi);}
+    if(door){R(x0,y+CELL-3,6,3,WP.post);R(x0+3,y+4,2,2,'#e0c050');if(!joined)R(x0,y-WH_+3,6,1,WP.hi);}
+    else{for(let py=y-9;py<y+CELL;py+=4)if(py>=y0)R(x0,py,6,1,WP.seam);}
     R(x0,y+CELL,6,1,WP.sh);
   }
 }

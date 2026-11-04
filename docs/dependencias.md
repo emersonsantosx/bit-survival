@@ -50,7 +50,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |
 | 18-plantacao | 36 | 6 | 13 | 59 | 14 |  |  | 12 | 1 |  | 8 | 3 | 41 |  | 1 |  |  | . |  |
-| 19-cerca | 29 | 7 | 2 | 77 | 12 |  |  | 1 |  | 1 | 2 | 3 | 68 |  |  |  |  |  | . |
+| 19-cerca | 29 | 7 | 2 | 77 | 12 |  |  | 1 |  | 1 | 2 | 3 | 70 |  |  |  |  |  | . |
 
 (colunas = os dois primeiros digitos do nome do arquivo)
 
@@ -73,7 +73,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | weather | let | 04-estado:5 | 11 | 87 |
 | parts | let | 04-estado:9 | 11 | 61 |
 | zombies | let | 04-estado:9 | 11 | 58 |
-| R | funcao | 13-render-personagens:2 | 10 | 1083 |
+| R | funcao | 13-render-personagens:2 | 10 | 1085 |
 | ctx | const | 01-base:27 | 10 | 902 |
 | blds | let | 04-estado:9 | 10 | 50 |
 | solidPoint | funcao | 05-geometria:325 | 10 | 26 |
