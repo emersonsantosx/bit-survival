@@ -682,7 +682,7 @@ function updateP(dt){
 }
 function updateZ(z,dt){
   z.anim+=dt*(z.kind===1?10:6);
-  z.cd=Math.max(0,z.cd-dt);z.hit=Math.max(0,z.hit-dt);z.alert=Math.max(0,z.alert-dt);z.lunge=Math.max(0,z.lunge-dt);
+  z.cd=Math.max(0,z.cd-dt);z.hit=Math.max(0,z.hit-dt);z.alert=Math.max(0,z.alert-dt);z.lunge=Math.max(0,z.lunge-dt);z.hurtT=Math.max(0,(z.hurtT||0)-dt);
   if(z.vx||z.vy){
     stepMove(z,z.vx*dt,z.vy*dt,z.r);
     const f=Math.pow(.02,dt);z.vx*=f;z.vy*=f;
@@ -708,8 +708,11 @@ function updateZ(z,dt){
   // No living players nearby — wander
   if(bestD>=1e9){ targetDead=true; }
   const d=bestD;
+  /* Sentidos do zumbi. VISAO: so enxerga quem esta dentro do alcance (parado 52, andando 95, correndo 140, com os modificadores abaixo)
+     e sem nada no meio. AUDICAO: ver makeNoise (raio curto, so os passos de quem corre). Sem sentido nenhum o zumbi nao sabe onde o jogador
+     esta: ele vai ate o ULTIMO lugar onde viu (ou ouviu), procura um pouco e volta a vagar. Quem esta longe nao e puxado pelos passos. */
   let det=95;
-  if(targetSprint)det=185;else if(!targetMoving)det=52;
+  if(targetSprint)det=140;else if(!targetMoving)det=52;
   if(dark>.5)det*=.72;
   if(z.kind===1)det*=1.18;
   if(z.kind===5)det*=1.12;
@@ -745,21 +748,26 @@ function updateZ(z,dt){
     }
   }
   z.losT-=dt;
-  if(z.losT<=0){z.losT=.3;z.seen=d<det*1.2?losClear(z.x,z.y-5,targetX,targetY-5):false;}
+  if(z.losT<=0){z.losT=.3;z.seen=d<det?losClear(z.x,z.y-5,targetX,targetY-5):false;}
   z.lock=Math.max(0,z.lock-dt);
   if(z.seen&&d<det)z.lock=Math.max(z.lock,4);
-  if(z.lock>0&&d>det*2&&!z.lastSeen){z.lastSeen={x:targetX,y:targetY};z.searchT=3.2;}
   if(z.seen)z.lastSeen={x:targetX,y:targetY};
+  else if(z._ws&&z.lastSeen)z.searchT=3.2;   // acabou de perder de vista: vai ao ultimo lugar e procura
+  z._ws=z.seen;
   if(FIELD&&!targetDead&&d>26&&inCorn(targetX,targetY)){z.seen=false;z.lock=0;z.lastSeen=null;z.searchT=0;} // milharal: quem persegue perde o alvo de vista
   if(z.kind===9&&!targetDead&&d<560){ // Yeti: caçador implacável, não perde o alvo por ruído, escuridão ou linha de visão
     z.seen=true;z.lock=Math.max(z.lock,4);z.lastSeen={x:targetX,y:targetY};z.alert=0;
   }
   let mode='wander';
-  if(z.lock>0&&(d<det*2||z.kind===9))mode='chase';
+  const live=z.seen||z.kind===9||(z.hurtT>0&&d<500);   // sabe onde o jogador esta AGORA: viu, e o Yeti, ou acabou de levar um golpe ou tiro dele
+  if(z.lock>0&&(live||z.lastSeen))mode='chase';
   else if(z.alert>0)mode='noise';
   else if(z.lastSeen&&z.searchT>0)mode='search';
   let tx,ty,sp;
-  if(mode==='chase'){
+  if(mode==='chase'&&!live){   // perdeu de vista: segue ate o ultimo lugar onde viu, nao ate onde o jogador esta agora
+    tx=z.lastSeen.x;ty=z.lastSeen.y;sp=pointInLake(z.x,z.y)?z.spd*.6:z.spd*.85;
+    if(Math.hypot(tx-z.x,ty-z.y)<14){z.lock=0;z.searchT=Math.max(z.searchT||0,2.4);}
+  }else if(mode==='chase'){
     if(z.ranged){
       // Histerese: recua se d<70 (até d>90), aproxima se d>120, e fica parado atirando entre 90 e 120
       if(z._kite){ if(d>90) z._kite=false; } else if(d<70) z._kite=true;
@@ -1291,7 +1299,7 @@ function updateHud(force){
   if(P.sleeping){canInteract=true;btnText='LEVANTAR';}
   else if(TG&&TG.k==='bed'){btnText='DORMIR';}
   {const hb=$('hoe');if(hb)hb.classList.toggle('hide',!(!!P.tool&&!P.inVehicle&&!P.dead&&!P.sleeping));}
-  {const hb=$('hoe'),want=FENCE_ICON[P.tool]||'hoe';if(hb&&hb.dataset.ic!==want){hb.dataset.ic=want;hb.setAttribute('aria-label',{fence:'Construir cerca',gate:'Construir portão',wall:'Construir parede',door:'Construir porta',floor:'Construir piso',roof:'Construir telhado',mattress:'Montar enxergão'}[want]||'Arar a terra');hb.innerHTML=pxIcon(want,4);}}   // botao de construir: ARAR com a enxada, a peca da ferramenta nas outras
+  {const hb=$('hoe'),want=FENCE_ICON[P.tool]||'hoe';if(hb&&hb.dataset.ic!==want){hb.dataset.ic=want;hb.setAttribute('aria-label',{fence:'Construir cerca',gate:'Construir portão',wall:'Construir parede',door:'Construir porta',floor:'Construir piso',roof:'Construir telhado',mattress:'Montar cama'}[want]||'Arar a terra');hb.innerHTML=pxIcon(want,4);}}   // botao de construir: ARAR com a enxada, a peca da ferramenta nas outras
   {const tb=$('tools');if(tb){const l=toolList(),show=l.length>0&&!P.inVehicle&&!P.dead&&!P.sleeping,want=P.tool||'toolbox';tb.classList.toggle('hide',!show);tb.classList.toggle('act',!!P.tool);
     if(tb.dataset.ic!==want){tb.dataset.ic=want;tb.setAttribute('aria-label',P.tool?'Guardar ferramenta de construção':'Ferramentas de construção');tb.innerHTML=pxIcon(want,P.tool?3:3);}}}
   const pick_=$('pick');

@@ -6,11 +6,13 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch();let bad=0;const ok=(c,m)=>{console.log(c?'OK  ':'FAIL',m);if(!c)bad++;};
 const pg=await (await b.newContext({viewport:{width:900,height:600}})).newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.goto('file://'+file);await pg.waitForTimeout(300);
-const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];items.length=0;P.inside=null;
+const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;trees.length=0;rocks.length=0;decorations.length=0;vehicles.length=0;rebuildSolidGrid();P.inside=null;   // area limpa: arvore, bicho ou carro no caminho mudariam a contagem sem ser bug
  const o={};
  for(let i=0;i<20;i++)addItem('wood');o.w0=countInv('wood');
  const rec=RECIPES.find(q=>q.out==='fence');o.rec=!!rec;craft(rec);o.has=toolList().includes('fence');o.eq=P.tool;o.w1=countInv('wood');
- let spot=null;for(let i=0;i<300;i++){P.x=400+i*9;P.y=500;P.face=0;const it=fenceIntent();if(!it.bad){spot=it;break;}}
+ // ponto onde as 3 posicoes usadas abaixo aceitam cerca (nao vale lago, construcao ou borda do mapa por perto)
+ const okAt=(x,y,face)=>{P.x=x;P.y=y;P.face=face;P.tool='fence';return !fenceIntent().bad;};
+ let spot=null;for(let i=0;i<900&&!spot;i++){const x=300+((i*37)%120)*9,y=300+((i*53)%60)*9;if(okAt(x,y,0)&&okAt(x,y+40,Math.PI/2)&&okAt(x+24,y+40,Math.PI/2)&&okAt(x+84,y+40,0)){P.x=x;P.y=y;P.face=0;spot=fenceIntent();}}
  o.spot=!!spot;
  // cerca em volta de um quadrado: anda e constroi em 4 direcoes
  const e0=spot.e;fenceBuild();o.n1=fenceList().length;
@@ -20,8 +22,8 @@ const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pending
  // save/load
  const pk=fencePack();fenceLoad([]);o.cleared=fenceList().length;fenceLoad(pk);o.reload=fenceList().length;
  fenceRemote({x:3,y:3,d:'h',g:0});o.remote=fenceList().length;
- // sem madeira
- removeInv('wood',countInv('wood'));P.face=0;P.x+=60;const w=fenceIntent();o.noWood=w.bad;
+ // sem madeira (e sem credito de cerca: 1 madeira rende 2 pecas)
+ removeInv('wood',countInv('wood'));P._fcred=0;P.tool='fence';P.face=0;P.x+=60;const w=fenceIntent();o.noWood=w.bad;
  P.tool='fence';for(let i=0;i<30;i++)update(.05);o.btn=!document.getElementById('hoe').classList.contains('hide');
  // colisao: jogador atravessa a cerca
  return o;});

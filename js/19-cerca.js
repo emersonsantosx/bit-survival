@@ -246,7 +246,7 @@ function cellWalled(cx,cy){
   const t=fmap.get('h'+cx+','+cy),b=fmap.get('h'+cx+','+(cy+1)),l=fmap.get('v'+cx+','+cy),r=fmap.get('v'+(cx+1)+','+cy);
   return !!((t&&t.g>=2)||(b&&b.g>=2)||(l&&l.g>=2)||(r&&r.g>=2));
 }
-/* lados do quadrado (cx,cy) que tem parede ou porta: t, b, l, r (a cabeceira do enxergao vira para um deles) */
+/* lados do quadrado (cx,cy) que tem parede ou porta: t, b, l, r (a cabeceira da cama vira para um deles) */
 function cellWallDirs(cx,cy){
   const o=[],w=(d,x,y)=>{const q=fmap.get(d+x+','+y);return !!q&&q.g>=2;};
   if(w('h',cx,cy))o.push('t');if(w('h',cx,cy+1))o.push('b');if(w('v',cx,cy))o.push('l');if(w('v',cx+1,cy))o.push('r');

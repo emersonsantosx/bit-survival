@@ -71,7 +71,7 @@ PXG.wall=['kkkkkkkkkkkk','kAAAAAAAAAAk','kNkNkNkNkNNk','kNkNkNkNkNNk','kNkNkNkNk
 PXG.door=['kkkkkkkkkkkk','kNNNNNNNNNNk','kNSNNNNNNSNk','kNNNNNNNNNNk','kNSNNNNNANNk','kNNNNNNNNNNk','kkkkkkkkkkkk'];
 PXG.floor=['kkkkkkkkkkkk','kAAAAAAAAAAk','kNNNNNNNNNNk','kAAAAAAAAAAk','kNNNNNNNNNNk','kAAAAAAAAAAk','kkkkkkkkkkkk'];
 PXG.roof=['..kkkkkkkkkk','.kRRRRRRRRRk','kRrRRRrRRRRk','kRRRRRRRRrRk','kRrRRRrRRRRk','kRRRRRRRRrRk','kkkkkkkkkkkk'];
-PXG.mattress=['kkkkkkkkkkkk','kWWWWAAAAAAk','kWWWWAAAAAAk','kRRRRRRRRRRk','kRRBBRRYYRRk','kRRBBRRYYRRk','kkkkkkkkkkkk'];
+PXG.mattress=['kkkkkkkkkkkk','kWWWCBBBBBBk','kWWWCBBBBBBk','kWWWCBBBBBBk','kWWWCBBBBBBk','kWWWCBBBBBBk','kkkkkkkkkkkk'];
 PXG.fence=['.k..k..k..k.','kNk.kNk.kNk.','kNkkkNkkkNkk','kNk.kNk.kNk.','kNkkkNkkkNkk','kNk.kNk.kNk.','kkk.kkk.kkk.'];
 PXG.potato=['..kNNk...','.kNnnNNk.','kNnnNnNNk','kNNnNNnNk','.kNNnNNk.','..kkNkk..'];
 PXG.bakedpotato=['..kAAk...','.kAWWAAk.','kAWWAWAAk','kAAWAAWAk','.kAAWAAk.','..kkAkk..'];
@@ -163,7 +163,7 @@ const ITEMS={
   pickaxe:{n:'Picareta',e:'pickaxe'},
   katana:{n:'Katana',e:'katana'},
   hoe:{n:'Enxada',e:'hoe'},
-  fence:{n:'Cerca',e:'fence'},gate:{n:'Portão',e:'gate'},wall:{n:'Parede',e:'wall'},door:{n:'Porta',e:'door'},floor:{n:'Piso',e:'floor'},roof:{n:'Telhado',e:'roof'},mattress:{n:'Enxergão',e:'mattress'},
+  fence:{n:'Cerca',e:'fence'},gate:{n:'Portão',e:'gate'},wall:{n:'Parede',e:'wall'},door:{n:'Porta',e:'door'},floor:{n:'Piso',e:'floor'},roof:{n:'Telhado',e:'roof'},mattress:{n:'Cama',e:'mattress'},
   seed_corn:{n:'Sementes de milho',e:'seed'},
   potato:{n:'Batata',e:'potato'},bakedpotato:{n:'Batata assada',e:'bakedpotato'},melon:{n:'Melancia',e:'melon'},
   seed_potato:{n:'Sementes de batata',e:'seed'},seed_melon:{n:'Sementes de melancia',e:'seed'},
@@ -223,7 +223,7 @@ const WEAPONS={
   wall:{n:'Parede',dmg:1,range:20,cd:.5,kb:20,melee:true,chopRate:.2,wood:[1,1],arc:1.2},
   door:{n:'Porta',dmg:1,range:20,cd:.5,kb:20,melee:true,chopRate:.2,wood:[1,1],arc:1.2},
   floor:{n:'Piso',dmg:1,range:20,cd:.5,kb:20,melee:true,chopRate:.2,wood:[1,1],arc:1.2},
-  mattress:{n:'Enxergão',dmg:1,range:20,cd:.5,kb:20,melee:true,chopRate:.2,wood:[1,1],arc:1.2},
+  mattress:{n:'Cama',dmg:1,range:20,cd:.5,kb:20,melee:true,chopRate:.2,wood:[1,1],arc:1.2},
   roof:{n:'Telhado',dmg:1,range:20,cd:.5,kb:20,melee:true,chopRate:.2,wood:[1,1],arc:1.2},
   fence:{n:'Cerca',dmg:1,range:20,cd:.5,kb:20,melee:true,chopRate:.2,wood:[1,1],arc:1.2},
   hoe:{n:'Enxada',dmg:2,range:22,cd:.55,kb:35,melee:true,chopRate:.3,wood:[1,1],arc:1.2},
@@ -246,7 +246,7 @@ const RECIPES=[
   {out:'door',      need:{wood:4},           label:'Porta',           desc:'Ferramenta de construção: põe uma porta (3 madeiras por peça) ou troca uma parede por ela. Abre e fecha com o botão de interagir' },
   {out:'floor',     need:{wood:3},           label:'Piso',            desc:'Ferramenta de construção: põe piso de tábuas no quadrado da frente (1 madeira por quadrado). Não precisa de apoio. Aperte de novo sobre ele para tirar e recuperar a madeira' },
   {out:'roof',      need:{wood:4},           label:'Telhado',         desc:'Ferramenta de construção: põe telhado no quadrado da frente (2 madeiras por quadrado). Precisa encostar numa parede ou porta, ou noutro telhado (até 3 quadrados de distância). Fica transparente quando você está embaixo. Sem a parede, ele cai' },
-  {out:'mattress', need:{wood:3,cloth:2},  label:'Enxergão',         desc:'Ferramenta de construção: monta uma cama rústica no quadrado da frente (2 madeiras e 3 panos por cama). Dorme 1 pessoa, só à noite. Debaixo de um telhado cura mais. Aperte de novo sobre ela para desmontar' },
+  {out:'mattress', need:{wood:3,cloth:2},  label:'Cama',         desc:'Ferramenta de construção: monta uma cama no quadrado da frente (2 madeiras e 3 panos por cama). Dorme 1 pessoa, só à noite. Debaixo de um telhado cura mais. Aperte de novo sobre ela para desmontar' },
   {out:'greenhouse',need:{wood:8,cloth:4},  label:'Estufa',          desc:'Só no mapa de neve (onde o chão congelado não dá para arar): canteiro coberto 3x3 que cresce mais rápido. Monte ao ar livre' },
   {out:'spear',    need:{wood:4,stone:3}, label:'Lança',           desc:'Perfura em linha e ignora armadura (alcance 40)' },
   {out:'bat',      need:{wood:3},         label:'Taco',            desc:'Atordoa o zumbi, mas fraca contra blindados (dano 2.5)' },

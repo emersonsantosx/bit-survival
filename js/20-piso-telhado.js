@@ -3,13 +3,13 @@
    Telhado: 2 madeiras por quadrado, precisa de APOIO: ou o quadrado encosta numa parede/porta, ou encosta num telhado que ja tem apoio,
    ate 3 quadrados de distancia da parede mais perto. Tirou a parede, o telhado sem apoio cai (devolve 1 madeira por quadrado).
    Quem esta debaixo de um telhado o ve transparente (o grupo inteiro de quadrados ligados), de fora ele e solido.
-   Enxergao (ferramenta 'mattress'): cama rustica de 1 quadrado, 2 madeiras + 3 panos, dorme 1 pessoa (mesmas regras das outras camas).
+   Cama (ferramenta 'mattress'): cama de 1 quadrado (desenho igual ao das camas das casas), 2 madeiras + 3 panos, dorme 1 pessoa (mesmas regras das outras camas).
    A cabeceira vira para a parede que encosta nela (ou para o lado oposto ao jogador). Dormir DEBAIXO DE TELHADO cura mais (ver sleepSkipApply).
    Apertar o botao de construir sobre um quadrado que ja tem a peca da ferramenta TIRA a peca (devolve o custo; nao repete segurando o botao).
    Este arquivo roda dentro de uma funcao propria: so os nomes da lista no fim ficam visiveis para o resto do jogo. */
 (function(){
 const CELL=16,FLOOR_MAX=800,ROOF_MAX=500,BED_MAX=60,ROOF_SPAN=3,ROOF_H=14;   // ROOF_H: altura do telhado (a mesma da parede)
-const COST={floor:{wood:1},roof:{wood:2},mattress:{wood:2,cloth:3}},NAME={floor:'Piso',roof:'Telhado',mattress:'Enxergão'},MAXN={floor:FLOOR_MAX,roof:ROOF_MAX,mattress:BED_MAX};
+const COST={floor:{wood:1},roof:{wood:2},mattress:{wood:2,cloth:3}},NAME={floor:'Piso',roof:'Telhado',mattress:'Cama'},MAXN={floor:FLOOR_MAX,roof:ROOF_MAX,mattress:BED_MAX};
 const floors=new Map(),roofs=new Map(),beds=new Map();   // beds: guarda tambem o retangulo em pixels (x,y,w,h), o lado da cabeceira s e k:'mattress' (como os moveis das casas)
 const MAPS={floor:floors,roof:roofs,mattress:beds},KIND={floor:'f',roof:'r',mattress:'b'};   // chave 'x,y' (quadrado) -> {x,y}; o telhado guarda tambem a transparencia a
 let dist=new Map(),ver=0,grpCache=null,grpVer=-1;
@@ -17,7 +17,13 @@ const key=(x,y)=>x+','+y;
 const cellOf=v=>Math.floor(v/CELL);
 const isCT=t=>t==='floor'||t==='roof'||t==='mattress';
 const lackOf=t=>{for(const k in COST[t])if(countInv(k)<COST[t][k])return 'Falta '+(k==='wood'?'madeira':'pano');return null;};
-const mkBed=(x,y,s)=>({x:x*CELL,y:y*CELL,cx:x,cy:y,w:CELL,h:CELL,s,k:'mattress'});
+const DIR={t:[0,-1],b:[0,1],l:[-1,0],r:[1,0]},OPP={t:'b',b:'t',l:'r',r:'l'};
+/* a cama ocupa 2 quadrados (como as das casas, 27x15 px): (x,y) e o quadrado da CABECEIRA, o pe fica no quadrado oposto ao lado s */
+function mkBed(x,y,s){
+  const d=DIR[s],fx=x-d[0],fy=y-d[1];
+  return {x:Math.min(x,fx)*CELL,y:Math.min(y,fy)*CELL,w:CELL*(1+Math.abs(d[0])),h:CELL*(1+Math.abs(d[1])),cx:x,cy:y,fx,fy,s,k:'mattress'};
+}
+const bedAtCell=(cx,cy)=>{for(const b of beds.values())if((b.cx===cx&&b.cy===cy)||(b.fx===cx&&b.fy===cy))return b;return null;};
 
 /* ---- apoio do telhado: distancia (em quadrados) ate o quadrado encostado numa parede ---- */
 function walled(cx,cy){return !!window.cellWalled&&cellWalled(cx,cy);}
@@ -60,21 +66,30 @@ function cellBad(cx,cy,kind){   // motivo se NAO der para construir ali; null se
   return null;
 }
 /* o que o botao faz no quadrado da frente: PLACE poe a peca, REMOVE tira */
-/* lado da cabeceira do enxergao: encostada numa parede se tiver, senao do lado oposto ao jogador */
-function bedSide(cx,cy){
+/* onde fica a cama: com parede no quadrado da frente a cabeceira encosta nela; sem parede, o quadrado da frente e o pe e a cama segue para longe do jogador */
+function bedPlan(cx,cy){
   const a=P.face||0,face=Math.abs(Math.cos(a))>Math.abs(Math.sin(a))?(Math.cos(a)>0?'r':'l'):(Math.sin(a)>0?'b':'t');
   const w=window.cellWallDirs?cellWallDirs(cx,cy):[];
-  return w.includes(face)?face:(w[0]||face);
+  if(w.length){const sd=w.includes(face)?face:w[0];return {s:sd,hx:cx,hy:cy};}
+  return {s:face,hx:cx+DIR[face][0],hy:cy+DIR[face][1]};
 }
 function cellIntent(){
   const tool=P.tool,cx=cellOf(P.x+Math.cos(P.face)*14),cy=cellOf(P.y+Math.sin(P.face)*14),k=key(cx,cy),map=MAPS[tool];
+  if(tool==='mattress'){
+    const ex=bedAtCell(cx,cy);if(ex)return {cx:ex.cx,cy:ex.cy,s:ex.s,act:'REMOVE',bad:null};
+    const pl=bedPlan(cx,cy),d=DIR[pl.s],fx=pl.hx-d[0],fy=pl.hy-d[1],out={cx:pl.hx,cy:pl.hy,s:pl.s,act:'PLACE',bad:null};
+    if(beds.size>=BED_MAX)out.bad='Camas demais';
+    else if(bedAtCell(pl.hx,pl.hy)||bedAtCell(fx,fy))out.bad='Já tem uma cama aqui';
+    else if(window.cellWallDirs&&cellWallDirs(pl.hx,pl.hy).includes(OPP[pl.s]))out.bad='Tem uma parede no meio da cama';
+    else out.bad=cellBad(pl.hx,pl.hy,tool)||cellBad(fx,fy,tool)||lackOf(tool);
+    return out;
+  }
   if(map.has(k))return {cx,cy,act:'REMOVE',bad:null};
-  const s=tool==='mattress'?bedSide(cx,cy):null;
-  if(map.size>=MAXN[tool])return {cx,cy,s,act:'PLACE',bad:(tool==='floor'?'Pisos':tool==='roof'?'Telhados':'Enxergões')+' demais'};
+  if(map.size>=MAXN[tool])return {cx,cy,act:'PLACE',bad:(tool==='floor'?'Pisos':'Telhados')+' demais'};
   let bad=cellBad(cx,cy,tool);
   if(!bad&&tool==='roof'&&!canRoof(cx,cy))bad='Precisa de apoio: encoste numa parede ou num telhado';
   if(!bad)bad=lackOf(tool);
-  return {cx,cy,s,act:'PLACE',bad};
+  return {cx,cy,act:'PLACE',bad};
 }
 function cellBuild(quiet){
   if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||!isCT(P.tool))return;
@@ -111,28 +126,25 @@ function drawFloors(vx0,vx1,vy0,vy1){
     if(!floors.has(key(f.x-1,f.y)))R(x,y,1,CELL,'rgba(0,0,0,.28)');if(!floors.has(key(f.x+1,f.y)))R(x+CELL-1,y,1,CELL,'rgba(0,0,0,.28)');
   }
 }
-/* enxergao: moldura de madeira, colchao de palha, travesseiro e manta remendada. Desenhado com a cabeceira em cima e girado de 90 em 90 graus */
-const ROT={t:[1,0,0,1],r:[0,1,-1,0],b:[-1,0,0,-1],l:[0,-1,1,0]};
+/* cama: o mesmo desenho e tamanho (27x15) das camas das casas, dentro dos 2 quadrados que ela ocupa */
+const BED_COLS=['#3a5a8a','#8a3a3a','#3a7a5a','#7a5a8a','#8a6a2a'];
 function drawBeds(vx0,vx1,vy0,vy1){
-  if(!beds.size)return;
   for(const b of beds.values()){
-    if(b.x+CELL<vx0||b.x>vx1||b.y+CELL<vy0||b.y>vy1)continue;
-    ctx.save();const m=ROT[b.s]||ROT.t;ctx.translate(b.x+8,b.y+8);ctx.transform(m[0],m[1],m[2],m[3],0,0);ctx.translate(-8,-8);
-    bedArt((b.cx*3+b.cy*5)&3);ctx.restore();
+    if(b.x+b.w<vx0||b.x>vx1||b.y+b.h<vy0||b.y>vy1)continue;
+    bedArt(b.x,b.y,b.w,b.h,b.s,(b.cx*3+b.cy*5)%5);
   }
 }
-function bedArt(v){
-  R(1,16,14,1,'rgba(0,0,0,.28)');
-  R(0,0,16,16,'#4a3018');R(1,1,14,14,'#d8bf7a');                                    // moldura e colchao de palha
-  for(let i=0;i<9;i++)R(2+((i*5+v*3)%12),2+((i*7+v)%12),2,1,i%2?'#e6d392':'#bd9f52');   // fios de palha
-  R(0,0,16,2,'#7a5230');R(0,0,16,1,'#946238');R(0,14,16,2,'#5e3e22');                // cabeceira e pe da cama
-  R(3,3,10,4,'#efe9d8');R(3,6,10,1,'#cfc7b0');R(3,3,10,1,'#fffaf0');                  // travesseiro
-  R(1,8,14,6,'#8a3a3a');R(1,8,14,1,'#a54a4a');R(1,13,14,1,'#6a2a2a');                  // manta
-  R(3,10,4,3,'#3a5a8a');R(9,9,4,3,'#c8a040');R(9,12,2,1,'#3a5a8a');                    // remendos
-  for(let i=1;i<15;i+=2)R(i,8,1,1,'#e8dcb8');                                         // costura da dobra
+function bedArt(fx,fy,fw,fh,sd,v){
+  const vert=sd==='t'||sd==='b',w=vert?15:27,h=vert?27:15,x=fx+((fw-w)>>1),y=fy+((fh-h)>>1),bc=BED_COLS[v%BED_COLS.length];
+  R(x+1,y+h,w-2,2,'rgba(0,0,0,.30)');
+  R(x,y,w,h,'#4e3220');R(x+1,y+1,w-2,h-2,'#d6d2c4');
+  if(sd==='t'){R(x+1,y+8,w-2,h-9,bc);R(x+2,y+2,w-4,5,'#f4f0e6');}
+  else if(sd==='b'){R(x+1,y+1,w-2,h-9,bc);R(x+2,y+h-7,w-4,5,'#f4f0e6');}
+  else if(sd==='l'){R(x+8,y+1,w-9,h-2,bc);R(x+2,y+2,5,h-4,'#f4f0e6');}
+  else{R(x+1,y+1,w-9,h-2,bc);R(x+w-7,y+2,5,h-4,'#f4f0e6');}
 }
-/* o enxergao esta debaixo de um telhado? (dormir ai cura mais) */
-const bedCovered=b=>!!b&&roofs.has(key(b.cx,b.cy));
+/* a cama esta debaixo de um telhado? (dormir ai cura mais) */
+const bedCovered=b=>!!b&&roofs.has(key(b.cx,b.cy))&&roofs.has(key(b.fx,b.fy));   // os dois quadrados da cama
 /* quadrados ligados ao quadrado onde o jogador esta (mesmo telhado) */
 function playerGroup(){
   if(!P||P.inside||P.dead)return null;
@@ -166,8 +178,13 @@ function drawCellGhost(){
   if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||!isCT(P.tool))return;
   const it=cellIntent(),x=it.cx*CELL,y=it.cy*CELL,a=.55+.2*Math.sin(T*6);
   const c=it.bad?'230,90,80':it.act==='REMOVE'?'240,170,70':'110,220,110';
-  if(P.tool==='mattress'&&it.act==='PLACE'){   // previa da cama com a cabeceira no lado certo
-    ctx.save();ctx.globalAlpha=.55;const m=ROT[it.s]||ROT.t;ctx.translate(x+8,y+8);ctx.transform(m[0],m[1],m[2],m[3],0,0);ctx.translate(-8,-8);bedArt(0);ctx.restore();
+  if(P.tool==='mattress'){   // previa da cama inteira (2 quadrados) com a cabeceira no lado certo
+    const b=it.act==='REMOVE'?bedAtCell(it.cx,it.cy):mkBed(it.cx,it.cy,it.s);
+    if(it.act==='PLACE'){ctx.save();ctx.globalAlpha=.55;bedArt(b.x,b.y,b.w,b.h,b.s,0);ctx.restore();}
+    ctx.fillStyle='rgba('+c+','+(a*.35).toFixed(2)+')';ctx.fillRect(b.x,b.y,b.w,b.h);
+    ctx.fillStyle='rgba('+c+','+a.toFixed(2)+')';ctx.fillRect(b.x,b.y,b.w,1);ctx.fillRect(b.x,b.y+b.h-1,b.w,1);ctx.fillRect(b.x,b.y,1,b.h);ctx.fillRect(b.x+b.w-1,b.y,1,b.h);
+    if(it.bad){ctx.fillRect(b.x+b.w/2-1,b.y+b.h/2-1,2,2);}
+    return;
   }
   ctx.fillStyle='rgba('+c+','+(a*.4).toFixed(2)+')';
   const oy=P.tool==='roof'?y-ROOF_H:y;
@@ -192,7 +209,10 @@ function cellLoad(d){
 function cellRemote(d){
   if(!d||(d.k!=='f'&&d.k!=='r'&&d.k!=='b')||!Number.isFinite(d.x)||!Number.isFinite(d.y)||d.x<0||d.y<0||d.x*CELL>=WW||d.y*CELL>=WH)return;
   const x=Math.round(d.x),y=Math.round(d.y),map=d.k==='f'?floors:d.k==='r'?roofs:beds,k=key(x,y),max=d.k==='f'?FLOOR_MAX:d.k==='r'?ROOF_MAX:BED_MAX;
-  if(d.on){if(!map.has(k)&&map.size<max)map.set(k,d.k==='f'?{x,y}:d.k==='r'?{x,y,a:1}:mkBed(x,y,okSide(d.s)?d.s:'t'));}
+  if(d.on){
+    if(d.k==='b'){const nb=mkBed(x,y,okSide(d.s)?d.s:'t');if(!beds.has(k)&&beds.size<BED_MAX&&!bedAtCell(nb.cx,nb.cy)&&!bedAtCell(nb.fx,nb.fy))beds.set(k,nb);}
+    else if(!map.has(k)&&map.size<max)map.set(k,d.k==='f'?{x,y}:{x,y,a:1});
+  }
   else map.delete(k);
   ver++;if(d.k==='r'||!d.on)roofRecalc(true);else recalc();
 }
@@ -205,5 +225,5 @@ function cellApplySnapshot(d){
 
 window.cellBuild=cellBuild;window.cellIntent=cellIntent;window.drawCellGhost=drawCellGhost;window.drawFloors=drawFloors;window.drawRoofs=drawRoofs;
 window.cellPack=cellPack;window.cellLoad=cellLoad;window.cellRemote=cellRemote;window.cellApplySnapshot=cellApplySnapshot;window.roofRecalc=roofRecalc;
-window.drawBeds=drawBeds;window.bedCovered=bedCovered;window.bedList=()=>[...beds.values()];window.floorAt=(cx,cy)=>floors.has(key(cx,cy));window.bedAt=(cx,cy)=>beds.has(key(cx,cy));window.floorList=()=>[...floors.values()];window.roofList=()=>[...roofs.values()];
+window.drawBeds=drawBeds;window.bedCovered=bedCovered;window.bedList=()=>[...beds.values()];window.floorAt=(cx,cy)=>floors.has(key(cx,cy));window.bedAt=(cx,cy)=>!!bedAtCell(cx,cy);window.floorList=()=>[...floors.values()];window.roofList=()=>[...roofs.values()];
 })();
