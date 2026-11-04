@@ -526,8 +526,8 @@ function pickTarget(){
     a.s=a.d+turn+a.b-(a.key===P._ptKey?3:0);
     if(a.s<bs){bs=a.s;best=a;}
   }
-  /* itens no chão têm prioridade sobre dormir, porta e água (pia/torneira) */
-  if(best.k==='door'||best.k==='fgate'||best.k==='bed'||best.k==='tap'){
+  /* itens no chão têm prioridade sobre dormir, porta, água (pia/torneira) e carro destruído (a carcaça é grande e ficava na frente do item ao lado dela) */
+  if(best.k==='door'||best.k==='fgate'||best.k==='bed'||best.k==='tap'||(best.k==='veh'&&(best.v.destroyed||best.v.dying))){
     let bi=null;for(const a of c)if(a.k==='item'&&(!bi||a.s<bi.s))bi=a;
     if(bi)best=bi;
   }
@@ -728,7 +728,8 @@ function pickup(){
   let nv=null,ndCar=36;
   for(const v of vehicles){const d=Math.hypot(v.x-P.x,v.y-P.y);if(d<ndCar){ndCar=d;nv=v;}}
   const dItem=it?Math.hypot(it.x-P.x,it.y-P.y):1e9;
-  const preferItem=TG&&TG.k==='item'?true:(TG&&TG.k==='veh'?false:(it && dItem<=24 && dItem<=ndCar));
+  const wreck=v=>!!v&&(v.destroyed||v.dying);   // carcaca nao disputa com item no chao
+  const preferItem=TG&&TG.k==='item'?true:(TG&&TG.k==='veh'?(wreck(TG.v)&&!!it&&dItem<=24):(it && dItem<=24 && (dItem<=ndCar||wreck(nv))));
   if(TG&&TG.k==='veh'){nv=TG.v;ndCar=0;}
 
   if(nv && !preferItem){
