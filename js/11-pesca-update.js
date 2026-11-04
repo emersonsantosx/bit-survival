@@ -967,7 +967,11 @@ function update(dt){
   }
   // Spits run on BOTH sides (host spawns+syncs; guest receives via evt)
   for(const s of spits){
-    s.x+=s.vx*dt;s.y+=s.vy*dt;s.t-=dt;
+    const sx0=s.x,sy0=s.y;s.x+=s.vx*dt;s.y+=s.vy*dt;s.t-=dt;
+    if(s.t>0&&window.playerWallBlocks&&playerWallBlocks(sx0,sy0,s.x,s.y)){   // parede ou porta fechada do jogador para o cuspe
+      for(let i=0;i<6;i++)parts.push({x:s.x,y:s.y,vx:rnd(-40,40),vy:rnd(-40,20),t:.4,c:'#80e060'});
+      s.t=0;continue;
+    }
     if(P && !P.dead && Math.hypot(s.x-P.x,s.y-(P.y-6))<10){
       zombieHurt(8,.15);
       for(let i=0;i<10;i++)parts.push({x:s.x,y:s.y,vx:rnd(-60,60),vy:rnd(-60,20),t:.5,c:'#80e060'});
@@ -1279,7 +1283,7 @@ function updateHud(force){
   if(TG&&TG.k==='tap'){btnText='ÁGUA';}
   else if(TG&&TG.k==='chest'){btnText='ABRIR';}
   else if(TG&&TG.k==='door'){btnText=TG.dr.open?'FECHAR':'PORTA';}
-  else if(TG&&TG.k==='fgate'){btnText=TG.f.o?'FECHAR':'PORTÃO';}
+  else if(TG&&TG.k==='fgate'){btnText=TG.f.o?'FECHAR':TG.f.g===3?'PORTA':'PORTÃO';}
   else if(TG&&TG.k==='plot'){btnText=TG.act;}
   else if(TG&&TG.k==='veh'){if(TG.v.looted)btnText='ENTRAR';}
   if(!TG&&nearestCactus()){canInteract=true;btnText='ÁGUA';}
@@ -1287,7 +1291,7 @@ function updateHud(force){
   if(P.sleeping){canInteract=true;btnText='LEVANTAR';}
   else if(TG&&TG.k==='bed'){btnText='DORMIR';}
   {const hb=$('hoe');if(hb)hb.classList.toggle('hide',!(!!P.tool&&!P.inVehicle&&!P.dead&&!P.sleeping));}
-  {const hb=$('hoe'),want=P.tool==='fence'?'fence':P.tool==='gate'?'gate':'hoe';if(hb&&hb.dataset.ic!==want){hb.dataset.ic=want;hb.setAttribute('aria-label',want==='fence'?'Construir cerca':want==='gate'?'Construir portão':'Arar a terra');hb.innerHTML=pxIcon(want,4);}}   // botao de construir: ARAR com a enxada, CERCA com a cerca
+  {const hb=$('hoe'),want=FENCE_ICON[P.tool]||'hoe';if(hb&&hb.dataset.ic!==want){hb.dataset.ic=want;hb.setAttribute('aria-label',{fence:'Construir cerca',gate:'Construir portão',wall:'Construir parede',door:'Construir porta'}[want]||'Arar a terra');hb.innerHTML=pxIcon(want,4);}}   // botao de construir: ARAR com a enxada, a peca da ferramenta nas outras
   {const tb=$('tools');if(tb){const l=toolList(),show=l.length>0&&!P.inVehicle&&!P.dead&&!P.sleeping,want=P.tool||'toolbox';tb.classList.toggle('hide',!show);tb.classList.toggle('act',!!P.tool);
     if(tb.dataset.ic!==want){tb.dataset.ic=want;tb.setAttribute('aria-label',P.tool?'Guardar ferramenta de construção':'Ferramentas de construção');tb.innerHTML=pxIcon(want,P.tool?3:3);}}}
   const pick_=$('pick');
