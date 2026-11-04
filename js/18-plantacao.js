@@ -22,6 +22,7 @@ function soilBad(x,y){   // texto do motivo se NAO der para arar ali; null se de
   if(selectedMap==='snow'&&!ghAt(x,y))return 'O solo está congelado demais: monte uma estufa';
   if(x<24||y<24||x>WW-24||y>WH-24)return 'Longe demais da borda do mapa';
   if(bldNear(x,y,8))return 'Perto demais de uma construção';
+  if(window.floorAt&&floorAt(Math.floor(x/CELL),Math.floor(y/CELL)))return 'Tem piso aqui: tire o piso para arar';
   if(pointInLake(x,y)||pointInLake(x+8,y)||pointInLake(x-8,y)||pointInLake(x,y+8)||pointInLake(x,y-8))return 'Não dá para arar na água';
   if(solidPoint(x,y,6))return 'Tem algo no caminho';
   if(onCityRoad(x,y,6))return 'Não dá para arar o asfalto';

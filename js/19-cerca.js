@@ -16,7 +16,8 @@ const fkey=(x,y,d)=>d+x+','+y;
 let fmap=new Map();
 function reindex(){tallSet=null;fmap=new Map();tallN=0;for(const f of fences){fmap.set(fkey(f.x,f.y,f.d),f);if(isTall(f))tallN++;}}
 function addPiece(f){tallSet=null;fences.push(f);fmap.set(fkey(f.x,f.y,f.d),f);if(isTall(f))tallN++;}
-function dropPiece(f){tallSet=null;fences=fences.filter(q=>q!==f);fmap.delete(fkey(f.x,f.y,f.d));if(isTall(f))tallN--;}
+let remoteOp=false;   // true enquanto aplica algo vindo de outro jogador (o telhado que cair nao solta madeira de novo)
+function dropPiece(f){tallSet=null;fences=fences.filter(q=>q!==f);fmap.delete(fkey(f.x,f.y,f.d));if(isTall(f)){tallN--;if(window.roofRecalc)roofRecalc(remoteOp);}}
 const fenceAt=(x,y,d)=>fmap.get(fkey(x,y,d));
 
 /* borda da grade mais perto do ponto a frente do jogador */
@@ -50,6 +51,7 @@ function fenceIntent(){
 }
 function send(f,g){if(MP.active)sendEvt('fenceSet',{x:f.x,y:f.y,d:f.d,g:g,o:f.o?1:0});}
 function fenceBuild(quiet){
+  if(P&&CELL_TOOLS[P.tool]){if(window.cellBuild)cellBuild(quiet);return;}   // piso e telhado (modulo 20)
   if(!P||P.dead||P.inVehicle||P.inside||!isFT(P.tool))return;
   const it=fenceIntent(),e=it.e;
   if(it.bad){if(!quiet){toast(it.bad);beep(130,.08,'square',.04);}return;}
@@ -147,7 +149,7 @@ function removeKey(key){
     if(i>=0){decorations.splice(i,1);rebuildSolidGrid();}
   }
 }
-function structRemote(k){if(typeof k!=='string'||k.length>60)return;broken.add(k);removeKey(k);}
+function structRemote(k){if(typeof k!=='string'||k.length>60)return;broken.add(k);remoteOp=true;try{removeKey(k);}finally{remoteOp=false;}}
 function structPack(){return [...broken].slice(0,3000);}
 function structLoad(a){   // depois de gerar o mundo e antes de carregar as cercas do jogador
   broken.clear();
@@ -239,6 +241,11 @@ function playerWallBlocks(x1,y1,x2,y2){
   }
   return false;
 }
+/* o quadrado (cx,cy) encosta numa parede ou porta (apoio do telhado) */
+function cellWalled(cx,cy){
+  const t=fmap.get('h'+cx+','+cy),b=fmap.get('h'+cx+','+(cy+1)),l=fmap.get('v'+cx+','+cy),r=fmap.get('v'+(cx+1)+','+cy);
+  return !!((t&&t.g>=2)||(b&&b.g>=2)||(l&&l.g>=2)||(r&&r.g>=2));
+}
 /* carro contra parede e porta fechada (a cerca baixa continua sem barrar carro, como antes) */
 function wallsHitVehicle(cx,cy,c,s,L,W,R){
   if(!tallN)return 0;
@@ -251,6 +258,7 @@ function wallsHitVehicle(cx,cy,c,s,L,W,R){
 }
 /* fantasma das ferramentas Cerca e Portao: verde = poe, azul = troca a cerca por portao, vermelho = nao pode */
 function drawFenceGhost(){
+  if(P&&CELL_TOOLS[P.tool]){if(window.drawCellGhost)drawCellGhost();return;}
   if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||!isFT(P.tool))return;
   const it=fenceIntent(),e=it.e,x=e.x*CELL,y=e.y*CELL,a=.6+.25*Math.sin(T*6);
   const c=it.bad?'230,90,80':it.act==='REPLACE'?'110,170,240':'110,220,110';
@@ -281,7 +289,8 @@ function fenceLoad(a){
   }
   reindex();
 }
-function fenceRemote(d){
+function fenceRemote(d){remoteOp=true;try{fenceRemote_(d);}finally{remoteOp=false;}}
+function fenceRemote_(d){
   if(!d||!Number.isFinite(d.x)||!Number.isFinite(d.y)||(d.d!=='h'&&d.d!=='v'))return;
   const f=fenceAt(d.x,d.y,d.d);
   if(f&&f.s){if(isOpenable(f)&&d.o!==undefined)f.o=d.o?1:0;return;}
@@ -292,6 +301,6 @@ function fenceRemote(d){
 }
 function fenceApplySnapshot(a){if(Array.isArray(a))for(const r of a)if(Array.isArray(r))fenceRemote({x:r[0],y:r[1],d:r[2]===1?'v':'h',g:gv(r[3]),o:r[4]?1:0});}
 
-window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
+window.cellWalled=cellWalled;window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
 window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;
 })();
