@@ -1,6 +1,6 @@
-/* Enxergao: fabricar, montar (custo, cabeceira, regras), tirar com reembolso, dormir (so a noite), bonus de cura debaixo
+/* Cama: fabricar, montar (custo, cabeceira, regras), tirar com reembolso, dormir (so a noite), bonus de cura debaixo
    de telhado, acordar sem atravessar parede, canteiro, save e carregar, multiplayer.
-   Uso: node tests/teste-enxergao.js [caminho/index.html]. Sai com codigo 1 se algo falhar. */
+   Uso: node tests/teste-cama.js [caminho/index.html]. Sai com codigo 1 se algo falhar. */
 const path = require('path');
 const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'index.html'));
 const { chromium } = require('playwright');
@@ -53,14 +53,14 @@ const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pending
  for(const sd of ['t','b','l','r'])cellRemote({k:'b',x:20+'tblr'.indexOf(sd)*2,y:20,on:1,s:sd});drawBeds(0,WW,0,WH);o.drawn=bedList().length;
  return o;});
 console.log(JSON.stringify(r));
-ok(r.rec&&r.tool&&r.recCost[0]===3&&r.recCost[1]===2,'fabrica o enxergao como ferramenta (3 madeiras, 2 panos)');ok(r.spot,'achou area livre');
+ok(r.rec&&r.tool&&r.recCost[0]===3&&r.recCost[1]===2,'fabrica a cama como ferramenta (3 madeiras, 2 panos)');ok(r.spot,'achou area livre');
 ok(!r.i0.bad&&r.placed===1&&r.cost[0]===2&&r.cost[1]===3,'monta no quadrado da frente por 2 madeiras e 3 panos');ok(r.side==='r','cabeceira do lado oposto ao jogador');
 ok(r.again==='REMOVE'&&r.keeps===1&&r.removed===0&&r.refund[0]===2&&r.refund[1]===3,'botao sobre ele desmonta e devolve tudo (segurar nao desmonta)');
 ok(r.sideWall==='r','cabeceira vira para a parede');ok(r.noCloth==='Falta pano','sem pano');
 ok(r.spotFound&&r.dayBlock==='Você só consegue dormir à noite','de dia nao dorme');ok(r.tg==='bed','botao enxerga a cama (DORMIR)');
-ok(r.sleeping&&r.sleepPos,'deita no enxergao');ok(r.woke&&r.gain===22,'dorme sem telhado: +22 de vida (deu '+r.gain+')');ok(r.wakePos,'acorda do lado da cama, sem atravessar parede');
+ok(r.sleeping&&r.sleepPos,'deita na cama');ok(r.woke&&r.gain===22,'dorme sem telhado: +22 de vida (deu '+r.gain+')');ok(r.wakePos,'acorda do lado da cama, sem atravessar parede');
 ok(r.roofOver&&r.covered&&r.gainRoof===35,'dorme sob telhado: +35 de vida (deu '+r.gainRoof+')');ok(r.full,'cama ocupada por outro jogador');ok(/cama/i.test(r.soil||''),'nao da para arar embaixo da cama ('+r.soil+')');
-ok(r.cleared===0&&/^1:r$/.test(r.reload),'save e carregar mantem o enxergao e a cabeceira ('+r.reload+')');ok(r.badLoad==='1:t','save com lixo nao quebra ('+r.badLoad+')');
+ok(r.cleared===0&&/^1:r$/.test(r.reload),'save e carregar mantem a cama e a cabeceira ('+r.reload+')');ok(r.badLoad==='1:t','save com lixo nao quebra ('+r.badLoad+')');
 ok(r.remote==='l'&&r.remoteDel&&r.remoteBad,'multiplayer poe, tira e ignora dados invalidos');ok(r.drawn===5,'desenha nas quatro direcoes');
 ok(errs.length===0,'sem erros '+errs[0]);
 await b.close();process.exit(bad?1:0);})();

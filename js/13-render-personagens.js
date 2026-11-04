@@ -1413,7 +1413,7 @@ function findSleepSpot(){
     if(d<22&&d<bd){bd=d;best={ref:f,slots:bedSlots(f)};}
   }
   for(const t of tents){const d=Math.hypot(t.x-P.x,t.y-P.y);if(d<40&&d<bd){bd=d;best={ref:t,slots:tentSlots(t),tent:true};}}
-  if(!b&&window.bedList)for(const f of bedList()){   // enxergao montado pelo jogador
+  if(!b&&window.bedList)for(const f of bedList()){   // cama montada pelo jogador
     const dx=Math.max(f.x-P.x,0,P.x-f.x-f.w),dy=Math.max(f.y-P.y,0,P.y-f.y-f.h),d=Math.hypot(dx,dy);
     if(d<22&&d<bd){bd=d;best={ref:f,slots:bedSlots(f)};}
   }
@@ -1507,7 +1507,7 @@ function sleepSkipApply(nT){
   const hr=START_HOUR+T/DAY_SECONDS*24,nd=Math.floor(hr/24)+1;
   day=nd;update._lastDay=nd;dark=darkness(hr%24);
   if(nd>oldDay)dayAdvanced(nd-oldDay);
-  const roofed=!!(P.sleeping&&P.sleeping.ref&&P.sleeping.ref.k==='mattress'&&window.bedCovered&&bedCovered(P.sleeping.ref));   // enxergao debaixo de telhado: dorme melhor
+  const roofed=!!(P.sleeping&&P.sleeping.ref&&P.sleeping.ref.k==='mattress'&&window.bedCovered&&bedCovered(P.sleeping.ref));   // cama debaixo de telhado: dorme melhor
   P.hp=Math.min(100,P.hp+(roofed?35:22));P.food=Math.max(8,P.food-10);P.water=Math.max(8,P.water-14);
   P.stam=100;P.exhausted=false;P.sick=0;P.temp=(P.temp||0)*.35;
   wakeUp(true);SLP.fade=1;
@@ -1845,7 +1845,7 @@ function drawItem(it,near){
     case'wall':R(x-5,y-7+b,10,7,'#9a6a3a');R(x-5,y-7+b,10,2,'#c79a62');for(let i=0;i<3;i++)R(x-3+i*3,y-5+b,1,5,'#5e3e22');break;
     case'door':R(x-4,y-7+b,8,7,'#7a5230');R(x-4,y-7+b,8,1,'#946238');R(x+1,y-4+b,2,2,'#e0c050');break;
     case'floor':R(x-5,y-5+b,10,5,'#a97c45');R(x-5,y-3+b,10,1,'#6a4a28');R(x-5,y-1+b,10,1,'#6a4a28');R(x-5,y-5+b,10,1,'#c79a62');break;
-    case'mattress':R(x-5,y-6+b,10,6,'#4a3018');R(x-4,y-5+b,8,4,'#d8bf7a');R(x-3,y-5+b,6,2,'#efe9d8');R(x-4,y-3+b,8,2,'#8a3a3a');break;
+    case'mattress':R(x-5,y-6+b,10,7,'#4e3220');R(x-4,y-5+b,8,5,'#d6d2c4');R(x-4,y-5+b,3,5,'#f4f0e6');R(x-1,y-5+b,5,5,'#3a5a8a');break;
     case'roof':R(x-5,y-7+b,10,7,'#b44a3a');R(x-5,y-7+b,10,1,'#d9705c');for(let i=0;i<3;i++)R(x-5,y-5+b+i*2,10,1,'#7a2e24');break;
     case'fence':for(let i=0;i<4;i++){R(x-5+i*3,y-6+b,2,6,'#9a6a3a');}R(x-5,y-4+b,10,1,'#5a3c20');break;
     case'hoe':for(let i=0;i<10;i++)R(x-5+i,y-3+b-(i>>2),1,1,'#8a6a3a');R(x+3,y-7+b,4,3,'#c0c8d4');break;

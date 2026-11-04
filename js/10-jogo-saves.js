@@ -512,7 +512,7 @@ function pickTarget(){
     if(r.d<17)add({k:'bed',d:r.d,b:0},r.px,r.py,'b'+f.x+','+f.y);
   }
   for(const t of tents){const d=Math.hypot(t.x-P.x,t.y-P.y);if(d<40)add({k:'bed',d:Math.max(0,d-12-P.r),b:0},t.x,t.y,'b'+t.x+','+t.y);}
-  if(!P.inside&&window.bedList)for(const f of bedList()){const r=rectD(f.x,f.y,f.w,f.h);if(r.d<17)add({k:'bed',d:r.d,b:0},r.px,r.py,'m'+f.cx+','+f.cy);}   // enxergao montado pelo jogador
+  if(!P.inside&&window.bedList)for(const f of bedList()){const r=rectD(f.x,f.y,f.w,f.h);if(r.d<17)add({k:'bed',d:r.d,b:0},r.px,r.py,'m'+f.cx+','+f.cy);}   // cama montada pelo jogador
   for(const v of vehicles){
     if(Math.hypot(v.x-P.x,v.y-P.y)>=36)continue;
     vehHalf(v);const r=rectD(v.x-v._hx,v.y-v._hy,v._hx*2,v._hy*2);
