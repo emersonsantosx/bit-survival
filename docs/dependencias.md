@@ -42,8 +42,8 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 07-loot-mapa | 124 | 3 | 30 | 127 | 2 | 7 | . | 14 | 19 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |
 | 08-cidade-vilas-marcos | 119 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |
 | 09-milharal-geracao | 203 | 10 | 87 | 273 | 40 |  | 1 | 35 | . | 3 | 3 | 6 | 126 |  | 1 |  |  |  |  |  |
-| 10-jogo-saves | 90 | 50 | 46 | 619 | 15 | 2 | 10 | 10 | 7 | . | 84 | 25 | 9 |  | 17 |  |  |  |  |  |
-| 11-pesca-update | 229 | 37 | 49 | 808 | 58 | 2 | 3 | 4 | 19 | 59 | . | 13 | 14 |  | 4 |  |  |  |  |  |
+| 10-jogo-saves | 90 | 50 | 46 | 619 | 16 | 2 | 10 | 10 | 7 | . | 84 | 25 | 9 |  | 17 |  |  |  |  |  |
+| 11-pesca-update | 229 | 37 | 49 | 808 | 59 | 2 | 3 | 4 | 19 | 59 | . | 13 | 14 |  | 4 |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 35 | 27 | 573 | 12 | 1 | 6 | 5 | 11 | 24 | 36 | . | 18 |  | 10 |  |  |  |  |  |
 | 13-render-personagens | 320 | 39 | 20 | 258 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 583 | 13 | 16 | 293 | 12 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |
@@ -71,7 +71,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | WH | let | 03-dados:2 | 13 | 77 |
 | items | let | 04-estado:9 | 13 | 55 |
 | sendEvt | funcao | 12-crafting-multiplayer:100 | 13 | 50 |
-| toast | funcao | 11-pesca-update:1225 | 12 | 170 |
+| toast | funcao | 11-pesca-update:1233 | 12 | 170 |
 | parts | let | 04-estado:9 | 12 | 63 |
 | R | funcao | 13-render-personagens:2 | 11 | 1126 |
 | ctx | const | 01-base:27 | 11 | 931 |
@@ -82,7 +82,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | state | let | 04-estado:2 | 9 | 84 |
 | animals | let | 04-estado:9 | 9 | 37 |
 | ORLA | let | 05-geometria:123 | 9 | 37 |
-| pointInLake | funcao | 05-geometria:111 | 9 | 34 |
+| pointInLake | funcao | 05-geometria:111 | 9 | 35 |
 | H | let | 01-base:47 | 8 | 100 |
 | W | let | 01-base:47 | 8 | 96 |
 | remotePlayers | let | 04-estado:10 | 8 | 87 |

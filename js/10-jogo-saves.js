@@ -832,7 +832,9 @@ function makeNoise(x,y,r){
     if(z.dead)continue;
     const d=Math.hypot(z.x-x,z.y-y);
     if(d<r){
-      z.alert=Math.max(z.alert||0,7);z.tx=x+rnd(-12,12);z.ty=y+rnd(-12,12);z.heardAt=T||0;
+      if(r<=150&&d>r*.6&&!losClear(z.x,z.y-5,x,y-5))continue;   // barulho baixo (passos, golpes) longe e com algo no meio nao chega
+      const fuzz=12+d*.3;   // quanto mais longe, mais impreciso o lugar onde ele acha que foi
+      z.alert=Math.max(z.alert||0,7);z.tx=x+rnd(-fuzz,fuzz);z.ty=y+rnd(-fuzz,fuzz);z.heardAt=T||0;
       if(d<r*.48){for(const other of zombies){if(other===z||other.dead)continue;if(Math.hypot(other.x-z.x,other.y-z.y)<95){other.alert=Math.max(other.alert||0,4);other.tx=x+rnd(-24,24);other.ty=y+rnd(-24,24);}}}
     }
   }
@@ -990,7 +992,7 @@ function damageZ(z,dmg,kx,ky,fromNet,wn){
     if(ar>0){const eff=Math.max(dmg*.4,dmg-ar*((W&&W.pierce)?.3:1));armored=eff<dmg*.75;dmg=eff;}
   }
   const hv=zHeavy(z);
-  z.hit=.25;z.vx+=(kx||0)*hv;z.vy+=(ky||0)*hv;z.lock=5;z.alert=0;
+  z.hit=.25;z.vx+=(kx||0)*hv;z.vy+=(ky||0)*hv;z.lock=5;z.alert=0;z.hurtT=3;   // quem apanha sabe onde esta o agressor por uns segundos
   if(W&&W.stun&&z.hp>0){z.stun=Math.max(z.stun||0,W.stun*hv);z.lunge=0;}
   if(armored){for(let i=0;i<4;i++)parts.push({x:z.x,y:z.y-8,vx:rnd(-60,60),vy:rnd(-50,0),t:.25,c:'#d0d4dc'});try{beep(1100,.04,'square',.04,-300);}catch(e){}}
   z._predT=0.5; // keep local prediction for 0.5s so snapshot doesn't erase guest damage
