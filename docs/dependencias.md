@@ -51,7 +51,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |
 | 18-plantacao | 36 | 6 | 13 | 59 | 14 |  |  | 12 | 1 |  | 8 | 3 | 41 |  | 1 |  |  | . |  |  |
-| 19-cerca | 29 | 7 | 2 | 81 | 12 |  |  | 1 |  | 3 | 2 | 3 | 68 |  |  |  |  |  | . |  |
+| 19-cerca | 29 | 7 | 2 | 81 | 12 |  |  | 1 |  | 3 | 2 | 3 | 70 |  |  |  |  |  | . |  |
 | 20-piso-telhado | 28 | 3 | 6 | 35 | 6 |  |  | 1 |  |  | 2 | 2 | 19 |  |  |  |  |  |  | . |
 
 (colunas = os dois primeiros digitos do nome do arquivo)
@@ -73,7 +73,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | sendEvt | funcao | 12-crafting-multiplayer:100 | 13 | 50 |
 | toast | funcao | 11-pesca-update:1225 | 12 | 170 |
 | parts | let | 04-estado:9 | 12 | 63 |
-| R | funcao | 13-render-personagens:2 | 11 | 1109 |
+| R | funcao | 13-render-personagens:2 | 11 | 1111 |
 | ctx | const | 01-base:27 | 11 | 920 |
 | weather | let | 04-estado:5 | 11 | 87 |
 | zombies | let | 04-estado:9 | 11 | 58 |
