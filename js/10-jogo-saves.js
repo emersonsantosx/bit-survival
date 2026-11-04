@@ -366,9 +366,9 @@ function weaponList(){
   return l;
 }
 /* ferramentas de construcao (enxada, cerca, portao): nao entram no arsenal das armas, tem botao proprio na HUD */
-const BUILD_TOOLS=['hoe','fence','gate','wall','door','floor','roof'];
-const FENCE_ICON={fence:'fence',gate:'gate',wall:'wall',door:'door',floor:'floor',roof:'roof'};   // ferramentas do botao de construir que nao sao a enxada (modulos 19-cerca e 20-piso-telhado)
-const CELL_TOOLS={floor:1,roof:1};   // as que agem num quadrado (modulo 20); as outras agem numa borda da grade (modulo 19)
+const BUILD_TOOLS=['hoe','fence','gate','wall','door','floor','roof','mattress'];
+const FENCE_ICON={fence:'fence',gate:'gate',wall:'wall',door:'door',floor:'floor',roof:'roof',mattress:'mattress'};   // ferramentas do botao de construir que nao sao a enxada (modulos 19-cerca e 20-piso-telhado)
+const CELL_TOOLS={floor:1,roof:1,mattress:1};   // as que agem num quadrado (modulo 20); as outras agem numa borda da grade (modulo 19)
 function toolList(){return Array.isArray(P?.tools)?P.tools.filter(k=>BUILD_TOOLS.includes(k)):[];}
 function addTool(key){
   if(!P||!BUILD_TOOLS.includes(key))return;
@@ -399,7 +399,7 @@ function cycleWeapon(){
   const i=l.indexOf(P.weapon);P.weapon=l[(Math.max(-1,i)+1)%l.length];
   beep(300,.05,'square',.04);updateWeaponHud();     // o botão de trocar arma já mostra a arma: sem aviso no topo
 }
-const WEAPON_ICON={hoe:'hoe',fence:'fence',gate:'gate',wall:'wall',door:'door',floor:'floor',roof:'roof',fists:'fists',bat:'bat',axe:'axe',pickaxe:'pickaxe',katana:'katana',spear:'spear',bow:'bow',pistol:'pistol',smg:'smg',shotgun:'shotgun',rifle:'rifle',fishingrod:'rod'};
+const WEAPON_ICON={hoe:'hoe',fence:'fence',gate:'gate',wall:'wall',door:'door',floor:'floor',roof:'roof',mattress:'mattress',fists:'fists',bat:'bat',axe:'axe',pickaxe:'pickaxe',katana:'katana',spear:'spear',bow:'bow',pistol:'pistol',smg:'smg',shotgun:'shotgun',rifle:'rifle',fishingrod:'rod'};
 let weaponWheelOpen=false, weaponWheelOpenedAt=0;
 function updateWeaponHud(){const el=$('wpn'),sw=$('swap');if(el)el._sig=null;if(sw)sw._sig=null;}   // o HUD redesenha a arma no próximo quadro
 function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
@@ -512,6 +512,7 @@ function pickTarget(){
     if(r.d<17)add({k:'bed',d:r.d,b:0},r.px,r.py,'b'+f.x+','+f.y);
   }
   for(const t of tents){const d=Math.hypot(t.x-P.x,t.y-P.y);if(d<40)add({k:'bed',d:Math.max(0,d-12-P.r),b:0},t.x,t.y,'b'+t.x+','+t.y);}
+  if(!P.inside&&window.bedList)for(const f of bedList()){const r=rectD(f.x,f.y,f.w,f.h);if(r.d<17)add({k:'bed',d:r.d,b:0},r.px,r.py,'m'+f.cx+','+f.cy);}   // enxergao montado pelo jogador
   for(const v of vehicles){
     if(Math.hypot(v.x-P.x,v.y-P.y)>=36)continue;
     vehHalf(v);const r=rectD(v.x-v._hx,v.y-v._hy,v._hx*2,v._hy*2);
