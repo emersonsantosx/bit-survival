@@ -967,7 +967,11 @@ function update(dt){
   }
   // Spits run on BOTH sides (host spawns+syncs; guest receives via evt)
   for(const s of spits){
-    s.x+=s.vx*dt;s.y+=s.vy*dt;s.t-=dt;
+    const sx0=s.x,sy0=s.y;s.x+=s.vx*dt;s.y+=s.vy*dt;s.t-=dt;
+    if(s.t>0&&window.playerWallBlocks&&playerWallBlocks(sx0,sy0,s.x,s.y)){   // parede ou porta fechada do jogador para o cuspe
+      for(let i=0;i<6;i++)parts.push({x:s.x,y:s.y,vx:rnd(-40,40),vy:rnd(-40,20),t:.4,c:'#80e060'});
+      s.t=0;continue;
+    }
     if(P && !P.dead && Math.hypot(s.x-P.x,s.y-(P.y-6))<10){
       zombieHurt(8,.15);
       for(let i=0;i<10;i++)parts.push({x:s.x,y:s.y,vx:rnd(-60,60),vy:rnd(-60,20),t:.5,c:'#80e060'});

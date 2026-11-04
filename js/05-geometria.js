@@ -487,6 +487,7 @@ function castRay(x,y,ang,maxd){
   // Finer step + larger hit radius so firearms reliably hit (esp. multiplayer guest)
   for(let d=4;d<=maxd;d+=3){
     const px=x+cx*d,py=y+cy*d;
+    if(window.playerWallBlocks&&playerWallBlocks(px-cx*3,py-cy*3,px,py))return{x:px,y:py,z:null,animal:null};   // parede e porta fechada do jogador param o tiro (antes de qualquer alvo atras delas)
     for(const z of zombies){
       if(z.dead)continue;
       const hitR = Math.max(10, (z.r||5)+6);
@@ -552,6 +553,7 @@ function vehicleOverlap(v){
     if(obbHitsRect(cx,cy,c,s,L,W,o.x-o._hx+2,o.y-o._hy+2,o.x+o._hx-2,o.y+o._hy-2))cnt++;
   }
   if(plane&&obbHitsRect(cx,cy,c,s,L,W,plane.x-35,plane.y-16,plane.x+35,plane.y+16))cnt++;
+  if(window.wallsHitVehicle)cnt+=wallsHitVehicle(cx,cy,c,s,L,W,R);   // parede e porta fechada do jogador: carro nao atravessa
   return cnt;
 }
 /* qual OUTRO veículo está na frente do carro (a carroceria avançada 3px encosta nele)? serve para o dano da batida */

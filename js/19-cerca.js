@@ -10,13 +10,13 @@ const CELL=16,FENCE_MAX=500;
 const GT={fence:0,gate:1,wall:2,door:3},NAMES=['Cerca','Portão','Parede','Porta'],HP_F=[3,3,6,5];
 const PIECE_COST={gate:1,wall:2,door:3};   // madeira por peca (a cerca rende 2 pecas por madeira)
 const isFT=t=>t in GT,isOpenable=f=>f.g===1||f.g===3,isTall=f=>f.g>=2,gv=v=>(v===1||v===2||v===3)?v:0;
-let tallN=0;
+let tallN=0,tallSet=null;   // tallSet: celulas de 64 px (e vizinhas) com peca alta; descarta rapido quase todo ponto do segmento sem consultar o mapa
 let fences=[];
 const fkey=(x,y,d)=>d+x+','+y;
 let fmap=new Map();
-function reindex(){fmap=new Map();tallN=0;for(const f of fences){fmap.set(fkey(f.x,f.y,f.d),f);if(isTall(f))tallN++;}}
-function addPiece(f){fences.push(f);fmap.set(fkey(f.x,f.y,f.d),f);if(isTall(f))tallN++;}
-function dropPiece(f){fences=fences.filter(q=>q!==f);fmap.delete(fkey(f.x,f.y,f.d));if(isTall(f))tallN--;}
+function reindex(){tallSet=null;fmap=new Map();tallN=0;for(const f of fences){fmap.set(fkey(f.x,f.y,f.d),f);if(isTall(f))tallN++;}}
+function addPiece(f){tallSet=null;fences.push(f);fmap.set(fkey(f.x,f.y,f.d),f);if(isTall(f))tallN++;}
+function dropPiece(f){tallSet=null;fences=fences.filter(q=>q!==f);fmap.delete(fkey(f.x,f.y,f.d));if(isTall(f))tallN--;}
 const fenceAt=(x,y,d)=>fmap.get(fkey(x,y,d));
 
 /* borda da grade mais perto do ponto a frente do jogador */
@@ -55,7 +55,7 @@ function fenceBuild(quiet){
   if(it.bad){if(!quiet){toast(it.bad);beep(130,.08,'square',.04);}return;}
   const m=mid(e);
   if(it.act==='REPLACE'){
-    removeInv('wood',it.cost);const f=fenceAt(e.x,e.y,e.d);if(isTall(f))tallN--;f.g=GT[P.tool];if(isTall(f))tallN++;f.o=0;f.hp=undefined;send(f,f.g);
+    removeInv('wood',it.cost);const f=fenceAt(e.x,e.y,e.d);tallSet=null;if(isTall(f))tallN--;f.g=GT[P.tool];if(isTall(f))tallN++;f.o=0;f.hp=undefined;send(f,f.g);
     beep(260,.07,'triangle',.05,60);return;
   }
   if(P.tool!=='fence')removeInv('wood',it.cost);else{if(!(P._fcred>0)){removeInv('wood',1);P._fcred=2;}P._fcred--;}
@@ -220,15 +220,32 @@ function drawWall(f){
   }
 }
 /* tiro, visao e golpe nao atravessam parede ou porta fechada (o resto do jogo chama isto de dentro de wallBlocks) */
+function tallBuild(){
+  tallSet=new Set();
+  for(const f of fences){if(!isTall(f))continue;const cx=Math.floor(f.x*CELL/64),cy=Math.floor(f.y*CELL/64);for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)tallSet.add((cx+i)*8192+(cy+j));}
+}
 function playerWallBlocks(x1,y1,x2,y2){
   if(!tallN)return false;
+  if(!tallSet)tallBuild();
   const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy),n=Math.max(1,Math.ceil(len/3));
   for(let k=0;k<=n;k++){
-    const px=x1+dx*k/n,py=y1+dy*k/n,gy=Math.round(py/CELL),gx=Math.round(px/CELL);
-    if(Math.abs(py-gy*CELL)<=3.5){const f=fmap.get('h'+Math.floor(px/CELL)+','+gy);if(f&&f.g>=2&&!(f.g===3&&f.o))return true;}
-    if(Math.abs(px-gx*CELL)<=3.5){const f=fmap.get('v'+gx+','+Math.floor(py/CELL));if(f&&f.g>=2&&!(f.g===3&&f.o))return true;}
+    const px=x1+dx*k/n,py=y1+dy*k/n;
+    if(!tallSet.has(Math.floor(px/64)*8192+Math.floor(py/64)))continue;
+    const gy=Math.round(py/CELL),gx=Math.round(px/CELL);
+    if(Math.abs(py-gy*CELL)<=3){const f=fmap.get('h'+Math.floor(px/CELL)+','+gy);if(f&&f.g>=2&&!(f.g===3&&f.o))return true;}
+    if(Math.abs(px-gx*CELL)<=3){const f=fmap.get('v'+gx+','+Math.floor(py/CELL));if(f&&f.g>=2&&!(f.g===3&&f.o))return true;}
   }
   return false;
+}
+/* carro contra parede e porta fechada (a cerca baixa continua sem barrar carro, como antes) */
+function wallsHitVehicle(cx,cy,c,s,L,W,R){
+  if(!tallN)return 0;
+  let n=0;const i0=Math.floor((cx-R)/CELL)-1,i1=Math.floor((cx+R)/CELL)+1,j0=Math.floor((cy-R)/CELL)-1,j1=Math.floor((cy+R)/CELL)+1;
+  for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++)for(const d of ['h','v']){
+    const f=fmap.get(d+i+','+j);if(!f||f.g<2||(f.g===3&&f.o))continue;
+    const r=solidRect(f);if(obbHitsRect(cx,cy,c,s,L,W,r.x,r.y,r.x+r.w,r.y+r.h))n++;
+  }
+  return n;
 }
 /* fantasma das ferramentas Cerca e Portao: verde = poe, azul = troca a cerca por portao, vermelho = nao pode */
 function drawFenceGhost(){
@@ -267,12 +284,12 @@ function fenceRemote(d){
   const f=fenceAt(d.x,d.y,d.d);
   if(f&&f.s){if(isOpenable(f)&&d.o!==undefined)f.o=d.o?1:0;return;}
   if(d.g===-1){if(f)dropPiece(f);return;}
-  if(f){if(isTall(f))tallN--;f.g=gv(d.g);if(isTall(f))tallN++;f.o=isOpenable(f)&&d.o?1:0;return;}
+  if(f){tallSet=null;if(isTall(f))tallN--;f.g=gv(d.g);if(isTall(f))tallN++;f.o=isOpenable(f)&&d.o?1:0;return;}
   if(fences.length>=FENCE_MAX+2000)return;
   const g=gv(d.g),n={x:Math.round(d.x),y:Math.round(d.y),d:d.d,g:g,o:(g===1||g===3)&&d.o?1:0};addPiece(n);
 }
 function fenceApplySnapshot(a){if(Array.isArray(a))for(const r of a)if(Array.isArray(r))fenceRemote({x:r[0],y:r[1],d:r[2]===1?'v':'h',g:gv(r[3]),o:r[4]?1:0});}
 
-window.playerWallBlocks=playerWallBlocks;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
+window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
 window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;
 })();

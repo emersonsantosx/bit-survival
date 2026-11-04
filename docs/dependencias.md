@@ -12,7 +12,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 02-audio | 68 | 32 | 35 | 1 | 5 | 14 |
 | 03-dados | 44 | 32 | 12 | 0 | 2 | 14 |
 | 04-estado | 83 | 78 | 5 | 0 | 6 | 16 |
-| 05-geometria | 57 | 41 | 16 | 0 | 10 | 12 |
+| 05-geometria | 57 | 42 | 15 | 0 | 10 | 12 |
 | 06-interiores-portas | 31 | 16 | 15 | 0 | 7 | 6 |
 | 07-loot-mapa | 62 | 30 | 32 | 0 | 13 | 8 |
 | 08-cidade-vilas-marcos | 44 | 23 | 20 | 1 | 11 | 11 |
@@ -42,7 +42,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 08-cidade-vilas-marcos | 119 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |
 | 09-milharal-geracao | 203 | 10 | 87 | 273 | 40 |  | 1 | 35 | . | 3 | 3 | 6 | 126 |  | 1 |  |  |  |  |
 | 10-jogo-saves | 90 | 50 | 46 | 618 | 15 | 2 | 10 | 10 | 7 | . | 84 | 25 | 9 |  | 17 |  |  |  |  |
-| 11-pesca-update | 227 | 37 | 49 | 807 | 58 | 2 | 3 | 4 | 19 | 59 | . | 13 | 14 |  | 4 |  |  |  |  |
+| 11-pesca-update | 229 | 37 | 49 | 808 | 58 | 2 | 3 | 4 | 19 | 59 | . | 13 | 14 |  | 4 |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 35 | 27 | 573 | 12 | 1 | 6 | 5 | 11 | 22 | 36 | . | 18 |  | 10 |  |  |  |  |
 | 13-render-personagens | 320 | 39 | 20 | 250 | 12 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 583 | 13 | 16 | 293 | 12 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |
@@ -50,7 +50,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |
 | 18-plantacao | 36 | 6 | 13 | 59 | 14 |  |  | 12 | 1 |  | 8 | 3 | 41 |  | 1 |  |  | . |  |
-| 19-cerca | 29 | 7 | 2 | 77 | 11 |  |  | 1 |  | 1 | 2 | 3 | 68 |  |  |  |  |  | . |
+| 19-cerca | 29 | 7 | 2 | 77 | 12 |  |  | 1 |  | 1 | 2 | 3 | 68 |  |  |  |  |  | . |
 
 (colunas = os dois primeiros digitos do nome do arquivo)
 
@@ -63,15 +63,15 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | clamp | const | 01-base:4 | 15 | 96 |
 | selectedMap | let | 04-estado:3 | 14 | 197 |
 | beep | funcao | 02-audio:42 | 14 | 110 |
-| rnd | const | 01-base:16 | 13 | 374 |
+| rnd | const | 01-base:16 | 13 | 376 |
 | T | let | 04-estado:13 | 12 | 104 |
 | WW | let | 03-dados:2 | 12 | 85 |
 | WH | let | 03-dados:2 | 12 | 74 |
 | items | let | 04-estado:9 | 12 | 54 |
 | sendEvt | funcao | 12-crafting-multiplayer:100 | 12 | 48 |
-| toast | funcao | 11-pesca-update:1221 | 11 | 168 |
+| toast | funcao | 11-pesca-update:1225 | 11 | 168 |
 | weather | let | 04-estado:5 | 11 | 87 |
-| parts | let | 04-estado:9 | 11 | 60 |
+| parts | let | 04-estado:9 | 11 | 61 |
 | zombies | let | 04-estado:9 | 11 | 58 |
 | R | funcao | 13-render-personagens:2 | 10 | 1083 |
 | ctx | const | 01-base:27 | 10 | 902 |
@@ -114,7 +114,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | roads | let | 04-estado:9 | 5 | 28 |
 | DAY_SECONDS | const | 03-dados:8 | 5 | 19 |
 | decals | let | 04-estado:9 | 5 | 15 |
-| bldAt | funcao | 05-geometria:578 | 5 | 15 |
+| bldAt | funcao | 05-geometria:580 | 5 | 15 |
 | flash | let | 04-estado:13 | 5 | 13 |
 | addItem | funcao | 04-estado:249 | 5 | 13 |
 | walls | let | 04-estado:9 | 5 | 10 |
@@ -127,7 +127,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **02-audio** (35): muted, gAtk, ambientSrc, ambientGain, rainNoise, ACT, sndBusy, _sndT, sndThrottle, stepNoise, VOICE_BOOST, voice, ZVB, creatureGain, AVB, musicWanted, musicOn, musicGain, musicTimer, musicNext, musicStepN, musicVerb, MUSIC_BASE, MUSIC_STEP, MUSIC_CACHE, ...
 - **03-dados** (12): PXPAL, PXG, pxLines, pxRot, PXURL, pxData, PXCV, hydratePx, FISH_TPL, fishGrid, FISH_POOL, ZUNLOCK
 - **04-estado** (5): chatLog, chatUnread, chatTime, chatAddHistory, chatShowEmpty
-- **05-geometria** (16): iceOf, orlaHit, _PAVE, _SANDP, orlaPatterns, TERR, CAR_TOP, SPG_C, spgSync, WG_C, WG, wallGrid, SOLID_GRID, wallBlockerAt, obbHitsRect, obbHitsCircle
+- **05-geometria** (15): iceOf, orlaHit, _PAVE, _SANDP, orlaPatterns, TERR, CAR_TOP, SPG_C, spgSync, WG_C, WG, wallGrid, SOLID_GRID, wallBlockerAt, obbHitsCircle
 - **06-interiores-portas** (15): FURN, ROOMFURN, BLD_ROOMS, ROOM_FLOOR, rectsHit, intConnected, intUnreached, DOOR_BREAK, doorHearable, doorSound, intBlocked, bldSpawnPoint, roomSpawnPoint, FLOOT, furnLootTable
 - **07-loot-mapa** (32): LOOT_RESPAWN, PING_LIFE, pingAdd, pingBadge, pingCandidate, pingCol, ALLY_COL, wpUpdate, WP_COL, wpDist, wpPick, bigTimer, bigPrevState, bigMapTap, drawPingsMini, RG_CELL, RG_FRAC, RG_TREE_S, RG_ROCK_S, RG_BT, RG_BR, RG_SET_T, RG_SET_R, rgKey, rgCount, ...
 - **08-cidade-vilas-marcos** (20): bldDims, bldDims0, bldSize, cityPickType, cityFillBlock, cityRubble, cityPark, cityHouseFence, bldSizeRural, ruralPickType, genTown, ruralCarFree, SLED_COLS, BUGGY_COLS, ATV_COLS, prints, LM_SIDE_D, LM_SIDE_S, chestLoot, lmCurse
