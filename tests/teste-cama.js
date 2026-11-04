@@ -16,6 +16,9 @@ const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pending
  // montar: custo, cabeceira do lado oposto ao jogador
  P.tool='mattress';face(cx0,cy0,0);o.i0=cellIntent();const w1=countInv('wood'),c1=countInv('cloth');cellBuild();
  o.placed=bedList().length;o.cost=[w1-countInv('wood'),c1-countInv('cloth')];o.side=bedList()[0]&&bedList()[0].s;
+ o.size=[bedList()[0].w,bedList()[0].h].sort((a,b)=>a-b).join('x');o.cells=bedList()[0].fx!==bedList()[0].cx||bedList()[0].fy!==bedList()[0].cy;
+ // nao da para por outra cama por cima do pe da cama
+ {const b0=bedList()[0];const sv=P.x,sy=P.y,sf=P.face;P.x=b0.fx*16+8-14;P.y=b0.fy*16+8;P.face=0;o.overlap=cellIntent().act==='REMOVE'||!!cellIntent().bad;P.x=sv;P.y=sy;P.face=sf;}
  // tirar devolve tudo (segurar nao tira)
  o.again=cellIntent().act;cellBuild(true);o.keeps=bedList().length;const w2=countInv('wood'),c2=countInv('cloth');cellBuild();o.removed=bedList().length;o.refund=[countInv('wood')-w2,countInv('cloth')-c2];
  // cabeceira na parede: parede na borda direita do quadrado (v em cx0+1) e jogador olhando de baixo
@@ -24,25 +27,25 @@ const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pending
  const hold=countInv('cloth');removeInv('cloth',hold);o.noCloth=cellIntent().bad;for(let i=0;i<hold;i++)addItem('cloth');
  // montar de novo e dormir
  face(cx0,cy0,0);cellBuild();const bed=bedList()[0];
- P.x=bed.x+8;P.y=bed.y+30;P.face=-Math.PI/2;
+ P.x=(bed.x+bed.w/2);P.y=bed.y+30;P.face=-Math.PI/2;
  dark=0;const sp0=findSleepSpot();o.spotFound=!!sp0&&!!sp0.slot;o.dayBlock=sleepBlock();
  dark=1;T=DAY_SECONDS*0.55;let t=T;
  // tem alvo "DORMIR" por perto
- P.x=bed.x+8;P.y=bed.y+22;P.face=-Math.PI/2;const tg=pickTarget();o.tg=tg&&tg.k;
+ P.x=(bed.x+bed.w/2);P.y=bed.y+22;P.face=-Math.PI/2;const tg=pickTarget();o.tg=tg&&tg.k;
  // dormir sem telhado: +22
  P.hp=40;P.food=80;P.water=80;P.bleed=0;P.sick=0;zombies.length=0;GH.on=false;
  const sp=findSleepSpot();trySleep(sp);o.sleeping=!!P.sleeping&&P.sleeping.ref===bed;
- o.sleepPos=Math.abs(P.x-(bed.x+8))<1&&Math.abs(P.y-(bed.y+8))<1;
+ o.sleepPos=Math.abs(P.x-((bed.x+bed.w/2)))<1&&Math.abs(P.y-((bed.y+bed.h/2)))<1;
  const hp1=P.hp;sleepSkipApply(T);o.gain=P.hp-hp1;o.woke=!P.sleeping;
- o.wakePos=!wallBlocks(bed.x+8,bed.y+8,P.x,P.y);
+ o.wakePos=!wallBlocks((bed.x+bed.w/2),(bed.y+bed.h/2),P.x,P.y);
  // dormir sob telhado: +35 (telhado precisa de apoio: parede ja esta na borda direita)
- P.tool='roof';face(cx0,cy0,0);cellBuild();o.roofOver=roofList().some(c=>c.x===cx0&&c.y===cy0);o.covered=bedCovered(bed);
- P.x=bed.x+8;P.y=bed.y+22;P.hp=40;P.food=80;P.water=80;P.tool='mattress';
+ P.tool='roof';face(cx0,cy0,0);cellBuild();face(cx0-1,cy0,0);cellBuild();o.roofOver=roofList().length===2;o.covered=bedCovered(bed);
+ P.x=(bed.x+bed.w/2);P.y=bed.y+22;P.hp=40;P.food=80;P.water=80;P.tool='mattress';
  const sp2=findSleepSpot();trySleep(sp2);const hp2=P.hp;sleepSkipApply(T);o.gainRoof=P.hp-hp2;
  // ocupada por outro jogador
- remotePlayers.x={x:bed.x+8,y:bed.y+8,sl:{s:'t',hx:0,hy:-4},alive:true};P.x=bed.x+8;P.y=bed.y+22;const sp3=findSleepSpot();o.full=!!sp3&&!!sp3.full;delete remotePlayers.x;
+ remotePlayers.x={x:(bed.x+bed.w/2),y:(bed.y+bed.h/2),sl:{s:'t',hx:0,hy:-4},alive:true};P.x=(bed.x+bed.w/2);P.y=bed.y+22;const sp3=findSleepSpot();o.full=!!sp3&&!!sp3.full;delete remotePlayers.x;
  // canteiro nao nasce embaixo da cama
- o.soil=typeof soilBad==='function'?soilBad(bed.x+8,bed.y+8):'n/a';
+ o.soil=typeof soilBad==='function'?soilBad((bed.x+bed.w/2),(bed.y+bed.h/2)):'n/a';
  // save e carregar
  const pk=JSON.parse(JSON.stringify(cellPack()));cellLoad(null);o.cleared=bedList().length;cellLoad(pk);o.reload=bedList().length+':'+(bedList()[0]&&bedList()[0].s);
  cellLoad({b:[[-1,2,'t'],['a',1],null,[3,3,'zz']]});o.badLoad=bedList().length+':'+(bedList()[0]&&bedList()[0].s);cellLoad(pk);
@@ -50,11 +53,12 @@ const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pending
  cellRemote({k:'b',x:7,y:7,on:1,s:'l'});o.remote=bedList().find(q=>q.cx===7&&q.cy===7)&&bedList().find(q=>q.cx===7&&q.cy===7).s;cellRemote({k:'b',x:7,y:7,on:0});o.remoteDel=!bedList().find(q=>q.cx===7&&q.cy===7);
  cellRemote({k:'b',x:-3,y:7,on:1});cellRemote({k:'b',x:'q',y:7,on:1});o.remoteBad=bedList().length===1;
  // desenho sem erro nas 4 direcoes
- for(const sd of ['t','b','l','r'])cellRemote({k:'b',x:20+'tblr'.indexOf(sd)*2,y:20,on:1,s:sd});drawBeds(0,WW,0,WH);o.drawn=bedList().length;
+ for(const sd of ['t','b','l','r'])cellRemote({k:'b',x:20+'tblr'.indexOf(sd)*4,y:20,on:1,s:sd});drawBeds(0,WW,0,WH);o.drawn=bedList().length;
  return o;});
 console.log(JSON.stringify(r));
+ok(r.size==='16x32'&&r.cells&&r.overlap,'a cama ocupa 2 quadrados (como as das casas) e nao se sobrepoe ('+r.size+')');
 ok(r.rec&&r.tool&&r.recCost[0]===3&&r.recCost[1]===2,'fabrica a cama como ferramenta (3 madeiras, 2 panos)');ok(r.spot,'achou area livre');
-ok(!r.i0.bad&&r.placed===1&&r.cost[0]===2&&r.cost[1]===3,'monta no quadrado da frente por 2 madeiras e 3 panos');ok(r.side==='r','cabeceira do lado oposto ao jogador');
+ok(!r.i0.bad&&r.placed===1&&r.cost[0]===2&&r.cost[1]===3,'monta a cama (quadrado da frente e o seguinte) por 2 madeiras e 3 panos');ok(r.side==='r','cabeceira do lado oposto ao jogador');
 ok(r.again==='REMOVE'&&r.keeps===1&&r.removed===0&&r.refund[0]===2&&r.refund[1]===3,'botao sobre ele desmonta e devolve tudo (segurar nao desmonta)');
 ok(r.sideWall==='r','cabeceira vira para a parede');ok(r.noCloth==='Falta pano','sem pano');
 ok(r.spotFound&&r.dayBlock==='Você só consegue dormir à noite','de dia nao dorme');ok(r.tg==='bed','botao enxerga a cama (DORMIR)');
