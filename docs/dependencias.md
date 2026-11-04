@@ -42,17 +42,17 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 07-loot-mapa | 124 | 3 | 30 | 127 | 2 | 7 | . | 14 | 19 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |
 | 08-cidade-vilas-marcos | 119 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |
 | 09-milharal-geracao | 203 | 10 | 87 | 273 | 40 |  | 1 | 35 | . | 3 | 3 | 6 | 126 |  | 1 |  |  |  |  |  |
-| 10-jogo-saves | 90 | 50 | 46 | 618 | 15 | 2 | 10 | 10 | 7 | . | 84 | 25 | 9 |  | 17 |  |  |  |  |  |
+| 10-jogo-saves | 90 | 50 | 46 | 619 | 15 | 2 | 10 | 10 | 7 | . | 84 | 25 | 9 |  | 17 |  |  |  |  |  |
 | 11-pesca-update | 229 | 37 | 49 | 808 | 58 | 2 | 3 | 4 | 19 | 59 | . | 13 | 14 |  | 4 |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 35 | 27 | 573 | 12 | 1 | 6 | 5 | 11 | 24 | 36 | . | 18 |  | 10 |  |  |  |  |  |
-| 13-render-personagens | 320 | 39 | 20 | 250 | 12 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |
+| 13-render-personagens | 320 | 39 | 20 | 258 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 583 | 13 | 16 | 293 | 12 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |
 | 15-missoes-ui-controles | 173 | 51 | 21 | 220 |  |  | 17 |  |  | 55 | 11 | 23 | 5 |  | . |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |
 | 18-plantacao | 36 | 6 | 13 | 59 | 14 |  |  | 12 | 1 |  | 8 | 3 | 41 |  | 1 |  |  | . |  |  |
 | 19-cerca | 29 | 7 | 2 | 81 | 12 |  |  | 1 |  | 3 | 2 | 3 | 70 |  |  |  |  |  | . |  |
-| 20-piso-telhado | 28 | 3 | 6 | 35 | 6 |  |  | 1 |  |  | 2 | 2 | 19 |  |  |  |  |  |  | . |
+| 20-piso-telhado | 39 | 3 | 6 | 37 | 6 |  |  | 1 |  |  | 2 | 2 | 36 |  |  |  |  |  |  | . |
 
 (colunas = os dois primeiros digitos do nome do arquivo)
 
@@ -60,7 +60,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:13 | 16 | 1575 |
+| P | let | 04-estado:13 | 16 | 1586 |
 | MP | let | 04-estado:18 | 16 | 514 |
 | selectedMap | let | 04-estado:3 | 15 | 198 |
 | beep | funcao | 02-audio:42 | 15 | 113 |
@@ -73,8 +73,8 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | sendEvt | funcao | 12-crafting-multiplayer:100 | 13 | 50 |
 | toast | funcao | 11-pesca-update:1225 | 12 | 170 |
 | parts | let | 04-estado:9 | 12 | 63 |
-| R | funcao | 13-render-personagens:2 | 11 | 1111 |
-| ctx | const | 01-base:27 | 11 | 920 |
+| R | funcao | 13-render-personagens:2 | 11 | 1132 |
+| ctx | const | 01-base:27 | 11 | 931 |
 | weather | let | 04-estado:5 | 11 | 87 |
 | zombies | let | 04-estado:9 | 11 | 58 |
 | solidPoint | funcao | 05-geometria:325 | 11 | 27 |
@@ -103,7 +103,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | $ | const | 01-base:2 | 6 | 140 |
 | Z | let | 01-base:47 | 6 | 99 |
 | plane | let | 04-estado:12 | 6 | 62 |
-| ITEMS | const | 03-dados:139 | 6 | 55 |
+| ITEMS | const | 03-dados:140 | 6 | 55 |
 | rebuildSolidGrid | funcao | 05-geometria:365 | 6 | 16 |
 | atkHeld | let | 04-estado:15 | 6 | 14 |
 | addItem | funcao | 04-estado:249 | 6 | 14 |
@@ -112,7 +112,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | sprintHeld | let | 04-estado:15 | 6 | 12 |
 | setRain | funcao | 02-audio:601 | 6 | 11 |
 | bldNear | funcao | 05-geometria:576 | 6 | 11 |
-| mapHasLake | funcao | 03-dados:271 | 6 | 8 |
+| mapHasLake | funcao | 03-dados:274 | 6 | 8 |
 | onSand | funcao | 05-geometria:131 | 6 | 8 |
 | joy | const | 04-estado:182 | 5 | 51 |
 | decorations | let | 04-estado:9 | 5 | 35 |

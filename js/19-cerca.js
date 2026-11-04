@@ -246,6 +246,12 @@ function cellWalled(cx,cy){
   const t=fmap.get('h'+cx+','+cy),b=fmap.get('h'+cx+','+(cy+1)),l=fmap.get('v'+cx+','+cy),r=fmap.get('v'+(cx+1)+','+cy);
   return !!((t&&t.g>=2)||(b&&b.g>=2)||(l&&l.g>=2)||(r&&r.g>=2));
 }
+/* lados do quadrado (cx,cy) que tem parede ou porta: t, b, l, r (a cabeceira do enxergao vira para um deles) */
+function cellWallDirs(cx,cy){
+  const o=[],w=(d,x,y)=>{const q=fmap.get(d+x+','+y);return !!q&&q.g>=2;};
+  if(w('h',cx,cy))o.push('t');if(w('h',cx,cy+1))o.push('b');if(w('v',cx,cy))o.push('l');if(w('v',cx+1,cy))o.push('r');
+  return o;
+}
 /* carro contra parede e porta fechada (a cerca baixa continua sem barrar carro, como antes) */
 function wallsHitVehicle(cx,cy,c,s,L,W,R){
   if(!tallN)return 0;
@@ -301,6 +307,6 @@ function fenceRemote_(d){
 }
 function fenceApplySnapshot(a){if(Array.isArray(a))for(const r of a)if(Array.isArray(r))fenceRemote({x:r[0],y:r[1],d:r[2]===1?'v':'h',g:gv(r[3]),o:r[4]?1:0});}
 
-window.cellWalled=cellWalled;window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
+window.cellWalled=cellWalled;window.cellWallDirs=cellWallDirs;window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
 window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;
 })();

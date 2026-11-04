@@ -380,7 +380,7 @@ const HELD={
   pistol:{ax:2,ay:3,gun:1,s:.8},smg:{ax:3,ay:3,gun:1,s:.88},shotgun:{ax:6,ay:3,gun:1,s:.92},rifle:{ax:5,ay:3,gun:1,s:.92},
   bow:{ax:3,ay:5,off:3},
   bat:{ax:1,ay:9,rot:Math.PI/4},axe:{ax:4,ay:9,rot:Math.PI/4},pickaxe:{ax:2,ay:9,rot:Math.PI/4},
-  hoe:{ax:1,ay:9,rot:Math.PI/4,s:1.1},fence:{ax:1,ay:9,rot:Math.PI/4,s:1.0},gate:{ax:1,ay:9,rot:Math.PI/4,s:1.0},wall:{ax:1,ay:9,rot:Math.PI/4,s:1.0},door:{ax:1,ay:9,rot:Math.PI/4,s:1.0},floor:{ax:1,ay:9,rot:Math.PI/4,s:1.0},roof:{ax:1,ay:9,rot:Math.PI/4,s:1.0},katana:{ax:1,ay:9,rot:Math.PI/4,s:1.2},spear:{ax:1,ay:9,rot:Math.PI/4,s:1.5},fishingrod:{ax:1,ay:9,rot:Math.PI/4,s:1.3}
+  hoe:{ax:1,ay:9,rot:Math.PI/4,s:1.1},fence:{ax:1,ay:9,rot:Math.PI/4,s:1.0},gate:{ax:1,ay:9,rot:Math.PI/4,s:1.0},wall:{ax:1,ay:9,rot:Math.PI/4,s:1.0},door:{ax:1,ay:9,rot:Math.PI/4,s:1.0},floor:{ax:1,ay:9,rot:Math.PI/4,s:1.0},roof:{ax:1,ay:9,rot:Math.PI/4,s:1.0},mattress:{ax:1,ay:9,rot:Math.PI/4,s:1.0},katana:{ax:1,ay:9,rot:Math.PI/4,s:1.2},spear:{ax:1,ay:9,rot:Math.PI/4,s:1.5},fishingrod:{ax:1,ay:9,rot:Math.PI/4,s:1.3}
 };
 /* arma branca (machado, picareta, taco, espada, lanca): olhando para a esquerda o desenho e o balanco sao o ESPELHO do golpe para a direita (antes, para a esquerda a arma ia de baixo para cima e a cabeca ficava de ponta-cabeca) */
 function meleeLeft(wpn,face){const H=HELD[wpn];return !!H&&!H.gun&&wpn!=='bow'&&Math.cos(face)<0;}
@@ -411,7 +411,7 @@ function armLine(sx,sy,ex,ey,sleeve,skin,fr){
   ctx.restore();
 }
 function punchHand(h,sw){if(sw>0&&!h._pon)h._ph=(h._ph|0)^1;h._pon=sw>0;return h._ph|0;} // alterna soco direito/esquerdo a cada golpe
-const TWO_HAND={pistol:1,rifle:1,shotgun:1,smg:1,bow:1,bat:1,axe:1,pickaxe:1,katana:1,spear:1,fishingrod:1,hoe:1,fence:1,gate:1,wall:1,door:1,floor:1,roof:1}; // armas de duas mãos
+const TWO_HAND={pistol:1,rifle:1,shotgun:1,smg:1,bow:1,bat:1,axe:1,pickaxe:1,katana:1,spear:1,fishingrod:1,hoe:1,fence:1,gate:1,wall:1,door:1,floor:1,roof:1,mattress:1}; // armas de duas mãos
 function human(x,y,face,o){
   humanDraw(x,y,face,o);
   let d=lakeDepth(x,y);
@@ -1369,7 +1369,7 @@ function updateObserver(dt){
 /* ============ DORMIR (camas, camas de casal e barraca) ============
    Só à noite (dark>=.5). Em dupla, a noite só passa quando TODOS os jogadores vivos estão deitados (o Host decide e avisa o convidado).
    Ao amanhecer: vida e energia recuperam, fome e sede caem um pouco e o clima abre. Não dá para dormir sangrando, com fome/sede demais ou com zumbi por perto. */
-const SLC={t:0,b:1,l:2,r:3},SLI=['t','b','l','r'],SLEEP_BED={bed:1,bed2:2,bunk:1};
+const SLC={t:0,b:1,l:2,r:3},SLI=['t','b','l','r'],SLEEP_BED={bed:1,bed2:2,bunk:1,mattress:1};
 const SLP={fade:0,total:1,asleep:1};
 function nearTent(x,y,r){for(const t of tents)if(Math.hypot(t.x-x,t.y-y)<r)return true;return false;}
 function tentSpot(){
@@ -1413,6 +1413,10 @@ function findSleepSpot(){
     if(d<22&&d<bd){bd=d;best={ref:f,slots:bedSlots(f)};}
   }
   for(const t of tents){const d=Math.hypot(t.x-P.x,t.y-P.y);if(d<40&&d<bd){bd=d;best={ref:t,slots:tentSlots(t),tent:true};}}
+  if(!b&&window.bedList)for(const f of bedList()){   // enxergao montado pelo jogador
+    const dx=Math.max(f.x-P.x,0,P.x-f.x-f.w),dy=Math.max(f.y-P.y,0,P.y-f.y-f.h),d=Math.hypot(dx,dy);
+    if(d<22&&d<bd){bd=d;best={ref:f,slots:bedSlots(f)};}
+  }
   if(!best)return null;
   const free=best.slots.filter(sl=>!slotTaken(sl));
   if(!free.length){best.full=true;return best;}
@@ -1458,7 +1462,7 @@ function wakeUp(quiet){
     const f=sl.ref,o=9,m={t:[sl.x,f.y+f.h+o],b:[sl.x,f.y-o],l:[f.x+f.w+o,sl.y],r:[f.x-o,sl.y]}[sl.s];
     c=[m,[f.x+f.w+o,f.y+f.h/2],[f.x-o,f.y+f.h/2],[f.x+f.w/2,f.y+f.h+o],[f.x+f.w/2,f.y-o]];
   }
-  for(const q of c)if(wakeSpotOk(q[0],q[1])){P.x=q[0];P.y=q[1];break;}
+  for(const q of c)if(wakeSpotOk(q[0],q[1])&&!(window.wallBlocks&&wallBlocks(sl.x,sl.y,q[0],q[1]))){P.x=q[0];P.y=q[1];break;}   // sem acordar do outro lado de uma parede
   if(!quiet)beep(400,.08,'sine',.03,60);
 }
 function sleepTick(dt){
@@ -1503,10 +1507,11 @@ function sleepSkipApply(nT){
   const hr=START_HOUR+T/DAY_SECONDS*24,nd=Math.floor(hr/24)+1;
   day=nd;update._lastDay=nd;dark=darkness(hr%24);
   if(nd>oldDay)dayAdvanced(nd-oldDay);
-  P.hp=Math.min(100,P.hp+22);P.food=Math.max(8,P.food-10);P.water=Math.max(8,P.water-14);
+  const roofed=!!(P.sleeping&&P.sleeping.ref&&P.sleeping.ref.k==='mattress'&&window.bedCovered&&bedCovered(P.sleeping.ref));   // enxergao debaixo de telhado: dorme melhor
+  P.hp=Math.min(100,P.hp+(roofed?35:22));P.food=Math.max(8,P.food-10);P.water=Math.max(8,P.water-14);
   P.stam=100;P.exhausted=false;P.sick=0;P.temp=(P.temp||0)*.35;
   wakeUp(true);SLP.fade=1;
-  toast('Você dormiu bem. Amanheceu!');
+  toast(roofed?'Você dormiu bem, abrigado sob o telhado. Amanheceu!':'Você dormiu bem. Amanheceu!');
   beep(520,.12,'sine',.04,80);setTimeout(()=>beep(700,.14,'sine',.04),120);
 }
 function drawSleeper(x,y,sl,look){
@@ -1840,6 +1845,7 @@ function drawItem(it,near){
     case'wall':R(x-5,y-7+b,10,7,'#9a6a3a');R(x-5,y-7+b,10,2,'#c79a62');for(let i=0;i<3;i++)R(x-3+i*3,y-5+b,1,5,'#5e3e22');break;
     case'door':R(x-4,y-7+b,8,7,'#7a5230');R(x-4,y-7+b,8,1,'#946238');R(x+1,y-4+b,2,2,'#e0c050');break;
     case'floor':R(x-5,y-5+b,10,5,'#a97c45');R(x-5,y-3+b,10,1,'#6a4a28');R(x-5,y-1+b,10,1,'#6a4a28');R(x-5,y-5+b,10,1,'#c79a62');break;
+    case'mattress':R(x-5,y-6+b,10,6,'#4a3018');R(x-4,y-5+b,8,4,'#d8bf7a');R(x-3,y-5+b,6,2,'#efe9d8');R(x-4,y-3+b,8,2,'#8a3a3a');break;
     case'roof':R(x-5,y-7+b,10,7,'#b44a3a');R(x-5,y-7+b,10,1,'#d9705c');for(let i=0;i<3;i++)R(x-5,y-5+b+i*2,10,1,'#7a2e24');break;
     case'fence':for(let i=0;i<4;i++){R(x-5+i*3,y-6+b,2,6,'#9a6a3a');}R(x-5,y-4+b,10,1,'#5a3c20');break;
     case'hoe':for(let i=0;i<10;i++)R(x-5+i,y-3+b-(i>>2),1,1,'#8a6a3a');R(x+3,y-7+b,4,3,'#c0c8d4');break;
