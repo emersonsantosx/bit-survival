@@ -382,7 +382,7 @@ function genWorld(seed) {
   weatherTimer=rnd(120,240);
   weatherParticles=[];
   // Animais por mapa (passivos, caça = comida)
-  plotsLoad([]);fenceLoad([]);animals=[];birds=[];birdsReady=false;flockT=rnd(15,40);
+  plotsLoad([]);fenceLoad([]);cellLoad(null);animals=[];birds=[];birdsReady=false;flockT=rnd(15,40);
   const animalPlan=
     selectedMap==='forest'?[{k:'deer',n:8},{k:'rabbit',n:12},{k:'boar',n:5}]:
     selectedMap==='snow'?[{k:'rabbit',n:10},{k:'wolf',n:6},{k:'deer',n:4}]:

@@ -1263,7 +1263,7 @@ function render(){
     const d=Math.hypot(it.x-P.x,it.y-P.y);
     if(d<nd){nd=d;nearIt=it;}
   }
-  drawGreenhouses(vx0,vx1,vy0,vy1);drawPlots(vx0,vx1,vy0,vy1);
+  drawGreenhouses(vx0,vx1,vy0,vy1);drawPlots(vx0,vx1,vy0,vy1);drawFloors(vx0,vx1,vy0,vy1);
   for(const it of items){
     if(it.x<vx0||it.x>vx1||it.y<vy0||it.y>vy1||itemIndoor(it))continue;
     drawItem(it,it===nearIt);
@@ -1335,6 +1335,7 @@ function render(){
     }
   }
   for(const b of blds)if(vis(b)&&b.roofA>.02){drawRoof(b);bldTopFx(b);}
+  drawRoofs(vx0,vx1,vy0,vy1);
   drawIceFx();drawMirage(vx0,vx1,vy0,vy1);drawFog(vx0,vx1,vy0,vy1);
   drawPingsWorld();
   drawBirdsAir(vx0,vx1,vy0,vy1);

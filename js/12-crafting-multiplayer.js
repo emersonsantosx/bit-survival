@@ -5,7 +5,7 @@ function craft(r){
   if(!canCraft(r)){toast('Recursos insuficientes');beep(120,.1,'square',.05);return;}
   const out=r.out;
   // Não gasta recursos para fabricar uma arma que já está no arsenal
-  if(['pickaxe','axe','katana','spear','bat','fishingrod','hoe','fence','gate','wall','door'].includes(out)&&((P.meleeWeapons||[]).includes(out)||P.melee===out||toolList().includes(out))){
+  if((['pickaxe','axe','katana','spear','bat','fishingrod'].includes(out)||BUILD_TOOLS.includes(out))&&((P.meleeWeapons||[]).includes(out)||P.melee===out||toolList().includes(out))){
     toast('Você já tem: '+ITEMS[out].n);beep(120,.1,'square',.05);return;
   }
   if(out==='bow'&&P.firearms.bow){toast('Você já tem um arco');beep(120,.1,'square',.05);return;}
@@ -21,7 +21,7 @@ function craft(r){
     if(!tp){toast(P.inside?'Monte a barraca ao ar livre':'Sem espaço para a barraca aqui');beep(120,.1,'square',.05);return;}
     P._tp=tp;
   }
-  if(out!=='campfire'&&out!=='tent'&&out!=='greenhouse'&&!['pickaxe','axe','katana','spear','bow','arrows','bat','fishingrod','hoe','fence','gate','wall','door'].includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
+  if(out!=='campfire'&&out!=='tent'&&out!=='greenhouse'&&!['pickaxe','axe','katana','spear','bow','arrows','bat','fishingrod'].includes(out)&&!BUILD_TOOLS.includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
   for(const k in r.need)removeInv(k,r.need[k]);
   if(out==='greenhouse'){
     const sp=P._gh||ghSpot();P._gh=null;
@@ -140,6 +140,8 @@ function handleEvt(kind, data){
     structRemote(data.k);
   } else if(kind==='fenceSet'){
     fenceRemote(data);
+  } else if(kind==='cellSet'){
+    cellRemote(data);
   } else if(kind==='plotSet'){
     plotRemote(data);
   } else if(kind==='doorSet'){
@@ -768,7 +770,7 @@ function applySnapshot(snap){
     }
     campfires = merged;
   }
-  plotsApplySnapshot(snap.plots);if(Array.isArray(snap.br))for(const k of snap.br)structRemote(k);fenceApplySnapshot(snap.fn);if(Array.isArray(snap.gh))for(const a of snap.gh)if(Array.isArray(a))ghRemote({x:a[0],y:a[1]});
+  plotsApplySnapshot(snap.plots);if(Array.isArray(snap.br))for(const k of snap.br)structRemote(k);fenceApplySnapshot(snap.fn);cellApplySnapshot(snap.pf);if(Array.isArray(snap.gh))for(const a of snap.gh)if(Array.isArray(a))ghRemote({x:a[0],y:a[1]});
   if(Array.isArray(snap.tents)){
     let ch=false;
     for(const a of snap.tents){if(Array.isArray(a)&&isFiniteNum(a[0])&&isFiniteNum(a[1])&&!tents.some(t=>Math.abs(t.x-a[0])<10&&Math.abs(t.y-a[1])<10)){tents.push({x:a[0],y:a[1]});ch=true;}}
@@ -1002,7 +1004,7 @@ function packSnapshot(){
     vehicles:vPack,vfull:fullV,
     campfires:campfires.map(c=>({x:Math.round(c.x),y:Math.round(c.y),t:c.t||0,flicker:+(c.flicker||0).toFixed(2)})),
     tents:tents.map(t=>[Math.round(t.x),Math.round(t.y)]),
-    plots:plotsPack(),gh:ghPack(),fn:fencePack(),br:structPack(),
+    plots:plotsPack(),gh:ghPack(),fn:fencePack(),br:structPack(),pf:cellPack(),
     sc:SCW.on?1:0,
     bd:packBirds(),
     tg:fullV?goneList(BASE_TREES,trees):undefined,rg:fullV?goneList(BASE_ROCKS,rocks):undefined,tn:fullV?grownPack(trees):undefined,rn:fullV?grownPack(rocks):undefined,

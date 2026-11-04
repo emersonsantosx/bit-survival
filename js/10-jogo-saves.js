@@ -85,7 +85,7 @@ function saveGame(){
       decals:decals.map(d=>[_q(d.x,1),_q(d.y,1),_q(d.l,1)]),
       chests:chestList.map(c=>c.open?1:0), rl:lootStatePack(),
       ice:(()=>{const o=[];lakes.forEach((l,i)=>{if(l.holes)for(const h of l.holes)o.push([i,h.x,h.y]);});return o;})(),
-      plots:plotsPack(),gh:ghPack(),fn:fencePack(),br:structPack(),
+      plots:plotsPack(),gh:ghPack(),fn:fencePack(),br:structPack(),pf:cellPack(),
       doors:(()=>{const o=[];blds.forEach((b,bi)=>{if(b.doors)b.doors.forEach((d,di)=>{if(d.open)o.push([bi,di,d.open]);});});return o;})()
     };
     localStorage.setItem(slotKey(curSlot),JSON.stringify(data));
@@ -161,7 +161,7 @@ function continueGame(n){
     if(Array.isArray(d.chests))d.chests.forEach((v,i)=>{if(chestList[i]&&v)chestList[i].open=true;});
     lootStateLoad(d.rl);
     if(Array.isArray(d.ice))for(const a of d.ice){const l=Array.isArray(a)&&lakes[a[0]];if(l&&l.frozen&&Number.isFinite(a[1])&&Number.isFinite(a[2])){if(!l.holes)l.holes=[];l.holes.push({x:a[1],y:a[2],r:16});}}
-    plotsLoad(d.plots);ghLoad(d.gh);structLoad(d.br);fenceLoad(d.fn);
+    plotsLoad(d.plots);ghLoad(d.gh);structLoad(d.br);fenceLoad(d.fn);cellLoad(d.pf);
     if(Array.isArray(d.doors))for(const a of d.doors){const bb=Array.isArray(a)&&blds[a[0]],dd=bb&&bb.doors&&bb.doors[a[1]];if(dd&&(a[2]===1||a[2]===2)){dd.open=a[2];if(a[2]===2)dd.hp=0;}}
     if(P){P.hold=null;}EAT=null;eatLock=false;
     decals=(d.decals||[]).map(a=>({x:a[0],y:a[1],l:Number.isFinite(a[2])?a[2]:20})).filter(a=>a.l>0);
@@ -366,8 +366,9 @@ function weaponList(){
   return l;
 }
 /* ferramentas de construcao (enxada, cerca, portao): nao entram no arsenal das armas, tem botao proprio na HUD */
-const BUILD_TOOLS=['hoe','fence','gate','wall','door'];
-const FENCE_ICON={fence:'fence',gate:'gate',wall:'wall',door:'door'};   // ferramentas que usam a borda da grade (modulo 19-cerca)
+const BUILD_TOOLS=['hoe','fence','gate','wall','door','floor','roof'];
+const FENCE_ICON={fence:'fence',gate:'gate',wall:'wall',door:'door',floor:'floor',roof:'roof'};   // ferramentas do botao de construir que nao sao a enxada (modulos 19-cerca e 20-piso-telhado)
+const CELL_TOOLS={floor:1,roof:1};   // as que agem num quadrado (modulo 20); as outras agem numa borda da grade (modulo 19)
 function toolList(){return Array.isArray(P?.tools)?P.tools.filter(k=>BUILD_TOOLS.includes(k)):[];}
 function addTool(key){
   if(!P||!BUILD_TOOLS.includes(key))return;
@@ -398,7 +399,7 @@ function cycleWeapon(){
   const i=l.indexOf(P.weapon);P.weapon=l[(Math.max(-1,i)+1)%l.length];
   beep(300,.05,'square',.04);updateWeaponHud();     // o botão de trocar arma já mostra a arma: sem aviso no topo
 }
-const WEAPON_ICON={hoe:'hoe',fence:'fence',gate:'gate',wall:'wall',door:'door',fists:'fists',bat:'bat',axe:'axe',pickaxe:'pickaxe',katana:'katana',spear:'spear',bow:'bow',pistol:'pistol',smg:'smg',shotgun:'shotgun',rifle:'rifle',fishingrod:'rod'};
+const WEAPON_ICON={hoe:'hoe',fence:'fence',gate:'gate',wall:'wall',door:'door',floor:'floor',roof:'roof',fists:'fists',bat:'bat',axe:'axe',pickaxe:'pickaxe',katana:'katana',spear:'spear',bow:'bow',pistol:'pistol',smg:'smg',shotgun:'shotgun',rifle:'rifle',fishingrod:'rod'};
 let weaponWheelOpen=false, weaponWheelOpenedAt=0;
 function updateWeaponHud(){const el=$('wpn'),sw=$('swap');if(el)el._sig=null;if(sw)sw._sig=null;}   // o HUD redesenha a arma no próximo quadro
 function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
