@@ -395,8 +395,13 @@ function addMeleeWeapon(key){
   if(!P.meleeWeapons.includes(key))P.meleeWeapons.push(key);
   P.melee=key;
 }
+function closeTool(){   // guarda a ferramenta de construcao (caixa de materiais) e volta as armas
+  if(!P||!P.tool)return;
+  P.tool=null;const tw=$('twn');if(tw){tw.textContent='Guardado';tw.classList.remove('chg');void tw.offsetWidth;tw.classList.add('chg');}
+}
 function cycleWeapon(){
   if(state!=='play'||!P)return;
+  closeTool();
   if(P.hold){putAwayHold();return;}
   const l=weaponList();if(!l.length)return;
   const i=l.indexOf(P.weapon);P.weapon=l[(Math.max(-1,i)+1)%l.length];
@@ -406,7 +411,7 @@ const WEAPON_ICON={hoe:'hoe',fence:'fence',gate:'gate',wall:'wall',door:'door',f
 let weaponWheelOpen=false, weaponWheelOpenedAt=0;
 function updateWeaponHud(){const el=$('wpn'),sw=$('swap');if(el)el._sig=null;if(sw)sw._sig=null;}   // o HUD redesenha a arma no próximo quadro
 function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
-function chooseWeapon(key){if(!P||!weaponList().includes(key))return;if(P.hold)putAwayHold(true);P.weapon=key;updateWeaponHud();beep(360,.06,'square',.045);closeWeaponWheel();}
+function chooseWeapon(key){if(!P||!weaponList().includes(key))return;closeTool();if(P.hold)putAwayHold(true);P.weapon=key;updateWeaponHud();beep(360,.06,'square',.045);closeWeaponWheel();}
 function dropWeaponFromArsenal(key){
   if(!P||key==='fists'||!weaponList().includes(key)) return;
   const w=WEAPONS[key]; if(!w) return;
