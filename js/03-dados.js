@@ -11,7 +11,7 @@ function invCap(){return P&&P.pack?PACK_SLOTS:MAX_SLOTS;}
 
 /* ============ ÍCONES PIXEL ART (substituem os emojis do sistema) ============ */
 const PXPAL={R:'#d33',r:'#8a2020',O:'#d9892b',Y:'#ffd84a',B:'#3a9be0',b:'#8fd0ff',G:'#6fcf6f',g:'#3e7a2e',
-  W:'#f0ead8',S:'#c0c8d4',s:'#6a7280',N:'#8a5a2a',n:'#c8924e',P:'#e8a0a0',K:'#222831',M:'#8DA568',A:'#C79A54',f:'#e8b890',F:'#b98860',C:'#b8b090',c:'#8a8468',k:'#5a3a24',d:'#6a7f4a'};
+  W:'#f0ead8',S:'#c0c8d4',s:'#6a7280',N:'#8a5a2a',n:'#c8924e',P:'#e8a0a0',K:'#222831',M:'#8DA568',A:'#C79A54',f:'#e8b890',F:'#b98860',C:'#b8b090',c:'#8a8468',k:'#5a3a24',d:'#6a7f4a',V:'#8a3aa8',v:'#5a2478',T:'#e8442a',t:'#a82818',L:'#f09a2a',l:'#c8661a',E:'#d9a066',e:'#a8703a'};
 const PXG={
   heart:['.RR...RR.','RWRR.RRRR','RRRRRRRRR','RRRRRRRRR','.RRRRRRR.','..RRRRR..','...RRR...','....R....'],
   drumstick:['..OOO....','.OWOOO...','OOOOOOO..','OOOOOOO..','.OOOOO...','..OOOW...','....WWW..','.....WWW.'],
@@ -76,6 +76,12 @@ PXG.fence=['.k..k..k..k.','kNk.kNk.kNk.','kNkkkNkkkNkk','kNk.kNk.kNk.','kNkkkNkk
 PXG.potato=['..kNNk...','.kNnnNNk.','kNnnNnNNk','kNNnNNnNk','.kNNnNNk.','..kkNkk..'];
 PXG.bakedpotato=['..kAAk...','.kAWWAAk.','kAWWAWAAk','kAAWAAWAk','.kAAWAAk.','..kkAkk..'];
 PXG.melon=['..kggggk..','.kgGGgGgk.','kgGgGGgGgk','kgGGgGGgGk','kgGgGGgGgk','kgGGgGGgGk','.kgGgGgGk.','..kkgggk..'];
+PXG.apple=['....k.G..','...kkGG..','.kkRRkRk.','kRRWRRRRk','kRWRRRRRk','kRRRRRRRk','kRRRRRRrk','.kRRRRrk.','..kkkkk..'];
+PXG.berry=['...G..G..','..GkGGk..','.kVVkVVk.','kVWVkVVVk','kVVVVVWVk','.kVVkVVk.','..kkVkk..'];
+PXG.date=['..kGGk..','.kkGGkk.','kLLLllLLk','kLWLLlLLk','kLLLLLlLk','.kLLllLk.','..kkkkk..'];
+PXG.pricklypear=['..GkG...','.kRRkRk..','kRRWRRRk.','kRRRRRRRk','kRWRRRRRk','.kRRRrRk.','..kkkkk..'];
+PXG.tomato=['...GkG...','..GGkGG..','.kTTTTTk.','kTWTTTTTk','kTTTTTTTk','kTTTTTTtk','.kTTTTtk.','..kkkkk..'];
+PXG.carrot=['..G.G.G..','..GGGGG..','..kLLLk..','..kLWLk..','...kLLk..','...kLlk..','....kLk..','....kkk..'];
 PXG.greenhouse=['..kSSSSSSk..','.kSbbSbbSSk.','kSbbSbbSbbSk','kSSSSSSSSSSk','kNbbNbbNbbNk','kNbbNbbNbbNk','kNNNNNNNNNNk'];
 PXG.seed=['........','..NNNN..','.NNnnNN.','.NYYYYN.','.NYGYYN.','.NYYGYN.','..NNNN..','........'];
 PXG.katana=pxLines(11,11,[['l',5,6,10,1,'S',1],['l',5,5,10,1,'W',0],['l',3,6,6,9,'Y',0],['l',2,8,4,7,'N',0],['r',0,9,2,1,'Y']]);
@@ -167,6 +173,8 @@ const ITEMS={
   seed_corn:{n:'Sementes de milho',e:'seed'},
   potato:{n:'Batata',e:'potato'},bakedpotato:{n:'Batata assada',e:'bakedpotato'},melon:{n:'Melancia',e:'melon'},
   seed_potato:{n:'Sementes de batata',e:'seed'},seed_melon:{n:'Sementes de melancia',e:'seed'},
+  apple:{n:'Maçã',e:'apple'},berry:{n:'Frutinhas',e:'berry'},date:{n:'Tâmaras',e:'date'},pricklypear:{n:'Fruta de cacto',e:'pricklypear'},tomato:{n:'Tomate',e:'tomato'},carrot:{n:'Cenoura',e:'carrot'},
+  seed_apple:{n:'Sementes de maçã',e:'seed'},seed_berry:{n:'Sementes de frutinhas',e:'seed'},seed_date:{n:'Sementes de tâmara',e:'seed'},seed_cactus:{n:'Sementes de cacto',e:'seed'},seed_tomato:{n:'Sementes de tomate',e:'seed'},seed_carrot:{n:'Sementes de cenoura',e:'seed'},
   spear:{n:'Lança',e:'spear'},
   bow:{n:'Arco',e:'bow'},
   arrows:{n:'Flechas',e:'arrows'},
@@ -259,11 +267,12 @@ const RECIPES=[
   {out:'campfire', need:{wood:5,stone:3}, label:'Fogueira',        desc:'Cozinha peixe e ilumina à noite' }
 ];
 const LOOT={
-  house:{food:12,water:28,bandage:18,stone:8,wood:6,bat:4,ammo:3,axe:2,medkit:2,arrows:3,backpack:2,katana:.5},
-  shop:{food:16,water:35,bandage:12,medkit:4,bat:3,axe:2,arrows:4,backpack:2},
+  house:{food:12,water:28,bandage:18,stone:8,wood:6,bat:4,ammo:3,axe:2,medkit:2,arrows:3,backpack:2,katana:.5,seed:9},
+  barn:{food:8,water:20,bandage:8,stone:6,wood:8,axe:4,arrows:3,seed:22},
+  shop:{food:16,water:35,bandage:12,medkit:4,bat:3,axe:2,arrows:4,backpack:2,seed:4},
   mil:{pistol:10,smg:8,shotgun:6,rifle:5,ammo:30,medkit:12,bandage:12,food:4,water:7,stone:4,backpack:3},
   car:{food:8,water:18,ammo:15,bandage:12,medkit:4,pistol:3},
-  apartment:{food:9,water:20,bandage:14,ammo:6,bat:3,medkit:3,stone:4,arrows:3,backpack:2,katana:.4},
+  apartment:{food:9,water:20,bandage:14,ammo:6,bat:3,medkit:3,stone:4,arrows:3,backpack:2,katana:.4,seed:2},
   office:{food:8,water:22,bandage:10,ammo:5,bat:2,medkit:2,backpack:2},
   garage:{ammo:22,food:5,water:12,bandage:8,pistol:4,bat:3,axe:3,arrows:4,backpack:1},
   clinic:{medkit:28,bandage:30,food:5,water:14,ammo:3},
@@ -282,6 +291,18 @@ function pickWeather(rf){
 function lakeLoot(t){return mapHasLake()?Object.assign({fishingrod:1.5},t):t;}
 /* fora dos prédios só existem pedra e taco; todo o resto (comida, água, armas, curativos) fica dentro das casas */
 const OUT_LOOT={stone:6,bat:.25};
+/* sementes por mapa: so entram no sorteio as que vingam ali ao ar livre (na neve: as que vingam na estufa, pois nao ha planta selvagem) */
+const SEED_POOL={
+  forest:{seed_corn:2,seed_potato:2,seed_tomato:2,seed_carrot:2,seed_apple:1,seed_berry:1.4},
+  city:{seed_tomato:2.4,seed_carrot:2.2,seed_potato:2,seed_corn:1.6,seed_berry:1,seed_apple:.8},
+  desert:{seed_melon:3,seed_corn:2,seed_date:1.2,seed_cactus:1.2},
+  snow:{seed_corn:2,seed_potato:2,seed_carrot:2,seed_tomato:1.6,seed_berry:1.2,seed_apple:1}
+};
+function rollSeed(h){   // h em [0,1): escolha deterministica (nao mexe no _rng da geracao)
+  const t=SEED_POOL[selectedMap]||SEED_POOL.forest;let s=0;for(const k in t)s+=t[k];
+  let r=((h%1)+1)%1*s;for(const k in t){r-=t[k];if(r<0)return k;}return Object.keys(t)[0];
+}
+const posHash=(x,y,k)=>{let a=(Math.round(x)*73856093^Math.round(y)*19349663^(k|0)*83492791)>>>0;a=Math.imul(a^(a>>>13),1274126177)>>>0;return ((a^(a>>>16))>>>0)/4294967296;};
 
 const ZTYPES=[
   {name:'Comum',    hp:8,  spd:34, dmg:9,  r:5, color:'#7a9a5a'},

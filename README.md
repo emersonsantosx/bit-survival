@@ -12,7 +12,7 @@ Abra o `index.html` em qualquer navegador moderno. Não precisa de servidor.
 |---|---|
 | `index.html` | A página e os botões da HUD |
 | `css/estilo.css` | Todo o visual |
-| `js/01-base.js` ... `js/20-piso-telhado.js` | O jogo, em scripts clássicos carregados na ordem do número |
+| `js/01-base.js` ... `js/21-frutiferas.js` | O jogo, em scripts clássicos carregados na ordem do número |
 | `tests/` | Testes automáticos (Playwright) |
 | `tools/dependencias.js` | Gera `docs/dependencias.md`, o mapa de quem usa o quê entre os arquivos `js/` |
 | `config.xml`, `icon.png`, `.github/workflows/build.yml` | Geração do APK (Cordova) |

@@ -6,7 +6,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch();let bad=0;const ok=(c,m)=>{console.log(c?'OK  ':'FAIL',m);if(!c)bad++;};
 const pg=await (await b.newContext()).newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.goto('file://'+file);await pg.waitForTimeout(300);
-const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;aud();zombies=[];
+const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;plotsLoad([]);ghLoad([]);aud();zombies=[];
  const o={};P.inside=null;P.tool='hoe';
  // acha ponto livre
  let ok=false;for(let i=0;i<200&&!ok;i++){P.x=400+i*9;P.y=500;P.face=0;const f=frontCell();if(!soilBad(f.cx*16+8,f.cy*16+8))ok=true;}
@@ -22,7 +22,7 @@ const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pending
 console.log(JSON.stringify(r));
 ok(r.btnVisible,'botao da enxada aparece');ok(r.tgk==='item','item vence com enxada na mao');ok(r.plots===1&&r.plots2===1,'arou 1 canteiro');ok(r.after===0,'terra vazia volta ao normal');ok(r.btnHidden,'botao some sem enxada');
 // cidade
-const c=await pg.evaluate(()=>{selectedMap='city';newGame();window.requestAnimationFrame=()=>0;
+const c=await pg.evaluate(()=>{selectedMap='city';newGame();window.requestAnimationFrame=()=>0;plotsLoad([]);ghLoad([]);
  const o={gardens:cityGardens.length};
  // ponto no gramado livre
  let good=null,road=null,conc=null;

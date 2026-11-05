@@ -85,7 +85,7 @@ function saveGame(){
       decals:decals.map(d=>[_q(d.x,1),_q(d.y,1),_q(d.l,1)]),
       chests:chestList.map(c=>c.open?1:0), rl:lootStatePack(),
       ice:(()=>{const o=[];lakes.forEach((l,i)=>{if(l.holes)for(const h of l.holes)o.push([i,h.x,h.y]);});return o;})(),
-      plots:plotsPack(),gh:ghPack(),fn:fencePack(),br:structPack(),pf:cellPack(),
+      plots:plotsPack(),fr:fruitPack(),gh:ghPack(),fn:fencePack(),br:structPack(),pf:cellPack(),
       doors:(()=>{const o=[];blds.forEach((b,bi)=>{if(b.doors)b.doors.forEach((d,di)=>{if(d.open)o.push([bi,di,d.open]);});});return o;})()
     };
     localStorage.setItem(slotKey(curSlot),JSON.stringify(data));
@@ -161,7 +161,7 @@ function continueGame(n){
     if(Array.isArray(d.chests))d.chests.forEach((v,i)=>{if(chestList[i]&&v)chestList[i].open=true;});
     lootStateLoad(d.rl);
     if(Array.isArray(d.ice))for(const a of d.ice){const l=Array.isArray(a)&&lakes[a[0]];if(l&&l.frozen&&Number.isFinite(a[1])&&Number.isFinite(a[2])){if(!l.holes)l.holes=[];l.holes.push({x:a[1],y:a[2],r:16});}}
-    plotsLoad(d.plots);ghLoad(d.gh);structLoad(d.br);fenceLoad(d.fn);cellLoad(d.pf);
+    plotsLoad(d.plots);fruitLoad(d.fr);ghLoad(d.gh);structLoad(d.br);fenceLoad(d.fn);cellLoad(d.pf);
     if(Array.isArray(d.doors))for(const a of d.doors){const bb=Array.isArray(a)&&blds[a[0]],dd=bb&&bb.doors&&bb.doors[a[1]];if(dd&&(a[2]===1||a[2]===2)){dd.open=a[2];if(a[2]===2)dd.hp=0;}}
     if(P){P.hold=null;}EAT=null;eatLock=false;
     decals=(d.decals||[]).map(a=>({x:a[0],y:a[1],l:Number.isFinite(a[2])?a[2]:20})).filter(a=>a.l>0);
@@ -255,10 +255,12 @@ function discardItem(i){
   beep(280,.1,'triangle',.06,-80);
   for(let k=0;k<4;k++)parts.push({x:dx,y:dy,vx:rnd(-20,20),vy:rnd(-30,0),t:.4,c:'#a0a0a0'});
 }
-const EATABLE=it=>it==='food'||isFishItem(it)||it==='cookedfish'||it==='meat'||it==='cookedmeat'||it==='corn'||it==='cookedcorn'||it==='potato'||it==='bakedpotato'||it==='melon';
+/* frutas e verduras da natureza e da horta: [fome, sede, vida, aviso]. Comer devolve 1 semente da mesma planta (SEED_OF) */
+const FRUIT_FOOD={apple:[14,5,1,'Maçã crocante!'],berry:[9,7,0,'Frutinhas doces'],date:[18,0,2,'Tâmaras: energia rápida'],pricklypear:[9,16,0,'Fruta de cacto: refrescante'],tomato:[10,9,0,'Tomate fresco'],carrot:[12,2,0,'Cenoura crocante']};
+const EATABLE=it=>it==='food'||isFishItem(it)||it==='cookedfish'||it==='meat'||it==='cookedmeat'||it==='corn'||it==='cookedcorn'||it==='potato'||it==='bakedpotato'||it==='melon'||!!FRUIT_FOOD[it];
 let EAT=null,eatLock=false;
 /* comer uma colheita devolve 1 semente da mesma planta (o jogador nao fabrica sementes no crafting) */
-const SEED_OF={corn:'seed_corn',cookedcorn:'seed_corn',potato:'seed_potato',bakedpotato:'seed_potato',melon:'seed_melon'};
+const SEED_OF={corn:'seed_corn',cookedcorn:'seed_corn',potato:'seed_potato',bakedpotato:'seed_potato',melon:'seed_melon',apple:'seed_apple',berry:'seed_berry',date:'seed_date',pricklypear:'seed_cactus',tomato:'seed_tomato',carrot:'seed_carrot'};
 let seedGain=null;
 function giveSeedFor(){
   const sd=seedGain;seedGain=null;if(!sd||!P)return;
@@ -282,6 +284,7 @@ function applyUse(it){
   else if(it==='bakedpotato'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+4);P.food=Math.min(100,P.food+28);P.hp=Math.min(100,P.hp+2);ok=true;toast('Batata assada! +2 HP');}}
   else if(it==='melon'){if(P.food<98||P.water<98){P.food=Math.min(100,P.food+10);P.water=Math.min(100,P.water+22);ok=true;toast('Melancia fresca!');}}
   else if(it==='cookedcorn'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+6);P.food=Math.min(100,P.food+32);P.hp=Math.min(100,P.hp+3);ok=true;toast('Milho assado! +3 HP');}}
+  else if(FRUIT_FOOD[it]){const f=FRUIT_FOOD[it];if(P.food<97||(f[1]>0&&P.water<97)){P.food=Math.min(100,P.food+f[0]);P.water=Math.min(100,P.water+f[1]);P.hp=Math.min(100,P.hp+f[2]);ok=true;toast(f[3]);}}
   else if(it==='water'){if(P.water<95){P.water=Math.min(100,P.water+40);ok=true;toast('Você bebeu água');}}
   else if(it==='bandage'){if(P.bleed||P.hp<95){P.bleed=false;P.hp=Math.min(100,P.hp+10);ok=true;toast('Bandagem usada');track('use_bandage');}}
   else if(it==='medkit'){if(P.bleed||P.hp<90||P.sick>0){P.bleed=false;P.sick=0;P.hp=Math.min(100,P.hp+50);ok=true;toast('Kit médico usado');}}
@@ -502,6 +505,7 @@ function pickTarget(){
   const it=nearestItem();if(it)add({k:'item',d:Math.max(0,Math.hypot(it.x-P.x,it.y-P.y)-P.r-2),b:0,it},it.x,it.y,'i'+it.x+','+it.y+it.t);
   const ch=nearestChest();if(ch)add({k:'chest',d:Math.max(0,Math.hypot(ch.x-P.x,ch.y-P.y)-P.r-3),b:0,ch},ch.x,ch.y,'c'+ch.x+','+ch.y);
   for(const q of plotCands())add(q,q.px,q.py,q.key);
+  for(const q of fruitCands())add(q,q.px,q.py,q.key);
   for(const q of doorCands())add({k:'door',d:q.ed,b:-3,dr:q.dr},q.px,q.py,'d'+q.dr.bi+'.'+q.dr.di);
   for(const q of fenceGateCands())add({k:'fgate',d:q.ed,b:-3,f:q.f},q.px,q.py,'g'+q.f.d+q.f.x+','+q.f.y);
   const tap=nearestFurn(['ksink','sink'],14);
@@ -704,6 +708,7 @@ function pickup(){
   }
   if(TG&&TG.k==='chest'){openChest(TG.ch,false);return;}
   if(TG&&TG.k==='plot'){plotDo(TG);return;}
+  if(TG&&TG.k==='fruit'){fruitPick(TG.o);return;}
   if(TG&&TG.k==='door'){setDoor(TG.dr,TG.dr.open?0:1);return;}
   if(TG&&TG.k==='fgate'){fenceToggle(TG.f);return;}
   if(TG&&TG.k==='bed'){const sp=findSleepSpot();if(sp){trySleep(sp);return;}}

@@ -929,7 +929,6 @@ function drawDecoration(d){
     case'berry':
       shadow(x,y+2,5,2);
       R(x-5,y-6,10,6,'#2a6a2a');R(x-4,y-8,8,3,'#3a8a3a');
-      R(x-3,y-5,2,2,'#c02040');R(x+1,y-6,2,2,'#e03050');R(x-1,y-7,2,2,'#c02040');
       break;
     case'rock_moss':
       shadow(x,y+2,6,3);

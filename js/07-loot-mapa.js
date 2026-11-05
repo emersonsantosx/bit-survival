@@ -445,5 +445,6 @@ function addBuilding(x,y,w,h,type){
   if(n>0) n+=rint(0,Math.max(0,b.rooms.length-2));
   placeBldLoot(b,n,lootKey);
   if(b.type==='clinic')medicBonus(b);
+  seedBonus(b);
 }
 

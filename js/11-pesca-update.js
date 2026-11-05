@@ -672,7 +672,7 @@ function updateP(dt){
   P.x=clamp(P.x,8,WW-8);P.y=clamp(P.y,8,WH-8);
   pushOut(P,P.r);
   iceTick(dt);
-  plantTick(dt);
+  plantTick(dt);fruitTick(dt);
   // Never switch to interior camera while driving — keeps world visible & exit orientation clear
   P.inside=null;
   if(!P.inVehicle){
@@ -1293,6 +1293,7 @@ function updateHud(force){
   else if(TG&&TG.k==='door'){btnText=TG.dr.open?'FECHAR':'PORTA';}
   else if(TG&&TG.k==='fgate'){btnText=TG.f.o?'FECHAR':TG.f.g===3?'PORTA':'PORTÃO';}
   else if(TG&&TG.k==='plot'){btnText=TG.act;}
+  else if(TG&&TG.k==='fruit'){btnText='COLHER';}
   else if(TG&&TG.k==='veh'){if(TG.v.looted)btnText='ENTRAR';}
   if(!TG&&nearestCactus()){canInteract=true;btnText='ÁGUA';}
   if(cf && P.hold && cookOf(P.hold)){canInteract=true;btnText='ASSAR';}

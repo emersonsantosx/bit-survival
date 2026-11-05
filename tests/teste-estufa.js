@@ -6,7 +6,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch();let bad=0;const ok=(c,m)=>{console.log(c?'OK  ':'FAIL',m);if(!c)bad++;};
 const pg=await (await b.newContext({viewport:{width:900,height:600}})).newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.goto('file://'+file);await pg.waitForTimeout(300);
-const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];items.length=0;P.inside=null;
+const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;plotsLoad([]);ghLoad([]);zombies=[];items.length=0;P.inside=null;
  let g0=null;for(let i=0;i<300;i++){P.x=400+i*9;P.y=500;P.face=0;P.tool='hoe';const g=ghostFor();if(g&&g.ok){g0=g;break;}}
  const o={okGhost:!!g0};
  hoeTill();o.afterTill=plotList().length;o.ghostAfter=ghostFor()===null||ghostFor().cx!==g0.cx;
