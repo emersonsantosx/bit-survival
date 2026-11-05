@@ -810,6 +810,11 @@ function pickup(){
     P[t]=true;toast('Turbante vestido! Menos calor no deserto');
     try{refreshInvScr();}catch(e){}
   }
+  else if(t==='flashlight'){
+    if(P.torch){toast('Você já tem uma lanterna'+(MP.active?': deixe pro parceiro':''));return;}
+    P.torch=true;P.flashOn=false;toast('Lanterna! Liga e desliga no botão abaixo do menu');
+    try{updateFlashBtn();}catch(e){}
+  }
   else if(t==='backpack'){
     if(P.pack){toast('Você já tem uma mochila'+(MP.active?': deixe pro parceiro':''));return;}
     P.pack=true;buildInv();toast('Mochila equipada! Agora você carrega 12 itens');

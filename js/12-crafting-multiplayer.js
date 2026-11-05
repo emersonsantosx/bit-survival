@@ -649,7 +649,7 @@ function handleNetData(data,isHostSide){
     const wasAlive=rp.alive!==false && rp.id;
     rp.id=data.id;rp.name=sanitizeName(data.name);
     rp.skin=(Number.isInteger(data.skin)&&data.skin>=0&&data.skin<SKINS.length)?data.skin:0;
-    rp.pk=data.pk?1:0;
+    rp.pk=data.pk?1:0;rp.lt=data.lt?1:0;
     rp.tx=pos.x;rp.ty=pos.y;
     if(rp.x===undefined){rp.x=pos.x;rp.y=pos.y;}
     rp.face=isFiniteNum(data.face)?data.face:rp.face;
@@ -1021,7 +1021,7 @@ function packMyPlayer(){
   const p = {type:'player',id:myNetId(),name:MP.playerName||'Jogador',
     x:Math.round(P.x),y:Math.round(P.y),face:+P.face.toFixed(2),
     moving:!!P.moving,sprint:!!P.sprint,weapon:P.tool||P.weapon||'fists',swing:+(P.swing||0).toFixed(2),
-    hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle,skin:SKIN_SEL,pk:P.pack?1:0,hold:P.hold||'',fw:Object.keys(P.firearms||{}).filter(k=>P.firearms[k])};
+    hp:Math.round(P.hp),alive:!P.dead,inVehicle:!!P.inVehicle,skin:SKIN_SEL,pk:P.pack?1:0,lt:(P.torch&&P.flashOn)?1:0,hold:P.hold||'',fw:Object.keys(P.firearms||{}).filter(k=>P.firearms[k])};
   if(OBS.on&&!P.inside&&!P.inVehicle)p.ob=[Math.round(OBS.x),Math.round(OBS.y),OBS.glitch>0?1:0];
   if(GH.on&&GH.b)p.gh=[GH.b.x|0,GH.b.y|0,Math.round(GH.x),Math.round(GH.y),GH.kill>0?1:0];
   if(P.sleeping){const sl=P.sleeping;p.sl=[SLC[sl.s]|0,sl.hx|0,sl.hy|0,sl.tent?1:0];}

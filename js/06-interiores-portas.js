@@ -443,22 +443,30 @@ function placeBldLoot(b,n,lootKey,room){
 /* casa de campo e cidade guardam semente de verdade: chance fixa por casa (gerador proprio, nao mexe no _rng).
    Na neve e no deserto, onde quase nao ha planta selvagem, a chance e maior: e das casas que vem a plantacao. */
 const SEED_BONUS={house:{forest:.5,city:.4,desert:.6,snow:.8},cabin:{forest:.6,city:.5,desert:.6,snow:.9},barn:{forest:.9,city:.9,desert:.95,snow:.9},shop:{forest:.3,city:.25,desert:.35,snow:.4}};
+/* ponto para um item extra: em cima de um movel de loot ou, sem movel, num ponto livre de um comodo (gerador proprio: nao mexe no _rng) */
+function bonusSpot(b,lr){
+  const spots=b.furn.filter(f=>f.loot);
+  if(spots.length){const f=spots[Math.floor(lr()*spots.length)];return {x:f.x+f.w/2+(lr()*6-3),y:f.y+f.h/2+(lr()*4-2)};}
+  const rs=b.rooms&&b.rooms.length?b.rooms:[{x:b.x+12,y:b.y+16,w:b.w-24,h:b.h-36}];let x=b.x+b.w/2,y=b.y+b.h/2;
+  for(let k=0;k<8;k++){const r=rs[Math.floor(lr()*rs.length)],qx=r.x+8+lr()*Math.max(1,r.w-16),qy=r.y+8+lr()*Math.max(1,r.h-16);
+    if(!b.furn.some(f=>qx>f.x-7&&qx<f.x+f.w+7&&qy>f.y-7&&qy<f.y+f.h+7)){x=qx;y=qy;break;}}
+  return {x,y};
+}
 function seedBonus(b){
   const row=SEED_BONUS[b.type];if(!row)return;
   const lr=mkRng(((Math.round(b.x)*31+Math.round(b.y)*47+(b.h|0)*3)%99991)/99991);
   if(lr()>=(row[selectedMap]||.4))return;
-  const spots=b.furn.filter(f=>f.loot);
   const n=1+(lr()<.5?1:0)+(selectedMap==='snow'&&lr()<.4?1:0);
-  for(let i=0;i<n;i++){
-    let x,y;
-    if(spots.length){const f=spots[Math.floor(lr()*spots.length)];x=f.x+f.w/2+(lr()*6-3);y=f.y+f.h/2+(lr()*4-2);}
-    else{   // sem movel de loot: ponto livre num comodo, sorteado pelo gerador proprio
-      const rs=b.rooms&&b.rooms.length?b.rooms:[{x:b.x+12,y:b.y+16,w:b.w-24,h:b.h-36}];x=b.x+b.w/2;y=b.y+b.h/2;
-      for(let k=0;k<8;k++){const r=rs[Math.floor(lr()*rs.length)],qx=r.x+8+lr()*Math.max(1,r.w-16),qy=r.y+8+lr()*Math.max(1,r.h-16);
-        if(!b.furn.some(f=>qx>f.x-7&&qx<f.x+f.w+7&&qy>f.y-7&&qy<f.y+f.h+7)){x=qx;y=qy;break;}}
-    }
-    items.push({t:rollSeed(lr()),x:Math.round(x),y:Math.round(y),h:true});
-  }
+  for(let i=0;i<n;i++){const q=bonusSpot(b,lr);items.push({t:rollSeed(lr()),x:Math.round(q.x),y:Math.round(q.y),h:true});}
+}
+/* lanterna: quase toda base militar guarda uma (as vezes duas); nas demais casas e raro, mas existe nos 4 mapas */
+const FLASH_BONUS={mil:.8,garage:.12,warehouse:.12,gas:.1,shop:.07,house:.05,cabin:.05,barn:.05,apartment:.04,office:.05,clinic:.04};
+function flashBonus(b){
+  const ch=FLASH_BONUS[b.type];if(!ch)return;
+  const lr=mkRng(((Math.round(b.x)*53+Math.round(b.y)*17+(b.h|0)*11+7)%99991)/99991);
+  if(lr()>=ch)return;
+  const n=b.type==='mil'&&lr()<.35?2:1;
+  for(let i=0;i<n;i++){const q=bonusSpot(b,lr);items.push({t:'flashlight',x:Math.round(q.x),y:Math.round(q.y),h:true});}
 }
 /* clinica sempre tem remedio de verdade: itens extras nos armarios medicos (gerador proprio, nao mexe no _rng) */
 function medicBonus(b){

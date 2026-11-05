@@ -533,6 +533,30 @@ const coneC=(()=>{
   g.fillStyle=gr;g.beginPath();g.moveTo(4,64);g.lineTo(250,10);g.lineTo(250,118);g.closePath();g.fill();
   return c;
 })();
+/* lanterna: feixe estreito e comprido (cone de ~44 graus) com ponto de luz mais forte na frente; o farol do veiculo e um triangulo largo e amarelado */
+const FL_LEN=310,FL_H=230;
+function flashShape(g,x0){g.beginPath();g.moveTo(x0,FL_H/2);g.lineTo(FL_LEN,FL_H/2-100);g.lineTo(FL_LEN,FL_H/2+100);g.closePath();}
+const flashMask=(()=>{   // so o alfa importa: ele fura a escuridao
+  const c=document.createElement('canvas');c.width=FL_LEN+10;c.height=FL_H;const g=c.getContext('2d');
+  try{g.filter='blur(7px)';}catch(e){}
+  const gr=g.createLinearGradient(0,0,FL_LEN,0);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.55,'rgba(255,255,255,.95)');gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=gr;flashShape(g,10);g.fill();
+  return c;
+})();
+const flashGlow=(()=>{   // brilho branco-azulado por cima, com o ponto de luz a ~2/3 do alcance
+  const c=document.createElement('canvas');c.width=FL_LEN+10;c.height=FL_H;const g=c.getContext('2d');
+  try{g.filter='blur(6px)';}catch(e){}
+  const gr=g.createLinearGradient(0,0,FL_LEN,0);gr.addColorStop(0,'rgba(235,245,255,.5)');gr.addColorStop(.6,'rgba(225,238,255,.22)');gr.addColorStop(1,'rgba(220,235,255,0)');
+  g.fillStyle=gr;flashShape(g,10);g.fill();
+  const hs=g.createRadialGradient(205,FL_H/2,0,205,FL_H/2,80);hs.addColorStop(0,'rgba(255,255,245,.38)');hs.addColorStop(1,'rgba(255,255,245,0)');
+  g.fillStyle=hs;g.fillRect(100,FL_H/2-90,200,180);
+  return c;
+})();
+function flashReach(x,y,face){   // o feixe para na primeira parede
+  const cf=Math.cos(face),sf=Math.sin(face);let L=26;
+  for(let d=26;d<=170;d+=12){if(!losClear(x,y-5,x+cf*d,y-5+sf*d))break;L=d;}
+  return Math.min(170,L+16);
+}
 const vigC=document.createElement('canvas');
 function ensureVig(){
   if(vigC.width===W&&vigC.height===H)return;
@@ -900,6 +924,20 @@ function drawLighting(sx,sy){
         for(let k=0;k<5;k++){const dd=22+k*24;punch(hx0+cf*dd*Z,hy0+sf*dd*Z,(30+k*8)*Z);}
       }
     }
+    const beams=[];   // lanternas acesas (a minha e as dos aliados)
+    if(P&&P.torch&&P.flashOn&&!P.dead&&!P.inVehicle){
+      const tl=flashReach(P.x,P.y,P.face);P._fLen=P._fLen?P._fLen+(tl-P._fLen)*.3:tl;
+      beams.push({x:P.x,y:P.y,a:P.face,len:P._fLen});
+    }
+    for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.lt&&rp.alive!==false&&!rp.inVehicle&&Number.isFinite(rp.x)&&Number.isFinite(rp.face))beams.push({x:rp.x,y:rp.y,a:rp.face,len:130});}
+    for(const bm of beams){
+      const [bx,by]=sp(bm.x+Math.cos(bm.a)*5,bm.y-7);
+      if(bx<-200*Z||by<-200*Z||bx>W+200*Z||by>H+200*Z)continue;
+      const fl=1+Math.sin(T*31)*.012;
+      lctx.save();lctx.translate(bx/LS,by/LS);lctx.rotate(bm.a);const k=bm.len*fl*Z/LS/FL_LEN;lctx.scale(k,k);lctx.globalAlpha=.96;lctx.drawImage(flashMask,-10,-FL_H/2);lctx.restore();
+      punch(bx,by+3*Z,24*Z,.7);   // um pouco de luz em volta de quem segura
+    }
+    drawLighting._beams=beams;
     for(const q of LP){const [qx,qy]=sp(q.x,q.y);punch(qx,qy,q.r*Z,Math.min(1,q.t/q.d*1.4));}
     lctx.globalCompositeOperation='source-over';
     ctx.imageSmoothingEnabled=true;
@@ -931,6 +969,13 @@ function drawLighting(sx,sy){
       ctx.drawImage(SIGN_SP[sg.ci],qx-qr,qy-qr,2*qr,2*qr);
     }
     ctx.globalAlpha=Math.min(1,dark*1.1)*GL;
+    ctx.globalAlpha=1;
+    // lanterna: brilho do feixe
+    for(const bm of (drawLighting._beams||[])){
+      const [bx,by]=sp(bm.x+Math.cos(bm.a)*5,bm.y-7);
+      ctx.save();ctx.translate(bx,by);ctx.rotate(bm.a);const k=bm.len*Z/FL_LEN;ctx.scale(k,k);
+      ctx.globalAlpha=Math.min(1,dark*1.3)*(selectedMap==='snow'?.6:1);ctx.drawImage(flashGlow,-10,-FL_H/2);ctx.restore();
+    }
     ctx.globalAlpha=1;
     // faróis: cone de luz e halo
     if(tier<2)for(const v of headlit){
