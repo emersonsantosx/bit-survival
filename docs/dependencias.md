@@ -90,7 +90,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | H | let | 01-base:47 | 8 | 100 |
 | W | let | 01-base:47 | 8 | 96 |
 | remotePlayers | let | 04-estado:10 | 8 | 87 |
-| ITEMS | const | 03-dados:146 | 8 | 57 |
+| ITEMS | const | 03-dados:162 | 8 | 57 |
 | dark | let | 04-estado:13 | 8 | 54 |
 | rocks | let | 04-estado:9 | 8 | 45 |
 | campfires | let | 04-estado:9 | 8 | 37 |
@@ -116,7 +116,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | sprintHeld | let | 04-estado:15 | 6 | 12 |
 | setRain | funcao | 02-audio:601 | 6 | 11 |
 | bldNear | funcao | 05-geometria:576 | 6 | 11 |
-| mapHasLake | funcao | 03-dados:283 | 6 | 8 |
+| mapHasLake | funcao | 03-dados:299 | 6 | 8 |
 | onSand | funcao | 05-geometria:131 | 6 | 8 |
 | joy | const | 04-estado:182 | 5 | 51 |
 | roads | let | 04-estado:9 | 5 | 28 |

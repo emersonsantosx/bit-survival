@@ -76,14 +76,30 @@ PXG.fence=['.k..k..k..k.','kNk.kNk.kNk.','kNkkkNkkkNkk','kNk.kNk.kNk.','kNkkkNkk
 PXG.potato=['..kNNk...','.kNnnNNk.','kNnnNnNNk','kNNnNNnNk','.kNNnNNk.','..kkNkk..'];
 PXG.bakedpotato=['..kAAk...','.kAWWAAk.','kAWWAWAAk','kAAWAAWAk','.kAAWAAk.','..kkAkk..'];
 PXG.melon=['..kggggk..','.kgGGgGgk.','kgGgGGgGgk','kgGGgGGgGk','kgGgGGgGgk','kgGGgGGgGk','.kgGgGgGk.','..kkgggk..'];
-PXG.apple=['....k.G..','...kkGG..','.kkRRkRk.','kRRWRRRRk','kRWRRRRRk','kRRRRRRRk','kRRRRRRrk','.kRRRRrk.','..kkkkk..'];
-PXG.berry=['...G..G..','..GkGGk..','.kVVkVVk.','kVWVkVVVk','kVVVVVWVk','.kVVkVVk.','..kkVkk..'];
-PXG.date=['..kGGk..','.kkGGkk.','kLLLllLLk','kLWLLlLLk','kLLLLLlLk','.kLLllLk.','..kkkkk..'];
-PXG.pricklypear=['..GkG...','.kRRkRk..','kRRWRRRk.','kRRRRRRRk','kRWRRRRRk','.kRRRrRk.','..kkkkk..'];
-PXG.tomato=['...GkG...','..GGkGG..','.kTTTTTk.','kTWTTTTTk','kTTTTTTTk','kTTTTTTtk','.kTTTTtk.','..kkkkk..'];
-PXG.carrot=['..G.G.G..','..GGGGG..','..kLLLk..','..kLWLk..','...kLLk..','...kLlk..','....kLk..','....kkk..'];
+PXG.apple=['...kG..','.kRRRk.','kRWRRRk','kRRRRRk','kRRRRrk','.kRRrk.','..kkk..'];
+PXG.berry=['..kG..','.kVVk.','kVWVVk','kVVVVk','.kVVk.','..kk..'];
+PXG.date=['..kG...','.kLLLk.','kLWLLlk','.kLLlk.','..kkk..'];
+PXG.pricklypear=['..kGk..','.kRRRk.','kRWRRRk','kRRRRrk','.kRRrk.','..kkk..'];
+PXG.tomato=['..GkG..','.kTTTk.','kTWTTTk','kTTTTtk','.kTTtk.','..kkk..'];
+PXG.carrot=['G.G.G','.GGG.','.kLLk','.kLWk','..kLk','..kLk','...kk'];
 PXG.greenhouse=['..kSSSSSSk..','.kSbbSbbSSk.','kSbbSbbSbbSk','kSSSSSSSSSSk','kNbbNbbNbbNk','kNbbNbbNbbNk','kNNNNNNNNNNk'];
 PXG.seed=['........','..NNNN..','.NNnnNN.','.NYYYYN.','.NYGYYN.','.NYYGYN.','..NNNN..','........'];
+/* sementes: cada planta tem a sua, parecida com a semente de verdade (carimbos de formas pequenas numa grade 10x8) */
+(function(){
+  const stamp=(shapes,pal)=>{const g=Array.from({length:8},()=>'..........'.split(''));
+    for(const q of shapes){const sh=q[0];for(let y=0;y<sh.length;y++)for(let x=0;x<sh[y].length;x++){const c=sh[y][x];if(c==='.')continue;const gx=q[1]+x,gy=q[2]+y;if(gx>=0&&gx<10&&gy>=0&&gy<8)g[gy][gx]=pal[c]||c;}}
+    return g.map(r=>r.join(''));};
+  const DROP=['.k.','kNk','kNk','.k.'],PIT=['.k.','kNk','kek','kNk','kNk','.k.'],DISC=['.kk.','kNNk','kNNk','.kk.'],SLIV=['k','N','k'],DOT=['kk','kk'],GRAIN=['.YY.','YYYY','YYYY','.kk.'];
+  PXG.seed_apple=stamp([[DROP,1,0],[DROP,6,1],[DROP,3,4]],{k:'k',N:'N'});             // pevides marrons e pontudas
+  PXG.seed_berry=stamp([[DOT,0,0],[DOT,4,1],[DOT,7,0],[DOT,2,3],[DOT,6,4],[DOT,0,6],[DOT,4,6],[DOT,8,6]],{k:'E'});   // grãozinhos bege
+  PXG.seed_date=stamp([[PIT,1,1],[PIT,6,0]],{k:'k',N:'N',e:'k'});                       // caroço comprido com sulco
+  PXG.seed_cactus=stamp([[DISC,0,0],[DISC,5,1],[DISC,2,4],[DISC,7,5]],{k:'s',N:'K'});   // discos pretos miúdos (borda cinza para aparecer no fundo escuro)
+  PXG.seed_tomato=stamp([[DISC,0,1],[DISC,5,0],[DISC,3,4],[DISC,7,4]],{k:'E',N:'W'});   // discos claros achatados
+  PXG.seed_carrot=stamp([[SLIV,0,0],[SLIV,3,1],[SLIV,6,0],[SLIV,1,4],[SLIV,4,4],[SLIV,8,3],[SLIV,7,6]],{k:'e',N:'n'});   // lascas finas
+  PXG.seed_melon=stamp([[DROP,0,1],[DROP,4,0],[DROP,7,3],[DROP,3,4]],{k:'s',N:'K'});    // sementes pretas, achatadas
+  PXG.seed_corn=stamp([[GRAIN,0,0],[GRAIN,5,1],[GRAIN,2,4],[GRAIN,6,5]],{});   // grãos amarelos
+  PXG.seed_potato=['..........','...G.G....','..kGkG....','.kNnNNk...','kNnNNnNk..','kNNNnNNk..','.kNNNNk...','..kkkk....'];   // batata-semente com brotos
+})();
 PXG.katana=pxLines(11,11,[['l',5,6,10,1,'S',1],['l',5,5,10,1,'W',0],['l',3,6,6,9,'Y',0],['l',2,8,4,7,'N',0],['r',0,9,2,1,'Y']]);
 PXG.spear=pxLines(11,11,[['l',0,10,4,6,'N',1],['r',4,5,2,1,'R'],['r',4,3,2,1,'W'],['r',5,4,2,1,'S'],['r',6,5,2,1,'s'],['r',5,2,2,1,'W'],['r',6,3,2,1,'S'],['r',7,4,2,1,'s'],['r',6,1,2,1,'W'],['r',7,2,2,1,'S'],['r',8,3,2,1,'s'],['r',8,1,2,1,'S'],['r',9,0,2,1,'S']]);
 PXG.arrows=pxLines(11,11,[['l',1,9,9,1,'n',0],['l',8,0,10,2,'S',1],['r',9,0,2,3,'S'],['l',0,10,2,8,'W',1],['l',0,8,2,6,'W',0]]);
@@ -170,11 +186,11 @@ const ITEMS={
   katana:{n:'Katana',e:'katana'},
   hoe:{n:'Enxada',e:'hoe'},
   fence:{n:'Cerca',e:'fence'},gate:{n:'Portão',e:'gate'},wall:{n:'Parede',e:'wall'},door:{n:'Porta',e:'door'},floor:{n:'Piso',e:'floor'},roof:{n:'Telhado',e:'roof'},mattress:{n:'Cama',e:'mattress'},
-  seed_corn:{n:'Sementes de milho',e:'seed'},
+  seed_corn:{n:'Sementes de milho',e:'seed_corn'},
   potato:{n:'Batata',e:'potato'},bakedpotato:{n:'Batata assada',e:'bakedpotato'},melon:{n:'Melancia',e:'melon'},
-  seed_potato:{n:'Sementes de batata',e:'seed'},seed_melon:{n:'Sementes de melancia',e:'seed'},
+  seed_potato:{n:'Sementes de batata',e:'seed_potato'},seed_melon:{n:'Sementes de melancia',e:'seed_melon'},
   apple:{n:'Maçã',e:'apple'},berry:{n:'Frutinhas',e:'berry'},date:{n:'Tâmaras',e:'date'},pricklypear:{n:'Fruta de cacto',e:'pricklypear'},tomato:{n:'Tomate',e:'tomato'},carrot:{n:'Cenoura',e:'carrot'},
-  seed_apple:{n:'Sementes de maçã',e:'seed'},seed_berry:{n:'Sementes de frutinhas',e:'seed'},seed_date:{n:'Sementes de tâmara',e:'seed'},seed_cactus:{n:'Sementes de cacto',e:'seed'},seed_tomato:{n:'Sementes de tomate',e:'seed'},seed_carrot:{n:'Sementes de cenoura',e:'seed'},
+  seed_apple:{n:'Sementes de maçã',e:'seed_apple'},seed_berry:{n:'Sementes de frutinhas',e:'seed_berry'},seed_date:{n:'Sementes de tâmara',e:'seed_date'},seed_cactus:{n:'Sementes de cacto',e:'seed_cactus'},seed_tomato:{n:'Sementes de tomate',e:'seed_tomato'},seed_carrot:{n:'Sementes de cenoura',e:'seed_carrot'},
   spear:{n:'Lança',e:'spear'},
   bow:{n:'Arco',e:'bow'},
   arrows:{n:'Flechas',e:'arrows'},

@@ -68,18 +68,19 @@ function fruitOver(o){
     for(let i=0;i<APPLE_AT.length;i++){
       if(posHash(o.x,o.y,20+i)<.3)continue;
       const a=APPLE_AT[i],ax=Math.round(x+a[0]),ay=Math.round(y+a[1]);
-      R(ax,ay,3,3,'#d8302a');R(ax,ay,1,1,'#f8b0a0');R(ax+1,ay-1,1,1,'#3a5a20');
+      R(ax,ay,2,2,'#d8302a');R(ax,ay,1,1,'#f8b0a0');
     }
   }else if(f==='date'){
     const v=Math.floor((o.seed||0)*4)&3,sw=v-1.5,tx=Math.round(Math.sin(1.6)*sw*2.2);
     const bx=x+tx,by=y-57;
-    R(bx-5,by,2,4,'#e8902a');R(bx-2,by+1,2,5,'#c8661a');R(bx+1,by,2,4,'#e8902a');R(bx+4,by+1,2,4,'#c8661a');R(bx-3,by+4,2,3,'#e8902a');R(bx+2,by+4,2,3,'#c8661a');
+    R(bx-4,by,1,3,'#e8902a');R(bx-2,by+1,1,3,'#c8661a');R(bx,by,1,3,'#e8902a');R(bx+2,by+1,1,3,'#c8661a');R(bx-3,by+3,1,2,'#e8902a');R(bx+1,by+3,1,2,'#c8661a');
   }else if(f==='berry'){
-    const P2=[[-4,-8],[1,-9],[-2,-5],[3,-6],[-5,-4],[4,-3]];
-    for(const q of P2){R(x+q[0],y+q[1],2,2,'#7a3aa8');R(x+q[0],y+q[1],1,1,'#c898e0');}
+    const P2=[[-4,-8],[1,-9],[-2,-5],[3,-6],[-5,-4],[4,-3],[0,-7],[-3,-7]];
+    for(const q of P2){R(x+q[0],y+q[1],1,1,'#8a3aa8');}
+    R(x-2,y-6,1,1,'#d8b0f0');R(x+3,y-7,1,1,'#d8b0f0');
   }else if(f==='pricklypear'){
     const ty=o.type==='cactus_tall'?[[-1,-24],[-8,-19],[6,-21]]:o.type==='cactus_bg'?[[-1,-18],[-9,-13],[-6,-14]]:[[-1,-9],[-4,-6],[2,-7]];
-    for(const q of ty){R(x+q[0],y+q[1],3,3,'#e0407a');R(x+q[0],y+q[1],1,1,'#ffb0d0');}
+    for(const q of ty){R(x+q[0],y+q[1],2,2,'#e0407a');R(x+q[0],y+q[1],1,1,'#ffb0d0');}
   }
 }
 
