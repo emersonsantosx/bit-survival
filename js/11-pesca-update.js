@@ -716,6 +716,10 @@ function updateZ(z,dt){
   let det=95;
   if(targetSprint)det=140;else if(!targetMoving)det=52;
   if(dark>.5)det*=.72;
+  if(P.flashOn&&dark>.3&&targetIsLocal&&!targetDead){   // feixe de lanterna aceso: quem esta no cone e perto enxerga o jogador de bem mais longe (anula a vantagem da noite)
+    const dd=Math.hypot(P.x-z.x,P.y-z.y),fa=Math.abs(wrap(Math.atan2(z.y-P.y,z.x-P.x)-P.face));
+    if(fa<.55&&dd<170)det*=1.45/(dark>.5?.72:1);
+  }
   if(z.kind===1)det*=1.18;
   if(z.kind===5)det*=1.12;
   if(z.crawler)det*=.7;
@@ -1301,6 +1305,7 @@ function updateHud(force){
   if(cf && P.hold && cookOf(P.hold)){canInteract=true;btnText='ASSAR';}
   if(P.sleeping){canInteract=true;btnText='LEVANTAR';}
   else if(TG&&TG.k==='bed'){btnText='DORMIR';}
+  {const fb=$('bflash');if(fb){const sh=!!P.torch&&!P.dead;if(fb._sh!==sh||fb._on!==!!P.flashOn){fb._sh=sh;fb._on=!!P.flashOn;updateFlashBtn();}}}
   {const hb=$('hoe');if(hb)hb.classList.toggle('hide',!(!!P.tool&&!P.inVehicle&&!P.dead&&!P.sleeping));}
   {const hb=$('hoe'),want=FENCE_ICON[P.tool]||'hoe';if(hb&&hb.dataset.ic!==want){hb.dataset.ic=want;hb.setAttribute('aria-label',{fence:'Construir cerca',gate:'Construir portão',wall:'Construir parede',door:'Construir porta',floor:'Construir piso',roof:'Construir telhado',mattress:'Montar cama'}[want]||'Arar a terra');hb.innerHTML=pxIcon(want,4);}}   // botao de construir: ARAR com a enxada, a peca da ferramenta nas outras
   {const tb=$('tools');if(tb){const l=toolList(),show=l.length>0&&!P.inVehicle&&!P.dead&&!P.sleeping,want=P.tool||'toolbox';tb.classList.toggle('hide',!show);tb.classList.toggle('act',!!P.tool);

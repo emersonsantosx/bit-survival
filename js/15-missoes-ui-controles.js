@@ -647,6 +647,7 @@ window.addEventListener('keydown',e=>{
   if(state!=='play')return;
   if(e.code==='Space'){reelKey=true;attack();}
   if(e.code==='KeyE')pickup();
+  if(e.code==='KeyF')toggleFlash();
   if(e.code==='KeyQ')cycleWeapon();
   if(e.code==='KeyC')openCraft();
   if(e.code==='KeyI')openInv();
@@ -791,6 +792,21 @@ on('quitmenu','click',e=>{
 });
 // Use pointerup so the finger is already lifted when the pause menu appears (avoids accidental CONTINUAR)
 on('bpause','pointerup',e=>{e.preventDefault();e.stopPropagation();aud();pause();});
+/* lanterna: liga e desliga (botao pequeno abaixo de pausa e fabricar, ou a tecla F) */
+function toggleFlash(){
+  if(!P||!P.torch||P.dead||state!=='play')return;
+  P.flashOn=!P.flashOn;beep(P.flashOn?900:520,.05,'square',.04);updateFlashBtn();
+}
+function updateFlashBtn(){
+  const b=$('bflash');if(!b)return;
+  const show=!!(P&&P.torch)&&!P.dead;
+  b.classList.toggle('hide',!show);
+  b.classList.toggle('on',show&&!!P.flashOn);
+  b.setAttribute('aria-pressed',show&&P.flashOn?'true':'false');
+  b.setAttribute('aria-label',P&&P.flashOn?'Desligar lanterna':'Ligar lanterna');
+}
+on('bflash','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
+on('bflash','pointerup',e=>{e.preventDefault();e.stopPropagation();aud();toggleFlash();});
 on('bpause','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
 on('mm','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
 on('mm','pointerup',e=>{e.preventDefault();e.stopPropagation();aud();bigMapOpen();});

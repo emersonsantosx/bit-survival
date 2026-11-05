@@ -32,7 +32,7 @@ const PXG={
   wood:['..NNNNN..','.NnnnnnN.','NnNNNNNnN','NnNnnnNnN','NnNNNNNnN','.NnnnnnN.','..NNNNN..'],
   stone:['..sSSSs..','.sSSSSSs.','sSSSWSSSs','sSSSSSSSs','.sSSSSSs.','..sssss..'],
   bandage:['.nnnnnnn.','nnnWWWnnn','nnnWWWnnn','.nnnnnnn.'],
-  cloth:['.CCCCCCC..','CCcCCCCCC.','CCcCCCcCC.','CCCCCCcCCC','cCCCCCCCC.','CCCCcCCC..','.CC.CC.C..'],
+  cloth:['ssssssss..','sWWWWWWSs.','sWWWWWSSWs','sWWWWWWWWs','sSWWWWWWWs','sWSSWWWWWs','sWWWWWWWWs','.ssssssss.'],
   medkit:['...sss...','WWWWWWWWW','WWWWRWWWW','WWWRRRWWW','WWWWRWWWW','WWWWWWWWW','sssssssss'],
   fists:['.kkkkkkkkkkk.','kffkffkffkffk','kffkffkffkffk','kfFkfFkfFkfFk','kffffffffffFk','kFFFFFFFFFFFk','kkkkkkkkfffFk','kfffffkkfffFk','.kfffffffffk.','..kfffffffk..','..kkkkkkkkk..','..kBBBBBBBk..','..kbbbbbbbk..','..kkkkkkkkk..'],
   bow:['...NNNW..','..NN..W..','.NN...W..','.N....W..','NN....W..','N.SSSSSYY','NN....W..','.N....W..','.NN...W..','..NN..W..','...NNNW..'],
@@ -76,6 +76,7 @@ PXG.fence=['.k..k..k..k.','kNk.kNk.kNk.','kNkkkNkkkNkk','kNk.kNk.kNk.','kNkkkNkk
 PXG.potato=['..kNNk...','.kNnnNNk.','kNnnNnNNk','kNNnNNnNk','.kNNnNNk.','..kkNkk..'];
 PXG.bakedpotato=['..kAAk...','.kAWWAAk.','kAWWAWAAk','kAAWAAWAk','.kAAWAAk.','..kkAkk..'];
 PXG.melon=['..kggggk..','.kgGGgGgk.','kgGgGGgGgk','kgGGgGGgGk','kgGgGGgGgk','kgGGgGGgGk','.kgGgGgGk.','..kkgggk..'];
+PXG.flashlight=['.......ss.','sssssssYYs','sSSSSRsYWs','sSssSSsYYs','sssssssYYs','.......ss.'];
 PXG.apple=['...kG..','.kRRRk.','kRWRRRk','kRRRRRk','kRRRRrk','.kRRrk.','..kkk..'];
 PXG.berry=['..kG..','.kVVk.','kVWVVk','kVVVVk','.kVVk.','..kk..'];
 PXG.date=['..kG...','.kLLLk.','kLWLLlk','.kLLlk.','..kkk..'];
@@ -172,7 +173,7 @@ const ITEMS={
   wood:{n:'Madeira',e:'wood'},
   stone:{n:'Pedra',e:'stone'},
   bandage:{n:'Bandagem',e:'bandage'},
-  cloth:{n:'Tecido',e:'cloth'},
+  cloth:{n:'Tecido',e:'cloth'},flashlight:{n:'Lanterna',e:'flashlight'},
   backpack:{n:'Mochila',e:'backpack'},
   medkit:{n:'Kit médico',e:'medkit'},
   ammo:{n:'Munição',e:'ammo'},
@@ -283,17 +284,17 @@ const RECIPES=[
   {out:'campfire', need:{wood:5,stone:3}, label:'Fogueira',        desc:'Cozinha peixe e ilumina à noite' }
 ];
 const LOOT={
-  house:{food:12,water:28,bandage:18,stone:8,wood:6,bat:4,ammo:3,axe:2,medkit:2,arrows:3,backpack:2,katana:.5,seed:9},
-  barn:{food:8,water:20,bandage:8,stone:6,wood:8,axe:4,arrows:3,seed:22},
-  shop:{food:16,water:35,bandage:12,medkit:4,bat:3,axe:2,arrows:4,backpack:2,seed:4},
-  mil:{pistol:10,smg:8,shotgun:6,rifle:5,ammo:30,medkit:12,bandage:12,food:4,water:7,stone:4,backpack:3},
+  house:{food:12,water:28,bandage:18,stone:8,wood:6,bat:4,ammo:3,axe:2,medkit:2,arrows:3,backpack:2,katana:.5,seed:9,flashlight:.7},
+  barn:{food:8,water:20,bandage:8,stone:6,wood:8,axe:4,arrows:3,seed:22,flashlight:1},
+  shop:{food:16,water:35,bandage:12,medkit:4,bat:3,axe:2,arrows:4,backpack:2,seed:4,flashlight:1.6},
+  mil:{pistol:10,smg:8,shotgun:6,rifle:5,ammo:30,medkit:12,bandage:12,food:4,water:7,stone:4,backpack:3,flashlight:9},
   car:{food:8,water:18,ammo:15,bandage:12,medkit:4,pistol:3},
-  apartment:{food:9,water:20,bandage:14,ammo:6,bat:3,medkit:3,stone:4,arrows:3,backpack:2,katana:.4,seed:2},
-  office:{food:8,water:22,bandage:10,ammo:5,bat:2,medkit:2,backpack:2},
-  garage:{ammo:22,food:5,water:12,bandage:8,pistol:4,bat:3,axe:3,arrows:4,backpack:1},
-  clinic:{medkit:28,bandage:30,food:5,water:14,ammo:3},
-  gas:{food:9,water:28,ammo:12,bandage:10,bat:3,medkit:3},
-  warehouse:{food:7,water:14,ammo:14,bandage:8,axe:6,bat:4,stone:10,medkit:3,arrows:5,backpack:2}
+  apartment:{food:9,water:20,bandage:14,ammo:6,bat:3,medkit:3,stone:4,arrows:3,backpack:2,katana:.4,seed:2,flashlight:.8},
+  office:{food:8,water:22,bandage:10,ammo:5,bat:2,medkit:2,backpack:2,flashlight:1.4},
+  garage:{ammo:22,food:5,water:12,bandage:8,pistol:4,bat:3,axe:3,arrows:4,backpack:1,flashlight:2.2},
+  clinic:{medkit:28,bandage:30,food:5,water:14,ammo:3,flashlight:1},
+  gas:{food:9,water:28,ammo:12,bandage:10,bat:3,medkit:3,flashlight:2},
+  warehouse:{food:7,water:14,ammo:14,bandage:8,axe:6,bat:4,stone:10,medkit:3,arrows:5,backpack:2,flashlight:2.4}
 };
 /* Mapas com lago (Floresta e Neve): só neles existe vara de pesca */
 function mapHasLake(){return selectedMap==='forest'||selectedMap==='snow'||selectedMap==='desert'||selectedMap==='city';} // desert = oásis
