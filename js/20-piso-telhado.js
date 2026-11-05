@@ -225,5 +225,5 @@ function cellApplySnapshot(d){
 
 window.cellBuild=cellBuild;window.cellIntent=cellIntent;window.drawCellGhost=drawCellGhost;window.drawFloors=drawFloors;window.drawRoofs=drawRoofs;
 window.cellPack=cellPack;window.cellLoad=cellLoad;window.cellRemote=cellRemote;window.cellApplySnapshot=cellApplySnapshot;window.roofRecalc=roofRecalc;
-window.drawBeds=drawBeds;window.bedCovered=bedCovered;window.bedList=()=>[...beds.values()];window.floorAt=(cx,cy)=>floors.has(key(cx,cy));window.bedAt=(cx,cy)=>!!bedAtCell(cx,cy);window.floorList=()=>[...floors.values()];window.roofList=()=>[...roofs.values()];
+window.drawBeds=drawBeds;window.bedCovered=bedCovered;window.bedList=()=>[...beds.values()];window.floorAt=(cx,cy)=>floors.has(key(cx,cy));window.bedAt=(cx,cy)=>!!bedAtCell(cx,cy);window.floorList=()=>[...floors.values()];window.roofAt=(cx,cy)=>roofs.has(key(cx,cy));window.roofList=()=>[...roofs.values()];
 })();

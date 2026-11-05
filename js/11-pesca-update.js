@@ -401,6 +401,8 @@ function envTemp(){
   if(weather==='rain') tg-=14; else if(weather==='snow') tg-=8+blizzK*14; else if(weather==='sand') tg+=8;
   if(P.inVehicle&&vehKind(P.inVehicle)==='car') tg*=0.6;      // cabine do carro fechado (veiculos abertos nao isolam)
   else if(bldAt(P.x,P.y)) tg*=0.3;                           // abrigo isola do clima
+  else if(shelterAt(P.x,P.y)===2) tg*=0.3;                   // casa construida e fechada (telhado + paredes + porta fechada) isola como um predio
+  else if(shelterAt(P.x,P.y)===1) tg*=0.75;                  // so telhado: corta vento e chuva, mas nao segura o calor
   else if(nearTent(P.x,P.y,34)) tg*=0.55;                    // barraca protege um pouco
   else {
     if(tg>10){ for(const n of querySolidNear(P.x,P.y,28)){ if(n.kind==='tree'){ tg-=22; break; } } } // sombra
@@ -428,7 +430,7 @@ function tempTick(dt){
   if(!Number.isFinite(P.temp)) P.temp=0;
   { // água do lago/oásis: ficar dentro vai molhando e esfriando aos poucos; fora, seca devagar
     const inW=!P.inVehicle&&pointInLake(P.x,P.y), snow=selectedMap==='snow';
-    const sheltered=!!((P.inVehicle&&vehKind(P.inVehicle)==='car')||bldAt(P.x,P.y)||nearTent(P.x,P.y,34));
+    const sheltered=!!((P.inVehicle&&vehKind(P.inVehicle)==='car')||bldAt(P.x,P.y)||shelterAt(P.x,P.y)>0||nearTent(P.x,P.y,34));
     const rainWet=!inW&&weather==='rain'&&!sheltered;                       // chuva molha quem esta ao relento
     let nearFire=false;for(const c of campfires){if(Math.hypot(c.x-P.x,c.y-P.y)<70){nearFire=true;break;}}
     const dry=(snow?55:30)/(nearFire?3:1);                                   // perto da fogueira seca bem mais rapido
@@ -908,7 +910,7 @@ function update(dt){
       parts.push({x:camX+rnd(0,W/Z),y:camY+rnd(0,H/Z),vx:rnd(-14,14),vy:rnd(-42,-22),t:rnd(.14,.24),c:'rgba(170,200,230,.75)',g:1});}
   }
   vaporT-=dt;
-  if(vaporT<=0&&P&&!P.dead&&P.temp<-14&&!P.inVehicle&&!bldAt(P.x,P.y)){
+  if(vaporT<=0&&P&&!P.dead&&P.temp<-14&&!P.inVehicle&&!bldAt(P.x,P.y)&&shelterAt(P.x,P.y)<2){
     vaporT=P.moving?1.3:2.2;
     const fx=Math.cos(P.face||0);
     vapor.push({x:P.x+fx*6,y:P.y-15,vx:fx*8,t:0});

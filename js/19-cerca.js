@@ -99,11 +99,32 @@ const BREAK={   // hp, madeira devolvida [min,max], som (w=madeira, s=metal/pedr
   barrier:{hp:5,wood:[0,0],n:'Barreira',s:1},mailbox:{hp:3,wood:[0,0],n:'Caixa de correio',s:1},trash:{hp:2,wood:[0,0],n:'Lixeira',s:1},
   cone:{hp:1,wood:[0,0],n:'Cone',s:1},snowman:{hp:2,wood:[0,0],n:'Boneco de neve'}
 };
+/* moveis das casas: machado para os de madeira, picareta para os de metal e louca. tool = arma exigida; hp = resistencia
+   (machado tira 2 por golpe, picareta .85); mat = material devolvido [item,min,max]; n = nome */
+const FBREAK={
+  couch:{tool:'axe',hp:6,mat:[['cloth',2,3],['wood',1,2]],n:'Sofá'},tv:{tool:'pickaxe',hp:3,mat:[['stone',1,1]],n:'TV'},
+  table:{tool:'axe',hp:5,mat:[['wood',2,3]],n:'Mesa'},bed:{tool:'axe',hp:6,mat:[['wood',2,3],['cloth',1,2]],n:'Cama'},bed2:{tool:'axe',hp:8,mat:[['wood',3,4],['cloth',2,3]],n:'Cama de casal'},
+  medbed:{tool:'pickaxe',hp:5,mat:[['stone',2,2],['cloth',1,1]],n:'Maca'},bunk:{tool:'axe',hp:7,mat:[['wood',3,3],['cloth',1,1]],n:'Beliche'},
+  wardrobe:{tool:'axe',hp:7,mat:[['wood',3,4]],n:'Guarda-roupa'},nightstand:{tool:'axe',hp:3,mat:[['wood',1,2]],n:'Criado-mudo'},
+  shelf:{tool:'axe',hp:4,mat:[['wood',2,3]],n:'Prateleira'},counter:{tool:'axe',hp:6,mat:[['wood',2,3]],n:'Balcão'},
+  fridge:{tool:'pickaxe',hp:5,mat:[['stone',2,3]],n:'Geladeira'},stove:{tool:'pickaxe',hp:5,mat:[['stone',2,3]],n:'Fogão'},
+  ksink:{tool:'pickaxe',hp:4,mat:[['stone',2,2]],n:'Pia'},sink:{tool:'pickaxe',hp:4,mat:[['stone',1,2]],n:'Pia'},
+  toilet:{tool:'pickaxe',hp:4,mat:[['stone',2,2]],n:'Vaso'},tub:{tool:'pickaxe',hp:6,mat:[['stone',3,3]],n:'Banheira'},
+  desk:{tool:'axe',hp:5,mat:[['wood',2,3]],n:'Escrivaninha'},locker:{tool:'pickaxe',hp:4,mat:[['stone',2,2]],n:'Armário de aço'},
+  medcab:{tool:'pickaxe',hp:4,mat:[['stone',2,2]],n:'Armário médico'},rack:{tool:'pickaxe',hp:5,mat:[['stone',2,3]],n:'Suporte de armas'},
+  crate:{tool:'axe',hp:3,mat:[['wood',1,2]],n:'Caixote'},barrel:{tool:'axe',hp:3,mat:[['wood',1,2]],n:'Barril'},bench:{tool:'axe',hp:4,mat:[['wood',2,2]],n:'Banco'},
+  workbench:{tool:'axe',hp:7,mat:[['wood',3,4]],n:'Bancada'},hay:{tool:'axe',hp:2,mat:[['cloth',1,1]],n:'Feno'},plant:{tool:'axe',hp:2,mat:[['wood',0,1]],n:'Planta'},
+  bookcase:{tool:'axe',hp:5,mat:[['wood',2,3]],n:'Estante'},dresser:{tool:'axe',hp:5,mat:[['wood',2,3]],n:'Cômoda'},lamp:{tool:'axe',hp:1,mat:[['wood',0,1]],n:'Abajur'},
+  pallet:{tool:'axe',hp:3,mat:[['wood',2,2]],n:'Palete'},aisle:{tool:'axe',hp:5,mat:[['wood',2,3]],n:'Gôndola'},meet:{tool:'axe',hp:8,mat:[['wood',4,4]],n:'Mesa de reunião'}
+};
+const FBREAK_DEF={tool:'axe',hp:4,mat:[['wood',1,2]],n:'Móvel'};
+const fbOf=f=>FBREAK[f.k]||FBREAK_DEF;
+const mk=(bi,f)=>'m:'+bi+','+Math.round(f.x)+','+Math.round(f.y)+','+f.k;
 const broken=new Set();   // chaves das cercas da cidade e dos objetos do mapa ja destruidos (vai no save)
 const fk=f=>'f:'+f.d+f.x+','+f.y,dk=d=>'d:'+d.x+','+d.y+','+d.type;
 function giveWood(n,x,y){for(let i=0;i<n;i++){if(!addItem('wood')){const it={t:'wood',x:x+rnd(-5,5),y:y+rnd(-3,3)};items.push(it);if(MP.active)sendEvt('itemAdded',{t:it.t,x:it.x,y:it.y});}}}
 function structTarget(w){
-  if(!P||P.dead||P.inVehicle||P.inside)return null;
+  if(!P||P.dead||P.inVehicle)return null;
   const reach=(w.range||18)+8;let best=null;
   const consider=(r,o,kind)=>{
     const px=clamp(P.x,r.x,r.x+r.w),py=clamp(P.y,r.y,r.y+r.h),d=Math.max(0,Math.hypot(P.x-px,P.y-py)-P.r);
@@ -111,6 +132,10 @@ function structTarget(w){
     if(d>3&&Math.abs(wrap(Math.atan2(py-P.y,px-P.x)-P.face))>1.35)return;   // so o que esta a frente
     if(!best||d<best.d)best={d,o,kind,x:px,y:py};
   };
+  if(P.inside){   // dentro de casa: so os moveis
+    if(P.inside.furn)for(const f of P.inside.furn)consider(f,f,'m');
+    return best;
+  }
   const cx=Math.floor(P.x/CELL),cy=Math.floor(P.y/CELL);
   for(let i=cx-3;i<=cx+4;i++)for(let j=cy-3;j<=cy+4;j++)for(const dd of ['h','v']){const f=fmap.get(dd+i+','+j);if(f)consider(gateRect(f),f,'f');}
   for(const d of decorations){
@@ -119,7 +144,30 @@ function structTarget(w){
   }
   return best;
 }
+function furnHit(st,w){
+  const f=st.o,fb=fbOf(f),b=P.inside;
+  P.cd=w.cd;P.swing=.18;
+  if(P.weapon!==fb.tool){toast(fb.n+': precisa de '+(fb.tool==='axe'?'machado':'picareta'));beep(150,.06,'square',.04);return;}
+  if(f.hp===undefined)f.hp=fb.hp;
+  f.hp-=Math.max(.5,w.chopRate||.5);shake=2;
+  const metal=fb.tool==='pickaxe';
+  if(metal)chopStone();else chopWood();
+  for(let i=0;i<5;i++)parts.push({x:st.x,y:st.y-4,vx:rnd(-30,30),vy:rnd(-40,-5),t:.35,c:metal?'#9a9a9a':'#9a6a3a'});
+  makeNoise(P.x,P.y,50);
+  if(f.hp>0)return;
+  const bi=blds.indexOf(b);if(bi<0)return;
+  const key=mk(bi,f);
+  furnRemove(b,f);broken.add(key);
+  if(MP.active)sendEvt('structBreak',{k:key});
+  const got=[];
+  for(const m of fb.mat){const n=rint(m[1],m[2]);if(n<=0)continue;
+    for(let i=0;i<n;i++){if(!addItem(m[0])){const it={t:m[0],x:f.x+f.w/2+rnd(-5,5),y:f.y+f.h/2+rnd(-3,3)};items.push(it);if(MP.active)sendEvt('itemAdded',{t:it.t,x:it.x,y:it.y});}}
+    got.push(n+' '+ITEMS[m[0]].n);}
+  toast(fb.n+' destruído(a)'+(got.length?'! +'+got.join(', '):''));beep(240,.14,'triangle',.08,-60);
+}
+function furnRemove(b,f){const i=b.furn.indexOf(f);if(i>=0)b.furn.splice(i,1);b._fc=null;}   // _fc: desenho guardado do interior
 function structHit(st,w){
+  if(st.kind==='m'){furnHit(st,w);return;}
   const o=st.o,hp0=st.kind==='f'?HP_F[o.g|0]:BREAK[o.type].hp;
   if(o.hp===undefined)o.hp=hp0;
   o.hp-=Math.max(.5,w.chopRate||.5);
@@ -140,6 +188,12 @@ function structHit(st,w){
 }
 /* tira o objeto da lista (cerca da cidade, cerca do jogador ou decoracao) */
 function removeKey(key){
+  if(key.charAt(0)==='m'){
+    const m=/^m:(\d+),(-?\d+),(-?\d+),(.+)$/.exec(key);if(!m)return;
+    const b=blds[+m[1]];if(!b||!b.furn)return;
+    const f=b.furn.find(q=>Math.round(q.x)===+m[2]&&Math.round(q.y)===+m[3]&&q.k===m[4]);if(f)furnRemove(b,f);
+    return;
+  }
   if(key.charAt(0)==='f'){
     const m=/^f:([hv])(-?\d+),(-?\d+)$/.exec(key);if(!m)return;
     const f=fenceAt(+m[2],+m[3],m[1]);if(f)dropPiece(f);
@@ -153,7 +207,7 @@ function structRemote(k){if(typeof k!=='string'||k.length>60)return;broken.add(k
 function structPack(){return [...broken].slice(0,3000);}
 function structLoad(a){   // depois de gerar o mundo e antes de carregar as cercas do jogador
   broken.clear();
-  if(Array.isArray(a))for(const k of a)if(typeof k==='string'&&k.length<=60){broken.add(k);if(k.charAt(0)==='d'||(k.charAt(0)==='f'&&fmap.get(k.slice(2))&&fmap.get(k.slice(2)).s))removeKey(k);}
+  if(Array.isArray(a))for(const k of a)if(typeof k==='string'&&k.length<=60){broken.add(k);if(k.charAt(0)==='d'||k.charAt(0)==='m'||(k.charAt(0)==='f'&&fmap.get(k.slice(2))&&fmap.get(k.slice(2)).s))removeKey(k);}
 }
 
 /* ---- desenho ---- */
@@ -252,6 +306,33 @@ function cellWallDirs(cx,cy){
   if(w('h',cx,cy))o.push('t');if(w('h',cx,cy+1))o.push('b');if(w('v',cx,cy))o.push('l');if(w('v',cx+1,cy))o.push('r');
   return o;
 }
+/* abrigo montado pelo jogador: 0 = ao relento, 1 = so com telhado em cima, 2 = fechado (todo quadrado ligado a este tem telhado e
+   paredes ou portas fechadas em volta; no maximo 150 quadrados). Fechado isola como um predio; so telhado protege um pouco do clima. */
+let shK='',shT=0,shV=0;
+function shelterAt(x,y){
+  if(!window.roofAt)return 0;
+  const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL),k=cx+','+cy,now=performance.now();
+  if(k===shK&&now-shT<400)return shV;
+  shK=k;shT=now;shV=0;
+  if(!roofAt(cx,cy))return shV;
+  shV=1;
+  if(!tallN)return shV;
+  const blocked=(d,i,j)=>{const q=fmap.get(d+i+','+j);return !!q&&q.g>=2&&!(q.g===3&&q.o);};
+  const seen=new Set([k]),st=[[cx,cy]];let sealed=true;
+  while(st.length&&sealed){
+    const c=st.pop(),i=c[0],j=c[1];
+    for(const m of [['h',i,j,i,j-1],['h',i,j+1,i,j+1],['v',i,j,i-1,j],['v',i+1,j,i+1,j]]){
+      if(blocked(m[0],m[1],m[2]))continue;
+      const nx=m[3],ny=m[4],nk=nx+','+ny;
+      if(seen.has(nk))continue;
+      if(!roofAt(nx,ny)||seen.size>=150){sealed=false;break;}
+      seen.add(nk);st.push([nx,ny]);
+    }
+  }
+  if(sealed)shV=2;
+  return shV;
+}
+window.shelterAt=shelterAt;
 /* carro contra parede e porta fechada (a cerca baixa continua sem barrar carro, como antes) */
 function wallsHitVehicle(cx,cy,c,s,L,W,R){
   if(!tallN)return 0;
