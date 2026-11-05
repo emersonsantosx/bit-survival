@@ -107,10 +107,12 @@ ok(pl.snowSpot&&pl.snowApple==='apple','neve: macieira vinga dentro da estufa');
 const hz=await pg.evaluate(()=>{
   localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;vehicles.length=0;
   const o={};const pls=plotList();o.n=pls.length;o.crops=[...new Set(pls.map(p=>p.c))].filter(Boolean);
-  const p=pls.find(q=>q.c&&q.g>=1&&['corn','potato','tomato','carrot','melon'].includes(q.c));
-  if(!p){return Object.assign(o,{none:true});}
-  const cr=p.c;P.inv=[];P.inside=null;P.dead=false;P.x=p.cx*16+8;P.y=p.cy*16+8+14;P.face=-Math.PI/2;P.tool=null;
-  const tg=pickTarget();o.act=tg&&tg.act;plotDo(tg);o.food=P.inv.length>0;o.seeds=P.inv.some(s=>/^seed_/.test(s.t));
+  P.inv=[];P.inside=null;P.dead=false;P.tool=null;P.face=-Math.PI/2;
+  let tg=null;   // primeiro canteiro anual ja maduro que o botao de interagir oferece colher
+  {const q=pls.find(q=>['corn','potato','tomato','carrot','melon'].includes(q.c))||pls[0];if(q){if(!q.c)q.c='tomato';q.g=1e9;}}   // garante um canteiro maduro (o sorteio das hortas varia)
+  for(const q of pls){if(!['corn','potato','tomato','carrot','melon'].includes(q.c))continue;P.x=q.cx*16+8;P.y=q.cy*16+8+14;const g=pickTarget();if(g&&g.k==='plot'&&g.act==='COLHER'&&g.p===q){tg=g;break;}}
+  if(!tg){return Object.assign(o,{none:true});}
+  o.act=tg.act;var cr0=tg.p.c;plotDo(tg);o.inv=JSON.stringify(P.inv);o.cr=cr0;o.food=P.inv.length>0;o.seeds=P.inv.some(s=>/^seed_/.test(s.t));
   // gerador proprio: o mesmo mundo da as mesmas hortas
   const a=JSON.stringify(plotsPack());genWorld(worldSeed);const b2=JSON.stringify(plotsPack());genWorld(worldSeed);o.same=b2===JSON.stringify(plotsPack());o.cnt=plotList().length;
   // salvar e carregar mantem as hortas
