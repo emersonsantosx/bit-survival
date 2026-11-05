@@ -401,21 +401,21 @@ function roomSpawnPoint(b,r){
 }
 /* o que cada movel guarda (chave "comodo:movel" vence a do movel puro); quem nao esta aqui usa a tabela geral do tipo de predio */
 const FLOOT={
-  fridge:{food:6,water:5,meat:1}, ksink:{food:1}, sink:{bandage:3},   // sem garrafas de agua: a torneira da pia ja da agua
+  fridge:{food:6,water:5,meat:1,apple:.9,tomato:.8,carrot:.8}, ksink:{food:1}, sink:{bandage:3},   // sem garrafas de agua: a torneira da pia ja da agua
   medcab:{bandage:6,medkit:4}, 'exam:medcab':{bandage:6,medkit:5}, 'pharmacy:medcab':{bandage:6,medkit:5}, 'pharmacy:shelf':{bandage:6,medkit:4,water:1},
   'waiting:table':{water:3,food:1,bandage:1.5}, 'exam:shelf':{bandage:5,medkit:3},
-  'kitchen:counter':{food:6,water:3}, 'kitchen:shelf':{food:7,water:3,seed_corn:1,potato:1.2,seed_potato:.5}, 'kitchen:table':{food:4,water:3},
+  'kitchen:counter':{food:6,water:3}, 'kitchen:shelf':{food:7,water:3,seed:3,potato:1.2,tomato:.8,carrot:.8}, 'kitchen:table':{food:4,water:3},
   nightstand:{bandage:2,water:3,food:2,ammo:1,pistol:.15}, wardrobe:{cloth:7,backpack:1,bat:.4,katana:.12}, dresser:{cloth:6,bandage:1},
-  bookcase:{cloth:1,food:1,water:1,bandage:1}, 'living:table':{food:3,water:4}, 'living:shelf':{food:2,water:3,bandage:1},
-  'storage:crate':{wood:4,stone:3,food:3,water:2,ammo:1.5,arrows:1}, 'storage:shelf':{food:5,water:5,bandage:1.5,medkit:.7,cloth:1},
+  bookcase:{cloth:1,food:1,water:1,bandage:1}, 'living:table':{food:3,water:4}, 'living:shelf':{food:2,water:3,bandage:1,seed:.8},
+  'storage:crate':{wood:4,stone:3,food:3,water:2,ammo:1.5,arrows:1,seed:2}, 'storage:shelf':{food:5,water:5,bandage:1.5,medkit:.7,cloth:1,seed:1.8},
   'shop:shelf':{food:7,water:6,bandage:2,medkit:.5}, 'shop:aisle':{food:7,water:6,bandage:2}, 'shop:counter':{ammo:2,bandage:2,food:2,water:2,bat:.5}, 'shop:fridge':{water:8,food:3},
   desk:{food:2,water:3,bandage:1.5,ammo:.7,cloth:1}, locker:{bandage:3,food:2,water:2,medkit:1,ammo:1.5,bat:1},
   'barracks:locker':{ammo:6,medkit:2.5,bandage:3.5,food:3,water:3,pistol:1},
   'armory:rack':{pistol:4,smg:3,shotgun:2.5,rifle:2,ammo:5}, 'armory:crate':{ammo:9,medkit:2,bandage:2,smg:.8,shotgun:.8}, 'armory:locker':{ammo:5,medkit:2,bandage:2,pistol:1.5},
   workbench:{axe:3,bat:2,stone:3,wood:3,ammo:1.5,arrows:1.5}, 'workshop:shelf':{wood:3,stone:3,ammo:1.5,bandage:1}, 'workshop:crate':{wood:3,stone:3,ammo:2,axe:1},
   pallet:{food:3,water:3,wood:2,stone:2,ammo:1.5,bandage:1,cloth:1.5}, 'hall:aisle':{food:4,water:4,wood:2,stone:1,ammo:1,cloth:1}, 'hall:crate':{food:3,water:2,wood:2,stone:2,ammo:1.5,axe:.7},
-  'stall:crate':{food:3,water:2,wood:3,corn:3,arrows:1,seed_corn:2,potato:2,seed_potato:1,melon:1.5,seed_melon:1},
-  table:{food:3,water:3}, shelf:{food:4,water:4,bandage:1.2,cloth:1}, counter:{food:4,water:3,ammo:1}, crate:{wood:3,stone:3,food:2,water:2,ammo:1.5}
+  'stall:crate':{food:3,water:2,wood:2,corn:2.5,arrows:1,seed:7,potato:2,melon:1.5,apple:1.2,tomato:1.4,carrot:1.4},
+  table:{food:3,water:3}, shelf:{food:4,water:4,bandage:1.2,cloth:1,seed:1.4}, counter:{food:4,water:3,ammo:1}, crate:{wood:3,stone:3,food:2,water:2,ammo:1.5,seed:1.2}
 };
 function furnLootTable(f,b){
   let t=FLOOT[(f.room&&f.room.k)+':'+f.k]||FLOOT[f.k];
@@ -435,7 +435,29 @@ function placeBldLoot(b,n,lootKey,room){
     }else{
       const p=room?roomSpawnPoint(b,room):(bldSpawnPoint(b)||{x:b.x+b.w/2,y:b.y+b.h/2});x=p.x;y=p.y;
     }
-    items.push({t:wpick(tbl||lakeLoot(LOOT[lootKey]||LOOT.house)),x:Math.round(x),y:Math.round(y),h:true});
+    let t0=wpick(tbl||lakeLoot(LOOT[lootKey]||LOOT.house));
+    if(t0==='seed')t0=rollSeed(posHash(x,y,7));   // "seed" no sorteio vira a semente do mapa (hash da posicao: o _rng da geracao nao muda)
+    items.push({t:t0,x:Math.round(x),y:Math.round(y),h:true});
+  }
+}
+/* casa de campo e cidade guardam semente de verdade: chance fixa por casa (gerador proprio, nao mexe no _rng).
+   Na neve e no deserto, onde quase nao ha planta selvagem, a chance e maior: e das casas que vem a plantacao. */
+const SEED_BONUS={house:{forest:.5,city:.4,desert:.6,snow:.8},cabin:{forest:.6,city:.5,desert:.6,snow:.9},barn:{forest:.9,city:.9,desert:.95,snow:.9},shop:{forest:.3,city:.25,desert:.35,snow:.4}};
+function seedBonus(b){
+  const row=SEED_BONUS[b.type];if(!row)return;
+  const lr=mkRng(((Math.round(b.x)*31+Math.round(b.y)*47+(b.h|0)*3)%99991)/99991);
+  if(lr()>=(row[selectedMap]||.4))return;
+  const spots=b.furn.filter(f=>f.loot);
+  const n=1+(lr()<.5?1:0)+(selectedMap==='snow'&&lr()<.4?1:0);
+  for(let i=0;i<n;i++){
+    let x,y;
+    if(spots.length){const f=spots[Math.floor(lr()*spots.length)];x=f.x+f.w/2+(lr()*6-3);y=f.y+f.h/2+(lr()*4-2);}
+    else{   // sem movel de loot: ponto livre num comodo, sorteado pelo gerador proprio
+      const rs=b.rooms&&b.rooms.length?b.rooms:[{x:b.x+12,y:b.y+16,w:b.w-24,h:b.h-36}];x=b.x+b.w/2;y=b.y+b.h/2;
+      for(let k=0;k<8;k++){const r=rs[Math.floor(lr()*rs.length)],qx=r.x+8+lr()*Math.max(1,r.w-16),qy=r.y+8+lr()*Math.max(1,r.h-16);
+        if(!b.furn.some(f=>qx>f.x-7&&qx<f.x+f.w+7&&qy>f.y-7&&qy<f.y+f.h+7)){x=qx;y=qy;break;}}
+    }
+    items.push({t:rollSeed(lr()),x:Math.round(x),y:Math.round(y),h:true});
   }
 }
 /* clinica sempre tem remedio de verdade: itens extras nos armarios medicos (gerador proprio, nao mexe no _rng) */

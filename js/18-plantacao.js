@@ -2,12 +2,19 @@
    Este arquivo roda dentro de uma funcao propria: so os nomes da lista no fim ficam visiveis para o resto do jogo.
    Canteiro = quadrado de 16 px {cx,cy,c,g,w}: c = planta (ou null se so arado), g = tempo de crescimento acumulado (s), w = umidade restante (s). */
 (function(){
-const CELL=16,PLOT_MAX=90,FALLOW=DAY_SECONDS;   // FALLOW: tempo que a terra arada vazia leva para voltar ao normal
+const CELL=16,PLOT_MAX=160,FALLOW=DAY_SECONDS;   // FALLOW: tempo que a terra arada vazia leva para voltar ao normal
 /* maps: onde vinga ao ar livre (numa estufa vinga em qualquer mapa). dry: velocidade de crescimento sem agua (1 = nao liga). */
 const CROPS={
   corn:  {n:'Milho',    seed:'seed_corn',  grow:1.5*DAY_SECONDS,yield:['corn',2,3],   seedBack:[1,2],maps:['forest','city','desert'],dry:.25},
   potato:{n:'Batata',   seed:'seed_potato',grow:1.2*DAY_SECONDS,yield:['potato',3,4], seedBack:[1,2],maps:['forest','city'],         dry:.35},
-  melon: {n:'Melancia', seed:'seed_melon', grow:2*DAY_SECONDS,  yield:['melon',1,2],  seedBack:[1,2],maps:['desert'],                dry:.6}    // aguenta a seca do deserto
+  melon: {n:'Melancia', seed:'seed_melon', grow:2*DAY_SECONDS,  yield:['melon',1,2],  seedBack:[1,2],maps:['desert'],                dry:.6},   // aguenta a seca do deserto
+  tomato:{n:'Tomate',   seed:'seed_tomato',grow:1.2*DAY_SECONDS,yield:['tomato',3,4], seedBack:[1,2],maps:['forest','city'],         dry:.3},
+  carrot:{n:'Cenoura',  seed:'seed_carrot',grow:1*DAY_SECONDS,  yield:['carrot',3,4], seedBack:[1,2],maps:['forest','city'],         dry:.35},
+  /* perenes (keep): depois de colhida a planta fica e volta a dar fruto; nao devolvem semente (a semente vem de comer o fruto) */
+  apple: {n:'Macieira', seed:'seed_apple', grow:3*DAY_SECONDS,  yield:['apple',3,4],  seedBack:[0,0],maps:['forest','city'],         dry:.5, keep:.65},
+  berry: {n:'Arbusto de frutinhas',seed:'seed_berry',grow:1.6*DAY_SECONDS,yield:['berry',4,5],seedBack:[0,0],maps:['forest','city'],dry:.5,keep:.65},
+  date:  {n:'Tamareira',seed:'seed_date',  grow:3*DAY_SECONDS,  yield:['date',4,5],   seedBack:[0,0],maps:['desert'],                dry:.7, keep:.65},
+  cactus:{n:'Cacto',    seed:'seed_cactus',grow:2*DAY_SECONDS,  yield:['pricklypear',3,4],seedBack:[0,0],maps:['desert'],            dry:1,  keep:.65}   // cacto nao liga para a seca
 };
 const MAPN={forest:'floresta',city:'cidade',desert:'deserto',snow:'neve'};
 /* ---- estufas: 3x3 canteiros (48 px), alinhadas a grade; dentro dela da para plantar em qualquer mapa ---- */
@@ -115,10 +122,11 @@ function plotDo(T){
     const cr=CROPS[p.c],got=[];
     const give=(t,n)=>{for(let i=0;i<n;i++){if(!addItem(t)){const it={t,x:p.cx*CELL+8+rnd(-6,6),y:p.cy*CELL+8+rnd(-4,4)};items.push(it);if(MP.active)sendEvt('itemAdded',{t:it.t,x:it.x,y:it.y});}}};
     const n=rint(cr.yield[1],cr.yield[2]),ns=rint(cr.seedBack[0],cr.seedBack[1]);
-    give(cr.yield[0],n);give(cr.seed,ns);
-    p.c=null;p.g=0;send(p);
+    give(cr.yield[0],n);if(ns>0)give(cr.seed,ns);
+    if(cr.keep)p.g=cr.grow*cr.keep;else{p.c=null;p.g=0;}   // perene: continua plantada e rebrota
+    send(p);
     beep(520,.08,'triangle',.05,120);puff(p.cx*CELL+8,p.cy*CELL+4,'#e8c040',9);
-    toast('Colheu: '+n+' '+ITEMS[cr.yield[0]].n+' e '+ns+' semente'+(ns>1?'s':''));
+    toast('Colheu: '+n+' '+ITEMS[cr.yield[0]].n+(ns>0?' e '+ns+' semente'+(ns>1?'s':''):''));
     try{track('harvest');}catch(e){}
   }
 }
@@ -158,6 +166,52 @@ function drawPlant(p){
     else if(st===1){R(x+1,y-5,6,5,g1);R(x+3,y-6,2,1,g2);}
     else if(st===2){R(x,y-8,8,8,g1);R(x+1,y-9,6,2,g2);R(x+2,y-6,2,2,g2);R(x+5,y-4,2,2,g2);}
     else{R(x,y-9,8,9,g1);R(x+1,y-10,6,2,g2);R(x+1,y-7,2,2,'#c58ad0');R(x+5,y-8,2,2,'#c58ad0');R(x+3,y-3,2,2,'#c8924e');}   // flores roxas e batata a mostra
+    return;
+  }
+  if(p.c==='tomato'){
+    const lf=g1,lg=g2;
+    if(st===0){R(x+3,y-2,2,2,lg);}
+    else if(st===1){R(x+1,y-6,6,6,lf);R(x+3,y-8,2,2,lg);R(x+3,y-1,1,1,'#5a3a24');}
+    else if(st===2){R(x+3,y-12,1,12,'#8a6a44');R(x,y-9,8,8,lf);R(x+1,y-11,6,3,lg);R(x+1,y-5,2,2,'#7ac05a');R(x+5,y-4,2,2,'#7ac05a');}
+    else{R(x+3,y-12,1,12,'#8a6a44');R(x,y-10,8,9,lf);R(x+1,y-12,6,3,lg);R(x+1,y-6,3,3,'#d8402a');R(x+5,y-5,3,3,'#e8543a');R(x+2,y-2,2,2,'#d8402a');R(x+2,y-6,1,1,'#f8b0a0');}
+    return;
+  }
+  if(p.c==='carrot'){
+    if(st===0){R(x+3,y-2,2,2,g2);}
+    else if(st===1){R(x+2,y-4,1,4,g1);R(x+4,y-5,1,5,g2);R(x+5,y-3,1,3,g1);}
+    else if(st===2){R(x+1,y-7,1,7,g1);R(x+3,y-9,1,9,g2);R(x+5,y-8,1,8,g1);R(x+7,y-6,1,6,g2);R(x+2,y-6,1,3,g2);}
+    else{R(x+1,y-8,1,6,g1);R(x+3,y-10,1,8,g2);R(x+5,y-9,1,7,g1);R(x+7,y-7,1,5,g2);R(x+2,y-3,2,3,'#f09a2a');R(x+5,y-3,2,3,'#f09a2a');R(x+3,y-1,2,1,'#c8661a');}
+    return;
+  }
+  if(p.c==='berry'){
+    if(st===0){R(x+3,y-2,2,2,g2);}
+    else if(st===1){R(x+1,y-5,6,5,g1);R(x+2,y-6,4,1,g2);}
+    else if(st===2){R(x-1,y-7,10,7,g1);R(x,y-9,8,3,g2);R(x+2,y-4,2,2,g2);}
+    else{R(x-1,y-8,10,8,g1);R(x,y-10,8,3,g2);R(x,y-6,2,2,'#8a3aa8');R(x+4,y-7,2,2,'#a84cc8');R(x+7,y-4,2,2,'#8a3aa8');R(x+2,y-3,2,2,'#a84cc8');R(x+4,y-3,1,1,'#e8c8f0');}
+    return;
+  }
+  if(p.c==='apple'){
+    const x2=x+4,tk=ok?'#6a4a2a':'#7a6a40';
+    if(st===0){R(x+3,y-2,2,2,g2);}
+    else if(st===1){R(x2-1,y-7,2,7,tk);R(x2-3,y-10,6,4,g1);R(x2-1,y-11,3,2,g2);}
+    else if(st===2){R(x2-2,y-9,4,9,tk);R(x2-6,y-17,12,9,g1);R(x2-4,y-19,8,3,g2);R(x2-1,y-14,3,3,g2);}
+    else{R(x2-2,y-9,4,9,tk);R(x2-7,y-18,14,10,g1);R(x2-5,y-20,10,3,g2);R(x2-5,y-14,2,2,'#e03a2a');R(x2+2,y-15,2,2,'#e03a2a');R(x2-1,y-11,2,2,'#e8543a');R(x2+4,y-11,2,2,'#e03a2a');R(x2-3,y-17,1,1,'#f8b0a0');}
+    return;
+  }
+  if(p.c==='date'){
+    const x2=x+4,tk=ok?'#8a6a3a':'#8a7a50',fr=ok?'#3e9a3e':'#7a9a40',fl=ok?'#5ab05a':'#a0b050';
+    if(st===0){R(x+3,y-2,2,2,g2);}
+    else if(st===1){R(x2-1,y-4,2,4,tk);R(x2-4,y-7,3,2,fr);R(x2+1,y-7,3,2,fr);R(x2-1,y-8,2,2,fl);}
+    else if(st===2){R(x2-1,y-10,2,10,tk);R(x2-6,y-13,5,2,fr);R(x2+1,y-13,5,2,fr);R(x2-4,y-15,3,2,fl);R(x2+1,y-15,3,2,fl);R(x2-1,y-16,2,3,fl);}
+    else{R(x2-1,y-13,3,13,tk);for(let k=1;k<13;k+=3)R(x2-1,y-k,3,1,'#6a4a2a');R(x2-8,y-16,7,2,fr);R(x2+2,y-16,7,2,fr);R(x2-6,y-19,4,2,fl);R(x2+2,y-19,4,2,fl);R(x2-1,y-20,3,4,fl);R(x2-3,y-14,2,3,'#e8902a');R(x2+1,y-14,2,3,'#c8661a');R(x2-1,y-13,2,2,'#e8902a');}
+    return;
+  }
+  if(p.c==='cactus'){
+    const cg=ok?'#3a7a3a':'#6a8a40',ch=ok?'#4a9a4a':'#8aa050',x2=x+4;
+    if(st===0){R(x+3,y-2,2,2,ch);}
+    else if(st===1){R(x2-1,y-5,3,5,cg);R(x2-1,y-5,3,1,ch);}
+    else if(st===2){R(x2-1,y-10,3,10,cg);R(x2-1,y-10,3,2,ch);R(x2-4,y-6,3,2,cg);R(x2-4,y-8,1,3,cg);}
+    else{R(x2-1,y-14,3,14,cg);R(x2-1,y-14,3,2,ch);R(x2-5,y-9,4,2,cg);R(x2-5,y-12,2,4,cg);R(x2+2,y-7,4,2,cg);R(x2+5,y-10,2,4,cg);R(x2-1,y-16,3,2,'#e0407a');R(x2-5,y-14,2,2,'#e0407a');R(x2+5,y-12,2,2,'#e0407a');}
     return;
   }
   if(p.c==='melon'){
@@ -242,10 +296,80 @@ function ghBuild(sp){
   if(MP.active)sendEvt('ghAdd',{x:g.x,y:g.y});
   for(let i=0;i<12;i++)parts.push({x:g.x+rnd(0,GH),y:g.y+GH-rnd(0,8),vx:rnd(-20,20),vy:rnd(-30,-8),t:.5,c:i%2?'#e8e0c8':'#bfe8f4'});
 }
+/* ---- hortas abandonadas: canteiros ja plantados e crescendo ao lado de algumas casas (fonte de comida e de sementes sem precisar de nada).
+   Gerador proprio (hash da posicao da casa): nao consome o _rng do mundo, entao a geracao e o save continuam iguais. Roda no fim do genWorld.
+   Floresta e cidade: horta de tomate, cenoura, batata, milho. Deserto: melancia, milho, tamareira, cacto. Neve: estufa abandonada ao lado das cabanas. ---- */
+const GARDEN_CROPS={
+  forest:{corn:2,potato:2,tomato:2,carrot:2,berry:1,apple:.5},
+  city:{tomato:2.4,carrot:2.2,potato:2,corn:1.4,berry:1},
+  desert:{melon:3,corn:2,cactus:1,date:.7},
+  snow:{carrot:2,potato:2,tomato:1.6,corn:1.6,berry:1}
+};
+const GARDEN_CHANCE={forest:.4,city:.45,desert:.45,snow:.5};
+function gardensGen(){
+  plots=[];
+  const map=selectedMap,table=GARDEN_CROPS[map],chance=GARDEN_CHANCE[map];if(!table||typeof blds==='undefined')return;
+  const blocked=new Set();   // quadrados tocados por cerca ou parede (as cercas da cidade ja existem aqui)
+  try{for(const f of fenceList()){blocked.add(f.x+','+f.y);if(f.d==='h')blocked.add(f.x+','+(f.y-1));else blocked.add((f.x-1)+','+f.y);}}catch(e){}
+  const pickCrop=lr=>{let t=0;for(const k in table)t+=table[k];let r=lr()*t;for(const k in table){r-=table[k];if(r<0)return k;}return 'corn';};
+  const want=map==='snow'?['cabin','house']:map==='desert'?['house','barn','cabin']:['house','cabin','barn'];
+  let made=0,pl=0;
+  const freeCell=(cx,cy)=>{
+    if(blocked.has(cx+','+cy)||plotAt(cx,cy))return false;
+    const x=cx*CELL+8,y=cy*CELL+8;
+    for(const b of blds)if(x>b.x-14&&x<b.x+b.w+14&&y>b.y-14&&y<b.y+b.h+14)return false;   // folga em volta das paredes (porta e passagem)
+    return map==='snow'?!pointInLake(x,y)&&!solidPoint(x,y,6)&&!onCityRoad(x,y,6):!soilBad(x,y);
+  };
+  const stageG=(c,lr)=>{const gr=CROPS[c].grow,r=lr();return r<.55?gr:gr*(.35+lr()*.6);};
+  for(const b of blds){
+    if(made>=(map==='snow'?3:12)||pl>=60)break;
+    if(!want.includes(b.type))continue;
+    const lr=mkRng(((Math.round(b.x)*41+Math.round(b.y)*67+(b.h|0)*5)%99991)/99991);
+    if(lr()>=chance)continue;
+    // horta de 3x2 quadrados (ou estufa 3x3 na neve) num dos lados da casa
+    const W=3,Hh=map==='snow'?3:2;
+    let spot=null;
+    for(let k=0;k<14&&!spot;k++){
+      const side=Math.floor(lr()*4),j=lr();
+      let ax,ay;
+      if(side===0){ax=b.x+b.w+10+lr()*18;ay=b.y+j*Math.max(8,b.h-Hh*CELL);}
+      else if(side===1){ax=b.x-10-W*CELL-lr()*18;ay=b.y+j*Math.max(8,b.h-Hh*CELL);}
+      else if(side===2){ax=b.x+j*Math.max(8,b.w-W*CELL);ay=b.y-10-Hh*CELL-lr()*14;}
+      else{ax=b.x+j*Math.max(8,b.w-W*CELL);ay=b.y+b.h+10+lr()*14;}
+      const cx=Math.round(ax/CELL),cy=Math.round(ay/CELL);let okc=true;
+      for(let i=-1;i<=W&&okc;i++)for(let q=-1;q<=Hh&&okc;q++){
+        const inside=i>=0&&i<W&&q>=0&&q<Hh;
+        if(inside){if(!freeCell(cx+i,cy+q))okc=false;}
+        else if(map==='snow'&&ghs.some(g=>Math.abs(g.x-(cx+i)*CELL)<GH+2&&Math.abs(g.y-(cy+q)*CELL)<GH+2))okc=false;
+      }
+      if(okc){const x0=cx*CELL-20,x1=(cx+W)*CELL+20,y0=cy*CELL-10,y1=(cy+Hh)*CELL+64;   // sem copa de arvore por cima da horta
+        for(const t of trees)if(t.x>x0&&t.x<x1&&t.y>y0&&t.y<y1){okc=false;break;}}
+      if(okc&&(cx*CELL<40||cy*CELL<40||(cx+W)*CELL>WW-40||(cy+Hh)*CELL>WH-40))okc=false;
+      if(okc)spot={cx,cy};
+    }
+    if(!spot)continue;
+    if(map==='snow'){
+      ghs.push({x:spot.cx*CELL,y:spot.cy*CELL});
+      for(let i=0;i<W;i++)for(let q=0;q<Hh;q++){
+        if(lr()<.3)continue;   // alguns canteiros vazios (so a terra arada)
+        const c=pickCrop(lr);plots.push(mark({cx:spot.cx+i,cy:spot.cy+q,c,g:stageG(c,lr),w:DAY_SECONDS*.4}));pl++;
+      }
+    }else{
+      const rowCrop=[pickCrop(lr),pickCrop(lr)];
+      for(let q=0;q<Hh;q++)for(let i=0;i<W;i++){
+        if(lr()<.15)continue;
+        const c=rowCrop[q];plots.push(mark({cx:spot.cx+i,cy:spot.cy+q,c,g:stageG(c,lr),w:0}));pl++;
+      }
+    }
+    made++;
+  }
+  for(const g of ghs)for(const p of plots)mark(p);
+  if(map==='snow')for(const p of plots)mark(p);
+}
 const plotAria={ARAR:'Arar a terra',PLANTAR:'Plantar semente',REGAR:'Regar',COLHER:'Colher'};
 
 window.ghPack=ghPack;window.ghLoad=ghLoad;window.ghRemote=ghRemote;window.ghSpot=ghSpot;window.ghBuild=ghBuild;window.drawGreenhouses=drawGreenhouses;window.drawGreenhouseFrame=drawGreenhouseFrame;window.ghList=()=>ghs;window.plotList=()=>plots;
 window.GREENHOUSE_OK=()=>selectedMap==='snow';   // estufa so onde nao da para arar ao ar livre
 window.plantTick=plantTick;window.hoeTill=hoeTill;window.ghostFor=ghostFor;window.soilBad=soilBad;window.frontCell=frontCell;window.plotCands=plotCands;window.plotDo=plotDo;window.drawPlots=drawPlots;window.plotsInView=plotsInView;window.drawPlant=drawPlant;
-window.plotsPack=plotsPack;window.plotsLoad=plotsLoad;window.plotRemote=plotRemote;window.plotsApplySnapshot=plotsApplySnapshot;window.plotAria=plotAria;
+window.gardensGen=gardensGen;window.plotsPack=plotsPack;window.plotsLoad=plotsLoad;window.plotRemote=plotRemote;window.plotsApplySnapshot=plotsApplySnapshot;window.plotAria=plotAria;
 })();

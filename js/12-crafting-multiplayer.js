@@ -144,6 +144,8 @@ function handleEvt(kind, data){
     cellRemote(data);
   } else if(kind==='plotSet'){
     plotRemote(data);
+  } else if(kind==='fruitSet'){
+    fruitRemote(data);
   } else if(kind==='doorSet'){
     const bb=blds[data.b],dd=bb&&bb.doors&&bb.doors[data.i];
     if(dd&&(data.s===0||data.s===1||data.s===2)&&!(dd.open===2&&data.s!==2))setDoor(dd,data.s,true);
@@ -770,7 +772,7 @@ function applySnapshot(snap){
     }
     campfires = merged;
   }
-  plotsApplySnapshot(snap.plots);if(Array.isArray(snap.br))for(const k of snap.br)structRemote(k);fenceApplySnapshot(snap.fn);cellApplySnapshot(snap.pf);if(Array.isArray(snap.gh))for(const a of snap.gh)if(Array.isArray(a))ghRemote({x:a[0],y:a[1]});
+  plotsApplySnapshot(snap.plots);if(Array.isArray(snap.fr))for(const a of snap.fr)if(Array.isArray(a))fruitRemote({x:a[0],y:a[1],r:a[2]});if(Array.isArray(snap.br))for(const k of snap.br)structRemote(k);fenceApplySnapshot(snap.fn);cellApplySnapshot(snap.pf);if(Array.isArray(snap.gh))for(const a of snap.gh)if(Array.isArray(a))ghRemote({x:a[0],y:a[1]});
   if(Array.isArray(snap.tents)){
     let ch=false;
     for(const a of snap.tents){if(Array.isArray(a)&&isFiniteNum(a[0])&&isFiniteNum(a[1])&&!tents.some(t=>Math.abs(t.x-a[0])<10&&Math.abs(t.y-a[1])<10)){tents.push({x:a[0],y:a[1]});ch=true;}}
@@ -1004,7 +1006,7 @@ function packSnapshot(){
     vehicles:vPack,vfull:fullV,
     campfires:campfires.map(c=>({x:Math.round(c.x),y:Math.round(c.y),t:c.t||0,flicker:+(c.flicker||0).toFixed(2)})),
     tents:tents.map(t=>[Math.round(t.x),Math.round(t.y)]),
-    plots:plotsPack(),gh:ghPack(),fn:fencePack(),br:structPack(),pf:cellPack(),
+    plots:plotsPack(),fr:fruitPack(),gh:ghPack(),fn:fencePack(),br:structPack(),pf:cellPack(),
     sc:SCW.on?1:0,
     bd:packBirds(),
     tg:fullV?goneList(BASE_TREES,trees):undefined,rg:fullV?goneList(BASE_ROCKS,rocks):undefined,tn:fullV?grownPack(trees):undefined,rn:fullV?grownPack(rocks):undefined,

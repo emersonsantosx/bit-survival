@@ -1303,11 +1303,11 @@ function render(){
   if(!P.inVehicle&&!(P.sleeping&&P.sleeping.tent))list.push({y:P.y,k:2,o:P});
   list.sort((a,b)=>a.y-b.y);
   for(const e of list){
-    if(e.k===0)drawTree(e.o);
+    if(e.k===0){drawTree(e.o);fruitOver(e.o);}
     else if(e.k===3)drawRock(e.o);
     else if(e.k===4)drawCampfire(e.o);
     else if(e.k===9)drawTent(e.o);
-    else if(e.k===6)drawDecoration(e.o);
+    else if(e.k===6){drawDecoration(e.o);fruitOver(e.o);}
     else if(e.k===7){ drawAnimal(e.o); }
     else if(e.k===8){ drawObserver(e.o); }
     else if(e.k===10){ drawScarecrow(e.o); }

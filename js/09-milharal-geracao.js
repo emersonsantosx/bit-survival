@@ -382,7 +382,7 @@ function genWorld(seed) {
   weatherTimer=rnd(120,240);
   weatherParticles=[];
   // Animais por mapa (passivos, caça = comida)
-  plotsLoad([]);fenceLoad([]);cellLoad(null);animals=[];birds=[];birdsReady=false;flockT=rnd(15,40);
+  plotsLoad([]);fruitReset();fenceLoad([]);cellLoad(null);animals=[];birds=[];birdsReady=false;flockT=rnd(15,40);
   const animalPlan=
     selectedMap==='forest'?[{k:'deer',n:8},{k:'rabbit',n:12},{k:'boar',n:5}]:
     selectedMap==='snow'?[{k:'rabbit',n:10},{k:'wolf',n:6},{k:'deer',n:4}]:
@@ -410,6 +410,7 @@ function genWorld(seed) {
     trees=trees.filter(t=>!inY(t,12));rocks=rocks.filter(t=>!inY(t,6));decorations=decorations.filter(d=>!inY(d,6));
   }
   rebuildSolidGrid();
+  try{gardensGen();}catch(e){console.warn('[hortas]',e);}
   BASE_TREES=trees.map(t=>t.x+','+t.y);BASE_ROCKS=rocks.map(t=>t.x+','+t.y);regrowInit(); // referência para sincronizar o que foi derrubado/quebrado
   buildMinimap();
   }catch(e){

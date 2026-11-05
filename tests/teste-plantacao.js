@@ -7,7 +7,7 @@ const { chromium } = require('playwright');
 for(const m of ['forest','snow','desert','city']){
  const pg=await (await b.newContext({viewport:{width:760,height:460}})).newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
  await pg.goto('file://'+file);await pg.waitForFunction(()=>typeof newGame==='function');
- const r=await pg.evaluate((m)=>{localStorage.clear();selectedMap=m;pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;aud();zombies=[];animals=[];
+ const r=await pg.evaluate((m)=>{localStorage.clear();selectedMap=m;pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;plotsLoad([]);ghLoad([]);aud();zombies=[];animals=[];
   const o={};const msgs=[];window.toast=s=>msgs.push(s);
   const give=(t,n)=>{for(let i=0;i<n;i++)addItem(t);};
   P.pack=true;give('wood',30);give('cloth',10);give('water',3);give('seed_corn',2);give('seed_potato',2);give('seed_melon',2);
