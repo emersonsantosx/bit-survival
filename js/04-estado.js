@@ -2,6 +2,7 @@
 let state='menu';
 let selectedMap='forest';
 let mpSelectedMap='forest';
+let mpSlot=-1;   // mundo escolhido pelo host: 1..4 = slot de save (novo se vazio), 0 = mundo temporario, sem salvar, -1 = ainda nao escolheu (a tela sugere um)
 let weather='none';
 let weatherTimer=120;
 let weatherParticles=[];
@@ -15,7 +16,7 @@ const DECAL_LIFE=45; // segundos até a mancha de sangue sumir
 let atkHeld=false,sprintHeld=false,noiseT=0,tt=null;
 let recentRemoved=[],recentAdded=[]; // convidado: mudanças de itens ainda não confirmadas pelo host
 let touchGas=0,touchSteer=0,stepT=0;
-let MP={gameStarted:false,reconnecting:false,guestAway:false,seed:null,reconnStart:0,reconnTries:0,active:false,isHost:false,peer:null,conn:null,roomCode:'',connected:false,syncT:0,lastRecv:0,myId:null,scriptLoaded:false,playerName:'Jogador',gameOver:false,rtt:80,pingT:0,snapT:0.16,failCount:0};
+let MP={gameStarted:false,reconnecting:false,guestAway:false,seed:null,reconnStart:0,reconnTries:0,active:false,isHost:false,peer:null,conn:null,roomCode:'',connected:false,syncT:0,lastRecv:0,myId:null,scriptLoaded:false,playerName:'Jogador',gameOver:false,rtt:80,pingT:0,snapT:0.16,failCount:0,slot:0,save:null,spawn:null};
 // STUN + TURN públicos (openrelay) — ajuda celular em 4G/CGNAT
 const PEER_ICE={iceServers:[
   {urls:'stun:stun.l.google.com:19302'},

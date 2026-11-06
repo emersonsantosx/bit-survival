@@ -33,7 +33,7 @@ function newGame(){
     alert('Erro ao gerar o mundo: '+err.message);
   }
 }
-/* ============ CONTINUAR (somente jogo solo) ============
+/* ============ CONTINUAR (jogo solo e mundo salvo do host no multiplayer) ============
    O mundo nasce de uma semente (a mesma técnica do multiplayer), então o save guarda a semente e só o que mudou:
    jogador, tempo, árvores/pedras que restaram, itens no chão, veículos, animais, zumbis, fogueiras e manchas. */
 const SAVE_KEY='minisurv_save', SAVE_PREFIX='minisurv_save_', SAVE_SLOTS=4, SAVE_VER=5, SAVE_EVERY=20;
@@ -66,7 +66,7 @@ function packObj(o){
   return r;
 }
 function canSave(){
-  return !!(P && worldSeed && curSlot>0 && !MP.active && !P.dead && (state==='play'||state==='pause'||state==='craft'));
+  return !!(P && worldSeed && curSlot>0 && (!MP.active||(MP.isHost&&MP.gameStarted)) && !P.dead && (state==='play'||state==='pause'||state==='craft'));
 }
 function saveGame(){
   if(!canSave()) return false;
@@ -84,9 +84,9 @@ function saveGame(){
       vehicles:vehicles.map(packObj), animals:animals.map(packObj), fires:campfires.map(packObj), tents:tents.map(t=>({x:Math.round(t.x),y:Math.round(t.y)})),
       decals:decals.map(d=>[_q(d.x,1),_q(d.y,1),_q(d.l,1)]),
       chests:chestList.map(c=>c.open?1:0), rl:lootStatePack(),
-      ice:(()=>{const o=[];lakes.forEach((l,i)=>{if(l.holes)for(const h of l.holes)o.push([i,h.x,h.y]);});return o;})(),
+      ice:icePack(),
       plots:plotsPack(),fr:fruitPack(),gh:ghPack(),fn:fencePack(),br:structPack(),pf:cellPack(),
-      doors:(()=>{const o=[];blds.forEach((b,bi)=>{if(b.doors)b.doors.forEach((d,di)=>{if(d.open)o.push([bi,di,d.open]);});});return o;})()
+      doors:doorsPack()
     };
     localStorage.setItem(slotKey(curSlot),JSON.stringify(data));
     return true;
@@ -110,6 +110,7 @@ function readSave(n){
     return d;
   }catch(e){ clearSave(n); return null; }
 }
+function slotRaw(n){try{return !!localStorage.getItem(slotKey(n));}catch(e){return false;}}   // ha algo guardado no slot (mesmo que seja de outra versao)
 function clearSave(n){ n=n||curSlot; if(n>0){try{localStorage.removeItem(slotKey(n));}catch(e){}} refreshContinue(); }
 function refreshContinue(){
   let last=null,lastN=0,cnt=0;
@@ -125,6 +126,68 @@ function readSave0(n){
     return (d&&d.v===SAVE_VER&&saveWorldOk(d)&&MAP_NAMES[d.map]&&Number.isFinite(d.seed)&&d.P&&d.P.hp>0)?d:null;
   }catch(e){ return null; }
 }
+/* gelo quebrado, portas abertas/quebradas e comida ja pega dos moveis: o convidado do multiplayer recebe isso junto com a semente */
+function icePack(){const o=[];lakes.forEach((l,i)=>{if(l.holes)for(const h of l.holes)o.push([i,h.x,h.y]);});return o;}
+function iceLoad(a){if(Array.isArray(a))for(const q of a.slice(0,400)){const l=Array.isArray(q)&&lakes[q[0]];if(l&&l.frozen&&Number.isFinite(q[1])&&Number.isFinite(q[2])){if(!l.holes)l.holes=[];l.holes.push({x:q[1],y:q[2],r:16});}}}
+function doorsPack(){const o=[];blds.forEach((b,bi)=>{if(b.doors)b.doors.forEach((d,di)=>{if(d.open)o.push([bi,di,d.open]);});});return o;}
+function doorsLoad(a){if(Array.isArray(a))for(const q of a.slice(0,4000)){const bb=Array.isArray(q)&&blds[q[0]],dd=bb&&bb.doors&&bb.doors[q[1]];if(dd&&(q[2]===1||q[2]===2)){dd.open=q[2];if(q[2]===2)dd.hp=0;}}}
+function worldExtraPack(){return {rl:lootStatePack(),dr:doorsPack(),ice:icePack()};}
+function worldExtraApply(o){if(!o||typeof o!=='object')return;if(Array.isArray(o.rl))lootStateLoad(o.rl.slice(0,3000));doorsLoad(o.dr);iceLoad(o.ice);}
+/* devolve ao mundo recem-gerado (genWorld) tudo o que o save guardou, menos jogador e zumbis. Serve ao CONTINUAR e ao multiplayer */
+function restoreWorldState(d){
+  // Tempo e clima (antes dos zumbis: a dificuldade deles depende do dia)
+  T=d.T; day=Math.max(1,d.day|0); kills=d.kills|0; update._lastDay=day;
+  try{missionsInit();}catch(e){}
+  if(typeof d.weather==='string') weather=d.weather;
+  if(Number.isFinite(d.weatherTimer)) weatherTimer=d.weatherTimer;
+  spawnTimer=Number.isFinite(d.spawnTimer)?d.spawnTimer:3;
+  // Árvores e pedras: o mundo base volta da semente; o save diz quais restaram e com quanta vida
+  const keep=(base,saved)=>{
+    const m=new Map(base.map(o=>[o.x+','+o.y,o])), out=[];
+    for(const a of saved){ const o=m.get(a[0]+','+a[1]); if(o){ if(Number.isFinite(a[2])) o.hp=a[2]; out.push(o); } }
+    return out;
+  };
+  trees=keep(trees,d.trees); rocks=keep(rocks,d.rocks);
+  grownApply(trees,d.tn); grownApply(rocks,d.rn);
+  items=d.items.map(a=>(Array.isArray(a)&&a[0]==='sword')?['katana'].concat(a.slice(1)):a).filter(a=>Array.isArray(a)&&typeof a[0]==='string'&&ITEMS[a[0]]&&Number.isFinite(a[1])&&Number.isFinite(a[2])).map(a=>Object.assign({t:a[0],x:a[1],y:a[2]},a[3]||{}));
+  vehicles=d.vehicles.filter(v=>v&&Number.isFinite(v.x)&&Number.isFinite(v.y)).map(v=>{v.driverId=null;v.spd=0;const sp=VEH[vehKind(v)];if(sp&&v.maxHp!==sp.hp){const f=Number.isFinite(v.hp)&&v.maxHp>0?v.hp/v.maxHp:1;v.maxHp=sp.hp;v.hp=Math.max(1,Math.round(sp.hp*f));}return v;});   // migra a vida para a nova tabela de veiculos
+  animals=d.animals.filter(a=>a&&Number.isFinite(a.x)&&Number.isFinite(a.y));
+  campfires=d.fires.filter(c=>c&&Number.isFinite(c.x)&&Number.isFinite(c.y));
+  tents=Array.isArray(d.tents)?d.tents.filter(t=>t&&Number.isFinite(t.x)&&Number.isFinite(t.y)).map(t=>({x:t.x,y:t.y})):[];
+  if(Array.isArray(d.chests))d.chests.forEach((v,i)=>{if(chestList[i]&&v)chestList[i].open=true;});
+  lootStateLoad(d.rl);
+  iceLoad(d.ice);
+  plotsLoad(d.plots);fruitLoad(d.fr);ghLoad(d.gh);structLoad(d.br);fenceLoad(d.fn);cellLoad(d.pf);
+  doorsLoad(d.doors);
+  if(P){P.hold=null;}EAT=null;eatLock=false;
+  decals=(d.decals||[]).map(a=>({x:a[0],y:a[1],l:Number.isFinite(a[2])?a[2]:20})).filter(a=>a.l>0);
+  rebuildSolidGrid();
+}
+function restorePlayerState(d){
+  // Jogador
+  P=Object.assign({x:plane.x+70,y:plane.y,r:5,hp:100,food:85,water:85,stam:100,temp:0,face:Math.PI/2,moving:false,sprint:false,exhausted:false,cd:0,swing:0,flash:0,bleed:false,dead:false,
+    weapon:'fists',melee:null,meleeWeapons:[],firearms:{},ammo:0,arrows:0,inv:[],walk:0},d.P,{inside:null,inVehicle:null,dead:false});
+  P.hold=null;
+  {if(!Array.isArray(P.tools))P.tools=[];for(const k of BUILD_TOOLS){if((P.meleeWeapons||[]).includes(k)){P.meleeWeapons=P.meleeWeapons.filter(q=>q!==k);if(!P.tools.includes(k))P.tools.push(k);}if(P.melee===k)P.melee=P.meleeWeapons[0]||null;if(P.weapon===k)P.weapon='fists';}if(!toolList().includes(P.tool))P.tool=null;}
+  {const sw=k=>k==='sword'?'katana':k;if(Array.isArray(P.meleeWeapons))P.meleeWeapons=P.meleeWeapons.map(sw).filter((k,i,a)=>a.indexOf(k)===i);P.melee=sw(P.melee);P.weapon=sw(P.weapon);}
+  if(!Array.isArray(P.inv)) P.inv=[];
+  P.inv=P.inv.map(sl=>sl&&sl.t==='sword'?Object.assign({},sl,{t:'katana'}):sl).filter(sl=>sl&&ITEMS[sl.t]&&sl.n>0);
+  if(d.inVeh>=0&&vehicles[d.inVeh]){ const v=vehicles[d.inVeh]; P.x=v.x; P.y=v.y+28; } // volta ao lado do carro em que estava
+  pushOut(P,P.r);
+}
+function restoreZombies(d){
+  // Zumbis
+  zombies=[];
+  for(const a of d.zombies){
+    if(!Array.isArray(a)||!Number.isFinite(a[0])||!Number.isFinite(a[1])) continue;
+    const z=spawnZ(a[0],a[1],a[2]);
+    if(Number.isFinite(a[3])) z.hp=a[3];
+    if(Number.isFinite(a[4])) z.max=a[4];
+    if(Number.isFinite(a[5])) z.spd=a[5];
+    if(Number.isFinite(a[6])) z.dmg=a[6];
+    if(Number.isFinite(a[7])){ z.si=a[7]|0; const lk=zombieLook(z.kind,z.si); z.skin=lk.skin; z.shirt=lk.shirt; }
+  }
+}
 function continueGame(n){
   const d=readSave(n);
   if(!d){ toast('Nenhum jogo salvo'); return; }
@@ -139,54 +202,9 @@ function continueGame(n){
     selectedMap=d.map; worldSeed=d.seed; curSlot=n; pendingSlot=n;
     genWorld(d.seed);
     if(!plane) throw new Error('plane não gerado');
-    // Tempo e clima (antes dos zumbis: a dificuldade deles depende do dia)
-    T=d.T; day=Math.max(1,d.day|0); kills=d.kills|0; update._lastDay=day;
-    try{missionsInit();}catch(e){}
-    if(typeof d.weather==='string') weather=d.weather;
-    if(Number.isFinite(d.weatherTimer)) weatherTimer=d.weatherTimer;
-    spawnTimer=Number.isFinite(d.spawnTimer)?d.spawnTimer:3;
-    // Árvores e pedras: o mundo base volta da semente; o save diz quais restaram e com quanta vida
-    const keep=(base,saved)=>{
-      const m=new Map(base.map(o=>[o.x+','+o.y,o])), out=[];
-      for(const a of saved){ const o=m.get(a[0]+','+a[1]); if(o){ if(Number.isFinite(a[2])) o.hp=a[2]; out.push(o); } }
-      return out;
-    };
-    trees=keep(trees,d.trees); rocks=keep(rocks,d.rocks);
-    grownApply(trees,d.tn); grownApply(rocks,d.rn);
-    items=d.items.map(a=>(Array.isArray(a)&&a[0]==='sword')?['katana'].concat(a.slice(1)):a).filter(a=>Array.isArray(a)&&typeof a[0]==='string'&&ITEMS[a[0]]&&Number.isFinite(a[1])&&Number.isFinite(a[2])).map(a=>Object.assign({t:a[0],x:a[1],y:a[2]},a[3]||{}));
-    vehicles=d.vehicles.filter(v=>v&&Number.isFinite(v.x)&&Number.isFinite(v.y)).map(v=>{v.driverId=null;v.spd=0;const sp=VEH[vehKind(v)];if(sp&&v.maxHp!==sp.hp){const f=Number.isFinite(v.hp)&&v.maxHp>0?v.hp/v.maxHp:1;v.maxHp=sp.hp;v.hp=Math.max(1,Math.round(sp.hp*f));}return v;});   // migra a vida para a nova tabela de veiculos
-    animals=d.animals.filter(a=>a&&Number.isFinite(a.x)&&Number.isFinite(a.y));
-    campfires=d.fires.filter(c=>c&&Number.isFinite(c.x)&&Number.isFinite(c.y));
-    tents=Array.isArray(d.tents)?d.tents.filter(t=>t&&Number.isFinite(t.x)&&Number.isFinite(t.y)).map(t=>({x:t.x,y:t.y})):[];
-    if(Array.isArray(d.chests))d.chests.forEach((v,i)=>{if(chestList[i]&&v)chestList[i].open=true;});
-    lootStateLoad(d.rl);
-    if(Array.isArray(d.ice))for(const a of d.ice){const l=Array.isArray(a)&&lakes[a[0]];if(l&&l.frozen&&Number.isFinite(a[1])&&Number.isFinite(a[2])){if(!l.holes)l.holes=[];l.holes.push({x:a[1],y:a[2],r:16});}}
-    plotsLoad(d.plots);fruitLoad(d.fr);ghLoad(d.gh);structLoad(d.br);fenceLoad(d.fn);cellLoad(d.pf);
-    if(Array.isArray(d.doors))for(const a of d.doors){const bb=Array.isArray(a)&&blds[a[0]],dd=bb&&bb.doors&&bb.doors[a[1]];if(dd&&(a[2]===1||a[2]===2)){dd.open=a[2];if(a[2]===2)dd.hp=0;}}
-    if(P){P.hold=null;}EAT=null;eatLock=false;
-    decals=(d.decals||[]).map(a=>({x:a[0],y:a[1],l:Number.isFinite(a[2])?a[2]:20})).filter(a=>a.l>0);
-    rebuildSolidGrid();
-    // Jogador
-    P=Object.assign({x:plane.x+70,y:plane.y,r:5,hp:100,food:85,water:85,stam:100,temp:0,face:Math.PI/2,moving:false,sprint:false,exhausted:false,cd:0,swing:0,flash:0,bleed:false,dead:false,
-      weapon:'fists',melee:null,meleeWeapons:[],firearms:{},ammo:0,arrows:0,inv:[],walk:0},d.P,{inside:null,inVehicle:null,dead:false});
-    P.hold=null;
-    {if(!Array.isArray(P.tools))P.tools=[];for(const k of BUILD_TOOLS){if((P.meleeWeapons||[]).includes(k)){P.meleeWeapons=P.meleeWeapons.filter(q=>q!==k);if(!P.tools.includes(k))P.tools.push(k);}if(P.melee===k)P.melee=P.meleeWeapons[0]||null;if(P.weapon===k)P.weapon='fists';}if(!toolList().includes(P.tool))P.tool=null;}
-    {const sw=k=>k==='sword'?'katana':k;if(Array.isArray(P.meleeWeapons))P.meleeWeapons=P.meleeWeapons.map(sw).filter((k,i,a)=>a.indexOf(k)===i);P.melee=sw(P.melee);P.weapon=sw(P.weapon);}
-    if(!Array.isArray(P.inv)) P.inv=[];
-    P.inv=P.inv.map(sl=>sl&&sl.t==='sword'?Object.assign({},sl,{t:'katana'}):sl).filter(sl=>sl&&ITEMS[sl.t]&&sl.n>0);
-    if(d.inVeh>=0&&vehicles[d.inVeh]){ const v=vehicles[d.inVeh]; P.x=v.x; P.y=v.y+28; } // volta ao lado do carro em que estava
-    pushOut(P,P.r);
-    // Zumbis
-    zombies=[];
-    for(const a of d.zombies){
-      if(!Array.isArray(a)||!Number.isFinite(a[0])||!Number.isFinite(a[1])) continue;
-      const z=spawnZ(a[0],a[1],a[2]);
-      if(Number.isFinite(a[3])) z.hp=a[3];
-      if(Number.isFinite(a[4])) z.max=a[4];
-      if(Number.isFinite(a[5])) z.spd=a[5];
-      if(Number.isFinite(a[6])) z.dmg=a[6];
-      if(Number.isFinite(a[7])){ z.si=a[7]|0; const lk=zombieLook(z.kind,z.si); z.skin=lk.skin; z.shirt=lk.shirt; }
-    }
+    restoreWorldState(d);
+    restorePlayerState(d);
+    restoreZombies(d);
     shake=0;flash=0;dark=0;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;stepT=0;
     MP.active=false;remotePlayers={};
     applyHudClasses();

@@ -52,6 +52,21 @@ function fruitPick(o){
   toast('Colheu: '+n+' '+ITEMS[f].n.toLowerCase()+(left?' · '+left+' no chão (inventário cheio)':' · coma para ganhar uma semente'));
   try{track('harvest');}catch(e){}
 }
+/* arvore frutifera derrubada: os frutos maduros caem no chao em volta do toco (se ainda estava sem fruto, nao cai nada). Devolve o texto do aviso */
+function fruitFell(o){
+  if(!o||!ripe(o))return '';
+  const f=fruitOf(o),y=YIELD[f],n=rint(y[0],y[1]);
+  for(let i=0;i<n;i++){
+    let x=o.x+rnd(-16,16),y2=o.y+rnd(-4,14);
+    for(let k=0;k<6&&solidPoint(x,y2,3);k++){x=o.x+rnd(-16,16);y2=o.y+rnd(-4,14);}
+    if(solidPoint(x,y2,3)){x=o.x;y2=o.y+8;}
+    items.push({t:f,x:x,y:y2});
+    if(MP.active)sendEvt('itemAdded',{t:f,x:x,y:y2});
+  }
+  const k=waiting.indexOf(o);if(k>=0)waiting.splice(k,1);
+  for(let i=0;i<8;i++)parts.push({x:o.x+rnd(-10,10),y:o.y-rnd(10,34),vx:rnd(-25,25),vy:rnd(-10,25),t:.5,c:f==='apple'?'#e03a2a':f==='date'?'#e8902a':'#8a3aa8',g:1});
+  return ' · caíram '+n+(n>1?' frutos':' fruto')+' no chão';
+}
 function setWait(o,r){o._pk=r;if(!waiting.includes(o))waiting.push(o);}
 function fruitTick(dt){
   if(!waiting.length)return;
@@ -103,6 +118,6 @@ function fruitRemote(d){
 }
 function fruitReset(){for(const o of waiting)o._pk=0;waiting=[];}
 
-window.fruitOf=fruitOf;window.fruitRipe=ripe;window.fruitCands=fruitCands;window.fruitPick=fruitPick;window.fruitTick=fruitTick;window.fruitOver=fruitOver;
+window.fruitOf=fruitOf;window.fruitRipe=ripe;window.fruitCands=fruitCands;window.fruitPick=fruitPick;window.fruitFell=fruitFell;window.fruitTick=fruitTick;window.fruitOver=fruitOver;
 window.fruitPack=fruitPack;window.fruitLoad=fruitLoad;window.fruitRemote=fruitRemote;window.fruitReset=fruitReset;window.FRUIT_NAME=NAME;
 })();
