@@ -1083,6 +1083,7 @@ function enterMultiplayerGame(isHost){
       weapon:'fists', melee:null, meleeWeapons:[], firearms:{}, ammo:0, arrows:0,
       inv:[{t:'bandage',n:1},{t:'water',n:1}],
       walk:0, inside:null, inVehicle:null};
+    if(!isHost&&guestRestore()) setTimeout(()=>{try{toast('Você voltou com o que conquistou neste mundo');}catch(e){}},900);   // convidado: volta com o inventario que ja tinha aqui
     pushOut(P,P.r);
     rebuildSolidGrid();
     // ⚠️ DEPOIS de criar P, aí sim popula zumbis (só no Host)
