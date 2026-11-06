@@ -31,11 +31,16 @@ const r=await pg.evaluate(()=>{
   // feixe: de noite a frente (na direcao do rosto) fica mais clara que as costas
   weather='clear';T=DAY_SECONDS*.9;P.flashOn=true;for(let i=0;i<80;i++){T=DAY_SECONDS*.9;update(.05);}
   const cv=document.getElementById('game');
-  P.x=1700;P.y=1700;P.face=0;camX=P.x-W/Z/2;camY=P.y-H/Z/2;
+  // procura um trecho aberto (sem parede, predio, agua ou obstaculo em volta) para o resultado nao depender do mundo sorteado
+  {let found=false;for(let i=0;i<4000&&!found;i++){const x=300+((i*97)%2600),y=300+((i*61)%2600);let clear=true;
+    for(let dx=-100;dx<=130&&clear;dx+=15)for(let dy=-100;dy<=100;dy+=15){if(solidPoint(x+dx,y+dy,6)||(typeof inWater==='function'&&inWater(x+dx,y+dy))||blds.some(q=>x+dx>q.x-20&&x+dx<q.x+q.w+20&&y+dy>q.y-20&&y+dy<q.y+q.h+20)){clear=false;break;}}
+    if(clear){P.x=x;P.y=y;found=true;}}
+   if(!found){P.x=1700;P.y=1700;}}
+  P.face=0;camX=P.x-W/Z/2;camY=P.y-H/Z/2;
   const lum=(wx,wy)=>{const sx=Math.round((wx-camX)*Z),sy=Math.round((wy-camY)*Z);const d=cv.getContext('2d').getImageData(sx-2,sy-2,5,5).data;let t=0;for(let i=0;i<d.length;i+=4)t+=d[i]+d[i+1]+d[i+2];return t/(d.length/4*3);};
   for(let i=0;i<3;i++){update(.05);render();}
   o.front=lum(P.x+70,P.y-6);o.back=lum(P.x-70,P.y-6);o.side=lum(P.x+10,P.y+70);
-  P.flashOn=false;render();o.frontOff=lum(P.x+70,P.y-6);
+  P.flashOn=false;render();o.frontOff=lum(P.x+70,P.y-6);o.backOff=lum(P.x-70,P.y-6);o.sideOff=lum(P.x+10,P.y+70);   // o terreno muda de mundo para mundo: compara cada ponto ligado x desligado
   // save e carregar
   const ps=JSON.parse(JSON.stringify(P,(k,v)=>(k==='inside'||k==='inVehicle'||k==='fish'||k==='sleeping'||k[0]==='_')?undefined:v));o.saved=ps.torch===true;
   // aliado com lanterna acesa nao quebra o desenho
@@ -50,7 +55,7 @@ ok(r.btnHidden0&&r.have&&r.noSlot&&r.btnShown&&!r.on0,'sem lanterna o botao some
 ok(r.dup,'a segunda lanterna fica no chao (so se carrega uma)');
 ok(r.on1&&r.off,'o botao liga e desliga');
 ok(r.below&&r.small,'botao pequeno, abaixo de pausa e fabricar');
-ok(r.front>r.back+12&&r.front>r.side+12&&r.front>r.frontOff+12,'de noite o feixe ilumina a frente e nao as costas ('+[r.front,r.back,r.side,r.frontOff].map(v=>Math.round(v))+')');
+ok(r.front-r.frontOff>12&&r.front-r.frontOff>(r.back-r.backOff)+12&&r.front-r.frontOff>(r.side-r.sideOff)+12,'de noite o feixe ilumina a frente e nao as costas nem o lado (ganho '+[r.front-r.frontOff,r.back-r.backOff,r.side-r.sideOff].map(v=>Math.round(v))+')');
 ok(r.saved,'o save guarda a lanterna');ok(r.remoteOk,'lanterna do aliado e desenhada sem erro');ok(r.deadHide,'morto: o botao some');
 ok(errs.length===0,'sem erros '+errs[0]);
 await b.close();process.exit(bad?1:0);})();
