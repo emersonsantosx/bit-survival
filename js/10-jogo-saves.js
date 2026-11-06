@@ -168,12 +168,43 @@ function restorePlayerState(d){
   P=Object.assign({x:plane.x+70,y:plane.y,r:5,hp:100,food:85,water:85,stam:100,temp:0,face:Math.PI/2,moving:false,sprint:false,exhausted:false,cd:0,swing:0,flash:0,bleed:false,dead:false,
     weapon:'fists',melee:null,meleeWeapons:[],firearms:{},ammo:0,arrows:0,inv:[],walk:0},d.P,{inside:null,inVehicle:null,dead:false});
   P.hold=null;
+  normalizeLoadout();
+  if(d.inVeh>=0&&vehicles[d.inVeh]){ const v=vehicles[d.inVeh]; P.x=v.x; P.y=v.y+28; } // volta ao lado do carro em que estava
+  pushOut(P,P.r);
+}
+/* arruma o que o jogador carrega (inventario, armas, ferramentas) depois de carregado de um save: migra nomes antigos e descarta o que nao existe mais */
+function normalizeLoadout(){
   {if(!Array.isArray(P.tools))P.tools=[];for(const k of BUILD_TOOLS){if((P.meleeWeapons||[]).includes(k)){P.meleeWeapons=P.meleeWeapons.filter(q=>q!==k);if(!P.tools.includes(k))P.tools.push(k);}if(P.melee===k)P.melee=P.meleeWeapons[0]||null;if(P.weapon===k)P.weapon='fists';}if(!toolList().includes(P.tool))P.tool=null;}
   {const sw=k=>k==='sword'?'katana':k;if(Array.isArray(P.meleeWeapons))P.meleeWeapons=P.meleeWeapons.map(sw).filter((k,i,a)=>a.indexOf(k)===i);P.melee=sw(P.melee);P.weapon=sw(P.weapon);}
   if(!Array.isArray(P.inv)) P.inv=[];
   P.inv=P.inv.map(sl=>sl&&sl.t==='sword'?Object.assign({},sl,{t:'katana'}):sl).filter(sl=>sl&&ITEMS[sl.t]&&sl.n>0);
-  if(d.inVeh>=0&&vehicles[d.inVeh]){ const v=vehicles[d.inVeh]; P.x=v.x; P.y=v.y+28; } // volta ao lado do carro em que estava
-  pushOut(P,P.r);
+}
+/* ===== Convidado do multiplayer: o mundo e do host, mas o que o convidado conquistou fica guardado NO APARELHO DELE, por mundo (mapa + semente).
+   Ao entrar de novo no mesmo mundo, volta com mochila, armas, vida, fome e sede; a posicao e sempre perto do host ===== */
+const GUEST_SKIP={x:1,y:1,r:1,face:1,moving:1,sprint:1,exhausted:1,cd:1,swing:1,flash:1,dead:1,inside:1,inVehicle:1,hold:1,walk:1,sleeping:1,fish:1};
+function guestKey(){return 'minisurv_guest_'+selectedMap+'_'+worldSeed;}
+function guestSave(){
+  if(!(P&&worldSeed&&MP.active&&!MP.isHost&&MP.gameStarted&&!P.dead&&(state==='play'||state==='pause'||state==='craft')))return false;
+  try{
+    const ps=JSON.parse(JSON.stringify(P,(k,v)=>(GUEST_SKIP[k]||k[0]==='_')?undefined:v));
+    localStorage.setItem(guestKey(),JSON.stringify({v:SAVE_VER,at:Date.now(),P:ps}));
+    return true;
+  }catch(e){console.warn('[guest save]',e);return false;}
+}
+function guestForget(){try{localStorage.removeItem(guestKey());}catch(e){}}
+/* aplica o que o convidado tinha neste mundo no P recem-criado; devolve true se havia algo */
+function guestRestore(){
+  try{
+    const raw=localStorage.getItem(guestKey());if(!raw)return false;
+    const d=JSON.parse(raw);
+    if(!d||d.v!==SAVE_VER||!d.P||typeof d.P!=='object'||!(d.P.hp>0))return false;
+    for(const k in d.P){if(GUEST_SKIP[k]||k[0]==='_')continue;P[k]=d.P[k];}
+    for(const k of ['hp','food','water','stam']){if(!Number.isFinite(P[k]))P[k]=k==='hp'?100:85;P[k]=Math.max(k==='hp'?1:0,Math.min(100,P[k]));}
+    if(!Number.isFinite(P.temp))P.temp=0;
+    if(!Array.isArray(P.inv))P.inv=[];
+    normalizeLoadout();
+    return true;
+  }catch(e){return false;}
 }
 function restoreZombies(d){
   // Zumbis
@@ -944,6 +975,7 @@ function die(){
   beep(200,.6,'sawtooth',.08,-150);boom(.5,.3,200);
 
   if(MP.active){
+    if(!MP.isHost)guestForget();   // convidado que morre perde o que tinha neste mundo (como no solo); renasce do zero
     // Notify the other player we died
     try{ if(MP.conn&&MP.conn.open) MP.conn.send({type:'playerDied', id:myNetId()}); }catch(e){}
     const otherAlive = isOtherPlayerAlive();

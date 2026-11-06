@@ -356,7 +356,7 @@ on('slotNo','click',()=>{aud();closeSlotAsk();});
 on('btnBackSlot','click',()=>{aud();closeSlotAsk();showScreen('menu');});
 on('btnPlay','click',()=>{aud();openSlots('new');});
 on('btnContinue','click',()=>{aud();openSlots('load');});
-window.addEventListener('pagehide',()=>{saveGame();});
+window.addEventListener('pagehide',()=>{saveGame();guestSave();});
 on('btnMulti','click',()=>{aud();showScreen('mpscreen');});
 on('btnSkins','click',()=>{aud();showScreen('skinscreen');});
 on('btnBackSkins','click',()=>showScreen('menu'));
@@ -751,7 +751,7 @@ function exitFullscreen(){
   }catch(e){}
 }
 function quitToMenu(){
-  saveGame();
+  saveGame();guestSave();
   closeWeaponWheel();
   closeChat();
   setChatButtonVisible(false);
@@ -918,6 +918,7 @@ function frame(ts){
   else if(state==='play' || (MP.active && !MP.gameOver && (state==='craft' || state==='dead' || state==='pause'))) update(dt);
   render();
   if(state==='play'&&(!MP.active||(MP.isHost&&MP.gameStarted))&&P&&!P.dead){ saveT+=dt; if(saveT>=SAVE_EVERY){ saveT=0; saveGame(); } }
+  else if(state==='play'&&MP.active&&!MP.isHost&&MP.gameStarted&&P&&!P.dead){ saveT+=dt; if(saveT>=SAVE_EVERY){ saveT=0; guestSave(); } }   // convidado: guarda o que conquistou, por mundo
   if(state==='play') perfMonitor(performance.now()-t0,intervalMs); else AUTO.warm=Math.max(AUTO.warm,1.5);
 }
 document.addEventListener('visibilitychange',()=>{
