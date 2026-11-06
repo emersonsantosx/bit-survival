@@ -9,7 +9,11 @@ await pg.goto('file://'+file);await pg.waitForTimeout(300);
 const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;plotsLoad([]);ghLoad([]);aud();zombies=[];
  const o={};P.inside=null;P.tool='hoe';
  // acha ponto livre
- let ok=false;for(let i=0;i<200&&!ok;i++){P.x=400+i*9;P.y=500;P.face=0;const f=frontCell();if(!soilBad(f.cx*16+8,f.cy*16+8))ok=true;}
+ // acha um ponto livre de verdade (o mundo e sorteado): sem arvore/pedra por perto, e a casa da frente com terra que da para arar
+ trees.length=0;rocks.length=0;rebuildSolidGrid();
+ let found=false;for(let y=400;y<WH-400&&!found;y+=40)for(let x=400;x<WW-400&&!found;x+=40){P.x=x;P.y=y;P.face=0;const f=frontCell();
+  if(!soilBad(f.cx*16+8,f.cy*16+8)&&!soilBad(x,y)&&!solidPoint(x,y,14)&&!solidPoint(x+16,y,14))found=true;}
+ o.found=found;
  items.length=0;items.push({x:P.x+3,y:P.y+3,t:'wood',n:1});
  update(.05);o.btnVisible=!document.getElementById('hoe').classList.contains('hide');
  o.tgk=pickTarget().k;o.tgAct=pickTarget().act||null;
@@ -20,7 +24,7 @@ const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pending
  P.tool=null;for(let i=0;i<30;i++)update(.05);o.btnHidden=document.getElementById('hoe').classList.contains('hide');
  return o;});
 console.log(JSON.stringify(r));
-ok(r.btnVisible,'botao da enxada aparece');ok(r.tgk==='item','item vence com enxada na mao');ok(r.plots===1&&r.plots2===1,'arou 1 canteiro');ok(r.after===0,'terra vazia volta ao normal');ok(r.btnHidden,'botao some sem enxada');
+ok(r.found,'achou um ponto livre para arar');ok(r.btnVisible,'botao da enxada aparece');ok(r.tgk==='item','item vence com enxada na mao');ok(r.plots===1&&r.plots2===1,'arou 1 canteiro');ok(r.after===0,'terra vazia volta ao normal');ok(r.btnHidden,'botao some sem enxada');
 // cidade
 const c=await pg.evaluate(()=>{selectedMap='city';newGame();window.requestAnimationFrame=()=>0;plotsLoad([]);ghLoad([]);
  const o={gardens:cityGardens.length};
