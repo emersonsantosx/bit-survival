@@ -182,9 +182,11 @@
 <div id="mphostscreen" class="screen hide">
   <div class="card">
     <h2>CRIAR SALA</h2>
-    <p style="font-size:11px">Digite seu nome, escolha o mapa e compartilhe o código</p>
+    <p style="font-size:11px">Digite seu nome, escolha o mundo e compartilhe o código</p>
     <input type="text" id="hostName" class="name-input" placeholder="SEU NOME" maxlength="12" autocomplete="off">
-    <div class="map-grid" style="margin:6px 0">
+    <div class="map-grid mp-worlds" id="hostWorlds"></div>
+    <p id="hostWorldNote" class="mp-note"></p>
+    <div class="map-grid" id="mpMapGrid" style="margin:6px 0">
       <button class="map-opt selected" data-mp-map="forest"><span class="ic"><canvas class="ico" data-art="tree" width="9" height="9"></canvas></span><span>FLORESTA</span></button>
       <button class="map-opt" data-mp-map="desert"><span class="ic"><canvas class="ico" data-art="cactus" width="9" height="9"></canvas></span><span>DESERTO</span></button>
       <button class="map-opt" data-mp-map="snow"><span class="ic"><canvas class="ico" data-art="pine" width="9" height="9"></canvas></span><span>NEVE</span></button>

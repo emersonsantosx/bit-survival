@@ -181,6 +181,42 @@ document.querySelectorAll('.map-opt[data-mp-map]').forEach(btn=>{
     mpSelectedMap=btn.getAttribute('data-mp-map')||'forest';
   });
 });
+/* ===== Multiplayer: o host escolhe o mundo (igual ao Minecraft). Slot ocupado = abre aquele mundo; slot vazio = cria um mundo novo la
+   e ele fica salvo para continuar sozinho ou de novo com amigos; "TEMPORARIO" = como era antes, nada e salvo ===== */
+function renderHostWorlds(){
+  const g=$('hostWorlds'); if(!g) return;
+  g.innerHTML='';
+  const opts=[];
+  let firstEmpty=0,latest=0,latestAt=-1;
+  for(let n=1;n<=SAVE_SLOTS;n++){
+    const d=readSave0(n),raw=slotRaw(n);
+    if(d){opts.push({n:n,d:d});if((d.at||0)>latestAt){latestAt=d.at||0;latest=n;}}
+    else if(raw)opts.push({n:n,bad:true});
+    else{opts.push({n:n});if(!firstEmpty)firstEmpty=n;}
+  }
+  opts.push({n:0});
+  if(!opts.some(o=>o.n===mpSlot&&!o.bad)) mpSlot=firstEmpty||latest||0;
+  for(const o of opts){
+    const b=document.createElement('button'); b.type='button'; b.className='map-opt'+(o.n===mpSlot?' selected':'');
+    const t=document.createElement('span'); t.textContent=o.n?'SLOT '+o.n:'TEMPORÁRIO'; b.appendChild(t);
+    const sm=document.createElement('small');
+    sm.textContent=o.d?MAP_NAMES[o.d.map]+' · DIA '+o.d.day:(o.bad?'OUTRA VERSÃO':(o.n?'NOVO MUNDO':'NÃO SALVA'));
+    b.appendChild(sm);
+    if(o.bad)b.disabled=true;
+    b.addEventListener('click',()=>{aud();mpSlot=o.n;renderHostWorlds();});
+    g.appendChild(b);
+  }
+  const sel=opts.find(o=>o.n===mpSlot)||{};
+  const grid=$('mpMapGrid'),note=$('hostWorldNote');
+  if(grid) grid.classList.toggle('hide',!!sel.d);   // mundo ja existe: o mapa e o dele
+  if(note) note.textContent=sel.d?'Você abre o mundo salvo: mapa '+MAP_NAMES[sel.d.map]+', dia '+sel.d.day+'. O amigo entra nele e você continua depois no solo.'
+    :(mpSlot?'Mundo novo: escolha o mapa. Ele fica salvo no slot '+mpSlot+' e aparece em CONTINUAR.':'Mundo temporário: nada é salvo.');
+}
+function lockHostWorlds(lock){
+  const g=$('hostWorlds'),m=$('mpMapGrid');
+  if(g)g.classList.toggle('locked',lock);
+  if(m)m.classList.toggle('locked',lock);
+}
 function bindSlider(id,key,labelId){
   const el=$(id),lab=$(labelId);if(!el||!lab)return;
   el.value=Math.round(CFG[key]*100);lab.textContent=el.value+'%';
@@ -333,10 +369,10 @@ on('btnBackMap','click',()=>openSlots('new'));
 on('btnStart','click',()=>loadingRun(()=>startGame(),'GERANDO O MUNDO...'));
 
 on('btnMPBack','click',()=>showScreen('menu'));
-on('btnMPHost','click',()=>{aud();showScreen('mphostscreen');const w=$('hostCodeWrap');if(w)w.classList.add('hide');setStatus('hostStatus','');});
+on('btnMPHost','click',()=>{aud();showScreen('mphostscreen');const w=$('hostCodeWrap');if(w)w.classList.add('hide');setStatus('hostStatus','');lockHostWorlds(false);renderHostWorlds();});
 on('btnMPJoin','click',()=>{aud();showScreen('mpjoinscreen');setStatus('joinStatus','');const i=$('joinCode');if(i)i.value='';});
 
-on('btnHostCreate','click',()=>{aud();mpHostStart();});
+on('btnHostCreate','click',()=>{aud();mpHostStart();if(MP.active&&MP.isHost)lockHostWorlds(true);});
 on('btnCopyCode','click',async e=>{
   e.preventDefault();e.stopPropagation();
   aud();
@@ -872,7 +908,7 @@ function frame(ts){
   if(MP.active&&MP.reconnecting){ /* pausado até reconectar */ }
   else if(state==='play' || (MP.active && !MP.gameOver && (state==='craft' || state==='dead' || state==='pause'))) update(dt);
   render();
-  if(state==='play'&&!MP.active&&P&&!P.dead){ saveT+=dt; if(saveT>=SAVE_EVERY){ saveT=0; saveGame(); } }
+  if(state==='play'&&(!MP.active||(MP.isHost&&MP.gameStarted))&&P&&!P.dead){ saveT+=dt; if(saveT>=SAVE_EVERY){ saveT=0; saveGame(); } }
   if(state==='play') perfMonitor(performance.now()-t0,intervalMs); else AUTO.warm=Math.max(AUTO.warm,1.5);
 }
 document.addEventListener('visibilitychange',()=>{

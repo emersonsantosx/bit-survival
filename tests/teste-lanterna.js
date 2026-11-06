@@ -19,9 +19,10 @@ for(const map of ['forest','city','desert','snow']){
 const r=await pg.evaluate(()=>{
   localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;vehicles.length=0;trees.length=0;rocks.length=0;decorations.length=0;rebuildSolidGrid();
   const o={};P.inside=null;P.dead=false;P.inVehicle=null;P.inv=[];
-  const btn=document.getElementById('bflash');o.btnHidden0=btn.classList.contains('hide');
+  document.getElementById('hud').classList.remove('hide');   // o HUD precisa estar visivel para medir o botao de verdade
+  const btn=document.getElementById('bflash');o.btnHidden0=btn.classList.contains('hide');o.cssHidden0=getComputedStyle(btn).display==='none'&&btn.getBoundingClientRect().width===0;
   items.push({t:'flashlight',x:P.x,y:P.y});P.face=0;pickup();
-  o.have=P.torch===true;o.noSlot=!P.inv.some(s=>s.t==='flashlight');for(let i=0;i<3;i++)update(.05);o.btnShown=!btn.classList.contains('hide');o.on0=btn.classList.contains('on');
+  o.have=P.torch===true;o.noSlot=!P.inv.some(s=>s.t==='flashlight');for(let i=0;i<3;i++)update(.05);o.btnShown=!btn.classList.contains('hide');o.cssShown=getComputedStyle(btn).display!=='none'&&btn.getBoundingClientRect().width>0;o.on0=btn.classList.contains('on');
   items.push({t:'flashlight',x:P.x,y:P.y});pickup();o.dup=items.some(i=>i.t==='flashlight');   // segunda lanterna fica no chao
   state='play';toggleFlash();o.on1=P.flashOn&&btn.classList.contains('on')&&btn.getAttribute('aria-pressed')==='true';
   toggleFlash();o.off=!P.flashOn&&!btn.classList.contains('on');
@@ -43,6 +44,8 @@ const r=await pg.evaluate(()=>{
   P.dead=true;for(let i=0;i<3;i++)update(.05);o.deadHide=btn.classList.contains('hide');P.dead=false;
   return o;});
 console.log(JSON.stringify(r));
+ok(r.cssHidden0,'o botao da lanterna nao aparece na tela antes de pegar a lanterna (display de verdade, nao so a classe)');
+ok(r.cssShown,'depois de pegar a lanterna o botao aparece na tela');
 ok(r.btnHidden0&&r.have&&r.noSlot&&r.btnShown&&!r.on0,'sem lanterna o botao some; ao pegar ele aparece desligado e sem ocupar espaco da mochila');
 ok(r.dup,'a segunda lanterna fica no chao (so se carrega uma)');
 ok(r.on1&&r.off,'o botao liga e desliga');

@@ -255,6 +255,7 @@ function attack(){
       for(let i=0;i<5;i++)parts.push({x:hitTree.x,y:hitTree.y-10,vx:rnd(-35,35),vy:rnd(-45,0),t:.4,c:'#8a5a2a'});
       if(MP.active) sendEvt('treeDmg', { x: hitTree.x, y: hitTree.y, dmg: w.chopRate || 0.5 });
       if(hitTree.hp <= 0){
+        const fruitMsg=fruitFell(hitTree);   // frutifera: os frutos maduros caem no chao
         trees.splice(trees.indexOf(hitTree), 1);
         rebuildSolidGrid();
         const n = w.wood ? rint(w.wood[0], w.wood[1]) : 2;
@@ -264,7 +265,7 @@ function attack(){
             if(MP.active) sendEvt('itemAdded', {t:'wood', x:hitTree.x, y:hitTree.y});
           }
         }
-        toast('Árvore derrubada! +' + n + ' Madeira');
+        toast('Árvore derrubada! +' + n + ' Madeira' + fruitMsg);
         beep(260, .18, 'triangle', .09, 120);
       }
       makeNoise(P.x, P.y, 60);

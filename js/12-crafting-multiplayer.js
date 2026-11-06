@@ -288,6 +288,16 @@ function mpHostStart(){
   MP.playerName=sanitizeName((nameEl&&nameEl.value)||'Host');
   if(nameEl) nameEl.value=MP.playerName;
   try{localStorage.setItem('minisurv_name',MP.playerName);}catch(e){}
+  // mundo escolhido: save existente (abre ele), slot vazio (mundo novo que sera salvo la) ou temporario (slot 0)
+  MP.slot=0;MP.save=null;
+  if(mpSlot>0){
+    if(slotRaw(mpSlot)){
+      const sv=readSave(mpSlot);
+      if(!sv){setStatus('hostStatus','Esse save não pôde ser aberto. Escolha outro mundo.',true);return;}
+      MP.save=sv;
+    }
+    MP.slot=mpSlot;
+  }
   const code=makeRoomCode();
   MP.roomCode='MINISURV-'+code;MP.isHost=true;MP.active=true;
   const hc=$('hostCode');if(hc)hc.textContent=code;
@@ -370,7 +380,7 @@ function mpJoinStart(code){
   try{localStorage.setItem('minisurv_name',MP.playerName);}catch(e){}
   const clean=sanitizeRoomCode(code);
   if(clean.length<4){ setStatus('joinStatus','Código inválido',true); MP.active=false; return; }
-  MP.isHost=false;MP.active=true;MP.roomCode='MINISURV-'+clean;
+  MP.isHost=false;MP.active=true;MP.roomCode='MINISURV-'+clean;MP.spawn=null;MP.save=null;MP.slot=0;
   setStatus('joinStatus','Carregando motor P2P...');
   loadPeerJS(err=>{
     if(err||typeof Peer==='undefined'){MP.active=false;MP.isHost=false;setStatus('joinStatus','Falha ao carregar P2P',true);return;}
@@ -496,7 +506,7 @@ function hostResumeGuest(){
   MP.guestAway=false;
   try{
     if(MP.conn&&MP.conn.open){
-      MP.conn.send({type:'worldInit',seed:MP.seed,map:selectedMap});
+      MP.conn.send({type:'worldInit',seed:MP.seed,map:selectedMap,sv:worldExtraPack(),sp:P?[Math.round(P.x),Math.round(P.y)]:undefined});
       MP.conn.send({type:'start',map:selectedMap,resume:true});
     }
   }catch(e){console.warn('[Host resume]',e);}
@@ -513,6 +523,20 @@ function guestResumed(){
   if(P)P._grace=4;           // 4s sem dano ao voltar (o mundo andou enquanto você estava fora)
   last=performance.now();lastFrameTs=0;
   toast('Reconectado!');
+}
+/* Host: gera o mundo da sala. Com mundo salvo (MP.save) usa a mesma semente e devolve tudo o que mudou nele; sem save, sorteia um mundo novo
+   (que fica salvo no slot escolhido, se houver). Devolve o que o convidado precisa para montar o mesmo mundo */
+function hostBuildWorld(){
+  const L=MP.save;
+  selectedMap = L?L.map:(mpSelectedMap || 'forest');
+  const seed = L?L.seed:(Math.floor(Math.random()*1e9) + 1);
+  MP.seed = seed;
+  worldSeed=seed;curSlot=MP.slot;pendingSlot=MP.slot;
+  genWorld(seed);
+  if(!plane) throw new Error('plane não gerado');
+  if(L) restoreWorldState(L);
+  console.log('[Host] genWorld OK (seed='+seed+', slot='+MP.slot+'):',trees.length,'árvores,',rocks.length,'rochas');
+  return {seed:seed,map:selectedMap,sv:worldExtraPack(),sp:L?[Math.round(L.P.x),Math.round(L.P.y)]:undefined};
 }
 function setupConn(conn,isHostSide){
   let opened=false;
@@ -534,16 +558,10 @@ function setupConn(conn,isHostSide){
       setStatus('hostStatus','Jogador conectado! Gerando mundo...');
       setTimeout(()=>{
         try{
-          selectedMap = mpSelectedMap || 'forest';
-          const seed = Math.floor(Math.random()*1e9) + 1;
-          MP.seed = seed;
-          worldSeed=0;
-          genWorld(seed);
-          if(!plane) throw new Error('plane não gerado');
-          console.log('[Host] genWorld OK (seed='+seed+'):',trees.length,'árvores,',rocks.length,'rochas');
+          const wi=hostBuildWorld();
           if(MP.conn && MP.conn.open){
             console.log('[Host] enviando seed+map...');
-            MP.conn.send({type:'worldInit', seed: seed, map: selectedMap});
+            MP.conn.send({type:'worldInit', seed: wi.seed, map: wi.map, sv: wi.sv, sp: wi.sp});
             MP.conn.send({type:'start', map: selectedMap});
             setStatus('hostStatus','Partida iniciada!');
           } else {
@@ -556,7 +574,7 @@ function setupConn(conn,isHostSide){
           return;
         }
         try{
-          enterMultiplayerGame(true);
+          enterMultiplayerGame(true);   // com mundo salvo, usa MP.save (jogador, zumbis e relogio)
         }catch(e){
           console.error('[Host enter]',e);
           setStatus('hostStatus','Erro ao iniciar: '+(e.message||e),true);
@@ -611,8 +629,10 @@ function handleNetData(data,isHostSide){
       console.log('[Guest] worldInit recebido — seed='+data.seed+' map='+map);
       try{
         selectedMap = map;
-        worldSeed=0;
+        worldSeed=data.seed;   // o mesmo valor do host (alguns detalhes do mundo dependem dele)
         genWorld(data.seed);
+        worldExtraApply(data.sv);   // portas, gelo quebrado e comida ja saqueada do mundo do host
+        MP.spawn=(Array.isArray(data.sp)&&data.sp.length===2&&data.sp.every(isFiniteNum)&&Math.abs(data.sp[0])<=WW&&Math.abs(data.sp[1])<=WH)?[data.sp[0],data.sp[1]]:null;
         console.log('[Guest] mundo gerado:',trees.length,'árvores, plane?',!!plane);
       }catch(e){
         console.error('[Guest genWorld]',e);
@@ -1044,6 +1064,7 @@ function packMyPlayer(){
   return p;
 }
 function enterMultiplayerGame(isHost){
+  const L=isHost?MP.save:null;   // mundo salvo do host
   // Fullscreen no MP: só marca intenção. O navegador exige gesto do usuário
   // (enterMultiplayerGame é disparado por evento de rede, não por toque).
   // O primeiro toque em jogo chama tryFullscreenFromGesture().
@@ -1054,8 +1075,10 @@ function enterMultiplayerGame(isHost){
     if(!plane) throw new Error('mundo não carregado');
     const offX = isHost ? 0 : 40;
     const offY = isHost ? 0 : 40;
+    const spx=(!isHost&&MP.spawn)?MP.spawn[0]-70:plane.x, spy=(!isHost&&MP.spawn)?MP.spawn[1]:plane.y;   // convidado nasce perto de onde o host esta
     // ⚠️ ORDEM CORRETA: cria P PRIMEIRO
-    P={x:plane.x+70+offX, y:plane.y+offY, r:5, hp:100, food:85, water:85, stam:100, temp:0,
+    if(L) restorePlayerState(L); else
+    P={x:spx+70+offX, y:spy+offY, r:5, hp:100, food:85, water:85, stam:100, temp:0,
       face:Math.PI/2, moving:false, sprint:false, exhausted:false, cd:0, swing:0, flash:0, bleed:false, dead:false,
       weapon:'fists', melee:null, meleeWeapons:[], firearms:{}, ammo:0, arrows:0,
       inv:[{t:'bandage',n:1},{t:'water',n:1}],
@@ -1064,7 +1087,7 @@ function enterMultiplayerGame(isHost){
     rebuildSolidGrid();
     // ⚠️ DEPOIS de criar P, aí sim popula zumbis (só no Host)
     if(isHost){
-      if(zombies.length===0) populate();
+      if(L) restoreZombies(L); else if(zombies.length===0) populate();
       console.log('[Host] populate —',zombies.length,'zumbis');
     } else {
       // Guest começa limpo e recebe autoridade do host via snapshot
@@ -1072,7 +1095,8 @@ function enterMultiplayerGame(isHost){
       campfires=[];
       animals=animals||[]; // mundo seed já gerou; host sobrescreve via snap
     }
-    T=0; kills=0; shake=0; flash=0; spawnTimer=3; dark=0; day=1; update._lastDay=1; MP._vNext=0;
+    if(!L){T=0; kills=0; spawnTimer=3; day=1; update._lastDay=1;}   // mundo salvo: o relogio, o dia e os abates vem do save
+    shake=0; flash=0; dark=0; MP._vNext=0;
     try{missionsInit();}catch(e){}
     recentRemoved=[]; recentAdded=[];
     atkHeld=false; sprintHeld=false; touchGas=0; touchSteer=0; stepT=0;
@@ -1081,6 +1105,7 @@ function enterMultiplayerGame(isHost){
     applyHudClasses();
     buildInv(); updateHud(true);
     state='play';
+    if(isHost&&curSlot>0){saveGame();refreshContinue();}   // o mundo do host ja nasce salvo no slot (ou e atualizado)
     showScreen(null);
     const hud=$('hud'); if(hud) hud.classList.remove('hide');
     const ds=$('deadscr'); if(ds) ds.classList.add('hide');
