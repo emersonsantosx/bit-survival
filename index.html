@@ -157,10 +157,13 @@
 <div id="achscreen" class="screen hide">
   <div class="card">
     <h2>CONQUISTAS</h2>
-    <div class="ach-title2">ESTATÍSTICAS</div>
-    <div class="ach-stats" id="achStats"></div>
+    <div class="ach-tabs" role="tablist">
+      <button type="button" class="ach-tab on" id="achTabList" role="tab" aria-selected="true">CONQUISTAS</button>
+      <button type="button" class="ach-tab" id="achTabStats" role="tab" aria-selected="false">ESTATÍSTICAS</button>
+    </div>
     <div class="ach-sum" id="achSum"></div>
     <div class="ach-list" id="achList"></div>
+    <div class="ach-stats hide" id="achStats"></div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">
       <button class="back" id="btnBackAch" style="margin:0">VOLTAR</button>
     </div>

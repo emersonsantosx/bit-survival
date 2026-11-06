@@ -142,8 +142,15 @@ function renderStats(){
   ];
   el.innerHTML=rows.map(r=>'<div><b>'+r[0]+'</b><span>'+r[1]+'</span></div>').join('');
 }
+function achTab(stats){
+  const l=$('achList'),st=$('achStats'),sm=$('achSum'),a=$('achTabList'),b=$('achTabStats');
+  if(l)l.classList.toggle('hide',!!stats);if(sm)sm.classList.toggle('hide',!!stats);if(st)st.classList.toggle('hide',!stats);
+  if(a){a.classList.toggle('on',!stats);a.setAttribute('aria-selected',String(!stats));}
+  if(b){b.classList.toggle('on',!!stats);b.setAttribute('aria-selected',String(!!stats));}
+}
 function renderAch(){
   try{renderStats();}catch(e){}
+  achTab(false);   // abre sempre na lista de conquistas
   const list=document.getElementById('achList'),sum=document.getElementById('achSum');if(!list)return;
   let got=0,h='';
   for(const a of ACH){
@@ -167,6 +174,8 @@ function showScreen(id){
     if(wantMusic)musicStart();else musicStop();
   }catch(e){}
 }
+on('achTabList','click',()=>{aud();achTab(false);});
+on('achTabStats','click',()=>{aud();achTab(true);});
 document.querySelectorAll('.map-opt[data-map]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.map-opt[data-map]').forEach(b=>b.classList.remove('selected'));
