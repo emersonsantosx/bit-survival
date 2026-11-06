@@ -191,9 +191,13 @@ function humanBody(R,o,face){
       if(!back){R(-4,-9,1,8,'#2a2a22');R(3,-9,1,8,'#2a2a22');R(-2,-5,2,2,'#4a4a3a');}
       R(-4,-2,8,1,'#2a2418');
       break;
-    case 'brute':
-      R(-4,-9,8,8,shirt);R(-5,-10,2,2,'#8a8a90');R(3,-10,2,2,'#8a8a90');R(-5,-11,1,1,'#b8b8c0');R(4,-11,1,1,'#b8b8c0');
-      R(-4,-5,8,2,'#5a3a20');R(-1,-5,2,2,'#c0b040');R(-4,-9,2,8,Sh(shirt,.15));
+    case 'brute':   // acougueiro de macacao verde-musgo com avental de borracha manchado, luvas e botas pesadas
+      R(-4,-9,8,8,shirt);R(-4,-9,2,8,Sh(shirt,.15));R(-4,-2,8,1,Sh(shirt,-.3));
+      R(-5,-10,2,3,Sh(shirt,.1));R(3,-10,2,3,Sh(shirt,.1));                                   // ombros largos
+      if(!back){R(-3,-9,6,8,'#b89a5a');R(-3,-9,6,1,'#d0b070');R(-3,-3,6,2,'#8a6a38');          // avental
+        R(-2,-6,3,2,'#6a1010');R(1,-4,2,3,'#7a1414');R(-3,-2,1,2,'#6a1010');R(2,-8,1,2,'#7a1414');R(-1,-5,1,1,'#3a0808');   // manchas e respingos
+        R(-4,-9,1,2,'#b89a5a');R(3,-9,1,2,'#b89a5a');}                                            // alcas
+      else{R(-4,-5,8,1,'#5a3a20');R(-1,-5,2,2,'#c0b040');R(-3,-9,6,1,'#b89a5a');}               // de costas: cinto e tira do avental
       break;
     case 'coat':
       R(-4,-9,8,8,shirt);R(-5,-9,1,10,'#7a1010');R(4,-9,1,10,'#7a1010');R(-5,-10,2,2,'#ffe040');R(3,-10,2,2,'#ffe040');
@@ -315,9 +319,11 @@ function humanBody(R,o,face){
       break;}
     case 'mohawk':
       R(-1,-19,2,5,hair);R(-1,-14,2,back?5:1,hair);R(0,-20,1,1,hair);if(!back){R(-3,-15,6,1,Sh(skin,-.25));}break;
-    case 'mask':
-      R(-4,-16,8,7,back?'#3a3a40':'#4a4a50');R(-4,-16,8,1,'#6a6a70');
-      if(!back){R(-3,-13,6,2,'#1a1a1a');R(-3,-13,6,1,'#e07a20');R(-1,-12,2,1,'#ffc060');R(-4,-9,2,1,'#6a6a70');R(2,-9,2,1,'#6a6a70');}break;
+    case 'mask':    // capacete de soldador enferrujado: cupula, lente redonda escura com brilho ambar, rebites e protetor de queixo
+      R(-4,-17,8,8,back?'#5a3e28':'#6a4a30');R(-3,-18,6,1,back?'#5a3e28':'#7a5638');R(-4,-17,8,1,'#7a5638');
+      if(back){R(-4,-12,8,1,'#4a3220');R(-1,-16,2,4,'#7a5638');}
+      else{R(-3,-14,6,4,'#1a1614');R(-2,-15,4,1,'#1a1614');R(-2,-13,4,2,'#2a2018');R(-1,-13,2,1,'#e0a030');R(-1,-12,1,1,'#ffd070');
+        R(-4,-12,1,1,'#b8b8c0');R(3,-12,1,1,'#b8b8c0');R(-4,-16,1,1,'#b8b8c0');R(3,-16,1,1,'#b8b8c0');R(-3,-9,6,1,'#4a3220');R(-2,-16,1,2,'#8a3a1a');}break;
     case 'hazhood':
       R(-4,-16,8,3,'#c8b830');R(-4,-13,1,5,'#c8b830');R(3,-13,1,5,'#c8b830');R(-3,-17,6,1,'#c8b830');
       if(!back){R(-3,-12,2,2,'#1a1410');R(1,-12,2,2,'#1a1410');R(-2,-12,1,1,'#b0ff70');R(1,-12,1,1,'#b0ff70');R(-2,-10,4,2,'#2a2a2a');R(2,-10,2,2,'#555');R(-1,-10,1,1,'#7a7a7a');R(0,-14,1,1,'#b0ff70');R(-2,-13,1,1,'#7aff50');}

@@ -919,7 +919,7 @@ function zombieLook(kind,si){
   const t=ZTYPES[kind]||ZTYPES[0];
   const v=(si|0)%5;
   const skin=kind===9?'#d8e0ea':kind===3?'#556b2f':kind===2?'#8a5a4a':kind===4?'#7ac070':kind===5?'#6a8060':kind===6?'#c0a0a0':kind===7?'#4a7a38':kind===8?'#c05040':kind===0?ZFLESH[v]:kind===1?'#a0b070':t.color;
-  const shirt=kind===9?'#f0f4f8':kind===3?'#b22222':kind===2?'#3a1a1a':kind===5?'#4a3a20':kind===6?'#7a4a7a':kind===7?'#5a4a30':kind===8?'#5a1010':kind===4?'#c8b830':kind===1?'#c0a050':ZSHIRTS[v];
+  const shirt=kind===9?'#f0f4f8':kind===3?'#b22222':kind===2?'#34402c':kind===5?'#4a3a20':kind===6?'#7a4a7a':kind===7?'#5a4a30':kind===8?'#5a1010':kind===4?'#c8b830':kind===1?'#c0a050':ZSHIRTS[v];
   const M=ZMAP[selectedMap];                                    // cada mapa tem o seu povo de zumbis
   if(M){if(kind===0)return {skin:M.fl[v],shirt:M.sh[v]};const o=M.look&&M.look[kind];if(o)return {skin:o[0],shirt:o[1]};}
   return {skin:skin,shirt:shirt};
