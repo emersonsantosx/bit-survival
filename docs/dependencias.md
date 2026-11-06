@@ -22,7 +22,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 12-crafting-multiplayer | 41 | 17 | 24 | 0 | 13 | 15 |
 | 13-render-personagens | 96 | 47 | 49 | 0 | 12 | 14 |
 | 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 12 | 0 |
-| 15-missoes-ui-controles | 79 | 18 | 61 | 0 | 9 | 11 |
+| 15-missoes-ui-controles | 80 | 18 | 62 | 0 | 9 | 11 |
 | 16-orientacao | 0 | 0 | 0 | 0 | 3 | 0 |
 | 17-arte-menu | 0 | 0 | 0 | 0 | 0 | 0 |
 | 18-plantacao | 0 | 0 | 0 | 0 | 11 | 0 |
@@ -48,7 +48,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 12-crafting-multiplayer | 55 | 35 | 29 | 600 | 12 | 1 | 6 | 5 | 11 | 37 | 36 | . | 18 |  | 10 |  |  |  |  |  |  |
 | 13-render-personagens | 320 | 39 | 20 | 258 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 608 | 13 | 16 | 314 | 13 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |
-| 15-missoes-ui-controles | 181 | 54 | 21 | 245 |  |  | 17 |  |  | 60 | 11 | 23 | 5 |  | . |  |  |  |  |  |  |
+| 15-missoes-ui-controles | 188 | 56 | 21 | 245 |  |  | 17 |  |  | 60 | 11 | 23 | 5 |  | . |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |
 | 18-plantacao | 36 | 6 | 22 | 64 | 16 |  |  | 13 | 1 |  | 8 | 3 | 139 |  | 1 |  |  | . |  |  |  |
@@ -104,7 +104,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | tents | let | 04-estado:10 | 7 | 20 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 7 | 18 |
 | addItem | funcao | 04-estado:250 | 7 | 16 |
-| $ | const | 01-base:2 | 6 | 148 |
+| $ | const | 01-base:2 | 6 | 153 |
 | Z | let | 01-base:47 | 6 | 107 |
 | plane | let | 04-estado:13 | 6 | 62 |
 | decorations | let | 04-estado:10 | 6 | 38 |
@@ -140,7 +140,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **11-pesca-update** (17): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, tickFishing, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, updateP, updateZ
 - **12-crafting-multiplayer** (24): canCraft, craft, handleEvt, loadPeerJS, makeRoomCode, hostRetryTimer, hostOpenPeer, hostSignalRetry, RECONN_MAX_MS, showReconnectUI, updateReconnectUI, hideReconnectUI, mpReconnectFail, mpGuestReconnectAttempt, hostResumeGuest, guestResumed, hostBuildWorld, setupConn, handleNetData, vehSetTarget, applySnapshot, goneList, applyGone, enterMultiplayerGame
 - **13-render-personagens** (49): skinLook, snowOutfit, _shc, Sh, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, TSP, treeSprite, treeShadow, drawOpenVeh, vehDriverLook, drawRider, obsStopDrone, obsStartDrone, obsStatic, obsSpotOk, ...
-- **15-missoes-ui-controles** (61): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACHD, achSave, achChime, achCheck, achSet, _statPx, _statPy, _statSaveT, fmtDur, renderStats, renderAch, renderHostWorlds, lockHostWorlds, bindSlider, bindToggle, bindSeg, slotMode, slotAsk, ...
+- **15-missoes-ui-controles** (62): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACHD, achSave, achChime, achCheck, achSet, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, renderAch, renderHostWorlds, lockHostWorlds, bindSlider, bindToggle, bindSeg, slotMode, ...
 
 ## Possivelmente mortas (revisar antes de apagar: podem ser chamadas por onclick no HTML ou pelos testes)
 
