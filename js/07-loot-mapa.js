@@ -111,6 +111,7 @@ function mmMarkers(){
   for(const c of campfires)mmDot(c.x,c.y,2,2,'#ff8020');
   for(const t of tents)mmDot(t.x,t.y,3,2,'#8DA568');
   if(window.stashList)for(const s of stashList())mmDot(s.x,s.y,2,2,'#C79A54');
+  if(window.wellList)for(const w of wellList())mmDot(w.x,w.y,2,2,'#5aa8e0');
   for(const id in remotePlayers){
     const rp=remotePlayers[id];
     if(!rp||!Number.isFinite(rp.x)||rp.alive===false)continue;

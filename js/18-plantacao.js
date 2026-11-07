@@ -51,7 +51,7 @@ function seedFor(p){   // a semente que esta na mao, se vingar neste canteiro
   const x=p.cx*CELL+8,y=p.cy*CELL+8,s=heldSeed();
   return(s&&cropOk(SEED2CROP[s],x,y))?s:null;
 }
-function nearWater(x,y){for(const l of lakes){if(l.fountain)continue;if(Math.hypot(x-l.cx,(y-l.cy)/.92)<l.r*1.08+55)return true;}return false;}
+function nearWater(x,y){if(window.wellNear&&wellNear(x,y,64))return true;for(const l of lakes){if(l.fountain)continue;if(Math.hypot(x-l.cx,(y-l.cy)/.92)<l.r*1.08+55)return true;}return false;}
 function mark(p){const x=p.cx*CELL+8,y=p.cy*CELL+8;p.nw=nearWater(x,y);p.gh=!!ghAt(x,y);return p;}
 
 /* ---- crescimento ---- */
@@ -321,6 +321,7 @@ function gardensGen(){
   const freeCell=(cx,cy)=>{
     if(blocked.has(cx+','+cy)||plotAt(cx,cy))return false;
     const x=cx*CELL+8,y=cy*CELL+8;
+    if(window.wellNear&&wellNear(x,y,30))return false;   // nunca por baixo de um poco
     for(const b of blds)if(x>b.x-14&&x<b.x+b.w+14&&y>b.y-14&&y<b.y+b.h+14)return false;   // folga em volta das paredes (porta e passagem)
     return map==='snow'?!pointInLake(x,y)&&!solidPoint(x,y,6)&&!onCityRoad(x,y,6):!soilBad(x,y);
   };
@@ -374,6 +375,7 @@ const plotAria={ARAR:'Arar a terra',PLANTAR:'Plantar semente',REGAR:'Regar',COLH
 
 window.ghPack=ghPack;window.ghLoad=ghLoad;window.ghRemote=ghRemote;window.ghSpot=ghSpot;window.ghBuild=ghBuild;window.drawGreenhouses=drawGreenhouses;window.drawGreenhouseFrame=drawGreenhouseFrame;window.ghList=()=>ghs;window.plotList=()=>plots;
 window.GREENHOUSE_OK=()=>selectedMap==='snow';   // estufa so onde nao da para arar ao ar livre
-window.plantTick=plantTick;window.hoeTill=hoeTill;window.ghostFor=ghostFor;window.soilBad=soilBad;window.frontCell=frontCell;window.plotCands=plotCands;window.isSeedItem=t=>!!SEED2CROP[t];window.heldSeed=heldSeed;window.plotNeedsSeed=plotNeedsSeed;window.plotDo=plotDo;window.drawPlots=drawPlots;window.plotsInView=plotsInView;window.drawPlant=drawPlant;
+window.plantTick=plantTick;window.hoeTill=hoeTill;window.ghostFor=ghostFor;window.soilBad=soilBad;window.frontCell=frontCell;function plotsRemark(){for(const p of plots)mark(p);}
+window.plotsRemark=plotsRemark;window.plotCands=plotCands;window.isSeedItem=t=>!!SEED2CROP[t];window.heldSeed=heldSeed;window.plotNeedsSeed=plotNeedsSeed;window.plotDo=plotDo;window.drawPlots=drawPlots;window.plotsInView=plotsInView;window.drawPlant=drawPlant;
 window.gardensGen=gardensGen;window.plotsPack=plotsPack;window.plotsLoad=plotsLoad;window.plotRemote=plotRemote;window.plotsApplySnapshot=plotsApplySnapshot;window.plotAria=plotAria;
 })();
