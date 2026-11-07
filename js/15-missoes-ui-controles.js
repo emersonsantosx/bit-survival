@@ -166,7 +166,7 @@ function renderAch(){
 /* ============ UI ============ */
 function showScreen(id){
   if(id==='menu') try{refreshContinue();}catch(e){}
-  const ids=['menu','invscr','mapscreen','slotscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
+  const ids=['menu','invscr','stashscr','mapscreen','slotscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
   for(const s of ids){const e=$(s);if(e)e.classList.add('hide');}
   if(id){const e=$(id);if(e)e.classList.remove('hide');}
   try{
@@ -568,6 +568,9 @@ function refreshInvScr(){
 }
 on('bpack','click',e=>{e.preventDefault();aud();uiTap();openInv();});
 on('invclose','click',()=>{uiTap();closeCraft();});
+on('stashclose','click',()=>{uiTap();closeStash();});
+on('stashall','click',()=>{stashTakeAll();});
+on('stashdismantle','click',()=>{aud();stashDismantle();});
 
 
 /* ============ CONTROLES ============ */

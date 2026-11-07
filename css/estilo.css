@@ -48,6 +48,18 @@ body.nomap #mm{display:none!important}
 .islot:active:not(.lock){transform:translateY(2px);box-shadow:0 1px 0 var(--c-deep)}
 .inv-eq{display:flex;align-items:center;gap:8px;background:var(--c-panel);border:3px solid var(--c-edge);padding:5px 8px;font:7px/1.5 var(--f-px);color:var(--c-cream);min-height:30px;box-sizing:border-box}
 .inv-eq b{color:var(--c-amber);font-weight:normal}
+.stash-card{max-width:640px}
+.stash-wrap{display:flex;gap:14px;justify-content:center;align-items:flex-start;width:100%;flex-wrap:wrap}
+.stash-col{display:flex;flex-direction:column;gap:6px;width:268px}
+.stash-col .inv-top{height:32px;align-items:center;box-sizing:border-box;padding:0 2px}
+.stash-col .inv-cap{gap:8px}
+.stash-ico{width:40px;height:30px;display:flex;align-items:center;justify-content:center;flex:none}
+.stash-grid{display:grid;grid-template-columns:repeat(5,46px);grid-template-rows:repeat(3,46px);gap:5px;padding:6px;box-sizing:border-box;width:268px;height:166px;background:#14171c;border:3px solid var(--c-line)}
+.stash-grid .islot{width:46px;height:46px}
+.stash-grid .islot.empty{background:#1b1f26;border-color:#2e343e;box-shadow:none;cursor:default}
+#stashgrid{border-color:#7a5230;background:#1d1812}
+.stash-btns{display:flex;gap:8px;margin-top:10px;width:100%;justify-content:center;flex-wrap:wrap}
+.stash-btns button:disabled{opacity:.45}
 .inv-hint{font:6px/1.5 var(--f-px);color:var(--c-dim);text-align:center}
 .inv-det{flex:1 1 200px;max-width:240px;min-width:170px;background:var(--c-panel);border:3px solid var(--c-edge);box-shadow:0 3px 0 var(--c-deep);padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;box-sizing:border-box;text-align:center}
 .inv-det .ico{width:64px;height:64px;background:#14171c;border:3px solid var(--c-line);display:flex;align-items:center;justify-content:center}

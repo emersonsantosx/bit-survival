@@ -86,7 +86,7 @@ function saveGame(){
       chests:chestList.map(c=>c.open?1:0), rl:lootStatePack(),
       ice:icePack(),
       plots:plotsPack(),fr:fruitPack(),gh:ghPack(),fn:fencePack(),br:structPack(),pf:cellPack(),
-      doors:doorsPack()
+      doors:doorsPack(),bx:stashPack()
     };
     localStorage.setItem(slotKey(curSlot),JSON.stringify(data));
     return true;
@@ -159,6 +159,7 @@ function restoreWorldState(d){
   iceLoad(d.ice);
   plotsLoad(d.plots);fruitLoad(d.fr);ghLoad(d.gh);structLoad(d.br);fenceLoad(d.fn);cellLoad(d.pf);
   doorsLoad(d.doors);
+  stashLoad(d.bx);
   if(P){P.hold=null;}EAT=null;eatLock=false;
   decals=(d.decals||[]).map(a=>({x:a[0],y:a[1],l:Number.isFinite(a[2])?a[2]:20})).filter(a=>a.l>0);
   rebuildSolidGrid();
@@ -558,6 +559,7 @@ function pickTarget(){
   const rectD=(x,y,w,h)=>{const cx=clamp(P.x,x,x+w),cy=clamp(P.y,y,y+h);return {d:Math.max(0,Math.hypot(P.x-cx,P.y-cy)-P.r),px:cx,py:cy};};
   const it=nearestItem();if(it)add({k:'item',d:Math.max(0,Math.hypot(it.x-P.x,it.y-P.y)-P.r-2),b:0,it},it.x,it.y,'i'+it.x+','+it.y+it.t);
   const ch=nearestChest();if(ch)add({k:'chest',d:Math.max(0,Math.hypot(ch.x-P.x,ch.y-P.y)-P.r-3),b:0,ch},ch.x,ch.y,'c'+ch.x+','+ch.y);
+  {const bx=window.stashNearby&&!P.inside&&stashNearby();if(bx)add({k:'stash',d:Math.max(0,Math.hypot(bx.x-P.x,bx.y-P.y)-P.r-8),b:0,bx},bx.x,bx.y,'x'+bx.x+','+bx.y);}
   for(const q of plotCands())add(q,q.px,q.py,q.key);
   for(const q of fruitCands())add(q,q.px,q.py,q.key);
   for(const q of doorCands())add({k:'door',d:q.ed,b:-3,dr:q.dr},q.px,q.py,'d'+q.dr.bi+'.'+q.dr.di);
@@ -761,6 +763,7 @@ function pickup(){
     if(st){toast('Segure carne, peixe ou milho crus para assar no fogão');return;}
   }
   if(TG&&TG.k==='chest'){openChest(TG.ch,false);return;}
+  if(TG&&TG.k==='stash'){openStash(TG.bx);return;}
   if(TG&&TG.k==='plot'){plotDo(TG);return;}
   if(TG&&TG.k==='fruit'){fruitPick(TG.o);return;}
   if(TG&&TG.k==='door'){setDoor(TG.dr,TG.dr.open?0:1);return;}

@@ -1328,6 +1328,7 @@ function render(){
   for(const f of fencesInView(vx0,vx1,vy0,vy1))list.push({y:fenceDepth(f),k:15,o:f});
   if(P&&FENCE_ICON[P.tool])list.push({y:1e9,k:16,o:null});   // fantasma da cerca por cima de tudo
   for(const t of tents)if(t.x>vx0-30&&t.x<vx1+30&&t.y>vy0&&t.y<vy1+30)list.push({y:t.y,k:9,o:t});
+  if(window.stashList)for(const s of stashList())if(s.x>vx0-20&&s.x<vx1+20&&s.y>vy0&&s.y<vy1+20)list.push({y:stashDepth(s),k:17,o:s});
   for(const g of ghList())if(g.x+48>vx0&&g.x<vx1&&g.y+48>vy0-10&&g.y<vy1+10)list.push({y:g.y+48,k:14,o:g});
   for(const z of zombies)if(!z.dead&&z.x>vx0&&z.x<vx1&&z.y>vy0&&z.y<vy1)list.push({y:z.y,k:1,o:z});
   for(const a of animals)if(!a.dead&&a.x>vx0&&a.x<vx1&&a.y>vy0&&a.y<vy1)list.push({y:a.y,k:7,o:a});
@@ -1352,6 +1353,7 @@ function render(){
     else if(e.k===3)drawRock(e.o);
     else if(e.k===4)drawCampfire(e.o);
     else if(e.k===9)drawTent(e.o);
+    else if(e.k===17)drawStash(e.o);
     else if(e.k===6){drawDecoration(e.o);fruitOver(e.o);}
     else if(e.k===7){ drawAnimal(e.o); }
     else if(e.k===8){ drawObserver(e.o); }
