@@ -61,7 +61,7 @@ function genField(seed){
   if(F.spots.length){for(let i=0;i<2;i++){const sp=F.spots[Math.floor(rr()*F.spots.length)];items.push({t:'corn',x:sp[0],y:sp[1]});}}
   SCW.on=rr()<.7;SCW.t=rnd(25,60);CORNT.t=rnd(40,70);
 }
-const YT={on:false,t:30,cool:0};
+const YT={on:false,t:30,cool:0,ok:true};   // ok: nem toda nevasca traz o Yeti
 function updateYeti(dt){
   if(selectedMap!=='snow'||!P||(MP.active&&!MP.isHost))return;
   YT.cool=Math.max(0,YT.cool-dt);
@@ -73,8 +73,8 @@ function updateYeti(dt){
     if(yeti&&anchors.every(a=>Math.hypot(a.x-yeti.x,a.y-yeti.y)>320)){yeti.dead=true;} // a nevasca passou: ele some na neve
     return;
   }
-  if(!YT.on){YT.on=true;YT.t=rnd(30,60);}
-  if(yeti||YT.cool>0||day<2||P.dead)return;
+  if(!YT.on){YT.on=true;YT.t=rnd(150,300);YT.ok=Math.random()<.5;}   // so metade das nevascas, e so depois de 2 a 5 minutos de neve
+  if(yeti||!YT.ok||YT.cool>0||day<2||P.dead)return;
   YT.t-=dt;
   if(YT.t>0)return;
   const a0=anchors[Math.floor(Math.random()*anchors.length)];
@@ -82,7 +82,7 @@ function updateYeti(dt){
     const a=rnd(0,6.283),d=rnd(280,370),x=a0.x+Math.cos(a)*d,y=a0.y+Math.sin(a)*d;
     if(x<60||y<60||x>WW-60||y>WH-60||solidPoint(x,y,24)||bldAt(x,y)||pointInLake(x,y)||inAnyView(x,y,100))continue;
     const z=spawnZ(x,y,9);z.alert=14;z.tx=a0.x;z.ty=a0.y;
-    YT.cool=300;
+    YT.cool=720;   // 12 minutos de descanso depois de cada aparicao
     toast('Algo enorme se move na nevasca...');
     if(MP.active)sendEvt('yeti',{});
     try{zombieVoice(z,'alert');}catch(e){}

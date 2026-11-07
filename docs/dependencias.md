@@ -13,11 +13,11 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 03-dados | 47 | 34 | 13 | 0 | 2 | 18 |
 | 04-estado | 84 | 79 | 5 | 0 | 6 | 20 |
 | 05-geometria | 57 | 42 | 15 | 0 | 10 | 16 |
-| 06-interiores-portas | 36 | 18 | 18 | 0 | 7 | 6 |
+| 06-interiores-portas | 36 | 19 | 17 | 0 | 7 | 6 |
 | 07-loot-mapa | 62 | 30 | 32 | 0 | 13 | 8 |
 | 08-cidade-vilas-marcos | 44 | 23 | 20 | 1 | 11 | 14 |
 | 09-milharal-geracao | 63 | 36 | 27 | 0 | 12 | 9 |
-| 10-jogo-saves | 109 | 74 | 35 | 0 | 13 | 12 |
+| 10-jogo-saves | 112 | 74 | 38 | 0 | 13 | 12 |
 | 11-pesca-update | 27 | 10 | 17 | 0 | 13 | 15 |
 | 12-crafting-multiplayer | 41 | 17 | 24 | 0 | 13 | 17 |
 | 13-render-personagens | 96 | 48 | 48 | 0 | 12 | 14 |
@@ -45,7 +45,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 07-loot-mapa | 124 | 3 | 30 | 127 | 2 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |
 | 08-cidade-vilas-marcos | 119 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |
 | 09-milharal-geracao | 203 | 10 | 87 | 273 | 40 |  | 1 | 35 | . | 3 | 3 | 6 | 126 |  | 1 |  |  |  |  |  |  |  |  |
-| 10-jogo-saves | 91 | 50 | 46 | 666 | 16 | 2 | 12 | 10 | 7 | . | 88 | 25 | 9 |  | 18 |  |  |  |  |  |  |  |  |
+| 10-jogo-saves | 91 | 50 | 47 | 680 | 18 | 4 | 12 | 10 | 7 | . | 88 | 25 | 9 |  | 18 |  |  |  |  |  |  |  |  |
 | 11-pesca-update | 231 | 37 | 49 | 830 | 59 | 2 | 3 | 4 | 19 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 37 | 29 | 607 | 12 | 1 | 6 | 5 | 11 | 38 | 39 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 320 | 40 | 20 | 258 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |
@@ -66,7 +66,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 19 | 1782 |
+| P | let | 04-estado:14 | 19 | 1796 |
 | MP | let | 04-estado:19 | 19 | 562 |
 | selectedMap | let | 04-estado:3 | 19 | 211 |
 | beep | funcao | 02-audio:42 | 18 | 128 |
@@ -103,13 +103,13 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | rocks | let | 04-estado:10 | 8 | 45 |
 | lakes | let | 04-estado:10 | 8 | 28 |
 | rebuildSolidGrid | funcao | 05-geometria:365 | 8 | 28 |
+| bldAt | funcao | 05-geometria:582 | 8 | 22 |
 | track | funcao | 15-missoes-ui-controles:60 | 8 | 13 |
 | CFG | const | 01-base:99 | 7 | 83 |
 | vehicles | let | 04-estado:10 | 7 | 48 |
 | shake | let | 04-estado:14 | 7 | 35 |
 | day | let | 04-estado:14 | 7 | 26 |
 | pick | const | 01-base:18 | 7 | 22 |
-| bldAt | funcao | 05-geometria:582 | 7 | 20 |
 | $ | const | 01-base:2 | 6 | 153 |
 | Z | let | 01-base:47 | 6 | 107 |
 | plane | let | 04-estado:13 | 6 | 62 |
@@ -136,11 +136,11 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **03-dados** (13): PXPAL, PXG, pxLines, pxRot, PXURL, pxData, PXCV, hydratePx, FISH_TPL, fishGrid, FISH_POOL, SEED_POOL, ZUNLOCK
 - **04-estado** (5): chatLog, chatUnread, chatTime, chatAddHistory, chatShowEmpty
 - **05-geometria** (15): iceOf, orlaHit, _PAVE, _SANDP, orlaPatterns, TERR, CAR_TOP, SPG_C, spgSync, WG_C, WG, wallGrid, SOLID_GRID, wallBlockerAt, obbHitsCircle
-- **06-interiores-portas** (18): FURN, ROOMFURN, BLD_ROOMS, ROOM_FLOOR, rectsHit, intConnected, intUnreached, DOOR_BREAK, doorHearable, doorSound, intBlocked, bldSpawnPoint, roomSpawnPoint, FLOOT, furnLootTable, SEED_BONUS, bonusSpot, FLASH_BONUS
+- **06-interiores-portas** (17): FURN, ROOMFURN, BLD_ROOMS, ROOM_FLOOR, rectsHit, intConnected, intUnreached, DOOR_BREAK, doorHearable, doorSound, bldSpawnPoint, roomSpawnPoint, FLOOT, furnLootTable, SEED_BONUS, bonusSpot, FLASH_BONUS
 - **07-loot-mapa** (32): LOOT_RESPAWN, PING_LIFE, pingAdd, pingBadge, pingCandidate, pingCol, ALLY_COL, wpUpdate, WP_COL, wpDist, wpPick, bigTimer, bigPrevState, bigMapTap, drawPingsMini, RG_CELL, RG_FRAC, RG_TREE_S, RG_ROCK_S, RG_BT, RG_BR, RG_SET_T, RG_SET_R, rgKey, rgCount, ...
 - **08-cidade-vilas-marcos** (20): bldDims, bldDims0, bldSize, cityPickType, cityFillBlock, cityRubble, cityPark, cityHouseFence, bldSizeRural, ruralPickType, genTown, ruralCarFree, SLED_COLS, BUGGY_COLS, ATV_COLS, prints, LM_SIDE_D, LM_SIDE_S, chestLoot, lmCurse
 - **09-milharal-geracao** (27): CORNT, genField, YT, _stalkCache, worldFlavor, MM_K, buildMinimap, bigBase, ANIMAL_PREY, BIRD_MAP, BIRD_FLOCK, birds, birdsReady, flockT, birdChirpT, birdSeq, BKEYS, BST, birdAnchors, birdOK, birdSound, newBird, initBirds, birdTakeoff, updateBirdsGuest, ...
-- **10-jogo-saves** (35): SAVE_KEY, SAVE_PREFIX, SAVE_VER, slotKey, autoSlot, packObj, canSave, saveWorldOk, icePack, iceLoad, doorsPack, doorsLoad, normalizeLoadout, GUEST_SKIP, guestKey, guestForget, FRUIT_FOOD, eatLock, SEED_OF, seedGain, giveSeedFor, applyUse, consumeOne, putAwayHold, closeTool, ...
+- **10-jogo-saves** (38): SAVE_KEY, SAVE_PREFIX, SAVE_VER, slotKey, autoSlot, packObj, canSave, saveWorldOk, icePack, iceLoad, doorsPack, doorsLoad, normalizeLoadout, GUEST_SKIP, guestKey, guestForget, FRUIT_FOOD, eatLock, SEED_OF, seedGain, giveSeedFor, applyUse, consumeOne, putAwayHold, closeTool, ...
 - **11-pesca-update** (17): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, tickFishing, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, updateP, updateZ
 - **12-crafting-multiplayer** (24): canCraft, craft, handleEvt, loadPeerJS, makeRoomCode, hostRetryTimer, hostOpenPeer, hostSignalRetry, RECONN_MAX_MS, showReconnectUI, updateReconnectUI, hideReconnectUI, mpReconnectFail, mpGuestReconnectAttempt, hostResumeGuest, guestResumed, hostBuildWorld, setupConn, handleNetData, vehSetTarget, applySnapshot, goneList, applyGone, enterMultiplayerGame
 - **13-render-personagens** (48): skinLook, snowOutfit, _shc, Sh, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, TSP, treeSprite, treeShadow, drawOpenVeh, vehDriverLook, drawRider, obsStopDrone, obsStartDrone, obsStatic, obsSpotOk, ...

@@ -530,9 +530,34 @@ function openWeaponWheel(){
   if(state!=='play'||!P||P.inVehicle||weaponWheelOpen)return;
   aud();buildWeaponWheel();
 }
+/* O item esta do mesmo lado da parede que o jogador? Dentro da casa nao da para pegar o que ficou do lado de fora da porta (e vice-versa),
+   a nao ser que a porta esteja aberta (ou quebrada) e colada nos dois. Dentro do mesmo predio, tambem nao atravessa parede interna. */
+function itemReach(it){
+  const bp=P.inside||bldAt(P.x,P.y),bi=bldAt(it.x,it.y);
+  if(bp===bi)return !(bi&&bi.iw&&typeof intBlocked==='function'&&intBlocked(bi,P.x,P.y,it.x,it.y));
+  const b=bp||bi;if(!b||!b.doors)return false;
+  for(const d of b.doors){
+    if(d.open===0)continue;
+    const cx=d.r.x+d.r.w/2,cy=d.r.y+d.r.h/2;
+    if(Math.hypot(P.x-cx,P.y-cy)<30&&Math.hypot(it.x-cx,it.y-cy)<30)return true;
+  }
+  return false;
+}
+/* pegar esse item faria alguma coisa? (mochila cheia, lanterna/mochila/arma que ja tem: o botao PEGAR so reclamaria e atrapalharia a porta) */
+const SPECIAL_PICK=new Set(['ammo','arrows','pistol','smg','shotgun','rifle','bow','turban','flashlight','backpack','bat','axe','pickaxe','katana','spear','fishingrod']);
+function itemTakeable(it){
+  const t=it.t;
+  if(t==='flashlight')return !P.torch;
+  if(t==='backpack')return !P.pack;
+  if(t==='turban')return !P.turban;
+  if(['pistol','smg','shotgun','rifle','bow'].includes(t))return true;   // repetida vira municao
+  if(['bat','axe','pickaxe','katana','spear','fishingrod'].includes(t))return !((P.meleeWeapons||[]).includes(t)||P.melee===t||(typeof toolList==='function'&&toolList().includes(t)));
+  if(SPECIAL_PICK.has(t)||(typeof BUILD_TOOLS!=='undefined'&&BUILD_TOOLS.includes(t)))return true;
+  return P.inv.some(s=>s.t===t)||P.inv.length<invCap();
+}
 function nearestItem(){
   let b=null,bd=24;
-  for(const it of items){const d=Math.hypot(it.x-P.x,it.y-P.y);if(d<bd){bd=d;b=it;}}
+  for(const it of items){const d=Math.hypot(it.x-P.x,it.y-P.y);if(d<bd&&itemReach(it)){bd=d;b=it;}}
   return b;
 }
 /* movel de dentro de casa mais perto do jogador (distancia ate a borda do movel) */
@@ -558,7 +583,7 @@ function pickTarget(){
   const c=[];
   const add=(o,px,py,key)=>{o.key=key;o.px=px;o.py=py;c.push(o);};
   const rectD=(x,y,w,h)=>{const cx=clamp(P.x,x,x+w),cy=clamp(P.y,y,y+h);return {d:Math.max(0,Math.hypot(P.x-cx,P.y-cy)-P.r),px:cx,py:cy};};
-  const it=nearestItem();if(it)add({k:'item',d:Math.max(0,Math.hypot(it.x-P.x,it.y-P.y)-P.r-2),b:0,it},it.x,it.y,'i'+it.x+','+it.y+it.t);
+  const it=nearestItem();if(it)add({k:'item',d:Math.max(0,Math.hypot(it.x-P.x,it.y-P.y)-P.r-2),b:itemTakeable(it)?0:8,take:itemTakeable(it),it},it.x,it.y,'i'+it.x+','+it.y+it.t);
   const ch=nearestChest();if(ch)add({k:'chest',d:Math.max(0,Math.hypot(ch.x-P.x,ch.y-P.y)-P.r-3),b:0,ch},ch.x,ch.y,'c'+ch.x+','+ch.y);
   {const bx=window.stashNearby&&!P.inside&&stashNearby();if(bx)add({k:'stash',d:Math.max(0,Math.hypot(bx.x-P.x,bx.y-P.y)-P.r-8),b:0,bx},bx.x,bx.y,'x'+bx.x+','+bx.y);}
   {const wl=window.wellNearby&&!P.inside&&wellNearby();if(wl)add({k:'well',d:Math.max(0,Math.hypot(wl.x-P.x,wl.y-P.y)-P.r-10),b:0,wl},wl.x,wl.y,'w'+wl.x+','+wl.y);}
@@ -590,7 +615,7 @@ function pickTarget(){
   }
   /* itens no chão têm prioridade sobre dormir, porta, água (pia/torneira) e carro destruído (a carcaça é grande e ficava na frente do item ao lado dela) */
   if(best.k==='door'||best.k==='fgate'||best.k==='bed'||best.k==='tap'||best.k==='well'||(best.k==='veh'&&(best.v.destroyed||best.v.dying))){
-    let bi=null;for(const a of c)if(a.k==='item'&&(!bi||a.s<bi.s))bi=a;
+    let bi=null;for(const a of c)if(a.k==='item'&&a.take&&(!bi||a.s<bi.s))bi=a;
     if(bi)best=bi;
   }
   P._ptKey=best.key;

@@ -288,12 +288,12 @@ const RECIPES=[
   {out:'campfire', need:{wood:5,stone:3}, label:'Fogueira',        desc:'Cozinha peixe e ilumina à noite' }
 ];
 const LOOT={
-  house:{food:12,water:28,bandage:18,stone:8,wood:6,bat:4,ammo:3,axe:2,medkit:2,arrows:3,backpack:2,katana:.5,seed:9,flashlight:.7},
+  house:{food:12,water:28,bandage:18,stone:8,wood:6,bat:4,ammo:3,axe:2,medkit:2,arrows:3,backpack:2,katana:4.5,seed:9,flashlight:.7},
   barn:{food:8,water:20,bandage:8,stone:6,wood:8,axe:4,arrows:3,seed:22,flashlight:1},
   shop:{food:16,water:35,bandage:12,medkit:4,bat:3,axe:2,arrows:4,backpack:2,seed:4,flashlight:1.6},
   mil:{pistol:10,smg:8,shotgun:6,rifle:5,ammo:30,medkit:12,bandage:12,food:4,water:7,stone:4,backpack:3,flashlight:9},
   car:{food:8,water:18,ammo:15,bandage:12,medkit:4,pistol:3},
-  apartment:{food:9,water:20,bandage:14,ammo:6,bat:3,medkit:3,stone:4,arrows:3,backpack:2,katana:.4,seed:2,flashlight:.8},
+  apartment:{food:9,water:20,bandage:14,ammo:6,bat:3,medkit:3,stone:4,arrows:3,backpack:2,katana:1.6,seed:2,flashlight:.8},
   office:{food:8,water:22,bandage:10,ammo:5,bat:2,medkit:2,backpack:2,flashlight:1.4},
   garage:{ammo:22,food:5,water:12,bandage:8,pistol:4,bat:3,axe:3,arrows:4,backpack:1,flashlight:2.2},
   clinic:{medkit:28,bandage:30,food:5,water:14,ammo:3,flashlight:1},
