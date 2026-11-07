@@ -113,7 +113,10 @@ function render_(){
   cg.innerHTML='';pg.innerHTML='';
   for(let i=0;i<SLOTS;i++)cg.appendChild(slotBtn(s.s[i],()=>withdraw(i),s.s[i]?'':'empty'));
   const cap=invCap();
-  for(let i=0;i<cap;i++)pg.appendChild(slotBtn(P.inv[i],()=>deposit(i),P.inv[i]?'':'empty'));
+  for(let i=0;i<SLOTS;i++){   // sempre 15 casas, igual ao bau: as que a mochila ainda nao tem aparecem com cadeado (mesma moldura dos dois lados)
+    if(i>=cap){const l=document.createElement('button');l.type='button';l.className='islot lock';l.disabled=true;l.innerHTML=pxIcon('lock',2);pg.appendChild(l);}
+    else pg.appendChild(slotBtn(P.inv[i],()=>deposit(i),P.inv[i]?'':'empty'));
+  }
   const u=$s('stashcnt');if(u)u.textContent=s.s.length+'/'+SLOTS;
   const pc=$s('stashpcap');if(pc)pc.textContent=P.inv.length+'/'+cap;
   const dm=$s('stashdismantle');if(dm){dm.disabled=s.s.length>0;dm.textContent=s.s.length?'DESMONTAR (VAZIO)':'DESMONTAR';}

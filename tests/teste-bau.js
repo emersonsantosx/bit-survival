@@ -23,6 +23,8 @@ const r=await pg.evaluate(()=>{
   const tg=pickTarget();o.target=tg&&tg.k;update(.05);o.btn=(document.getElementById('pick')||{}).dataset&&document.getElementById('pick').dataset.st;
   pickup();o.opened=state==='craft'&&!document.getElementById('stashscr').classList.contains('hide');
   o.gridSlots=document.querySelectorAll('#stashgrid .islot').length;
+  {const q=id=>{const e=document.getElementById(id).getBoundingClientRect();return [Math.round(e.top),Math.round(e.width),Math.round(e.height)];};const h=[...document.querySelectorAll('.stash-col .inv-top')].map(e=>Math.round(e.getBoundingClientRect().top));
+   o.rects=[q('stashgrid'),q('stashpack'),h];o.aligned=JSON.stringify(q('stashgrid'))===JSON.stringify(q('stashpack'))&&h[0]===h[1]&&document.querySelectorAll('#stashpack .islot').length===15;}
   // guardar
   P.pack=true;P.inv=[];['wood','stone','cloth','food','water','bandage','medkit','seed_corn','apple','berry','tomato','carrot','potato','pistol'].forEach((t,i)=>{if(ITEMS[t])P.inv.push({t:t,n:i+1});});
   buildInv();render_open();
@@ -58,6 +60,7 @@ ok(r.cantCraft5&&r.noneBuilt,'com 5 madeiras nao fabrica e nao gasta nada');
 ok(r.built&&r.woodLeft===2&&r.front&&r.solid,'com 8 madeiras fabrica: gasta 6, monta na frente e bloqueia a passagem');
 ok(r.target==='stash'&&r.btn==='ABRIR','o botao de interagir mostra ABRIR perto do bau');
 ok(r.opened&&r.gridSlots===15,'abre a tela do bau com 15 espacos');
+ok(r.aligned,'as molduras do bau e da mochila tem o mesmo tamanho e ficam alinhadas (topo e altura iguais, 15 casas cada) ('+JSON.stringify(r.rects)+')');
 ok(r.stored>=13&&r.invAfter===0,'guardar: itens da mochila vao para o bau ('+r.stored+' tipos)');
 ok(r.cap15&&r.cap===15,'o bau nunca passa de 15 espacos');
 ok(r.stack,'mesmo tipo empilha no mesmo espaco');
