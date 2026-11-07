@@ -1277,8 +1277,9 @@ function drawPlane(p){
 const OBS={on:false,vis:false,x:0,y:0,alpha:1,life:0,view:0,seenTot:0,look:12,dist:0,glitch:0,cd:480,_t:0,drone:null};
 function obsStopDrone(){
   const d=OBS.drone;OBS.drone=null;if(!d||!AC)return;
-  try{const t=AC.currentTime;d.g.gain.cancelScheduledValues(t);d.g.gain.setValueAtTime(Math.max(.0001,d.g.gain.value),t);d.g.gain.linearRampToValueAtTime(.0001,t+1.2);
-    for(const o of d.os)o.stop(t+1.3);}catch(e){}
+  try{const t=AC.currentTime;d.g.gain.cancelScheduledValues(t);d.g.gain.setValueAtTime(Math.max(.0001,d.g.gain.value),t);d.g.gain.linearRampToValueAtTime(.0001,t+1.2);  }catch(e){}
+  for(const o of d.os){try{o.stop(AC.currentTime+1.3);}catch(e){}}   // cada oscilador separado: um erro nao deixa os outros tocando
+  setTimeout(()=>{try{d.g.disconnect();}catch(e){}},1600);
 }
 function obsStartDrone(){
   if(!AC||OBS.drone)return;
@@ -1338,8 +1339,9 @@ function obsVanish(){
 function observerReset(){OBS.on=false;OBS.vis=false;OBS.alpha=1;OBS.glitch=0;OBS.cd=480+Math.random()*320;obsStopDrone();}
 function updateObserver(dt){
   if(OBS._t>T+.5)observerReset();OBS._t=T;
+  if(!OBS.on&&OBS.drone)obsStopDrone();   // seguranca: sem observador em cena nunca fica zumbido tocando
   if(OBS.glitch>0)OBS.glitch=Math.max(0,OBS.glitch-dt);
-  if(!P||P.dead||state!=='play'){if(OBS.on){OBS.on=false;OBS.vis=false;obsStopDrone();}return;}
+  if(!P||P.dead||state!=='play'){OBS.on=false;OBS.vis=false;obsStopDrone();return;}
   if(!OBS.on){
     OBS.cd-=dt;
     if(OBS.cd>0)return;
@@ -1353,7 +1355,7 @@ function updateObserver(dt){
   OBS.dist=Math.hypot(OBS.x-P.x,OBS.y-P.y);
   const onS=!P.inside&&obsOnScreen();
   if(OBS.dist<98&&onS){obsVanish();return;}                     // chegou perto: some
-  if(P.inside||P.inVehicle){ if(onS)obsVanish(); else OBS.on=false; return; }
+  if(P.inside||P.inVehicle){ if(onS)obsVanish(); else{OBS.on=false;OBS.vis=false;obsStopDrone();} return; }
   if(onS){
     if(!OBS.vis){OBS.vis=true;OBS.view=0;obsStartDrone();}      // acabou de ser avistado
     OBS.view+=dt;OBS.seenTot+=dt;
@@ -1365,7 +1367,7 @@ function updateObserver(dt){
     if(OBS.seenTot>55){obsVanish();return;}
   }else{
     if(OBS.vis){OBS.vis=false;obsStopDrone();}                  // saiu da tela: fica parado lá
-    if(OBS.life<=0){OBS.on=false;OBS.cd=900+Math.random()*700;return;}   // ficou para trás: sai de cena sem ninguém ver
+    if(OBS.life<=0){OBS.on=false;obsStopDrone();OBS.cd=900+Math.random()*700;return;}   // ficou para trás: sai de cena sem ninguém ver
     if(OBS.dist>520){const sp=obsPickAhead();if(sp){OBS.x=sp.x;OBS.y=sp.y;}} // o jogador se afastou: ele reaparece à frente, fora da tela
   }
 }

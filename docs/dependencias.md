@@ -20,7 +20,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 10-jogo-saves | 109 | 74 | 35 | 0 | 13 | 11 |
 | 11-pesca-update | 27 | 10 | 17 | 0 | 13 | 14 |
 | 12-crafting-multiplayer | 41 | 17 | 24 | 0 | 13 | 16 |
-| 13-render-personagens | 96 | 47 | 49 | 0 | 12 | 14 |
+| 13-render-personagens | 96 | 48 | 48 | 0 | 12 | 14 |
 | 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 12 | 0 |
 | 15-missoes-ui-controles | 80 | 18 | 62 | 0 | 9 | 11 |
 | 16-orientacao | 0 | 0 | 0 | 0 | 3 | 0 |
@@ -47,9 +47,9 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 10-jogo-saves | 91 | 50 | 46 | 662 | 16 | 2 | 12 | 10 | 7 | . | 88 | 25 | 9 |  | 18 |  |  |  |  |  |  |  |
 | 11-pesca-update | 231 | 37 | 49 | 830 | 59 | 2 | 3 | 4 | 19 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 604 | 12 | 1 | 6 | 5 | 11 | 38 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |
-| 13-render-personagens | 320 | 39 | 20 | 258 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |
+| 13-render-personagens | 320 | 40 | 20 | 258 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 608 | 13 | 16 | 314 | 13 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |
-| 15-missoes-ui-controles | 191 | 58 | 21 | 251 |  |  | 17 |  |  | 68 | 11 | 23 | 5 |  | . |  |  |  |  |  |  |  |
+| 15-missoes-ui-controles | 191 | 58 | 21 | 251 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |
 | 18-plantacao | 36 | 6 | 22 | 77 | 16 |  |  | 13 | 1 | 1 | 8 | 3 | 139 |  | 1 |  |  | . |  |  |  |  |
@@ -141,7 +141,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **10-jogo-saves** (35): SAVE_KEY, SAVE_PREFIX, SAVE_VER, slotKey, autoSlot, packObj, canSave, saveWorldOk, icePack, iceLoad, doorsPack, doorsLoad, normalizeLoadout, GUEST_SKIP, guestKey, guestForget, FRUIT_FOOD, eatLock, SEED_OF, seedGain, giveSeedFor, applyUse, consumeOne, putAwayHold, closeTool, ...
 - **11-pesca-update** (17): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, tickFishing, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, updateP, updateZ
 - **12-crafting-multiplayer** (24): canCraft, craft, handleEvt, loadPeerJS, makeRoomCode, hostRetryTimer, hostOpenPeer, hostSignalRetry, RECONN_MAX_MS, showReconnectUI, updateReconnectUI, hideReconnectUI, mpReconnectFail, mpGuestReconnectAttempt, hostResumeGuest, guestResumed, hostBuildWorld, setupConn, handleNetData, vehSetTarget, applySnapshot, goneList, applyGone, enterMultiplayerGame
-- **13-render-personagens** (49): skinLook, snowOutfit, _shc, Sh, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, TSP, treeSprite, treeShadow, drawOpenVeh, vehDriverLook, drawRider, obsStopDrone, obsStartDrone, obsStatic, obsSpotOk, ...
+- **13-render-personagens** (48): skinLook, snowOutfit, _shc, Sh, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, TSP, treeSprite, treeShadow, drawOpenVeh, vehDriverLook, drawRider, obsStopDrone, obsStartDrone, obsStatic, obsSpotOk, ...
 - **15-missoes-ui-controles** (62): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACHD, achSave, achChime, achCheck, achSet, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, renderAch, renderHostWorlds, lockHostWorlds, bindSlider, bindToggle, bindSeg, slotMode, ...
 
 ## Possivelmente mortas (revisar antes de apagar: podem ser chamadas por onclick no HTML ou pelos testes)

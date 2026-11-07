@@ -775,6 +775,7 @@ function quitToMenu(){
   }
   showScreen('menu');$('hud').classList.add('hide');state='menu';
   setAmbient(0);setRain(false);document.body.classList.remove('nohud','nomap');
+  try{observerReset();}catch(e){}   // o zumbido do Observador para ao voltar ao menu
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
   MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;MP.isHost=false;MP.roomCode='';MP.myId=null;MP.syncT=0;
   mpResetReconnect();
