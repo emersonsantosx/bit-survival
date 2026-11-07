@@ -41,6 +41,40 @@ ok(r.fullOutside==='door','fora da casa, mochila cheia: o item nao toma o lugar 
 ok(r.freeOutside==='item','com espaco na mochila o item ainda e pego primeiro');
 ok(r.ownedItem==='door','item que ja se tem (lanterna) nao atrapalha a porta');
 
+/* itens so valem no comodo em que o jogador esta (nem de fora da casa, nem do comodo ao lado) */
+const rm=await pg.evaluate(()=>{
+  localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];state='play';
+  const o={};items.length=0;P.inv=[];
+  const bd=blds.find(q=>q.rooms&&q.rooms.length>=3&&q.type==='house')||blds.find(q=>q.rooms&&q.rooms.length>=2);
+  // dois comodos vizinhos: A e B (paredes que se tocam)
+  let A=null,B=null;
+  for(const r of bd.rooms)for(const q of bd.rooms){if(r===q)continue;const side=Math.abs(r.x+r.w-q.x)<=6&&r.y<q.y+q.h&&q.y<r.y+r.h,under=Math.abs(r.y+r.h-q.y)<=6&&r.x<q.x+q.w&&q.x<r.x+r.w;if(side||under){A=r;B=q;break;}}
+  const inA=(r)=>({x:r.x+r.w/2,y:r.y+r.h/2});
+  const pa=inA(A);P.inside=bd;P.x=pa.x;P.y=pa.y;
+  // item do mesmo comodo: pega
+  items.push({t:'wood',x:pa.x+6,y:pa.y});o.same=nearestItem()!==null;
+  // item no comodo vizinho, colado na parede (a menos de 24 px do jogador): nao pega, nao aparece
+  items.length=0;
+  const ox0=Math.max(A.x,B.x),ox1=Math.min(A.x+A.w,B.x+B.w),oy0=Math.max(A.y,B.y),oy1=Math.min(A.y+A.h,B.y+B.h);
+  let ix,iy;
+  if(A.x+A.w<=B.x+6){P.x=A.x+A.w-4;P.y=(oy0+oy1)/2;ix=B.x+4;iy=P.y;}       // B a direita de A
+  else if(B.x+B.w<=A.x+6){P.x=A.x+4;P.y=(oy0+oy1)/2;ix=B.x+B.w-4;iy=P.y;}   // B a esquerda
+  else if(A.y+A.h<=B.y+6){P.y=A.y+A.h-4;P.x=(ox0+ox1)/2;iy=B.y+4;ix=P.x;}    // B embaixo
+  else{P.y=A.y+4;P.x=(ox0+ox1)/2;iy=B.y+B.h-4;ix=P.x;}                        // B em cima
+  items.push({t:'wood',x:ix,y:iy});
+  o.dist=Math.round(Math.hypot(ix-P.x,iy-P.y));
+  o.other=nearestItem()===null;
+  o.drawn=(b=>{b._vis=visRooms(b);return seeIn(b,ix,iy);})(bd);
+  // de fora da casa: nao pega item de dentro (mesmo colado na parede)
+  items.length=0;P.inside=null;P.x=bd.x-4;P.y=bd.y+bd.h/2;items.push({t:'wood',x:bd.x+10,y:bd.y+bd.h/2});
+  o.outside=nearestItem()===null;
+  return o;});
+console.log(JSON.stringify(rm));
+ok(rm.same,'dentro do comodo, o item dele pode ser pego');
+ok(rm.other&&rm.dist<24,'item do comodo vizinho (a '+rm.dist+' px, colado na parede) nao pode ser pego');
+ok(rm.drawn===false,'item do comodo vizinho tambem nao aparece');
+ok(rm.outside,'de fora da casa nao se pega item de dentro');
+
 const g=await pg.evaluate(()=>{
   localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];state='play';
   trees.length=0;rocks.length=0;blds.length=0;items.length=0;lakes.length=0;rebuildSolidGrid();P.inside=null;

@@ -530,17 +530,13 @@ function openWeaponWheel(){
   if(state!=='play'||!P||P.inVehicle||weaponWheelOpen)return;
   aud();buildWeaponWheel();
 }
-/* O item esta do mesmo lado da parede que o jogador? Dentro da casa nao da para pegar o que ficou do lado de fora da porta (e vice-versa),
-   a nao ser que a porta esteja aberta (ou quebrada) e colada nos dois. Dentro do mesmo predio, tambem nao atravessa parede interna. */
+/* So da para pegar (e so aparece, com a setinha) o item que o jogador esta VENDO: do lado de fora de uma casa nunca se pega item de dentro dela,
+   de dentro nao se pega o que ficou la fora, e dentro da casa so vale o item do comodo em que ele esta (o mesmo criterio do desenho, visRooms/seeIn). */
 function itemReach(it){
-  const bp=P.inside||bldAt(P.x,P.y),bi=bldAt(it.x,it.y);
-  if(bp===bi)return !(bi&&bi.iw&&typeof intBlocked==='function'&&intBlocked(bi,P.x,P.y,it.x,it.y));
-  const b=bp||bi;if(!b||!b.doors)return false;
-  for(const d of b.doors){
-    if(d.open===0)continue;
-    const cx=d.r.x+d.r.w/2,cy=d.r.y+d.r.h/2;
-    if(Math.hypot(P.x-cx,P.y-cy)<30&&Math.hypot(it.x-cx,it.y-cy)<30)return true;
-  }
+  const bi=bldAt(it.x,it.y);
+  if(!bi)return !P.inside;                  // item ao ar livre: so quem tambem esta ao ar livre
+  if(P.inside!==bi)return false;            // item dentro de um predio: so quem esta dentro dele...
+  for(const r of visRooms(bi))if(it.x>=r.x-3&&it.x<=r.x+r.w+3&&it.y>=r.y-3&&it.y<=r.y+r.h+3)return true;   // ...e no mesmo comodo
   return false;
 }
 /* pegar esse item faria alguma coisa? (mochila cheia, lanterna/mochila/arma que ja tem: o botao PEGAR so reclamaria e atrapalharia a porta) */
