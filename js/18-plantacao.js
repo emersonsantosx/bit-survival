@@ -45,11 +45,11 @@ function frontCell(){return {cx:cellOf(P.x+Math.cos(P.face)*14),cy:cellOf(P.y+Ma
 const mature=p=>!!p.c&&p.g>=CROPS[p.c].grow;
 function stage(p){if(!p.c)return -1;const f=p.g/CROPS[p.c].grow;return f>=1?3:f>=.6?2:f>=.25?1:0;}
 function seedInInv(){for(const s in SEED2CROP)if(countInv(s)>0)return s;return null;}
+function heldSeed(){return(P&&P.hold&&SEED2CROP[P.hold]&&countInv(P.hold)>0)?P.hold:null;}   // so vale a semente que esta na mao
 const cropOk=(c,x,y)=>CROPS[c].maps.includes(selectedMap)||!!ghAt(x,y);
-function seedFor(p){   // primeira semente do inventario que vinga neste canteiro
-  const x=p.cx*CELL+8,y=p.cy*CELL+8;
-  for(const s in SEED2CROP)if(countInv(s)>0&&cropOk(SEED2CROP[s],x,y))return s;
-  return null;
+function seedFor(p){   // a semente que esta na mao, se vingar neste canteiro
+  const x=p.cx*CELL+8,y=p.cy*CELL+8,s=heldSeed();
+  return(s&&cropOk(SEED2CROP[s],x,y))?s:null;
 }
 function nearWater(x,y){for(const l of lakes){if(l.fountain)continue;if(Math.hypot(x-l.cx,(y-l.cy)/.92)<l.r*1.08+55)return true;}return false;}
 function mark(p){const x=p.cx*CELL+8,y=p.cy*CELL+8;p.nw=nearWater(x,y);p.gh=!!ghAt(x,y);return p;}
@@ -72,7 +72,7 @@ function plantTick(dt){
 function plotCands(){
   const out=[];
   if(!P||P.dead||P.inVehicle||P.inside)return out;
-  const seed=seedInInv(),water=countInv('water')>0;
+  const seed=heldSeed(),water=countInv('water')>0;
   for(const p of plots){
     const x=p.cx*CELL,y=p.cy*CELL;
     if(Math.abs(x+8-P.x)>40||Math.abs(y+8-P.y)>40)continue;
@@ -85,6 +85,10 @@ function plotCands(){
     if(act)out.push({k:'plot',act,p,d:ed,b:-2,px:x+8,py:y+8,key:'p'+p.cx+','+p.cy+act});
   }
   return out;
+}
+function plotNeedsSeed(){   // canteiro vazio ao alcance, semente na mochila mas nenhuma na mao
+  if(!P||P.dead||P.inVehicle||P.inside||heldSeed()||!seedInInv())return false;
+  return plots.some(p=>!p.c&&Math.abs(p.cx*CELL+8-P.x)<=40&&Math.abs(p.cy*CELL+8-P.y)<=40);
 }
 /* botao proprio da enxada: ara a casa a frente (nao disputa mais com itens, portas e camas) */
 function hoeTill(quiet){
@@ -110,8 +114,8 @@ function plotDo(T){
   if(a==='PLANTAR'){
     if(p.c)return;
     const s=seedFor(p);
-    if(!s){const s0=seedInInv();if(s0){const c=CROPS[SEED2CROP[s0]];toast(c.n+' não vinga aqui ('+c.maps.map(m=>MAPN[m]).join(' e ')+', ou numa estufa)');beep(130,.08,'square',.04);}return;}
-    removeInv(s,1);p.c=SEED2CROP[s];p.g=0;send(p);
+    if(!s){const s0=heldSeed();if(s0){const c=CROPS[SEED2CROP[s0]];toast(c.n+' não vinga aqui ('+c.maps.map(m=>MAPN[m]).join(' e ')+', ou numa estufa)');beep(130,.08,'square',.04);}return;}
+    removeInv(s,1);if(countInv(s)<=0){P.hold=null;try{buildInv();}catch(e){}}p.c=SEED2CROP[s];p.g=0;send(p);
     beep(260,.07,'sine',.04);puff(p.cx*CELL+8,p.cy*CELL+8,'#6a4a2c',5);toast('Plantou: '+CROPS[p.c].n);
   }else if(a==='REGAR'){
     if(countInv('water')<1)return;
@@ -370,6 +374,6 @@ const plotAria={ARAR:'Arar a terra',PLANTAR:'Plantar semente',REGAR:'Regar',COLH
 
 window.ghPack=ghPack;window.ghLoad=ghLoad;window.ghRemote=ghRemote;window.ghSpot=ghSpot;window.ghBuild=ghBuild;window.drawGreenhouses=drawGreenhouses;window.drawGreenhouseFrame=drawGreenhouseFrame;window.ghList=()=>ghs;window.plotList=()=>plots;
 window.GREENHOUSE_OK=()=>selectedMap==='snow';   // estufa so onde nao da para arar ao ar livre
-window.plantTick=plantTick;window.hoeTill=hoeTill;window.ghostFor=ghostFor;window.soilBad=soilBad;window.frontCell=frontCell;window.plotCands=plotCands;window.plotDo=plotDo;window.drawPlots=drawPlots;window.plotsInView=plotsInView;window.drawPlant=drawPlant;
+window.plantTick=plantTick;window.hoeTill=hoeTill;window.ghostFor=ghostFor;window.soilBad=soilBad;window.frontCell=frontCell;window.plotCands=plotCands;window.isSeedItem=t=>!!SEED2CROP[t];window.heldSeed=heldSeed;window.plotNeedsSeed=plotNeedsSeed;window.plotDo=plotDo;window.drawPlots=drawPlots;window.plotsInView=plotsInView;window.drawPlant=drawPlant;
 window.gardensGen=gardensGen;window.plotsPack=plotsPack;window.plotsLoad=plotsLoad;window.plotRemote=plotRemote;window.plotsApplySnapshot=plotsApplySnapshot;window.plotAria=plotAria;
 })();

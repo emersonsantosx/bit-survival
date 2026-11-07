@@ -332,6 +332,35 @@ function shelterAt(x,y){
   if(sealed)shV=2;
   return shV;
 }
+/* ha construcao do jogador (parede, cerca, piso, telhado, cama, canteiro, estufa, bau) perto do ponto, ou ele esta dentro de um recinto fechado?
+   Usado pelo renascimento de arvores e pedras: nada nasce em cima da base do jogador nem dentro da cabana. */
+function builtNear(x,y,rad){
+  const R=rad||26,c0=Math.floor((x-R)/CELL),c1=Math.floor((x+R)/CELL),r0=Math.floor((y-R)/CELL),r1=Math.floor((y+R)/CELL);
+  for(let i=c0;i<=c1+1;i++)for(let j=r0;j<=r1+1;j++){
+    if(fmap.has('h'+i+','+j)||fmap.has('v'+i+','+j))return true;
+    if(i<=c1&&j<=r1&&((window.floorAt&&floorAt(i,j))||(window.roofAt&&roofAt(i,j))||(window.bedAt&&bedAt(i,j))))return true;
+  }
+  if(window.plotList)for(const p of plotList())if(Math.abs(p.cx*CELL+8-x)<R+8&&Math.abs(p.cy*CELL+8-y)<R+8)return true;
+  if(window.ghList)for(const g of ghList())if(x>g.x-R&&x<g.x+48+R&&y>g.y-R&&y<g.y+48+R)return true;
+  if(window.stashList)for(const s of stashList())if(Math.abs(s.x-x)<R+8&&Math.abs(s.y-y)<R+8)return true;
+  if(tallN){   // recinto fechado por paredes (mesmo sem piso nem telhado)
+    const blocked=(d,i,j)=>{const q=fmap.get(d+i+','+j);return !!q&&q.g>=2&&!(q.g===3&&q.o);};
+    const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL),k=cx+','+cy,seen=new Set([k]),st=[[cx,cy]];
+    while(st.length){
+      const c=st.pop(),i=c[0],j=c[1];
+      for(const m of [['h',i,j,i,j-1],['h',i,j+1,i,j+1],['v',i,j,i-1,j],['v',i+1,j,i+1,j]]){
+        if(blocked(m[0],m[1],m[2]))continue;
+        const nk=m[3]+','+m[4];
+        if(seen.has(nk))continue;
+        if(seen.size>=150)return false;   // escapou: espaco aberto
+        seen.add(nk);st.push([m[3],m[4]]);
+      }
+    }
+    return true;   // a busca acabou sem sair: fechado
+  }
+  return false;
+}
+window.builtNear=builtNear;
 window.shelterAt=shelterAt;
 /* carro contra parede e porta fechada (a cerca baixa continua sem barrar carro, como antes) */
 function wallsHitVehicle(cx,cy,c,s,L,W,R){

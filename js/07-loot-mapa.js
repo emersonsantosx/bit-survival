@@ -315,6 +315,7 @@ function rgSpotOk(x,y,isTree){
   for(const z of zombies)if(!z.dead&&Math.abs(z.x-x)<28&&Math.abs(z.y-y)<28)return false;
   for(const a of animals)if(!a.dead&&Math.abs(a.x-x)<28&&Math.abs(a.y-y)<28)return false;
   for(const t of tents)if(Math.abs(t.x-x)<34&&Math.abs(t.y-y)<34)return false;
+  if(window.builtNear&&builtNear(x,y,isTree?26:30))return false;   // nem na base do jogador nem dentro da cabana
   if(plane&&Math.abs(x-plane.x)<90&&Math.abs(y-plane.y)<70)return false;
   return true;
 }

@@ -97,25 +97,72 @@ function dismantle(){
 
 /* ---------- tela ---------- */
 const $s=id=>document.getElementById(id);
-function slotBtn(sl,onTap,extra){
+let dragEnd=0;
+/* arrastar entre as duas grades: mochila (side 'p') e bau (side 'c'). Toque continua guardando/pegando, como antes. */
+function moveTo(from,fi,to,ti){
+  const s=open;if(!s||!P)return;
+  if(from==='p'&&to==='p'){
+    if(ti===fi||!P.inv[fi])return;
+    const it=P.inv[fi];
+    if(ti<P.inv.length){P.inv[fi]=P.inv[ti];P.inv[ti]=it;}else{P.inv.splice(fi,1);P.inv.push(it);}
+    buildInv();uiTap();render_();
+  }else if(from==='c'&&to==='c'){
+    if(ti===fi||!s.s[fi])return;
+    const it=s.s[fi];
+    if(ti<s.s.length){s.s[fi]=s.s[ti];s.s[ti]=it;}else{s.s.splice(fi,1);s.s.push(it);}
+    syncOut(s);uiTap();render_();
+  }else if(from==='p')deposit(fi);
+  else withdraw(fi);
+}
+function startDrag(e,side,i,btn){
+  if(e.button>0)return;
+  const sx=e.clientX,sy=e.clientY,id=e.pointerId;let ghost=null,over=null;
+  const slotAt=(x,y)=>{const t=document.elementFromPoint(x,y);const b=t&&t.closest?t.closest('.islot'):null;return b&&!b.classList.contains('lock')&&b.dataset.side?b:null;};
+  const mv=ev=>{
+    if(ev.pointerId!==id)return;
+    if(!ghost){
+      if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<8)return;
+      ghost=btn.cloneNode(true);ghost.style.cssText='position:fixed;z-index:99999;pointer-events:none;opacity:.85;width:'+btn.offsetWidth+'px;height:'+btn.offsetHeight+'px;transform:scale(1.1)';
+      document.body.appendChild(ghost);btn.style.opacity='.35';
+    }
+    ghost.style.left=(ev.clientX-btn.offsetWidth/2)+'px';ghost.style.top=(ev.clientY-btn.offsetHeight/2)+'px';
+    const o=slotAt(ev.clientX,ev.clientY);
+    if(o!==over){if(over)over.style.outline='';over=o;if(over&&over!==btn)over.style.outline='2px solid #ffd84a';}
+    ev.preventDefault();
+  };
+  const up=ev=>{
+    if(ev.pointerId!==id)return;
+    window.removeEventListener('pointermove',mv);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);
+    if(over)over.style.outline='';
+    if(!ghost)return;
+    ghost.remove();btn.style.opacity='';dragEnd=performance.now()+250;
+    const o=ev.type==='pointercancel'?null:slotAt(ev.clientX,ev.clientY);
+    if(o)moveTo(side,i,o.dataset.side,+o.dataset.i);
+    else render_();
+  };
+  window.addEventListener('pointermove',mv,{passive:false});window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
+}
+function slotBtn(sl,onTap,extra,side,idx){
   const b=document.createElement('button');b.type='button';b.className='islot'+(extra?' '+extra:'');
+  b.dataset.side=side;b.dataset.i=idx;
   if(sl){
     b.insertAdjacentHTML('beforeend',pxFit(ITEMS[sl.t].e,32,28));
     if(sl.n>1)b.insertAdjacentHTML('beforeend','<span class="scnt">'+sl.n+'</span>');
     b.setAttribute('aria-label',ITEMS[sl.t].n+' x'+sl.n);b.title=ITEMS[sl.t].n;
-    b.addEventListener('click',()=>{if(performance.now()<craftReadyAt)return;aud();onTap();});
-  }else b.disabled=true;
+    b.addEventListener('click',()=>{if(performance.now()<craftReadyAt||performance.now()<dragEnd)return;aud();onTap();});
+    b.addEventListener('pointerdown',e=>startDrag(e,side,idx,b));
+  }   // casa vazia continua sendo alvo do arrastar
   return b;
 }
 function render_(){
   const s=open;if(!s||!P)return;
   const cg=$s('stashgrid'),pg=$s('stashpack');if(!cg||!pg)return;
   cg.innerHTML='';pg.innerHTML='';
-  for(let i=0;i<SLOTS;i++)cg.appendChild(slotBtn(s.s[i],()=>withdraw(i),s.s[i]?'':'empty'));
+  for(let i=0;i<SLOTS;i++)cg.appendChild(slotBtn(s.s[i],()=>withdraw(i),s.s[i]?'':'empty','c',i));
   const cap=invCap();
   for(let i=0;i<SLOTS;i++){   // sempre 15 casas, igual ao bau: as que a mochila ainda nao tem aparecem com cadeado (mesma moldura dos dois lados)
     if(i>=cap){const l=document.createElement('button');l.type='button';l.className='islot lock';l.disabled=true;l.innerHTML=pxIcon('lock',2);pg.appendChild(l);}
-    else pg.appendChild(slotBtn(P.inv[i],()=>deposit(i),P.inv[i]?'':'empty'));
+    else pg.appendChild(slotBtn(P.inv[i],()=>deposit(i),P.inv[i]?'':'empty','p',i));
   }
   const u=$s('stashcnt');if(u)u.textContent=s.s.length+'/'+SLOTS;
   const pc=$s('stashpcap');if(pc)pc.textContent=P.inv.length+'/'+cap;
@@ -181,5 +228,5 @@ function stashSnapshot(a){   // convidado que entra depois: cria os baus que fal
 
 window.stashSpot=stashSpot;window.stashBuild=stashBuild;window.stashNearby=stashNearby;window.openStash=openStash;window.closeStash=closeStash;window.stashIsOpen=stashIsOpen;
 window.drawStash=drawStash;window.stashDepth=stashDepth;window.stashPack=stashPack;window.stashLoad=stashLoad;window.stashReset=stashReset;window.stashRemote=stashRemote;window.stashSnapshot=stashSnapshot;
-window.stashList=()=>stashes;window.stashTakeAll=takeAll;window.stashDismantle=dismantle;window.stashDeposit=deposit;window.stashWithdraw=withdraw;window.STASH_SLOTS=SLOTS;window.STASH_COST=COST;
+window.stashList=()=>stashes;window.stashTakeAll=takeAll;window.stashDismantle=dismantle;window.stashDeposit=deposit;window.stashWithdraw=withdraw;window.stashMove=moveTo;window.STASH_SLOTS=SLOTS;window.STASH_COST=COST;
 })();

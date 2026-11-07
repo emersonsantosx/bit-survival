@@ -85,5 +85,28 @@ console.log(JSON.stringify(m));
 ok(m.add&&m.set&&m.createdOnSet,'eventos stashAdd/stashSet criam e atualizam (itens invalidos sao ignorados)');
 ok(m.snap&&m.fromSnap&&m.del,'snapshot leva os baus ao convidado; stashDel remove');
 ok(m.whitelist&&m.junk,'eventos liberados na rede e lixo e ignorado');
+/* arrastar com o mouse de verdade: mochila -> bau, bau -> mochila, reordenar nos dois lados */
+await pg.evaluate(()=>{
+  localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];
+  trees.length=0;rocks.length=0;rebuildSolidGrid();P.inside=null;P.pack=true;P.x=1700;P.y=1700;P.face=0;
+  P.inv=[{t:'wood',n:8}];craft(RECIPES.find(q=>q.out==='stash'));
+  P.inv=[{t:'stone',n:3},{t:'cloth',n:2},{t:'food',n:1}];const s=stashList()[0];s.s=[{t:'water',n:2},{t:'bandage',n:1}];
+  P.x=s.x-20;P.y=s.y;state='play';openStash(s);craftReadyAt=0;buildInv();
+});
+const cell=async(side,i)=>{const bb=await pg.locator('.islot[data-side="'+side+'"][data-i="'+i+'"]').boundingBox();return {x:bb.x+bb.width/2,y:bb.y+bb.height/2};};
+const drag=async(a,bq)=>{const p=await cell(a[0],a[1]),q=await cell(bq[0],bq[1]);await pg.mouse.move(p.x,p.y);await pg.mouse.down();await pg.mouse.move((p.x+q.x)/2,(p.y+q.y)/2,{steps:4});await pg.mouse.move(q.x,q.y,{steps:4});await pg.mouse.up();await pg.waitForTimeout(80);};
+const st=()=>pg.evaluate(()=>({inv:P.inv.map(q=>q.t).join(','),bau:stashList()[0].s.map(q=>q.t).join(',')}));
+await drag(['p',0],['c',9]);let d1=await st();   // pedra da mochila para uma casa vazia do bau
+ok(d1.inv==='cloth,food'&&d1.bau==='water,bandage,stone','arrastar da mochila para o bau guarda o item ('+JSON.stringify(d1)+')');
+await drag(['c',0],['p',7]);let d2=await st();   // agua do bau para uma casa vazia da mochila
+ok(d2.inv==='cloth,food,water'&&d2.bau==='bandage,stone','arrastar do bau para a mochila pega o item ('+JSON.stringify(d2)+')');
+await drag(['c',0],['c',1]);let d3=await st();    // reordenar dentro do bau (troca)
+ok(d3.bau==='stone,bandage','arrastar dentro do bau troca de lugar ('+d3.bau+')');
+await drag(['p',0],['p',2]);let d4=await st();    // reordenar dentro da mochila
+ok(d4.inv==='water,food,cloth','arrastar dentro da mochila troca de lugar ('+d4.inv+')');
+await drag(['p',0],['c',3]);await drag(['p',0],['p',0]);let d5=await st();
+ok(d5.bau==='stone,bandage,water'&&d5.inv==='food,cloth','soltar em cima de si mesmo nao muda nada e o bau sincroniza ('+JSON.stringify(d5)+')');
+const tap=await pg.evaluate(()=>{const before=stashList()[0].s.length;document.querySelector('#stashgrid .islot[data-i="0"]').click();return [before,stashList()[0].s.length,P.inv.length];});
+ok(tap[1]===tap[0]-1,'tocar continua pegando o item do bau ('+tap+')');
 ok(errs.length===0,'sem erros de JS ('+errs.join(' | ')+')');
 await b.close();console.log(bad?'\n'+bad+' falha(s)':'\nTodos os testes passaram');process.exit(bad?1:0);})();

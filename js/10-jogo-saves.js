@@ -310,6 +310,7 @@ const FRUIT_FOOD={apple:[14,5,1,'Maçã crocante!'],berry:[9,7,0,'Frutinhas doce
 const EATABLE=it=>it==='food'||isFishItem(it)||it==='cookedfish'||it==='meat'||it==='cookedmeat'||it==='corn'||it==='cookedcorn'||it==='potato'||it==='bakedpotato'||it==='melon'||!!FRUIT_FOOD[it];
 let EAT=null,eatLock=false;
 /* comer uma colheita devolve 1 semente da mesma planta (o jogador nao fabrica sementes no crafting) */
+const HOLDABLE=it=>EATABLE(it)||(typeof isSeedItem==='function'&&isSeedItem(it));   // o que vai para a mao: alimentos e sementes
 const SEED_OF={corn:'seed_corn',cookedcorn:'seed_corn',potato:'seed_potato',bakedpotato:'seed_potato',melon:'seed_melon',apple:'seed_apple',berry:'seed_berry',date:'seed_date',pricklypear:'seed_cactus',tomato:'seed_tomato',carrot:'seed_carrot'};
 let seedGain=null;
 function giveSeedFor(){
@@ -348,9 +349,9 @@ function consumeOne(it){
 }
 function putAwayHold(quiet){
   if(!P||!P.hold)return false;
-  P.hold=null;EAT=null;
+  const was=P.hold;P.hold=null;EAT=null;
   try{buildInv();}catch(e){}
-  if(!quiet)toast('Guardou o alimento');
+  if(!quiet)toast(EATABLE(was)?'Guardou o alimento':'Guardou a semente');
   return true;
 }
 function useItem(i){
@@ -359,12 +360,12 @@ function useItem(i){
   if(!slot)return;
   const it=slot.t;
   // alimentos vão para a mão; o botão de ataque vira COMER
-  if(EATABLE(it)){
+  if(HOLDABLE(it)){
     if(P.hold===it){putAwayHold();beep(300,.06,'triangle',.04);return;}
     if(P.inVehicle||P.sleeping){toast('Agora não dá para segurar');return;}
     P.hold=it;EAT=null;eatLock=false;
     buildInv();
-    toast('Na mão: '+ITEMS[it].n+' · botão COMER');
+    toast('Na mão: '+ITEMS[it].n+(EATABLE(it)?' · botão COMER':' · chegue num canteiro arado e use PLANTAR'));
     beep(420,.07,'triangle',.05,120);
     return;
   }
@@ -381,7 +382,7 @@ function useItem(i){
 }
 /* comer segurando o botão (como no Minecraft) */
 function eatStart(){
-  if(!P.hold||EAT||eatLock)return;
+  if(!P.hold||!EATABLE(P.hold)||EAT||eatLock)return;
   if(P.food>=95){toast('Sem fome agora');eatLock=true;return;}
   EAT={t:0,dur:P.hold==='food'?.9:1.2,c:0};
 }
@@ -836,6 +837,7 @@ function pickup(){
       return;
     }
     if(cf&&!P.hold&&(firstFishItem()||countInv('meat')>0||countInv('corn')>0||countInv('potato')>0)){toast('Segure o alimento cru na mão para assar');return;}
+    if(window.plotNeedsSeed&&plotNeedsSeed()){toast('Segure a semente na mão para plantar');return;}
     toast('Nada por perto');return;}
   const t=it.t;
   if(t==='ammo'){const n=rint(5,10);P.ammo+=n;toast('+'+n+' munição');}
