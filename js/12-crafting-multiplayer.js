@@ -21,18 +21,25 @@ function craft(r){
     if(!sp){toast(P.inside?'Monte o baú ao ar livre':'Sem espaço para o baú aqui');beep(120,.1,'square',.05);return;}
     P._sb=sp;
   }
+  if(out==='well'){
+    const why=wellWhy();
+    if(why){toast(why);beep(120,.1,'square',.05);return;}
+    P._wp=wellSpot();
+  }
   if(out==='tent'){
     const tp=tentSpot();
     if(!tp){toast(P.inside?'Monte a barraca ao ar livre':'Sem espaço para a barraca aqui');beep(120,.1,'square',.05);return;}
     P._tp=tp;
   }
-  if(out!=='campfire'&&out!=='tent'&&out!=='stash'&&out!=='greenhouse'&&!['pickaxe','axe','katana','spear','bow','arrows','bat','fishingrod'].includes(out)&&!BUILD_TOOLS.includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
+  if(out!=='campfire'&&out!=='tent'&&out!=='stash'&&out!=='well'&&out!=='greenhouse'&&!['pickaxe','axe','katana','spear','bow','arrows','bat','fishingrod'].includes(out)&&!BUILD_TOOLS.includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
   for(const k in r.need)removeInv(k,r.need[k]);
   if(out==='greenhouse'){
     const sp=P._gh||ghSpot();P._gh=null;
     if(sp){ghBuild(sp);toast('Estufa montada! Use a enxada dentro dela para arar');buildSound();}
   }else if(out==='stash'){
     const sp=P._sb||stashSpot();P._sb=null;stashBuild(sp);
+  }else if(out==='well'){
+    const sp=P._wp||wellSpot();P._wp=null;wellBuild(sp);
   }else if(out==='tent'){
     const tp=P._tp||tentSpot()||{x:P.x+40,y:P.y};P._tp=null;
     tents.push({x:tp.x,y:tp.y});rebuildSolidGrid();
@@ -93,7 +100,7 @@ function refreshCraft(){
     const row=document.createElement('div');
     row.className='craft-row '+(ok?'can':'no');
     const cost=Object.entries(r.need).map(([k,v])=>'<span class="cost-chip'+(countInv(k)<v?' lack':'')+'" title="'+(ITEMS[k]?.n||k)+'">'+(ITEMS[k]&&ITEMS[k].e?pxFit(ITEMS[k].e,16,14):(ITEMS[k]?.n||k))+'<b>'+v+'</b></span>').join('');
-    const icon=pxFit(isTool||isWeapon||r.out==='arrows'||r.out==='fishingrod'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'arrows':'axe')):(r.out==='bandage'?'bandage':(r.out==='backpack'?'backpack':(r.out==='tent'?'tent':(r.out==='stash'?'stash':(r.out==='greenhouse'?'greenhouse':'fire'))))),30,24);
+    const icon=pxFit(isTool||isWeapon||r.out==='arrows'||r.out==='fishingrod'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'arrows':'axe')):(r.out==='bandage'?'bandage':(r.out==='backpack'?'backpack':(r.out==='tent'?'tent':(r.out==='stash'?'stash':(r.out==='well'?'well':(r.out==='greenhouse'?'greenhouse':'fire')))))),30,24);
     row.innerHTML='<div class="recipe-icon">'+icon+'</div><div class="info"><div class="name">'+r.label+'</div><div class="cost">'+r.desc+'</div><div class="cost">Custo: '+(cost||'nenhum')+'</div><div class="status">'+(ok?pxIcon('check',2)+' Recursos suficientes':'Faltam recursos')+'</div></div>';
     const btn=document.createElement('button');
     btn.textContent='CRIAR';btn.disabled=!ok;
@@ -175,6 +182,8 @@ function handleEvt(kind, data){
     }
   } else if(kind==='stashAdd'||kind==='stashSet'||kind==='stashDel'){
     stashRemote(kind,data);
+  } else if(kind==='wellAdd'){
+    wellRemote(kind,data);
   } else if(kind==='sleepSkip'){
     if(Number.isFinite(data.T)&&P&&P.sleeping)sleepSkipApply(clamp(data.T,0,1e7));
   } else if(kind==='campfireAdded'){
@@ -802,7 +811,7 @@ function applySnapshot(snap){
     campfires = merged;
   }
   plotsApplySnapshot(snap.plots);if(Array.isArray(snap.fr))for(const a of snap.fr)if(Array.isArray(a))fruitRemote({x:a[0],y:a[1],r:a[2]});if(Array.isArray(snap.br))for(const k of snap.br)structRemote(k);fenceApplySnapshot(snap.fn);cellApplySnapshot(snap.pf);if(Array.isArray(snap.gh))for(const a of snap.gh)if(Array.isArray(a))ghRemote({x:a[0],y:a[1]});
-  stashSnapshot(snap.bx);
+  stashSnapshot(snap.bx);wellSnapshot(snap.wl);
   if(Array.isArray(snap.tents)){
     let ch=false;
     for(const a of snap.tents){if(Array.isArray(a)&&isFiniteNum(a[0])&&isFiniteNum(a[1])&&!tents.some(t=>Math.abs(t.x-a[0])<10&&Math.abs(t.y-a[1])<10)){tents.push({x:a[0],y:a[1]});ch=true;}}
@@ -1036,7 +1045,7 @@ function packSnapshot(){
     vehicles:vPack,vfull:fullV,
     campfires:campfires.map(c=>({x:Math.round(c.x),y:Math.round(c.y),t:c.t||0,flicker:+(c.flicker||0).toFixed(2)})),
     tents:tents.map(t=>[Math.round(t.x),Math.round(t.y)]),
-    bx:stashPack(),
+    bx:stashPack(),wl:wellPack(),
     plots:plotsPack(),fr:fruitPack(),gh:ghPack(),fn:fencePack(),br:structPack(),pf:cellPack(),
     sc:SCW.on?1:0,
     bd:packBirds(),

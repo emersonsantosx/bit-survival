@@ -343,6 +343,7 @@ function builtNear(x,y,rad){
   if(window.plotList)for(const p of plotList())if(Math.abs(p.cx*CELL+8-x)<R+8&&Math.abs(p.cy*CELL+8-y)<R+8)return true;
   if(window.ghList)for(const g of ghList())if(x>g.x-R&&x<g.x+48+R&&y>g.y-R&&y<g.y+48+R)return true;
   if(window.stashList)for(const s of stashList())if(Math.abs(s.x-x)<R+8&&Math.abs(s.y-y)<R+8)return true;
+  if(window.wellList)for(const w of wellList())if(Math.abs(w.x-x)<R+10&&Math.abs(w.y-y)<R+10)return true;
   if(tallN){   // recinto fechado por paredes (mesmo sem piso nem telhado)
     const blocked=(d,i,j)=>{const q=fmap.get(d+i+','+j);return !!q&&q.g>=2&&!(q.g===3&&q.o);};
     const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL),k=cx+','+cy,seen=new Set([k]),st=[[cx,cy]];
