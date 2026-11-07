@@ -17,7 +17,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 07-loot-mapa | 62 | 30 | 32 | 0 | 13 | 8 |
 | 08-cidade-vilas-marcos | 44 | 23 | 20 | 1 | 11 | 14 |
 | 09-milharal-geracao | 63 | 36 | 27 | 0 | 12 | 9 |
-| 10-jogo-saves | 109 | 74 | 35 | 0 | 13 | 11 |
+| 10-jogo-saves | 109 | 74 | 35 | 0 | 13 | 12 |
 | 11-pesca-update | 27 | 10 | 17 | 0 | 13 | 15 |
 | 12-crafting-multiplayer | 41 | 17 | 24 | 0 | 13 | 17 |
 | 13-render-personagens | 96 | 48 | 48 | 0 | 12 | 14 |
@@ -30,7 +30,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 20-piso-telhado | 0 | 0 | 0 | 0 | 9 | 0 |
 | 21-frutiferas | 0 | 0 | 0 | 0 | 9 | 0 |
 | 22-bau | 0 | 0 | 0 | 0 | 9 | 0 |
-| 23-poco | 0 | 0 | 0 | 0 | 8 | 0 |
+| 23-poco | 0 | 0 | 0 | 0 | 9 | 0 |
 
 ## Matriz: quantos usos cada arquivo (linha) faz de globais de outro (coluna)
 
@@ -58,7 +58,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 20-piso-telhado | 39 | 3 | 6 | 37 | 6 |  |  | 1 |  |  | 2 | 2 | 30 |  |  |  |  |  |  | . |  |  |  |
 | 21-frutiferas | 17 | 1 | 7 | 25 | 2 |  |  |  |  |  | 1 | 3 | 13 |  | 1 |  |  |  |  |  | . |  |  |
 | 22-bau | 14 | 13 | 11 | 63 | 11 |  |  | 1 |  | 3 | 8 | 6 |  |  |  |  |  |  |  |  |  | . |  |
-| 23-poco | 15 | 4 | 4 | 55 | 14 |  |  | 2 |  |  | 6 | 2 |  |  |  |  |  |  |  |  |  |  | . |
+| 23-poco | 15 | 4 | 4 | 51 | 14 |  |  | 2 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  | . |
 
 (colunas = os dois primeiros digitos do nome do arquivo)
 
@@ -66,9 +66,9 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 19 | 1784 |
+| P | let | 04-estado:14 | 19 | 1782 |
 | MP | let | 04-estado:19 | 19 | 562 |
-| selectedMap | let | 04-estado:3 | 19 | 212 |
+| selectedMap | let | 04-estado:3 | 19 | 211 |
 | beep | funcao | 02-audio:42 | 18 | 128 |
 | rnd | const | 01-base:16 | 17 | 421 |
 | clamp | const | 01-base:4 | 16 | 97 |
@@ -94,7 +94,6 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | dark | let | 04-estado:14 | 9 | 58 |
 | animals | let | 04-estado:10 | 9 | 37 |
 | ORLA | let | 05-geometria:123 | 9 | 37 |
-| lakes | let | 04-estado:10 | 9 | 29 |
 | tents | let | 04-estado:10 | 9 | 22 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 9 | 21 |
 | addItem | funcao | 04-estado:250 | 9 | 20 |
@@ -102,6 +101,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | W | let | 01-base:47 | 8 | 97 |
 | remotePlayers | let | 04-estado:11 | 8 | 89 |
 | rocks | let | 04-estado:10 | 8 | 45 |
+| lakes | let | 04-estado:10 | 8 | 28 |
 | rebuildSolidGrid | funcao | 05-geometria:365 | 8 | 28 |
 | track | funcao | 15-missoes-ui-controles:60 | 8 | 13 |
 | CFG | const | 01-base:99 | 7 | 83 |
@@ -127,7 +127,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | onSand | funcao | 05-geometria:131 | 6 | 8 |
 | joy | const | 04-estado:183 | 5 | 51 |
 
-(89 no total, mostrando ate 60)
+(90 no total, mostrando ate 60)
 
 ## Candidatas a esconder (so usadas dentro do proprio arquivo)
 

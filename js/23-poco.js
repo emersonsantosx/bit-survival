@@ -1,20 +1,19 @@
 /* ============ POCO (agua para beber, encher garrafa e manter a horta umida) ============
    Dois jeitos de aparecer:
-   1) gerado com o mundo (mesma semente = mesmos pocos, nada de save): ao lado de algumas casas na floresta, na neve e no deserto, e, na cidade,
-      so no fundo de alguns quintais cercados e gramados (nunca em praca);
+   1) gerado com o mundo (mesma semente = mesmos pocos, nada de save), poucos e bem espalhados: 2 na floresta, 1 na neve, 1 no deserto, ao lado de casas,
+      e 2 na cidade, so no fundo de quintais cercados e gramados (nunca em praca);
    2) fabricado pelo jogador (8 pedras e 4 madeiras): monta na frente do personagem. Fica no save e vai para o convidado pelo snapshot/evento wellAdd.
    Regras por mapa (estado local de cada jogador, nao salvo): floresta e cidade sempre tem agua; deserto: cada poco rende poucos goles e se enche de
-   novo devagar, e o poco fabricado so da certo perto de um oasis; neve: de noite ou nevando o poco congela, o primeiro uso quebra o gelo.
+   novo devagar; neve: de noite ou nevando o poco congela, o primeiro uso quebra o gelo.
    Um canteiro perto de um poco fica sempre umido (como perto de um lago).
    Estado: wells = [{x,y,g:1 gerado | 0 do jogador}]. Modulo no padrao dos 18..22: IIFE + window.*  */
 (function(){
-const COST_STONE=8,COST_WOOD=4,NEAR=40,SIP=14,DESERT_MAX=3,DESERT_REFILL=90,THAW=150,OASIS_R=340;
+const COST_STONE=8,COST_WOOD=4,NEAR=40,SIP=14,DESERT_MAX=3,DESERT_REFILL=90,THAW=150;
 let wells=[];
 const R2=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
 
 /* ---------- regras ---------- */
 function frozen(w){return selectedMap==='snow'&&(dark>=.5||weather==='snow')&&T>=(w.thaw||0);}
-function oasisNear(x,y){for(const l of lakes)if(!l.fountain&&Math.hypot(x-l.cx,y-l.cy)<l.r+OASIS_R)return true;return false;}
 function wellNearby(){
   let b=null,bd=NEAR;
   for(const w of wells){const d=Math.hypot(w.x-P.x,w.y-P.y);if(d<bd){bd=d;b=w;}}
@@ -68,7 +67,6 @@ function wellSpot(){
 }
 function wellWhy(){   // por que nao da para montar aqui (null = da)
   if(P.inside||bldAt(P.x,P.y))return 'Monte o poço ao ar livre';
-  if(selectedMap==='desert'&&!oasisNear(P.x,P.y))return 'No deserto o poço só dá água perto de um oásis';
   return wellSpot()?null:'Sem espaço para o poço aqui';
 }
 function wellBuild(sp){
@@ -83,44 +81,55 @@ function wellBuild(sp){
 }
 function remark(){try{if(window.plotsRemark)plotsRemark();}catch(e){}}   // canteiros ja arados perto do poco novo passam a ficar umidos
 
-/* ---------- geracao (determinista: so hash da posicao, nao sorteia nada do mundo) ---------- */
+/* ---------- geracao (determinista: so hash/semente, nao sorteia nada do mundo) ---------- */
+const WELL_MAX={forest:2,snow:1,desert:1,city:2};
+let cands=[];   // lugares validos achados na geracao (a cidade os junta em js/08); no fim sorteia-se alguns bem espalhados
 function wellGenAdd(x,y){
   x=Math.round(x);y=Math.round(y);
   if(wells.some(w=>Math.hypot(w.x-x,w.y-y)<30))return false;
   wells.push({x,y,g:1});return true;
 }
-function wellsGen(){   // floresta, neve e deserto: ao lado de algumas casas (a cidade poe os seus nos quintais, em js/08)
-  const map=selectedMap;if(map==='city')return;
-  const cfg={forest:{ch:.3,max:6,want:['house','cabin','barn']},snow:{ch:.3,max:4,want:['cabin','house']},desert:{ch:.34,max:3,want:['house','barn','cabin']}}[map];
-  if(!cfg)return;
-  let n=0;
-  for(const b of blds){
-    if(n>=cfg.max)break;
-    if(!cfg.want.includes(b.type))continue;
-    const lr=mkRng(((Math.round(b.x)*53+Math.round(b.y)*79+(b.w|0)*7+11)%99989)/99989);
-    if(lr()>=cfg.ch)continue;
-    const dx=Number.isFinite(b.doorX)?b.doorX+(b.door||0)/2:b.x+b.w/2,dy=b.y+b.h;
-    let done=false;
-    for(let k=0;k<16&&!done;k++){
-      const side=Math.floor(lr()*4),j=lr();let x,y;
-      if(side===0){x=b.x+b.w+30+lr()*22;y=b.y+8+j*Math.max(6,b.h-16);}
-      else if(side===1){x=b.x-30-lr()*22;y=b.y+8+j*Math.max(6,b.h-16);}
-      else if(side===2){x=b.x+10+j*Math.max(6,b.w-20);y=b.y-14-lr()*14;}
-      else{x=b.x+10+j*Math.max(6,b.w-20);y=b.y+b.h+30+lr()*16;}
-      x=Math.round(x);y=Math.round(y);
-      if(x<60||y<60||x>WW-60||y>WH-60)continue;
-      if(Math.hypot(x-dx,y-dy)<44)continue;                              // nunca na porta
-      if(solidPoint(x,y,20)||pointInLake(x,y+10)||bldAt(x,y)||bldAt(x,y-22)||onCityRoad(x,y,16))continue;
-      if(trees.some(t=>Math.abs(t.x-x)<26&&t.y>y-30&&t.y<y+10))continue;   // sem copa por cima
-      if(window.plotList&&plotList().some(p=>Math.abs(p.cx*16+8-x)<34&&Math.abs(p.cy*16+8-y)<34))continue;
-      if(window.ghList&&ghList().some(g=>x>g.x-26&&x<g.x+74&&y>g.y-26&&y<g.y+74))continue;
-      if(wells.some(w=>Math.hypot(w.x-x,w.y-y)<140))continue;
-      if(wellGenAdd(x,y)){done=true;n++;}
-    }
+function wellCand(x,y){cands.push({x:Math.round(x),y:Math.round(y)});}
+function pickSpread(list,n,lr){   // o primeiro por sorteio da semente, os outros sempre o mais longe dos ja escolhidos
+  if(!list.length)return [];
+  const out=[list[Math.floor(lr()*list.length)]];
+  while(out.length<n&&out.length<list.length){
+    let best=null,bd=-1;
+    for(const c of list){if(out.includes(c))continue;const d=Math.min(...out.map(o=>Math.hypot(o.x-c.x,o.y-c.y)));if(d>bd){bd=d;best=c;}}
+    out.push(best);
   }
-  rebuildSolidGrid();
+  return out;
 }
-function wellReset(){wells=[];}
+function findSpotNear(b,lr){
+  const dx=Number.isFinite(b.doorX)?b.doorX+(b.door||0)/2:b.x+b.w/2,dy=b.y+b.h;
+  for(let k=0;k<16;k++){
+    const side=Math.floor(lr()*4),j=lr();let x,y;
+    if(side===0){x=b.x+b.w+30+lr()*22;y=b.y+8+j*Math.max(6,b.h-16);}
+    else if(side===1){x=b.x-30-lr()*22;y=b.y+8+j*Math.max(6,b.h-16);}
+    else if(side===2){x=b.x+10+j*Math.max(6,b.w-20);y=b.y-14-lr()*14;}
+    else{x=b.x+10+j*Math.max(6,b.w-20);y=b.y+b.h+30+lr()*16;}
+    x=Math.round(x);y=Math.round(y);
+    if(x<60||y<60||x>WW-60||y>WH-60)continue;
+    if(Math.hypot(x-dx,y-dy)<44)continue;                              // nunca na porta
+    if(solidPoint(x,y,20)||pointInLake(x,y+10)||bldAt(x,y)||bldAt(x,y-22)||onCityRoad(x,y,16))continue;
+    if(trees.some(t=>Math.abs(t.x-x)<26&&t.y>y-30&&t.y<y+10))continue;   // sem copa por cima
+    if(window.plotList&&plotList().some(p=>Math.abs(p.cx*16+8-x)<34&&Math.abs(p.cy*16+8-y)<34))continue;
+    if(window.ghList&&ghList().some(g=>x>g.x-26&&x<g.x+74&&y>g.y-26&&y<g.y+74))continue;
+    return {x,y};
+  }
+  return null;
+}
+function wellsGen(){   // chamada no fim da geracao do mundo
+  const map=selectedMap,max=WELL_MAX[map];if(!max)return;
+  const lr=mkRng((((worldSeed|0)>>>0)%99991+map.length*131)/99991%1);
+  if(map!=='city'){
+    const want={forest:['house','cabin','barn'],snow:['cabin','house'],desert:['house','barn','cabin']}[map];
+    for(const b of blds)if(want.includes(b.type)){const s=findSpotNear(b,mkRng(((Math.round(b.x)*53+Math.round(b.y)*79+(b.w|0)*7+11)%99989)/99989));if(s)wellCand(s.x,s.y);}
+  }
+  for(const c of pickSpread(cands,max,lr))wellGenAdd(c.x,c.y);
+  cands=[];rebuildSolidGrid();
+}
+function wellReset(){wells=[];cands=[];}
 
 /* ---------- desenho: aro de pedra, dois postes, telhadinho, corda e balde ---------- */
 function drawWell(w){
@@ -161,7 +170,7 @@ function wellSnapshot(a){
 }
 
 window.wellList=()=>wells;window.wellNearby=wellNearby;window.wellNear=wellNear;window.wellUse=wellUse;window.wellSpot=wellSpot;window.wellWhy=wellWhy;window.wellBuild=wellBuild;
-window.wellGenAdd=wellGenAdd;window.wellsGen=wellsGen;window.wellReset=wellReset;window.drawWell=drawWell;window.wellDepth=wellDepth;
+window.wellGenAdd=wellGenAdd;window.wellCand=wellCand;window.WELL_MAX=WELL_MAX;window.wellsGen=wellsGen;window.wellReset=wellReset;window.drawWell=drawWell;window.wellDepth=wellDepth;
 window.wellPack=wellPack;window.wellLoad=wellLoad;window.wellRemote=wellRemote;window.wellSnapshot=wellSnapshot;window.wellFrozen=frozen;
 window.WELL_COST={stone:COST_STONE,wood:COST_WOOD};
 })();

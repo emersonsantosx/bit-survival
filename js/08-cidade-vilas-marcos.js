@@ -183,10 +183,10 @@ function cityHouseFence(h,b){
   for(let by=hy+14;by<hy1-8;by+=26,k++){if(hh(k)<.45)continue;cityDecor.push({x:x0+4,y:by,t:'bush',c:Math.floor(hh(k+50)*3)});if(hh(k+9)<.7)cityDecor.push({x:x1-4,y:by,t:'bush',c:Math.floor(hh(k+60)*3)});}
   for(let i=0;i<5;i++){const fx=Math.round(hx+6+hh(70+i)*(h.w-12)),fy=hy1+7+Math.floor(hh(80+i)*8);if(cityPaths.some(q=>fx>q.x-3&&fx<q.x+q.w+3&&fy>q.y-3&&fy<q.y+q.h+3))continue;cityDecor.push({x:fx,y:fy,t:'flower',c:Math.floor(hh(90+i)*4)});}
   cityDecor.push({x:(gc+1)*16+10,y:y1+7,t:'mail',c:Math.floor(hh(99)*3)});
-  /* poco no fundo do quintal (so em alguns, so aqui: nunca em praca). Fica entre a cerca dos fundos e a casa, longe da portinha e dos arbustos. */
-  if(hh(120)<.38&&hy-y0>=52&&window.wellGenAdd){
+  /* poco no fundo do quintal (so 2 no mapa inteiro, so aqui: nunca em praca). Fica entre a cerca dos fundos e a casa, longe da portinha e dos arbustos. */
+  if(hy-y0>=52&&window.wellCand){
     const wx=Math.round(x0+24+hh(121)*Math.max(0,(x1-x0)-48)),wy=Math.round(y0+26+hh(122)*Math.max(0,hy-y0-44));
-    if(wy<=hy-12)wellGenAdd(wx,wy);
+    if(wy<=hy-12)wellCand(wx,wy);   // todos os quintais com fundo livre sao candidatos; so 2 viram poco (js/23)
   }
 }
 function cityFree(x,y,hw,hh){
