@@ -1297,6 +1297,7 @@ function updateHud(force){
   const cf=nearestCampfire()||nearestStove();
   if(TG&&TG.k==='tap'){btnText='ÁGUA';}
   else if(TG&&TG.k==='chest'){btnText='ABRIR';}
+  else if(TG&&TG.k==='stash'){btnText='ABRIR';}
   else if(TG&&TG.k==='door'){btnText=TG.dr.open?'FECHAR':'PORTA';}
   else if(TG&&TG.k==='fgate'){btnText=TG.f.o?'FECHAR':TG.f.g===3?'PORTA':'PORTÃO';}
   else if(TG&&TG.k==='plot'){btnText=TG.act;}

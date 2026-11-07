@@ -376,6 +376,7 @@ function rebuildSolidGrid(){
   for(const r of rocks) put(r.x,r.y,'rock',r);
   for(const d of decorations) if(d.solid) put(d.x,d.y,'decor',d);
   for(const t of tents){put(t.x-12,t.y-6,'decor',t);put(t.x+12,t.y-6,'decor',t);put(t.x,t.y-10,'decor',t);}
+  if(window.stashList)for(const s of stashList()){put(s.x-5,s.y-4,'decor',s);put(s.x+5,s.y-4,'decor',s);}   // bau do jogador: bloqueia a passagem
 }
 function querySolidNear(x,y,pad){
   if(!solidGrid) return [];

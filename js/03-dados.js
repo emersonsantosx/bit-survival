@@ -71,6 +71,7 @@ PXG.wall=['kkkkkkkkkkkk','kAAAAAAAAAAk','kNkNkNkNkNNk','kNkNkNkNkNNk','kNkNkNkNk
 PXG.door=['kkkkkkkkkkkk','kNNNNNNNNNNk','kNSNNNNNNSNk','kNNNNNNNNNNk','kNSNNNNNANNk','kNNNNNNNNNNk','kkkkkkkkkkkk'];
 PXG.floor=['kkkkkkkkkkkk','kAAAAAAAAAAk','kNNNNNNNNNNk','kAAAAAAAAAAk','kNNNNNNNNNNk','kAAAAAAAAAAk','kkkkkkkkkkkk'];
 PXG.roof=['..kkkkkkkkkk','.kRRRRRRRRRk','kRrRRRrRRRRk','kRRRRRRRRrRk','kRrRRRrRRRRk','kRRRRRRRRrRk','kkkkkkkkkkkk'];
+PXG.stash=['.kkkkkkkkk.','kNnnnnnnnNk','kNNNNNNNNNk','ksssssssssk','kNNNYYNNNNk','kNNNYYNNNNk','kNNNNNNNNNk','.kkkkkkkkk.'];
 PXG.mattress=['kkkkkkkkkkkk','kWWWCBBBBBBk','kWWWCBBBBBBk','kWWWCBBBBBBk','kWWWCBBBBBBk','kWWWCBBBBBBk','kkkkkkkkkkkk'];
 PXG.fence=['.k..k..k..k.','kNk.kNk.kNk.','kNkkkNkkkNkk','kNk.kNk.kNk.','kNkkkNkkkNkk','kNk.kNk.kNk.','kkk.kkk.kkk.'];
 PXG.potato=['..kNNk...','.kNnnNNk.','kNnnNnNNk','kNNnNNnNk','.kNNnNNk.','..kkNkk..'];
@@ -280,6 +281,7 @@ const RECIPES=[
   {out:'fishingrod',need:{wood:3,stone:1}, label:'Vara de Pesca',   desc:'Lance a isca no lago e pesque (só mapas com lago)', lake:true },
   {out:'bandage',  need:{cloth:3},    label:'Bandagem',        desc:'Estanca sangramento e cura um pouco' },
   {out:'backpack', need:{cloth:6,wood:3}, label:'Mochila',        desc:'Carrega 12 itens diferentes em vez de 6', once:true },
+  {out:'stash', need:{wood:6}, label:'Baú', desc:'Só de madeira. Monta um baú ao ar livre na sua frente, com 15 espaços para guardar itens (nada se perde). Chegue perto e use ABRIR. Só dá para desmontar vazio' },
   {out:'tent', need:{cloth:8,wood:5}, label:'Barraca', desc:'Dorme 2 pessoas (só à noite). Monte ao ar livre' },
   {out:'campfire', need:{wood:5,stone:3}, label:'Fogueira',        desc:'Cozinha peixe e ilumina à noite' }
 ];
