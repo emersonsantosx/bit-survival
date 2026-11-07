@@ -685,7 +685,7 @@ function handleNetData(data,isHostSide){
     rp.moving=!!data.moving;rp.sprint=!!data.sprint;
     rp.weapon=(typeof data.weapon==='string'?data.weapon.slice(0,16):'fists');
     rp.swing=isFiniteNum(data.swing)?data.swing:0;
-    rp.hold=(typeof data.hold==='string'&&EATABLE(data.hold)&&ITEMS[data.hold])?data.hold:'';
+    rp.hold=(typeof data.hold==='string'&&HOLDABLE(data.hold)&&ITEMS[data.hold])?data.hold:'';
     rp.fw=Array.isArray(data.fw)?data.fw.filter(k=>typeof k==='string'&&WEAPONS[k]&&WEAPONS[k].firearm).slice(0,8):(rp.fw||[]);   // armas de fogo que o aliado já tem
     rp.hp=isFiniteNum(data.hp)?clamp(data.hp,0,100):rp.hp;
     rp.alive=data.alive!==false;rp.inVehicle=!!data.inVehicle;

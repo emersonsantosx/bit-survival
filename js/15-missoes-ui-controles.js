@@ -557,12 +557,12 @@ function refreshInvScr(){
     return;
   }
   const it=ITEMS[sl.t];
-  const usable=isFishItem(sl.t)||['food','water','cookedfish','meat','cookedmeat','corn','cookedcorn','potato','bakedpotato','melon','apple','berry','date','pricklypear','tomato','carrot','bandage','medkit'].includes(sl.t);
+  const usable=isFishItem(sl.t)||['food','water','cookedfish','meat','cookedmeat','corn','cookedcorn','potato','bakedpotato','melon','apple','berry','date','pricklypear','tomato','carrot','bandage','medkit'].includes(sl.t)||HOLDABLE(sl.t);
   d.innerHTML='<div class="ico">'+pxFit(it.e,48,44)+'</div><div class="nm">'+it.n.toUpperCase()+'</div><div class="qt">x'+sl.n+'</div><div class="ds">'+(IDESC[sl.t]||(FISH[it.fish]?'Peixe cru. Recupera '+FISH[it.fish].food+' de fome, melhor assar na fogueira (rende '+FISH[it.fish].yield+' '+(FISH[it.fish].yield>1?'porções':'porção')+').':''))+'</div>'+
-    '<div class="ibtns"><button class="ibtn use" id="ibUse"'+(usable?'':' disabled')+'>'+(EATABLE(sl.t)?(P.hold===sl.t?'GUARDAR':'SEGURAR'):'USAR')+'</button><button class="ibtn" id="ibDrop">SOLTAR</button>'+(sl.n>1?'<button class="ibtn" id="ibAll">TUDO</button>':'')+'</div>';
+    '<div class="ibtns"><button class="ibtn use" id="ibUse"'+(usable?'':' disabled')+'>'+(HOLDABLE(sl.t)?(P.hold===sl.t?'GUARDAR':'SEGURAR'):'USAR')+'</button><button class="ibtn" id="ibDrop">SOLTAR</button>'+(sl.n>1?'<button class="ibtn" id="ibAll">TUDO</button>':'')+'</div>';
   const ok=()=>performance.now()>=craftReadyAt;
   const bu=$('ibUse'),bd=$('ibDrop'),ba=$('ibAll');
-  if(bu)bu.onclick=()=>{if(!ok())return;aud();const _sl=P.inv[invSel],_seg=!!(_sl&&EATABLE(_sl.t)&&P.hold!==_sl.t);useItem(invSel);if(_seg&&P.hold===_sl.t)closeCraft();}; // SEGURAR fecha a mochila; GUARDAR e USAR mantêm aberta
+  if(bu)bu.onclick=()=>{if(!ok())return;aud();const _sl=P.inv[invSel],_seg=!!(_sl&&HOLDABLE(_sl.t)&&P.hold!==_sl.t);useItem(invSel);if(_seg&&P.hold===_sl.t)closeCraft();}; // SEGURAR fecha a mochila; GUARDAR e USAR mantêm aberta
   if(bd)bd.onclick=()=>{if(!ok())return;aud();discardItem(invSel);};
   if(ba)ba.onclick=()=>{if(!ok())return;aud();const k=invSel,c=P.inv[k]?P.inv[k].n:0;for(let q=0;q<c&&q<40;q++)discardItem(k);};
 }

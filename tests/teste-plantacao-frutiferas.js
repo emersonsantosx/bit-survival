@@ -73,7 +73,7 @@ const pl=await pg.evaluate(()=>{
   w('forest');
   for(const [seed,crop,item] of [['seed_tomato','tomato','tomato'],['seed_carrot','carrot','carrot'],['seed_apple','apple','apple'],['seed_berry','berry','berry']]){
     const f=free();const p=till(f);if(!p){o[crop]='sem terra';continue;}
-    P.inv=[];addItem(seed);plotDo({act:'PLANTAR',p});const planted=p.c===crop;
+    P.inv=[];addItem(seed);P.hold=seed;plotDo({act:'PLANTAR',p});const planted=p.c===crop;
     grow(p,planted?(crop==='apple'?3.2:1.7):0);
     const ripe=plotCands().some(c=>c.p===p&&c.act==='COLHER');
     P.inv=[];plotDo({act:'COLHER',p});
@@ -84,17 +84,17 @@ const pl=await pg.evaluate(()=>{
     plotsLoad([]);
   }
   // semente que nao vinga no mapa
-  {const f=free();const p=till(f);P.inv=[];addItem('seed_date');plotDo({act:'PLANTAR',p});o.dateInForest=p.c;}
+  {const f=free();const p=till(f);P.inv=[];addItem('seed_date');P.hold='seed_date';plotDo({act:'PLANTAR',p});o.dateInForest=p.c;}
   w('desert');
   for(const [seed,crop,item] of [['seed_date','date','date'],['seed_cactus','cactus','pricklypear']]){
     const f=free();const p=till(f);if(!p){o[crop]='sem terra';continue;}
-    P.inv=[];addItem(seed);plotDo({act:'PLANTAR',p});const planted=p.c===crop;grow(p,3.2);
+    P.inv=[];addItem(seed);P.hold=seed;plotDo({act:'PLANTAR',p});const planted=p.c===crop;grow(p,3.2);
     P.inv=[];plotDo({act:'COLHER',p});o['d_'+crop]={planted,got:countInv(item),keeps:p.c};plotsLoad([]);
   }
-  {const f=free();const p=till(f);P.inv=[];addItem('seed_apple');plotDo({act:'PLANTAR',p});o.appleInDesert=p.c;}
+  {const f=free();const p=till(f);P.inv=[];addItem('seed_apple');P.hold='seed_apple';plotDo({act:'PLANTAR',p});o.appleInDesert=p.c;}
   // neve: estufa aceita tudo
   w('snow');
-  {const sp=ghSpot();o.snowSpot=!!sp;if(sp){ghBuild(sp);const g=ghList()[0];const p=(()=>{P.tool='hoe';P.x=g.x+8-14+16;P.y=g.y+24;P.face=0;hoeTill(true);return plotList()[0];})();addItem('seed_apple');plotDo({act:'PLANTAR',p});o.snowApple=p&&p.c;}}
+  {const sp=ghSpot();o.snowSpot=!!sp;if(sp){ghBuild(sp);const g=ghList()[0];const p=(()=>{P.tool='hoe';P.x=g.x+8-14+16;P.y=g.y+24;P.face=0;hoeTill(true);return plotList()[0];})();addItem('seed_apple');P.hold='seed_apple';plotDo({act:'PLANTAR',p});o.snowApple=p&&p.c;}}
   return o;});
 console.log(JSON.stringify(pl));
 for(const c of ['tomato','carrot','apple','berry']){const q=pl[c];ok(q&&q.planted&&q.ripe&&q.got>=3,'planta e colhe '+c+' ('+JSON.stringify(q)+')');}

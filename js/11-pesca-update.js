@@ -1288,8 +1288,8 @@ function updateHud(force){
   if(!st&&MP.active&&MP.isHost&&MP.guestAway)st='CONVIDADO OFFLINE';
   const stat=$('stat');if(stat){stat.textContent=st;stat.style.opacity=st?'1':'0';stat.className=stk?'s-'+stk:'';} // a cor do aviso segue a cor da barra correspondente
   const PICK_ICON={ARAR:'c_hand',PLANTAR:'c_hand',COLHER:'c_hand',REGAR:'drop',FECHAR:'c_door',PORTA:'c_door','PORTÃO':'c_door',ABRIR:'c_chest',PEGAR:'c_hand','ÁGUA':'drop',ASSAR:'c_flame',ENTRAR:'c_door',DORMIR:'c_bed',LEVANTAR:'c_bed'};
-  {const at=$('atk'),want=P.hold?'c_eat':'c_atk';
-   if(at&&at.dataset.ic!==want){at.dataset.ic=want;at.setAttribute('aria-label',P.hold?'Comer':'Atacar');at.innerHTML=pxIcon(want,4);}}
+  {const at=$('atk'),want=(P.hold&&EATABLE(P.hold))?'c_eat':'c_atk';
+   if(at&&at.dataset.ic!==want){at.dataset.ic=want;at.setAttribute('aria-label',(P.hold&&EATABLE(P.hold))?'Comer':'Atacar');at.innerHTML=pxIcon(want,4);}}
   let canInteract=false,btnText='PEGAR';
   const TG=pickTarget();   // o botao sempre mostra o alvo mais perto (mesma regra de pickup)
   if(TG)canInteract=true;

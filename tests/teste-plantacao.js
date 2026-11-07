@@ -18,7 +18,8 @@ for(const m of ['forest','snow','desert','city']){
   if(m==='snow'){craft(RECIPES.find(r=>r.out==='greenhouse'));o.gh=ghList().length;const g=ghList()[0];P.x=g.x+24;P.y=g.y+24;P.face=0;}
   const ar=(dx)=>{const cx=Math.floor((P.x+dx)/16),cy=Math.floor(P.y/16);const n=plotList().length;plotDo({act:'ARAR',cell:{cx,cy}});return plotList().find(p=>p.cx===cx&&p.cy===cy);};
   const p1=ar(0),p2=ar(16),p3=ar(-16);o.plots=plotList().length;
-  const plant=(p,seed)=>{P.inv=P.inv.filter(s=>true);msgs.length=0;plotDo({act:'PLANTAR',p});return p.c;};
+  P.hold=null;plotDo({act:'PLANTAR',p:p1});o.noHand=p1.c===null&&!plotCands().some(c=>c.act==='PLANTAR');   // sem semente na mao nao planta
+  const plant=(p,seed)=>{msgs.length=0;for(const s of P.inv.filter(s=>/^seed_/.test(s.t))){P.hold=s.t;plotDo({act:'PLANTAR',p});if(p.c)break;}return p.c;};   // segura cada semente ate uma vingar
   // melancia fora do deserto deve recusar
   const melon=plant(p1);  // primeiro seed do inventario que vinga
   o.firstPlanted=p1&&p1.c;
@@ -37,7 +38,7 @@ for(const m of ['forest','snow','desert','city']){
   saveGame();const sv=JSON.parse(localStorage.getItem(slotKey(curSlot)));o.saved=[sv.plots.length,(sv.gh||[]).length];
   return o;},m);
  console.log(m,JSON.stringify(r));
- ok(r.plots===3,m+' 3 canteiros');ok(r.crops.every(c=>c===null||['corn','potato','melon'].includes(c)),m+' culturas validas');
+ ok(r.plots===3,m+' 3 canteiros');ok(r.noHand,m+' sem semente na mao nao planta');ok(r.crops.every(c=>c===null||['corn','potato','melon'].includes(c)),m+' culturas validas');
  if(m==='forest')ok(!r.crops.includes('melon'),'floresta: melancia recusada');
  if(m==='desert')ok(r.crops.includes('melon')&&!r.crops.includes('potato'),'deserto: melancia ok, batata recusada');
  if(m==='snow')ok(r.gh===1&&r.crops.filter(Boolean).length>0,'neve: planta dentro da estufa');
