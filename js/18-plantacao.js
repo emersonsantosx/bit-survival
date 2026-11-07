@@ -82,7 +82,7 @@ function plotCands(){
     if(mature(p))act='COLHER';
     else if(!p.c&&seed)act='PLANTAR';
     else if(p.c&&p.w<DAY_SECONDS*.25&&water)act='REGAR';
-    if(act)out.push({k:'plot',act,p,d:ed,b:-2,px:x+8,py:y+8,key:'p'+p.cx+','+p.cy+act});
+    if(act)out.push({k:'plot',act,p,d:ed,b:-6,px:x+8,py:y+8,key:'p'+p.cx+','+p.cy+act});
   }
   return out;
 }

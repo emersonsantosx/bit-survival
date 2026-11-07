@@ -27,16 +27,16 @@ const ROOMFURN={
   living:[['couch',1,1],['tv',1,1],['table',0,1],['bookcase',0,1],['shelf',0,1],['lamp',0,2],['plant',0,1]],
   bedroom:[['bed',1,1],['wardrobe',1,1],['nightstand',1,2],['dresser',0,1],['lamp',0,1],['plant',0,1]],
   bathroom:[['toilet',1,1],['sink',1,1],['tub',0,1]],
-  kitchen:[['counter',1,3],['fridge',1,1],['stove',1,1],['table',1,1],['shelf',0,1]],
-  storage:[['crate',2,4],['shelf',1,2],['barrel',0,2]],
-  shop:[['shelf',2,4],['counter',1,1],['fridge',0,1],['aisle',1,2]],
-  office:[['desk',2,4],['shelf',0,1],['locker',0,1],['plant',0,1]],
+  kitchen:[['counter',1,2],['fridge',1,1],['stove',1,1],['table',1,1],['shelf',0,1]],
+  storage:[['crate',2,3],['shelf',1,2],['barrel',0,2]],
+  shop:[['shelf',2,3],['counter',1,1],['fridge',0,1],['aisle',1,2]],
+  office:[['desk',2,3],['shelf',0,1],['locker',0,1],['plant',0,1]],
   meeting:[['meet',1,1],['shelf',0,1],['plant',0,1]],
-  waiting:[['bench',2,4],['plant',1,2],['table',0,1]],
+  waiting:[['bench',2,3],['plant',1,2],['table',0,1]],
   exam:[['medbed',1,2],['medcab',1,2]],
   workshop:[['workbench',1,2],['shelf',1,2],['barrel',1,2],['crate',1,2]],
-  hall:[['pallet',3,6],['aisle',1,3],['crate',1,3]],
-  barracks:[['bunk',2,4],['locker',2,3]],
+  hall:[['pallet',3,5],['aisle',1,3],['crate',1,3]],
+  barracks:[['bunk',2,3],['locker',2,3]],
   armory:[['rack',2,3],['crate',1,2],['locker',0,1]],
   stall:[['hay',3,5],['crate',1,2],['barrel',0,1]]
 };
@@ -212,9 +212,9 @@ function genInterior(b){
   const ix=b.x+WT,iy=b.y+WT,iw=b.w-2*WT,ih=b.h-2*WT,bottom=iy+ih;
   b.iw=[];b.gaps=[];b.furn=[];b.rooms=[];b.gadj=[];
   let rooms=[{x:ix,y:iy,w:iw,h:ih}];
-  const area=iw*ih,cap=(b.type==='warehouse'||b.type==='mil')?8:7;let MINR=30;
+  const area=iw*ih,cap=(b.type==='warehouse'||b.type==='mil')?8:7;let MINR=34;
   const MINROOMS={house:4,cabin:3,apartment:4,shop:3,clinic:4,office:4,garage:2,gas:2,warehouse:3,mil:4,barn:3};
-  let target=Math.min(cap,Math.max(MINROOMS[b.type]||3,Math.round(area/2700)));
+  let target=Math.min(cap,Math.max(MINROOMS[b.type]||3,Math.round(area/4200)));
   const doorL=b.doorX-12,doorR=b.doorX+b.door+12;
   function trySplit(r,vert){
     for(let k=0;k<6;k++){
@@ -405,7 +405,7 @@ const FLOOT={
   medcab:{bandage:6,medkit:4}, 'exam:medcab':{bandage:6,medkit:5}, 'pharmacy:medcab':{bandage:6,medkit:5}, 'pharmacy:shelf':{bandage:6,medkit:4,water:1},
   'waiting:table':{water:3,food:1,bandage:1.5}, 'exam:shelf':{bandage:5,medkit:3},
   'kitchen:counter':{food:6,water:3}, 'kitchen:shelf':{food:7,water:3,seed:3,potato:1.2,tomato:.8,carrot:.8}, 'kitchen:table':{food:4,water:3},
-  nightstand:{bandage:2,water:3,food:2,ammo:1,pistol:.15}, wardrobe:{cloth:7,backpack:1,bat:.4,katana:.12}, dresser:{cloth:6,bandage:1},
+  nightstand:{bandage:2,water:3,food:2,ammo:1,pistol:.15}, wardrobe:{cloth:7,backpack:1,bat:.4,katana:.7}, dresser:{cloth:6,bandage:1},
   bookcase:{cloth:1,food:1,water:1,bandage:1}, 'living:table':{food:3,water:4}, 'living:shelf':{food:2,water:3,bandage:1,seed:.8},
   'storage:crate':{wood:4,stone:3,food:3,water:2,ammo:1.5,arrows:1,seed:2}, 'storage:shelf':{food:5,water:5,bandage:1.5,medkit:.7,cloth:1,seed:1.8},
   'shop:shelf':{food:7,water:6,bandage:2,medkit:.5}, 'shop:aisle':{food:7,water:6,bandage:2}, 'shop:counter':{ammo:2,bandage:2,food:2,water:2,bat:.5}, 'shop:fridge':{water:8,food:3},

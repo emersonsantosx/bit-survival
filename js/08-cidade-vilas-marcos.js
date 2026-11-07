@@ -12,7 +12,7 @@ function onCityRoad(x,y,m){
 }
 /* tamanhos dos prédios (maiores, para caber cômodos e móveis) */
 function bldDims(type){
-  const d=bldDims0(type),K=1.3;
+  const d=bldDims0(type),K=1.5;
   return [Math.round(d[0]*K),Math.round(d[1]*K)];
 }
 function bldDims0(type){
