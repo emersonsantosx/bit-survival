@@ -60,7 +60,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 21-frutiferas | 17 | 1 | 7 | 25 | 2 |  |  |  |  |  | 1 | 3 | 13 |  | 1 |  |  |  |  |  | . |  |  |  |
 | 22-bau | 14 | 13 | 11 | 63 | 11 |  |  | 1 |  | 3 | 8 | 6 |  |  |  |  |  |  |  |  |  | . |  |  |
 | 23-poco | 15 | 4 | 4 | 51 | 14 |  |  | 2 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  | . |  |
-| 24-tronco | 23 | 5 | 6 | 107 | 15 |  |  | 1 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  |  | . |
+| 24-tronco | 23 | 6 | 4 | 103 | 14 |  |  | 1 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  |  | . |
 
 (colunas = os dois primeiros digitos do nome do arquivo)
 
@@ -68,10 +68,10 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 20 | 1894 |
+| P | let | 04-estado:14 | 20 | 1891 |
 | MP | let | 04-estado:19 | 20 | 567 |
 | selectedMap | let | 04-estado:3 | 20 | 214 |
-| beep | funcao | 02-audio:42 | 19 | 133 |
+| beep | funcao | 02-audio:42 | 19 | 134 |
 | rnd | const | 01-base:16 | 18 | 424 |
 | sendEvt | funcao | 12-crafting-multiplayer:115 | 17 | 60 |
 | toast | funcao | 11-pesca-update:1241 | 16 | 197 |
@@ -87,9 +87,9 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | R | funcao | 13-render-personagens:2 | 12 | 1238 |
 | weather | let | 04-estado:6 | 12 | 88 |
 | trees | let | 04-estado:10 | 12 | 51 |
-| pointInLake | funcao | 05-geometria:111 | 12 | 42 |
+| pointInLake | funcao | 05-geometria:111 | 12 | 41 |
 | zombies | let | 04-estado:10 | 11 | 58 |
-| campfires | let | 04-estado:10 | 11 | 42 |
+| campfires | let | 04-estado:10 | 11 | 41 |
 | state | let | 04-estado:2 | 10 | 93 |
 | tents | let | 04-estado:10 | 10 | 23 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |

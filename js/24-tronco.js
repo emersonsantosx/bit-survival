@@ -81,11 +81,16 @@ function drawLogGhost(){
 }
 
 /* ---------- sentar e levantar ---------- */
-function faceFor(L,sx,sy,fromX,fromY){
-  let cf=null,cd=160;
-  for(const c of campfires){const d=Math.hypot(c.x-sx,c.y-sy);if(d<cd){cd=d;cf=c;}}
-  if(cf)return Math.atan2(cf.y-sy,cf.x-sx);
+/* so duas posicoes por tronco: horizontal = para baixo ou para cima; vertical = para a direita ou para a esquerda.
+   Ao sentar fica virado para o lado de onde veio; o botao VIRAR troca para o outro lado. Fogueira e lago nao mudam isso. */
+function faceFor(L,fromX,fromY){
   return L.a==='h'?(fromY>=L.y?Math.PI/2:-Math.PI/2):(fromX>=L.x?0:Math.PI);
+}
+function logTurn(){
+  const st=P&&P.sitting;if(!st)return;
+  const L=st.L;
+  P.face=L.a==='h'?(Math.sin(P.face)>=0?-Math.PI/2:Math.PI/2):(Math.cos(P.face)>=0?Math.PI:0);
+  beep(320,.04,'sine',.025);
 }
 function logSit(L){
   if(!L||!P||P.dead||P.inVehicle||P.sitting)return;
@@ -96,7 +101,7 @@ function logSit(L){
   const s=free[0].s,fx=P.x,fy=P.y;
   if(P.fish)cancelFishing();
   P.sitting={L,sx:s.x,sy:s.y,i:free[0].i,t:0};
-  P.x=s.x;P.y=s.y;P.face=faceFor(L,s.x,s.y,fx,fy);P.moving=false;P.sprint=false;atkHeld=false;sprintHeld=false;
+  P.x=s.x;P.y=s.y;P.face=faceFor(L,fx,fy);P.moving=false;P.sprint=false;atkHeld=false;sprintHeld=false;
   beep(280,.1,'sine',.03,-40);
 }
 function standOk(x,y){return !solidPoint(x,y,P.r||5)&&!pointInLake(x,y)&&!(window.wallBlocks&&P.sitting&&wallBlocks(P.sitting.sx,P.sitting.sy,x,y));}
@@ -109,15 +114,6 @@ function logStand(quiet){
   for(const q of order)if(standOk(q[0],q[1])){P.x=q[0];P.y=q[1];break;}
   if(!quiet)beep(380,.07,'sine',.03,50);
 }
-/* direcao do lago mais perto ao alcance da vara (14 a 46 px), para pescar sentado sem precisar levantar para mirar */
-function lakeDir(){
-  let ba=null,bd=1e9;
-  for(let k=0;k<24;k++){
-    const a=k*Math.PI/12;
-    for(let d=14;d<=46;d+=4){if(pointInLake(P.x+Math.cos(a)*d,P.y+Math.sin(a)*d)){if(d<bd){bd=d;ba=a;}break;}}
-  }
-  return ba;
-}
 function sitTick(dt){
   P.moving=false;P.sprint=false;
   const st=P.sitting;st.t+=dt;
@@ -125,7 +121,6 @@ function sitTick(dt){
   survivalTick(dt);
   if(P.dead)return;
   if(P.fish)tickFishing(dt);
-  if(!P.fish&&!P.hold&&WEAPONS[P.weapon]&&WEAPONS[P.weapon].rod&&!P.tool){const a=lakeDir();if(a!==null)P.face=a;}   // com a vara na mao, olha para a agua
   P.stam=Math.min(P._scap||100,P.stam+STAM_REGEN*dt*(P._sreg||1));
   if(P.exhausted&&P.stam>Math.min(20,(P._scap||100)-8))P.exhausted=false;
   P.x=st.sx;P.y=st.sy;
@@ -215,7 +210,7 @@ function logSnapshot(a){
   if(ch)rebuildSolidGrid();
 }
 
-window.logDist=distToLog;window.logList=()=>logs;window.logNearby=logNearby;window.logSit=logSit;window.logStand=logStand;window.logSitTick=sitTick;window.logIntent=logIntent;window.logPlace=logPlace;window.drawLogGhost=drawLogGhost;window.logBuild=logBuild;
+window.logDist=distToLog;window.logList=()=>logs;window.logNearby=logNearby;window.logSit=logSit;window.logStand=logStand;window.logTurn=logTurn;window.logSitTick=sitTick;window.logIntent=logIntent;window.logPlace=logPlace;window.drawLogGhost=drawLogGhost;window.logBuild=logBuild;
 window.logsGen=logsGen;window.logReset=logReset;window.drawLog=drawLog;window.logDepth=logDepth;window.logSeats=seatsOf;
 window.logPack=logPack;window.logLoad=logLoad;window.logRemote=logRemote;window.logSnapshot=logSnapshot;
 window.LOG_COST={wood:COST_WOOD};

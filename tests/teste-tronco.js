@@ -66,10 +66,11 @@ await nw('forest');
 const f=await pg.evaluate(()=>{
   const lk=lakes.find(l=>!l.fountain);if(!lk)return {nolake:true};
   trees.length=0;rocks.length=0;blds.length=0;items.length=0;chestList.length=0;rebuildSolidGrid();
-  let x=lk.cx,y=lk.cy;while(pointInLake(x,y)&&x<lk.cx+lk.r*3)x+=4;x+=26;
+  let x=null,y=lk.cy;for(let k=lk.cx;k<lk.cx+lk.r*3;k+=2)if(!pointInLake(k,y)&&!pointInLake(k+12,y)&&pointInLake(k-20,y)&&pointInLake(k-30,y)){x=k+4;break;}
+  if(x===null)return {nolake:true};
   const L={x:Math.round(x),y:Math.round(y),a:'v',g:0};logList().push(L);rebuildSolidGrid();
   P.x=L.x+10;P.y=L.y;P.dead=false;P.hp=100;P.weapon='fishingrod';P.tool=null;P.hold=null;P.cd=0;
-  logSit(L);const o={sit:!!P.sitting};updateP(.05);
+  logSit(L);if(Math.cos(P.face)>0)logTurn();const o={sit:!!P.sitting};updateP(.05);
   P.cd=0;attack();o.fishing=!!P.fish;o.stillSit=!!P.sitting;
   for(let i=0;i<5;i++)updateP(.1);o.stillSit2=!!P.sitting&&!!P.fish;
   joy.active=true;joy.x=1;joy.y=0;for(let i=0;i<4;i++)updateP(.1);o.stoodByJoy=!P.sitting;joy.active=false;joy.x=0;
@@ -79,6 +80,20 @@ else{ok(f.sit&&f.fishing&&f.stillSit,'com a vara, ATACAR lanca a linha e o jogad
 ok(f.stillSit2,'continua sentado e pescando enquanto espera');ok(f.stoodByJoy,'mexer o analogico levanta');}
 await nw('forest');
 await pg.evaluate(()=>{trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;logList().length=0;rebuildSolidGrid();P.x=1600;P.y=1600;P.face=0;logBuild({x:1600,y:1640,a:'h'});});
+
+/* 3c) so duas posicoes por tronco, escolhidas pelo jogador (fogueira e lago nao mexem); o botao VIRAR troca */
+const fc=await pg.evaluate(()=>{
+  const o={};campfires.push({x:1500,y:1500,t:0,flicker:0});
+  const H={x:1600,y:1600,a:'h',g:0},V={x:1700,y:1600,a:'v',g:0};logList().length=0;logList().push(H,V);rebuildSolidGrid();
+  const sit=(L,x,y)=>{P.sitting=null;P.x=x;P.y=y;logSit(L);return P.face;};
+  let f=sit(H,1600,1620);o.h1=Math.abs(Math.sin(f))>.99;const a1=Math.sin(f);logTurn();o.h2=Math.sin(P.face)*a1<0&&Math.abs(Math.sin(P.face))>.99;logTurn();o.h3=Math.sin(P.face)*a1>0;
+  f=sit(H,1600,1580);o.h4=Math.sin(f)<-.99;
+  f=sit(V,1720,1600);o.v1=Math.cos(f)>.99;const b1=Math.cos(f);logTurn();o.v2=Math.cos(P.face)*b1<0&&Math.abs(Math.cos(P.face))>.99;
+  f=sit(V,1680,1600);o.v3=Math.cos(f)<-.99;
+  P.hold=null;P.sitting&&updateP(.1);o.noFire=Math.cos(P.face)<-.99;   // a fogueira (a noroeste) nao muda a direcao
+  P.sitting=null;campfires.length=0;logList().length=0;logList().push({x:1600,y:1640,a:'h',g:0});rebuildSolidGrid();return o;});
+ok(fc.h1&&fc.h2&&fc.h3&&fc.h4,'tronco horizontal: so para baixo ou para cima, e VIRAR troca de lado');
+ok(fc.v1&&fc.v2&&fc.v3&&fc.noFire,'tronco vertical: so para a direita ou para a esquerda, e a fogueira nao muda a direcao');
 
 /* 4) dois lugares: um terceiro nao senta se ocupados por aliados */
 const t2=await pg.evaluate(()=>{const L=logList()[0];remotePlayers={a:{x:logSeats(L)[0].x,y:logSeats(L)[0].y,st:true,alive:true},b:{x:logSeats(L)[1].x,y:logSeats(L)[1].y,st:true,alive:true}};

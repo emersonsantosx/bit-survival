@@ -758,7 +758,7 @@ function pickup(){
   if(P.inVehicle){exitVehicle();return;}
   if(P.fish){cancelFishing(P.fish.ph===2?'Você soltou a linha':'Você recolheu a linha');return;}
   if(P.sleeping){wakeUp(false);return;}
-  if(P.sitting){logStand();return;}
+  if(P.sitting){logTurn();return;}   // sentado: o botao vira para o outro lado (so o analogico levanta)
 
   const cf=nearestCampfire()||nearestStove();
   const ck=cf&&P.hold?cookOf(P.hold):null;
