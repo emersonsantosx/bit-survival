@@ -80,7 +80,7 @@ ok(rm.outside,'de fora da casa nao se pega item de dentro');
 
 const g=await pg.evaluate(()=>{
   localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];state='play';
-  trees.length=0;rocks.length=0;blds.length=0;items.length=0;lakes.length=0;rebuildSolidGrid();P.inside=null;
+  trees.length=0;rocks.length=0;if(window.logList)logList().length=0;blds.length=0;items.length=0;lakes.length=0;rebuildSolidGrid();P.inside=null;
   const o={};let cx=0,cy=0;
   for(let k=0;k<3000&&!cx;k++){const x=Math.floor((400+Math.random()*(WW-800))/16),y=Math.floor((400+Math.random()*(WH-800))/16);if(!soilBad(x*16+8,y*16+8)&&!soilBad(x*16+8,(y-1)*16+8)&&!soilBad((x+1)*16+8,y*16+8)&&!soilBad((x-1)*16+8,y*16+8)){cx=x;cy=y;}}
   fenceLoad([[cx,cy,0,1,0],[cx-1,cy,0,0,0],[cx+1,cy,0,0,0]]);   // portinha (g=1) numa cerca horizontal; o canteiro fica logo abaixo dela

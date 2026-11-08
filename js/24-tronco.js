@@ -42,24 +42,26 @@ function spotOk(x,y,a,ignore){
   return true;
 }
 
-/* ---------- montar ---------- */
-function logSpot(){
-  if(!P||P.inside||bldAt(P.x,P.y))return null;
-  const fx=Math.cos(P.face||0),fy=Math.sin(P.face||0),a=Math.abs(fy)>=Math.abs(fx)?'h':'v';   // atravessado na frente de quem olha
-  for(const d of [30,38,48]){
-    for(const da of [0,.5,-.5,1,-1,1.6,-1.6,3.14]){
-      const ang=(P.face||0)+da,x=Math.round(P.x+Math.cos(ang)*d),y=Math.round(P.y+Math.sin(ang)*d);
-      if(spotOk(x,y,a))return {x,y,a};
-    }
-  }
-  return null;
+/* ---------- colocar (ferramenta Tronco, igual parede e cerca: previa na frente, botao de construir posiciona) ----------
+   O tronco fica atravessado em relacao a quem olha (olhando para cima/baixo ele deita na horizontal; olhando para os lados ele fica em pe).
+   A previa acompanha o jogador: ande e vire ate achar o lugar e aperte o botao de construir. Verde = pode, vermelho = nao cabe. */
+function logIntent(){
+  const ang=P.face||0,fx=Math.cos(ang),fy=Math.sin(ang),a=Math.abs(fy)>=Math.abs(fx)?'h':'v';
+  const x=Math.round(a==='h'?P.x:P.x+(fx>=0?1:-1)*22),y=Math.round(a==='h'?P.y+(fy>=0?1:-1)*26:P.y);
+  let bad=null;
+  if(P.inside||bldAt(P.x,P.y))bad='Monte o tronco ao ar livre';
+  else if(countInv('wood')<COST_WOOD)bad='Precisa de '+COST_WOOD+' madeiras';
+  else if(!spotOk(x,y,a))bad='Sem espaço para o tronco aqui';
+  return {x,y,a,bad};
 }
-function logWhy(){
-  if(P.inside||bldAt(P.x,P.y))return 'Monte o tronco ao ar livre';
-  return logSpot()?null:'Sem espaço para o tronco aqui';
+function logPlace(quiet){
+  if(!P||P.dead||P.inVehicle||P.sleeping||P.sitting||P.tool!=='log')return;
+  if(quiet)return;   // segurar o botao nao repete: um tronco por toque
+  const it=logIntent();
+  if(it.bad){toast(it.bad);beep(130,.08,'square',.04);return;}
+  removeInv('wood',COST_WOOD);logBuild(it);
 }
 function logBuild(sp){
-  sp=sp||logSpot()||{x:Math.round(P.x+32),y:Math.round(P.y),a:'h'};
   logs.push({x:sp.x,y:sp.y,a:sp.a,g:0});rebuildSolidGrid();pushOut(P,P.r);
   if(MP.active){
     sendEvt('logAdd',{x:sp.x,y:sp.y,a:sp.a==='h'?0:1});
@@ -68,12 +70,20 @@ function logBuild(sp){
   toast('Tronco posicionado! Chegue perto e use SENTAR');buildSound();
   for(let i=0;i<7;i++)parts.push({x:sp.x+rnd(-14,14),y:sp.y-2,vx:rnd(-16,16),vy:rnd(-24,-6),t:.4,c:'#8a6238'});
 }
+function drawLogGhost(){
+  if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||P.sitting||P.tool!=='log')return;
+  const it=logIntent(),a=.55+.2*Math.sin(T*6),c=it.bad?'230,90,80':'110,220,110',r=rectOf(it);
+  ctx.save();ctx.globalAlpha=.6;drawLog({x:it.x,y:it.y,a:it.a});ctx.restore();
+  ctx.fillStyle='rgba('+c+','+(a*.3).toFixed(2)+')';ctx.fillRect(r.x0,r.y0,r.x1-r.x0,r.y1-r.y0);
+  ctx.fillStyle='rgba('+c+','+a.toFixed(2)+')';
+  ctx.fillRect(r.x0,r.y0,r.x1-r.x0,1);ctx.fillRect(r.x0,r.y1-1,r.x1-r.x0,1);ctx.fillRect(r.x0,r.y0,1,r.y1-r.y0);ctx.fillRect(r.x1-1,r.y0,1,r.y1-r.y0);
+  if(it.bad)ctx.fillRect((r.x0+r.x1)/2-1,(r.y0+r.y1)/2-1,2,2);
+}
 
 /* ---------- sentar e levantar ---------- */
-function faceFor(L,sx,sy,fromX,fromY){
-  let cf=null,cd=160;
-  for(const c of campfires){const d=Math.hypot(c.x-sx,c.y-sy);if(d<cd){cd=d;cf=c;}}
-  if(cf)return Math.atan2(cf.y-sy,cf.x-sx);
+/* so duas posicoes por tronco: horizontal = para baixo ou para cima; vertical = para a direita ou para a esquerda.
+   Ao sentar fica virado para o lado de onde veio (para o outro lado: levantar e sentar vindo do outro lado). Fogueira e lago nao mudam isso. Levantar: botao LEVANTAR ou analogico. */
+function faceFor(L,fromX,fromY){
   return L.a==='h'?(fromY>=L.y?Math.PI/2:-Math.PI/2):(fromX>=L.x?0:Math.PI);
 }
 function logSit(L){
@@ -85,7 +95,7 @@ function logSit(L){
   const s=free[0].s,fx=P.x,fy=P.y;
   if(P.fish)cancelFishing();
   P.sitting={L,sx:s.x,sy:s.y,i:free[0].i,t:0};
-  P.x=s.x;P.y=s.y;P.face=faceFor(L,s.x,s.y,fx,fy);P.moving=false;P.sprint=false;atkHeld=false;sprintHeld=false;
+  P.x=s.x;P.y=s.y;P.face=faceFor(L,fx,fy);P.moving=false;P.sprint=false;atkHeld=false;sprintHeld=false;
   beep(280,.1,'sine',.03,-40);
 }
 function standOk(x,y){return !solidPoint(x,y,P.r||5)&&!pointInLake(x,y)&&!(window.wallBlocks&&P.sitting&&wallBlocks(P.sitting.sx,P.sitting.sy,x,y));}
@@ -98,15 +108,6 @@ function logStand(quiet){
   for(const q of order)if(standOk(q[0],q[1])){P.x=q[0];P.y=q[1];break;}
   if(!quiet)beep(380,.07,'sine',.03,50);
 }
-/* direcao do lago mais perto ao alcance da vara (14 a 46 px), para pescar sentado sem precisar levantar para mirar */
-function lakeDir(){
-  let ba=null,bd=1e9;
-  for(let k=0;k<24;k++){
-    const a=k*Math.PI/12;
-    for(let d=14;d<=46;d+=4){if(pointInLake(P.x+Math.cos(a)*d,P.y+Math.sin(a)*d)){if(d<bd){bd=d;ba=a;}break;}}
-  }
-  return ba;
-}
 function sitTick(dt){
   P.moving=false;P.sprint=false;
   const st=P.sitting;st.t+=dt;
@@ -114,7 +115,6 @@ function sitTick(dt){
   survivalTick(dt);
   if(P.dead)return;
   if(P.fish)tickFishing(dt);
-  if(!P.fish&&!P.hold&&WEAPONS[P.weapon]&&WEAPONS[P.weapon].rod&&!P.tool){const a=lakeDir();if(a!==null)P.face=a;}   // com a vara na mao, olha para a agua
   P.stam=Math.min(P._scap||100,P.stam+STAM_REGEN*dt*(P._sreg||1));
   if(P.exhausted&&P.stam>Math.min(20,(P._scap||100)-8))P.exhausted=false;
   P.x=st.sx;P.y=st.sy;
@@ -204,7 +204,7 @@ function logSnapshot(a){
   if(ch)rebuildSolidGrid();
 }
 
-window.logDist=distToLog;window.logList=()=>logs;window.logNearby=logNearby;window.logSit=logSit;window.logStand=logStand;window.logSitTick=sitTick;window.logSpot=logSpot;window.logWhy=logWhy;window.logBuild=logBuild;
+window.logDist=distToLog;window.logList=()=>logs;window.logNearby=logNearby;window.logSit=logSit;window.logStand=logStand;window.logSitTick=sitTick;window.logIntent=logIntent;window.logPlace=logPlace;window.drawLogGhost=drawLogGhost;window.logBuild=logBuild;
 window.logsGen=logsGen;window.logReset=logReset;window.drawLog=drawLog;window.logDepth=logDepth;window.logSeats=seatsOf;
 window.logPack=logPack;window.logLoad=logLoad;window.logRemote=logRemote;window.logSnapshot=logSnapshot;
 window.LOG_COST={wood:COST_WOOD};

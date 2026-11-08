@@ -9,7 +9,7 @@ const pg=await (await b.newContext({viewport:{width:844,height:390}})).newPage()
 await pg.goto('file://'+file);await pg.waitForTimeout(300);
 const r=await pg.evaluate(()=>{
   localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];
-  trees.length=0;rocks.length=0;blds.length=0;items.length=0;lakes.length=0;rebuildSolidGrid();P.x=300;P.y=300;P.inside=null;
+  trees.length=0;rocks.length=0;if(window.logList)logList().length=0;blds.length=0;items.length=0;lakes.length=0;rebuildSolidGrid();P.x=300;P.y=300;P.inside=null;
   if(!RG_BT)regrowInit();
   const free=(x,y)=>rgSpotOk(x,y,true)&&rgSpotOk(x,y,false);
   // area livre de 12x12 casas (192 px) bem longe do jogador

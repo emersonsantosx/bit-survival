@@ -7,7 +7,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch();let bad=0;const ok=(c,m)=>{console.log(c?'OK  ':'FAIL',m);if(!c)bad++;};
 const pg=await (await b.newContext({viewport:{width:900,height:600}})).newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.goto('file://'+file);await pg.waitForTimeout(300);
-const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;trees.length=0;rocks.length=0;decorations.length=0;vehicles.length=0;rebuildSolidGrid();P.inside=null;P.dead=false;   // area limpa: arvore ou carro no caminho mudariam o resultado sem ser bug
+const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;trees.length=0;rocks.length=0;if(window.logList)logList().length=0;decorations.length=0;vehicles.length=0;rebuildSolidGrid();P.inside=null;P.dead=false;   // area limpa: arvore ou carro no caminho mudariam o resultado sem ser bug
  
  const o={};for(let i=0;i<40;i++)addItem('wood');
  const rw=RECIPES.find(q=>q.out==='wall'),rd=RECIPES.find(q=>q.out==='door');o.rec=!!rw&&!!rd;

@@ -26,17 +26,12 @@ function craft(r){
     if(why){toast(why);beep(120,.1,'square',.05);return;}
     P._wp=wellSpot();
   }
-  if(out==='log'){
-    const why=logWhy();
-    if(why){toast(why);beep(120,.1,'square',.05);return;}
-    P._lp=logSpot();
-  }
   if(out==='tent'){
     const tp=tentSpot();
     if(!tp){toast(P.inside?'Monte a barraca ao ar livre':'Sem espaço para a barraca aqui');beep(120,.1,'square',.05);return;}
     P._tp=tp;
   }
-  if(out!=='campfire'&&out!=='tent'&&out!=='stash'&&out!=='well'&&out!=='log'&&out!=='greenhouse'&&!['pickaxe','axe','katana','spear','bow','arrows','bat','fishingrod'].includes(out)&&!BUILD_TOOLS.includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
+  if(out!=='campfire'&&out!=='tent'&&out!=='stash'&&out!=='well'&&out!=='greenhouse'&&!['pickaxe','axe','katana','spear','bow','arrows','bat','fishingrod'].includes(out)&&!BUILD_TOOLS.includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
   for(const k in r.need)removeInv(k,r.need[k]);
   if(out==='greenhouse'){
     const sp=P._gh||ghSpot();P._gh=null;
@@ -45,8 +40,7 @@ function craft(r){
     const sp=P._sb||stashSpot();P._sb=null;stashBuild(sp);
   }else if(out==='well'){
     const sp=P._wp||wellSpot();P._wp=null;wellBuild(sp);
-  }else if(out==='log'){
-    const sp=P._lp||logSpot();P._lp=null;logBuild(sp);
+
   }else if(out==='tent'){
     const tp=P._tp||tentSpot()||{x:P.x+40,y:P.y};P._tp=null;
     tents.push({x:tp.x,y:tp.y});rebuildSolidGrid();
@@ -107,7 +101,7 @@ function refreshCraft(){
     const row=document.createElement('div');
     row.className='craft-row '+(ok?'can':'no');
     const cost=Object.entries(r.need).map(([k,v])=>'<span class="cost-chip'+(countInv(k)<v?' lack':'')+'" title="'+(ITEMS[k]?.n||k)+'">'+(ITEMS[k]&&ITEMS[k].e?pxFit(ITEMS[k].e,16,14):(ITEMS[k]?.n||k))+'<b>'+v+'</b></span>').join('');
-    const icon=pxFit(isTool||isWeapon||r.out==='arrows'||r.out==='fishingrod'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'arrows':'axe')):(r.out==='bandage'?'bandage':(r.out==='backpack'?'backpack':(r.out==='tent'?'tent':(r.out==='stash'?'stash':(r.out==='well'?'well':(r.out==='log'?'log':(r.out==='greenhouse'?'greenhouse':'fire'))))))),30,24);
+    const icon=pxFit(isTool||isWeapon||r.out==='arrows'||r.out==='fishingrod'?(WEAPON_ICON[r.out]||(r.out==='arrows'?'arrows':'axe')):(r.out==='bandage'?'bandage':(r.out==='backpack'?'backpack':(r.out==='tent'?'tent':(r.out==='stash'?'stash':(r.out==='well'?'well':(r.out==='greenhouse'?'greenhouse':'fire')))))),30,24);
     row.innerHTML='<div class="recipe-icon">'+icon+'</div><div class="info"><div class="name">'+r.label+'</div><div class="cost">'+r.desc+'</div><div class="cost">Custo: '+(cost||'nenhum')+'</div><div class="status">'+(ok?pxIcon('check',2)+' Recursos suficientes':'Faltam recursos')+'</div></div>';
     const btn=document.createElement('button');
     btn.textContent='CRIAR';btn.disabled=!ok;
