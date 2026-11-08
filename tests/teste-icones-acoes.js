@@ -27,7 +27,7 @@ const t=await pg.evaluate(()=>{
   return out;});
 for(const k in t)ok(t[k],'icone certo: '+k);
 /* 3) no jogo de verdade: botao perto do tronco e do carro, e o botao de sair */
-await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];state='play';trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;logList().length=0;rebuildSolidGrid();});
+await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];state='play';trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;{const fora=vehicles.filter(v=>Math.hypot(v.x-1600,v.y-1660)>250);vehicles.length=0;vehicles.push(...fora);}if(window.stashList)stashList().length=0;if(window.wellList)wellList().length=0;logList().length=0;rebuildSolidGrid();});
 const g=await pg.evaluate(()=>{
   logBuild({x:1600,y:1640,a:'h'});P.x=1600;P.y=1660;P.inside=null;update(.05);updateHud(true);
   const o={sit:document.getElementById('pick').dataset.ic==='a_log_sit'};

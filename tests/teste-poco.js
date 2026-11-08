@@ -25,7 +25,7 @@ for(const m of ['forest','snow','desert','city']){
 /* 2) craft e agua na floresta */
 await nw('forest');
 const c=await pg.evaluate(()=>{
-  trees.length=0;rocks.length=0;if(window.logList)logList().length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;rebuildSolidGrid();
+  trees.length=0;rocks.length=0;if(window.logList)logList().length=0;if(window.stashList)stashList().length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;rebuildSolidGrid();
   P.x=1600;P.y=1600;P.face=0;P.inv=[{t:'stone',n:8},{t:'wood',n:4}];
   const n0=wellList().length,r=RECIPES.find(q=>q.out==='well');craft(r);
   const o={rec:!!r,n:wellList().length-n0,left:P.inv.length,built:wellList().filter(w=>!w.g).length};
@@ -36,7 +36,7 @@ const c=await pg.evaluate(()=>{
   return o;});
 ok(c.rec&&c.n===1&&c.left===0&&c.built===1,'fabricar poco gasta 8 pedras e 4 madeiras e monta 1 poco');
 ok(c.near&&c.drink===54&&c.bottle===1,'ÁGUA: bebe quando tem sede (+14) e enche garrafa quando saciado');
-ok(c.target==='well','o poco vira alvo de interacao perto dele');
+ok(c.target==='well','o poco vira alvo de interacao perto dele (alvo: '+c.target+')');
 
 /* 3) quem nao tem material nao monta; poco bloqueia a passagem */
 const d=await pg.evaluate(()=>{const n0=wellList().length;P.inv=[{t:'stone',n:3}];craft(RECIPES.find(q=>q.out==='well'));
