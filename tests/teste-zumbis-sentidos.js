@@ -7,7 +7,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch();let bad=0;const ok=(c,m)=>{console.log(c?'OK  ':'FAIL',m);if(!c)bad++;};
 const pg=await (await b.newContext({viewport:{width:900,height:600}})).newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.goto('file://'+file);await pg.waitForTimeout(300);
-const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;trees.length=0;rocks.length=0;decorations.length=0;vehicles.length=0;campfires.length=0;rebuildSolidGrid();P.inside=null;P.dead=false;dark=0;
+const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;trees.length=0;rocks.length=0;if(window.logList)logList().length=0;decorations.length=0;vehicles.length=0;campfires.length=0;rebuildSolidGrid();P.inside=null;P.dead=false;dark=0;
  const o={};
  // area aberta
  let bx=0,by=0,found=false;for(let i=0;i<3000&&!found;i++){bx=300+((i*53)%120)*16;by=300+((i*29)%80)*16;let free=true;for(let dx=-4;dx<=32&&free;dx++)for(let dy=-4;dy<=4&&free;dy+=2){const x=bx+dx*10,y=by+dy*10;if(bldNear(x,y,24)||pointInLake(x,y)||solidPoint(x,y,10))free=false;}if(free)found=true;}   // corredor livre de -40 a +320 px

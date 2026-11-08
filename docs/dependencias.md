@@ -60,7 +60,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 21-frutiferas | 17 | 1 | 7 | 25 | 2 |  |  |  |  |  | 1 | 3 | 13 |  | 1 |  |  |  |  |  | . |  |  |  |
 | 22-bau | 14 | 13 | 11 | 63 | 11 |  |  | 1 |  | 3 | 8 | 6 |  |  |  |  |  |  |  |  |  | . |  |  |
 | 23-poco | 15 | 4 | 4 | 51 | 14 |  |  | 2 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  | . |  |
-| 24-tronco | 23 | 6 | 4 | 103 | 14 |  |  | 1 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  |  | . |
+| 24-tronco | 23 | 5 | 4 | 98 | 14 |  |  | 1 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  |  | . |
 
 (colunas = os dois primeiros digitos do nome do arquivo)
 
@@ -68,10 +68,10 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 20 | 1891 |
+| P | let | 04-estado:14 | 20 | 1886 |
 | MP | let | 04-estado:19 | 20 | 567 |
 | selectedMap | let | 04-estado:3 | 20 | 214 |
-| beep | funcao | 02-audio:42 | 19 | 134 |
+| beep | funcao | 02-audio:42 | 19 | 133 |
 | rnd | const | 01-base:16 | 18 | 424 |
 | sendEvt | funcao | 12-crafting-multiplayer:115 | 17 | 60 |
 | toast | funcao | 11-pesca-update:1241 | 16 | 197 |

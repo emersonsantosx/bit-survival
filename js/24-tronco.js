@@ -82,15 +82,9 @@ function drawLogGhost(){
 
 /* ---------- sentar e levantar ---------- */
 /* so duas posicoes por tronco: horizontal = para baixo ou para cima; vertical = para a direita ou para a esquerda.
-   Ao sentar fica virado para o lado de onde veio; o botao VIRAR troca para o outro lado. Fogueira e lago nao mudam isso. */
+   Ao sentar fica virado para o lado de onde veio (para o outro lado: levantar e sentar vindo do outro lado). Fogueira e lago nao mudam isso. Levantar: botao LEVANTAR ou analogico. */
 function faceFor(L,fromX,fromY){
   return L.a==='h'?(fromY>=L.y?Math.PI/2:-Math.PI/2):(fromX>=L.x?0:Math.PI);
-}
-function logTurn(){
-  const st=P&&P.sitting;if(!st)return;
-  const L=st.L;
-  P.face=L.a==='h'?(Math.sin(P.face)>=0?-Math.PI/2:Math.PI/2):(Math.cos(P.face)>=0?Math.PI:0);
-  beep(320,.04,'sine',.025);
 }
 function logSit(L){
   if(!L||!P||P.dead||P.inVehicle||P.sitting)return;
@@ -210,7 +204,7 @@ function logSnapshot(a){
   if(ch)rebuildSolidGrid();
 }
 
-window.logDist=distToLog;window.logList=()=>logs;window.logNearby=logNearby;window.logSit=logSit;window.logStand=logStand;window.logTurn=logTurn;window.logSitTick=sitTick;window.logIntent=logIntent;window.logPlace=logPlace;window.drawLogGhost=drawLogGhost;window.logBuild=logBuild;
+window.logDist=distToLog;window.logList=()=>logs;window.logNearby=logNearby;window.logSit=logSit;window.logStand=logStand;window.logSitTick=sitTick;window.logIntent=logIntent;window.logPlace=logPlace;window.drawLogGhost=drawLogGhost;window.logBuild=logBuild;
 window.logsGen=logsGen;window.logReset=logReset;window.drawLog=drawLog;window.logDepth=logDepth;window.logSeats=seatsOf;
 window.logPack=logPack;window.logLoad=logLoad;window.logRemote=logRemote;window.logSnapshot=logSnapshot;
 window.LOG_COST={wood:COST_WOOD};

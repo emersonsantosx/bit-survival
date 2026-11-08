@@ -7,7 +7,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch();let bad=0;const ok=(c,m)=>{console.log(c?'OK  ':'FAIL',m);if(!c)bad++;};
 const pg=await (await b.newContext({viewport:{width:900,height:600}})).newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.goto('file://'+file);await pg.waitForTimeout(300);
-const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;trees.length=0;rocks.length=0;decorations.length=0;vehicles.length=0;tents.length=0;rebuildSolidGrid();P.inside=null;P.dead=false;
+const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;trees.length=0;rocks.length=0;if(window.logList)logList().length=0;decorations.length=0;vehicles.length=0;tents.length=0;rebuildSolidGrid();P.inside=null;P.dead=false;
  const o={};for(let i=0;i<60;i++)addItem('wood');for(let i=0;i<30;i++)addItem('cloth');
  const rm=RECIPES.find(q=>q.out==='mattress');o.rec=!!rm;const w0=countInv('wood'),c0=countInv('cloth');craft(rm);o.tool=toolList().includes('mattress');o.recCost=[w0-countInv('wood'),c0-countInv('cloth')];
  let bx=0,by=0,found=false;for(let i=0;i<900&&!found;i++){bx=60+((i*53)%60)*16;by=60+((i*29)%40)*16;let free=true;for(let dx=-3;dx<=10&&free;dx++)for(let dy=-3;dy<=8&&free;dy++){const x=bx+dx*16+8,y=by+dy*16+8;if(bldNear(x,y,24)||pointInLake(x,y)||solidPoint(x,y,10))free=false;}if(free)found=true;}

@@ -17,7 +17,7 @@ for(const map of ['forest','city','desert','snow']){
   if(o.milBlds>0)ok(o.milWith>=Math.ceil(o.milBlds*.4),map+': bases militares guardam lanterna ('+o.milWith+' de '+o.milBlds+')');
 }
 const r=await pg.evaluate(()=>{
-  localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;vehicles.length=0;trees.length=0;rocks.length=0;decorations.length=0;rebuildSolidGrid();
+  localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;vehicles.length=0;trees.length=0;rocks.length=0;if(window.logList)logList().length=0;decorations.length=0;rebuildSolidGrid();
   const o={};P.inside=null;P.dead=false;P.inVehicle=null;P.inv=[];
   document.getElementById('hud').classList.remove('hide');   // o HUD precisa estar visivel para medir o botao de verdade
   const btn=document.getElementById('bflash');o.btnHidden0=btn.classList.contains('hide');o.cssHidden0=getComputedStyle(btn).display==='none'&&btn.getBoundingClientRect().width===0;

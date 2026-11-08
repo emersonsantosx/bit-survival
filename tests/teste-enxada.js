@@ -10,7 +10,7 @@ const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pending
  const o={};P.inside=null;P.tool='hoe';
  // acha ponto livre
  // acha um ponto livre de verdade (o mundo e sorteado): sem arvore/pedra por perto, e a casa da frente com terra que da para arar
- trees.length=0;rocks.length=0;rebuildSolidGrid();
+ trees.length=0;rocks.length=0;if(window.logList)logList().length=0;rebuildSolidGrid();
  let found=false;for(let y=400;y<WH-400&&!found;y+=40)for(let x=400;x<WW-400&&!found;x+=40){P.x=x;P.y=y;P.face=0;const f=frontCell();
   if(!soilBad(f.cx*16+8,f.cy*16+8)&&!soilBad(x,y)&&!solidPoint(x,y,14)&&!solidPoint(x+16,y,14))found=true;}
  o.found=found;
