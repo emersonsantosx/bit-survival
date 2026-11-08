@@ -536,7 +536,8 @@ function itemReach(it){
   const bi=bldAt(it.x,it.y);
   if(!bi)return !P.inside;                  // item ao ar livre: so quem tambem esta ao ar livre
   if(P.inside!==bi)return false;            // item dentro de um predio: so quem esta dentro dele...
-  for(const r of visRooms(bi))if(it.x>=r.x-3&&it.x<=r.x+r.w+3&&it.y>=r.y-3&&it.y<=r.y+r.h+3)return true;   // ...e no mesmo comodo
+  const mine=[];roomsAt(bi,P.x,P.y-2,mine);   // so os comodos do proprio jogador (no multiplayer, o comodo de outro jogador nao conta)
+  for(const r of mine)if(it.x>=r.x-3&&it.x<=r.x+r.w+3&&it.y>=r.y-3&&it.y<=r.y+r.h+3)return true;   // ...e no mesmo comodo
   return false;
 }
 /* pegar esse item faria alguma coisa? (mochila cheia, lanterna/mochila/arma que ja tem: o botao PEGAR so reclamaria e atrapalharia a porta) */
