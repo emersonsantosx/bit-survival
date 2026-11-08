@@ -41,14 +41,33 @@ const s=await pg.evaluate(()=>{
   P.stam=10;for(let i=0;i<30;i++)updateP(.1);o.stam=P.stam;o.still=!!P.sitting;
   const px=P.x,py=P.y;joy.active=true;joy.x=1;joy.y=0;updateP(.1);updateP(.1);updateP(.1);o.stood=!P.sitting;joy.active=false;joy.x=0;
   o.free=!solidPoint(P.x,P.y,P.r);
-  logSit(L);hurt(5);o.hurtStand=!P.sitting;
-  logSit(L);attack();o.atkStand=!P.sitting;
+  P.hp=100;logSit(L);hurt(5);o.hurtStand=!!P.sitting;
+  P.weapon='fists';P.cd=0;attack();o.atkStand=!!P.sitting;logStand(true);
   return o;});
 ok(s.tgt==='log','o tronco vira alvo de interacao perto dele');
 ok(s.sit&&s.atSeat,'SENTAR coloca o jogador num dos lugares do tronco');
 ok(s.still&&s.stam>50,'sentado recupera folego rapido ('+Math.round(s.stam)+')');
 ok(s.stood&&s.free,'mexer o direcional levanta, em lugar livre');
-ok(s.hurtStand&&s.atkStand,'dano e ataque tambem levantam');
+ok(s.hurtStand&&s.atkStand,'dano e ataque NAO levantam (so o analogico)');
+
+/* 3b) pescar sentado: com a vara o ataque lanca a linha e o personagem continua no tronco; so o analogico levanta */
+await nw('forest');
+const f=await pg.evaluate(()=>{
+  const lk=lakes.find(l=>!l.fountain);if(!lk)return {nolake:true};
+  trees.length=0;rocks.length=0;blds.length=0;items.length=0;chestList.length=0;rebuildSolidGrid();
+  let x=lk.cx,y=lk.cy;while(pointInLake(x,y)&&x<lk.cx+lk.r*3)x+=4;x+=26;
+  const L={x:Math.round(x),y:Math.round(y),a:'v',g:0};logList().push(L);rebuildSolidGrid();
+  P.x=L.x+10;P.y=L.y;P.dead=false;P.hp=100;P.weapon='fishingrod';P.tool=null;P.hold=null;P.cd=0;
+  logSit(L);const o={sit:!!P.sitting};updateP(.05);
+  P.cd=0;attack();o.fishing=!!P.fish;o.stillSit=!!P.sitting;
+  for(let i=0;i<5;i++)updateP(.1);o.stillSit2=!!P.sitting&&!!P.fish;
+  joy.active=true;joy.x=1;joy.y=0;for(let i=0;i<4;i++)updateP(.1);o.stoodByJoy=!P.sitting;joy.active=false;joy.x=0;
+  return o;});
+if(f.nolake)console.log('SKIP pesca sentado (sem lago neste mundo)');
+else{ok(f.sit&&f.fishing&&f.stillSit,'com a vara, ATACAR lanca a linha e o jogador continua sentado');
+ok(f.stillSit2,'continua sentado e pescando enquanto espera');ok(f.stoodByJoy,'mexer o analogico levanta');}
+await nw('forest');
+await pg.evaluate(()=>{trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;logList().length=0;rebuildSolidGrid();P.x=1600;P.y=1600;P.face=0;P.inv=[{t:'wood',n:4}];craft(RECIPES.find(q=>q.out==='log'));});
 
 /* 4) dois lugares: um terceiro nao senta se ocupados por aliados */
 const t2=await pg.evaluate(()=>{const L=logList()[0];remotePlayers={a:{x:logSeats(L)[0].x,y:logSeats(L)[0].y,st:true,alive:true},b:{x:logSeats(L)[1].x,y:logSeats(L)[1].y,st:true,alive:true}};

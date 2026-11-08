@@ -941,7 +941,6 @@ function hurt(n,bleedChance){
   if(P.inVehicle)return; // dentro de um veículo o jogador nunca leva dano: só o veículo sofre
   if(P._grace>0)return; // acabou de reconectar
   if(P.sleeping)wakeUp(true);
-  if(P.sitting)logStand(true);
   if(EAT){EAT=null;eatLock=true;}
   P.hp-=n;flash=.45;shake=4;
   if(P.fish)cancelFishing('A linha se soltou!');

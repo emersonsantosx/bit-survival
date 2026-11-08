@@ -98,16 +98,27 @@ function logStand(quiet){
   for(const q of order)if(standOk(q[0],q[1])){P.x=q[0];P.y=q[1];break;}
   if(!quiet)beep(380,.07,'sine',.03,50);
 }
+/* direcao do lago mais perto ao alcance da vara (14 a 46 px), para pescar sentado sem precisar levantar para mirar */
+function lakeDir(){
+  let ba=null,bd=1e9;
+  for(let k=0;k<24;k++){
+    const a=k*Math.PI/12;
+    for(let d=14;d<=46;d+=4){if(pointInLake(P.x+Math.cos(a)*d,P.y+Math.sin(a)*d)){if(d<bd){bd=d;ba=a;}break;}}
+  }
+  return ba;
+}
 function sitTick(dt){
   P.moving=false;P.sprint=false;
   const st=P.sitting;st.t+=dt;
   if(!logs.includes(st.L)){P.sitting=null;return;}   // o tronco sumiu (mundo recarregado)
   survivalTick(dt);
   if(P.dead)return;
+  if(P.fish)tickFishing(dt);
+  if(!P.fish&&!P.hold&&WEAPONS[P.weapon]&&WEAPONS[P.weapon].rod&&!P.tool){const a=lakeDir();if(a!==null)P.face=a;}   // com a vara na mao, olha para a agua
   P.stam=Math.min(P._scap||100,P.stam+STAM_REGEN*dt*(P._sreg||1));
   if(P.exhausted&&P.stam>Math.min(20,(P._scap||100)-8))P.exhausted=false;
   P.x=st.sx;P.y=st.sy;
-  if(joy.active&&Math.hypot(joy.x,joy.y)>.45&&st.t>.25)logStand(false);
+  if(joy.active&&Math.hypot(joy.x,joy.y)>.45&&st.t>.25&&!(P.fish&&P.fish.ph>=1))logStand(false);   // so o analogico levanta (menos na hora da fisgada, quando o jogador fica preso na vara)
 }
 
 /* ---------- desenho: casca, aneis na ponta cortada, nos e, na neve, uma capa de neve ---------- */

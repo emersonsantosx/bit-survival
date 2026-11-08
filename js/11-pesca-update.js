@@ -198,7 +198,6 @@ function meleeDmg(w){
 function attack(){
   if(state!=='play'||P.cd>0||P.inVehicle)return;
   if(P.sleeping){wakeUp(false);P.cd=.4;return;}
-  if(P.sitting&&!P.hold){logStand();P.cd=.3;return;}
   if(P.hold){eatStart();return;}
   const w=WEAPONS[P.weapon];
   if(!w)return;
