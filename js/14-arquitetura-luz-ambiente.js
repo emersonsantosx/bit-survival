@@ -1089,14 +1089,14 @@ function render(){
       const rp=remotePlayers[id];
       if(!rp || rp.alive===false || rp.inVehicle) continue;
       if(rp.x<b.x||rp.x>b.x+b.w||rp.y<b.y||rp.y>b.y+b.h||!seeIn(b,rp.x,rp.y)) continue;
-      if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,anim:rp.anim||0,wpn:rp.hold?null:(rp.weapon||'fists'),hold:rp.hold||null,swing:rp.swing||0,ph:punchHand(rp,rp.swing||0),flash:rp.flash||0});
+      if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,sit:!!rp.st,anim:rp.anim||0,wpn:rp.hold?null:(rp.weapon||'fists'),hold:rp.hold||null,swing:rp.swing||0,ph:punchHand(rp,rp.swing||0),flash:rp.flash||0});
       const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
       ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
       ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
       if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
     }
     for(const an of animals)if(!an.dead&&an.x>=b.x&&an.x<=b.x+b.w&&an.y>=b.y&&an.y<=b.y+b.h&&seeIn(b,an.x,an.y))drawAnimal(an);
-    if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
+    if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,sit:!!P.sitting,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
     for(const z of zombies)if(!z.dead&&z.x>=b.x&&z.x<=b.x+b.w&&z.y>=b.y&&z.y<=b.y+b.h&&seeIn(b,z.x,z.y)){
       human(z.x,z.y,z.face,{skin:z.hit>0?'#ffd0d0':z.skin,shirt:z.shirt,zv:z.si|0,moving:z.moving,anim:z.anim,zombie:true,lunge:z.lunge>0,s:zombieScale(z),kind:z.kind,spitter:z.ranged,wind:z.windT>0,screamer:z.screams,crawler:z.crawler,brute:z.kind===2,boss:z.kind===3,yeti:z.kind===9,bloater:z.bloater||z.kind===7});
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
@@ -1330,6 +1330,7 @@ function render(){
   for(const t of tents)if(t.x>vx0-30&&t.x<vx1+30&&t.y>vy0&&t.y<vy1+30)list.push({y:t.y,k:9,o:t});
   if(window.stashList)for(const s of stashList())if(s.x>vx0-20&&s.x<vx1+20&&s.y>vy0&&s.y<vy1+20)list.push({y:stashDepth(s),k:17,o:s});
   if(window.wellList)for(const w of wellList())if(w.x>vx0-20&&w.x<vx1+20&&w.y>vy0&&w.y<vy1+36)list.push({y:wellDepth(w),k:18,o:w});
+  if(window.logList)for(const L of logList())if(L.x>vx0-40&&L.x<vx1+40&&L.y>vy0-30&&L.y<vy1+40)list.push({y:logDepth(L),k:19,o:L});
   for(const g of ghList())if(g.x+48>vx0&&g.x<vx1&&g.y+48>vy0-10&&g.y<vy1+10)list.push({y:g.y+48,k:14,o:g});
   for(const z of zombies)if(!z.dead&&z.x>vx0&&z.x<vx1&&z.y>vy0&&z.y<vy1)list.push({y:z.y,k:1,o:z});
   for(const a of animals)if(!a.dead&&a.x>vx0&&a.x<vx1&&a.y>vy0&&a.y<vy1)list.push({y:a.y,k:7,o:a});
@@ -1356,6 +1357,7 @@ function render(){
     else if(e.k===9)drawTent(e.o);
     else if(e.k===17)drawStash(e.o);
     else if(e.k===18)drawWell(e.o);
+    else if(e.k===19)drawLog(e.o);
     else if(e.k===6){drawDecoration(e.o);fruitOver(e.o);}
     else if(e.k===7){ drawAnimal(e.o); }
     else if(e.k===8){ drawObserver(e.o); }
@@ -1373,14 +1375,14 @@ function render(){
     }else if(e.k===5){
       const rp=e.o;
       if(rp.alive!==false){
-        if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,anim:rp.anim||0,wpn:rp.hold?null:(rp.weapon||'fists'),hold:rp.hold||null,swing:rp.swing||0,ph:punchHand(rp,rp.swing||0),flash:rp.flash||0});
+        if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,sit:!!rp.st,anim:rp.anim||0,wpn:rp.hold?null:(rp.weapon||'fists'),hold:rp.hold||null,swing:rp.swing||0,ph:punchHand(rp,rp.swing||0),flash:rp.flash||0});
         const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
         ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
         ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
         if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
       }
     }else{
-      if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
+      if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,sit:!!P.sitting,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
     }
   }
   for(const b of blds)if(vis(b)&&b.roofA>.02){drawRoof(b);bldTopFx(b);}

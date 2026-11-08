@@ -71,6 +71,7 @@ PXG.wall=['kkkkkkkkkkkk','kAAAAAAAAAAk','kNkNkNkNkNNk','kNkNkNkNkNNk','kNkNkNkNk
 PXG.door=['kkkkkkkkkkkk','kNNNNNNNNNNk','kNSNNNNNNSNk','kNNNNNNNNNNk','kNSNNNNNANNk','kNNNNNNNNNNk','kkkkkkkkkkkk'];
 PXG.floor=['kkkkkkkkkkkk','kAAAAAAAAAAk','kNNNNNNNNNNk','kAAAAAAAAAAk','kNNNNNNNNNNk','kAAAAAAAAAAk','kkkkkkkkkkkk'];
 PXG.roof=['..kkkkkkkkkk','.kRRRRRRRRRk','kRrRRRrRRRRk','kRRRRRRRRrRk','kRrRRRrRRRRk','kRRRRRRRRrRk','kkkkkkkkkkkk'];
+PXG.log=['.kkkkkkkkkk.','kEeNNNNNNNNk','kEeNnnnnNNNk','kEeNNNNNNNNk','.kkkkkkkkkk.'];
 PXG.well=['..rrrrrrr..','.rRRRRRRRr.','rrrrrrrrrrr','.k.......k.','.k.......k.','.kssssssSk.','ksSsSsSsSsk','kssBBBBBssk','.kkkkkkkkk.'];
 PXG.stash=['.kkkkkkkkk.','kNnnnnnnnNk','kNNNNNNNNNk','ksssssssssk','kNNNYYNNNNk','kNNNYYNNNNk','kNNNNNNNNNk','.kkkkkkkkk.'];
 PXG.mattress=['kkkkkkkkkkkk','kWWWCBBBBBBk','kWWWCBBBBBBk','kWWWCBBBBBBk','kWWWCBBBBBBk','kWWWCBBBBBBk','kkkkkkkkkkkk'];
@@ -284,6 +285,7 @@ const RECIPES=[
   {out:'backpack', need:{cloth:6,wood:3}, label:'Mochila',        desc:'Carrega 12 itens diferentes em vez de 6', once:true },
   {out:'well', need:{stone:8,wood:4}, label:'Poço', desc:'Monta um poço ao ar livre na sua frente: beba e encha garrafas com ÁGUA, e a horta perto dele fica úmida. No deserto rende poucos goles; na neve congela à noite e nevando (quebre o gelo).' },
   {out:'stash', need:{wood:6}, label:'Baú', desc:'Só de madeira. Monta um baú ao ar livre na sua frente, com 15 espaços para guardar itens (nada se perde). Chegue perto e use ABRIR. Só dá para desmontar vazio' },
+  {out:'log', need:{wood:4}, label:'Tronco', desc:'Só de madeira. Monta um tronco caído ao ar livre na sua frente, com 2 lugares: use SENTAR perto da fogueira, do lago ou de onde quiser. Sentado você recupera o fôlego mais rápido; mexer o direcional levanta.' },
   {out:'tent', need:{cloth:8,wood:5}, label:'Barraca', desc:'Dorme 2 pessoas (só à noite). Monte ao ar livre' },
   {out:'campfire', need:{wood:5,stone:3}, label:'Fogueira',        desc:'Cozinha peixe e ilumina à noite' }
 ];

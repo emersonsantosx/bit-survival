@@ -496,6 +496,7 @@ function updateP(dt){
   if(P.dead) return;
   if(GH.on&&GH.kill>0){P.moving=false;return;}
   if(P.sleeping){sleepTick(dt);return;}
+  if(P.sitting){logSitTick(dt);if(P.sitting||P.dead)return;}
   if(P.inVehicle){
     const v=P.inVehicle;
     if(P.fish)P.fish=null;
@@ -1299,6 +1300,7 @@ function updateHud(force){
   else if(TG&&TG.k==='chest'){btnText='ABRIR';}
   else if(TG&&TG.k==='stash'){btnText='ABRIR';}
   else if(TG&&TG.k==='well'){btnText='ÁGUA';}
+  else if(TG&&TG.k==='log'){btnText='SENTAR';}
   else if(TG&&TG.k==='door'){btnText=TG.dr.open?'FECHAR':'PORTA';}
   else if(TG&&TG.k==='fgate'){btnText=TG.f.o?'FECHAR':TG.f.g===3?'PORTA':'PORTÃO';}
   else if(TG&&TG.k==='plot'){btnText=TG.act;}
@@ -1306,7 +1308,7 @@ function updateHud(force){
   else if(TG&&TG.k==='veh'){if(TG.v.looted)btnText='ENTRAR';}
   if(!TG&&nearestCactus()){canInteract=true;btnText='ÁGUA';}
   if(cf && P.hold && cookOf(P.hold)){canInteract=true;btnText='ASSAR';}
-  if(P.sleeping){canInteract=true;btnText='LEVANTAR';}
+  if(P.sleeping||P.sitting){canInteract=true;btnText='LEVANTAR';}
   else if(TG&&TG.k==='bed'){btnText='DORMIR';}
   {const fb=$('bflash');if(fb){const sh=!!P.torch&&!P.dead;if(fb._sh!==sh||fb._on!==!!P.flashOn){fb._sh=sh;fb._on=!!P.flashOn;updateFlashBtn();}}}
   {const hb=$('hoe');if(hb)hb.classList.toggle('hide',!(!!P.tool&&!P.inVehicle&&!P.dead&&!P.sleeping));}

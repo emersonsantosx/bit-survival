@@ -377,6 +377,7 @@ function rebuildSolidGrid(){
   for(const d of decorations) if(d.solid) put(d.x,d.y,'decor',d);
   for(const t of tents){put(t.x-12,t.y-6,'decor',t);put(t.x+12,t.y-6,'decor',t);put(t.x,t.y-10,'decor',t);}
   if(window.stashList)for(const s of stashList()){put(s.x-5,s.y-4,'decor',s);put(s.x+5,s.y-4,'decor',s);}
+  if(window.logList)for(const L of logList())for(let k=-18;k<=18;k+=9)put(L.a==='h'?L.x+k:L.x,L.a==='h'?L.y-3:L.y+k,'decor',L);   // tronco caido: bloqueia a passagem
   if(window.wellList)for(const w of wellList()){put(w.x-7,w.y-3,'decor',w);put(w.x,w.y-3,'decor',w);put(w.x+7,w.y-3,'decor',w);}   // poco: bloqueia a passagem   // bau do jogador: bloqueia a passagem
 }
 function querySolidNear(x,y,pad){
