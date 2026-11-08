@@ -7,7 +7,7 @@ const SKINS=[
   {skin:'#b9855a',hair:'#2a1d14',shirt:'#5a7a4a',alt:'#c08a3a',pants:'#4a4a34',f:false,os:'hoodie',hs:'cap',hat:'#8a3a2a',acc:'pack',pack:'#6a5a3a',boot:'#2a2418'},
   {skin:'#f0c8a0',hair:'#e0c060',shirt:'#4a7a7a',alt:'#8a5a9a',pants:'#3a4a6a',f:false,os:'tee',hs:'spiky',band:'#c04a3a',boot:'#e0dcd0'},
   {skin:'#6a4530',hair:'#1a1210',shirt:'#c9853a',alt:'#3a6a9a',pants:'#34343a',f:false,os:'vest',under:'#d8d4c8',hs:'afro',beard:true,boot:'#2a2018'},
-  {skin:'#f0c4a0',hair:'#0c0a09',shirt:'#a8486a',alt:'#4a8a9a',pants:'#3a4a6a',f:true,os:'sweater',hs:'long',slv:.85,boot:'#3a2a20'},
+  {skin:'#f0c4a0',hair:'#0c0a09',shirt:'#a8486a',alt:'#4a8a9a',pants:'#3a4a6a',f:true,os:'sweater',hs:'long',slv:.85,bow:'#ee86b4',boot:'#3a2a20'},
   {skin:'#b9855a',hair:'#2a1d14',shirt:'#3a8a7a',alt:'#d0803a',pants:'#4a3a2a',f:true,os:'jacket',hs:'pony',acc:'pack',pack:'#5a4a3a',boot:'#241c16'},
   {skin:'#f2cfae',hair:'#e6c66a',shirt:'#6a4aa0',alt:'#4a9a5a',pants:'#3a3a58',f:true,os:'dress',hs:'pig',hat:'#e8d0e0',boot:'#3a2a30'},
   {skin:'#6a4530',hair:'#1a1210',shirt:'#d4a24a',alt:'#c04a5a',pants:'#2a2a30',f:true,os:'tee',hs:'buns',band:'#c04a5a',boot:'#e0dcd0'}
@@ -25,7 +25,7 @@ function snowOutfit(lk,i){
   const s=SKINS[(i>=0&&i<SKINS.length)?i:0],hatC=s.alt||'#8a3a3a';
   if(lk.os!=='robe')lk.os='parka';
   if(!(lk.hs==='long'||lk.hs==='pony'||lk.hs==='pig'))lk.hs='short';   // tira bonés e cabelos volumosos que não cabem sob o gorro
-  lk.band=undefined;lk.beanie=hatC;lk.glove=Sh(hatC,-.3);lk.slv=.6;
+  lk.bow=undefined;lk.band=undefined;lk.beanie=hatC;lk.glove=Sh(hatC,-.3);lk.slv=.6;
   if(lk.female||lk.pants===lk.skin)lk.pants='#3a3a48';                  // calça quente no lugar de saia ou short
   return lk;
 }
@@ -256,7 +256,16 @@ function humanBody(R,o,face){
   if(z&&hs!=='mask'&&hs!=='hazhood'){R(-3,-10,6,1,Sh(skin,-.18));}
   // cabelo / chapéu (parte de trás e de baixo, antes do rosto)
   switch(hs){
-    case 'long':R(-3,-16,6,1,hair);if(back||ex>=0)R(-4,-16,1,8,hair);if(back||ex<=0)R(3,-16,1,8,hair);if(back)R(-4,-16,8,9,hair);break; // de lado, o cabelo cai só atrás e o olho da frente não some no preto
+    case 'long':
+      /* laco: de frente e de lado fica ATRAS do cabelo (so as pontas aparecem por tras da cabeca); de costas aparece por cima do cabelo, no alto da nuca */
+      if(S.bow&&!back){
+        const bw=S.bow,bk=Sh(bw,-.3),bl=Sh(bw,.2);
+        if(ex===0){R(-3,-17,2,1,bw);R(1,-17,2,1,bw);R(-1,-16,2,1,bk);}                       // de frente: as duas voltas espiam acima do cabelo
+        else{const sx=ex>0?-6:3;R(sx,-17,3,2,bw);R(sx,-17,1,1,bl);R(sx+(ex>0?2:0),-15,1,1,bk);}   // de lado: o laco fica na parte de tras da cabeca
+      }
+      R(-3,-16,6,1,hair);if(back||ex>=0)R(-4,-16,1,8,hair);if(back||ex<=0)R(3,-16,1,8,hair);if(back)R(-4,-16,8,9,hair);
+      if(S.bow&&back){const bw=S.bow,bk=Sh(bw,-.3),bl=Sh(bw,.2);R(-3,-18,2,1,bw);R(1,-18,2,1,bw);R(-3,-17,2,2,bw);R(1,-17,2,2,bw);R(-3,-18,1,1,bl);R(-1,-17,2,2,bk);}
+      break; // de lado, o cabelo cai só atrás e o olho da frente não some no preto
     case 'wild':R(-4,-16,8,1,hair);R(-4,-15,1,8,hair);R(3,-15,1,9,hair);R(-5,-10,1,3,hair);R(4,-9,1,3,hair);R(-5,-14,1,2,hair);if(back)R(-4,-16,8,10,hair);break;
     case 'pig':R(-5,-13,2,5,hair);R(3,-13,2,5,hair);R(-5,-13,2,1,S.hat||'#e8d0e0');R(3,-13,2,1,S.hat||'#e8d0e0');break;
     case 'pony':
@@ -295,7 +304,6 @@ function humanBody(R,o,face){
       if(!back){   // de lado a franja cai so do lado de tras: assim o olho de la nao se funde ao cabelo preto e o rosto mostra os dois olhos
         if(ex===0){R(-3,-13,2,1,hair);R(1,-13,2,1,hair);}else if(ex>0)R(-3,-13,2,1,hair);else R(1,-13,2,1,hair);
       }
-      if(S.bow&&!back){R(2,-16,3,2,S.bow);R(3,-17,1,1,S.bow);R(3,-15,1,1,Sh(S.bow,-.25));}
       break;
     case 'pony':
       R(-3,-16,6,1,hair);R(-3,-15,6,back?5:2,hair);if(!back)sbn(1);break;
