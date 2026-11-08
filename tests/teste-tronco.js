@@ -28,10 +28,21 @@ await nw('forest');
 const c=await pg.evaluate(()=>{
   trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;logList().length=0;rebuildSolidGrid();
   P.x=1600;P.y=1600;P.face=0;const r=RECIPES.find(q=>q.out==='log');
-  P.inv=[{t:'wood',n:3}];craft(r);const sem=logList().length;
-  P.inv=[{t:'wood',n:4}];craft(r);
-  return {rec:!!r&&Object.keys(r.need).join()==='wood',sem,n:logList().length,left:P.inv.length,solid:querySolidNear(logList()[0].x,logList()[0].y-3,6).length>0};});
-ok(c.rec&&c.sem===0&&c.n===1&&c.left===0,'tronco usa so madeira (4); sem material nao monta');ok(c.solid,'tronco bloqueia a passagem');
+  P.inv=[{t:'wood',n:1}];craft(r);const semTool=!toolList().includes('log');
+  P.inv=[{t:'wood',n:2+4}];craft(r);
+  const o={rec:!!r&&Object.keys(r.need).join()==='wood',semTool,tool:P.tool==='log',n0:logList().length,left:countInv('wood')};
+  // colocar: previa na frente, botao de construir posiciona; madeira insuficiente nao posiciona
+  P.face=Math.PI/2;const a=logIntent();o.hor=a.a==='h'&&a.y>P.y&&!a.bad;P.face=0;const b=logIntent();o.ver=b.a==='v'&&b.x>P.x;
+  P.face=Math.PI/2;fenceBuild(false);o.n=logList().length;o.left2=countInv('wood');
+  fenceBuild(false);o.n2=logList().length;   // sem madeira (0) ou em cima do tronco: nao posiciona
+  P.inv=[{t:'wood',n:4}];fenceBuild(false);o.dup=logList().length;   // ja existe um tronco ali
+  P.y+=60;P.face=-Math.PI/2;P.inv=[{t:'wood',n:3}];o.poor=!!logIntent().bad;fenceBuild(false);o.n3=logList().length;
+  o.solid=querySolidNear(logList()[0].x,logList()[0].y-3,6).length>0;
+  return o;});
+ok(c.rec&&c.semTool&&c.tool&&c.n0===0&&c.left===4,'craftar o Tronco usa so madeira (2) e entrega a ferramenta; nada aparece na hora');
+ok(c.hor&&c.ver,'a previa fica na frente: olhando para baixo deita (horizontal), olhando para o lado fica em pe');
+ok(c.n===1&&c.left2===0&&c.n2===1&&c.dup===1&&c.n3===1,'o botao de construir posiciona 1 tronco por 4 madeiras e recusa sem madeira ou em cima de outro tronco');
+ok(c.solid,'tronco bloqueia a passagem');
 
 /* 3) sentar, descansar, levantar */
 const s=await pg.evaluate(()=>{
@@ -67,7 +78,7 @@ if(f.nolake)console.log('SKIP pesca sentado (sem lago neste mundo)');
 else{ok(f.sit&&f.fishing&&f.stillSit,'com a vara, ATACAR lanca a linha e o jogador continua sentado');
 ok(f.stillSit2,'continua sentado e pescando enquanto espera');ok(f.stoodByJoy,'mexer o analogico levanta');}
 await nw('forest');
-await pg.evaluate(()=>{trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;logList().length=0;rebuildSolidGrid();P.x=1600;P.y=1600;P.face=0;P.inv=[{t:'wood',n:4}];craft(RECIPES.find(q=>q.out==='log'));});
+await pg.evaluate(()=>{trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;logList().length=0;rebuildSolidGrid();P.x=1600;P.y=1600;P.face=0;logBuild({x:1600,y:1640,a:'h'});});
 
 /* 4) dois lugares: um terceiro nao senta se ocupados por aliados */
 const t2=await pg.evaluate(()=>{const L=logList()[0];remotePlayers={a:{x:logSeats(L)[0].x,y:logSeats(L)[0].y,st:true,alive:true},b:{x:logSeats(L)[1].x,y:logSeats(L)[1].y,st:true,alive:true}};
@@ -90,6 +101,11 @@ const w=await pg.evaluate(()=>{
 ok(w.toolClosed&&w.keep,'fechar a caixa de materiais volta para a arma que ja estava na mao');
 ok(w.holdOff&&w.keep2,'guardar o item da mao volta para a mesma arma');
 ok(w.many<2||w.next,'sem nada aberto o botao ainda passa para a proxima arma');
+
+/* 7) pose sentada desenha nos 4 lados e a previa do tronco desenha (verde e vermelha) sem erro */
+const dr=await pg.evaluate(()=>{try{const lk=myLook();for(const f of [Math.PI/2,-Math.PI/2,0,Math.PI])for(const L of [{x:50,y:50,a:'h'},{x:50,y:50,a:'v'}])for(const s of logSeats(L))human(s.x,s.y,f,{...lk,sit:true,wpn:'fists'});
+  P.tool='log';P.inv=[{t:'wood',n:9}];drawLogGhost();P.inv=[];drawLogGhost();P.tool=null;return 'ok';}catch(e){return String(e);}});
+ok(dr==='ok','pose sentada (cima, baixo, esquerda, direita) e previa do tronco desenham sem erro: '+dr);
 
 ok(errs.length===0,'sem erros de JS'+(errs.length?': '+errs[0]:''));
 await b.close();process.exit(bad?1:0);})();
