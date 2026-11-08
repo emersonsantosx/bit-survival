@@ -86,7 +86,7 @@ function saveGame(){
       chests:chestList.map(c=>c.open?1:0), rl:lootStatePack(),
       ice:icePack(),
       plots:plotsPack(),fr:fruitPack(),gh:ghPack(),fn:fencePack(),br:structPack(),pf:cellPack(),
-      doors:doorsPack(),bx:stashPack(),wl:wellPack()
+      doors:doorsPack(),bx:stashPack(),wl:wellPack(),lg:logPack()
     };
     localStorage.setItem(slotKey(curSlot),JSON.stringify(data));
     return true;
@@ -159,7 +159,7 @@ function restoreWorldState(d){
   iceLoad(d.ice);
   plotsLoad(d.plots);fruitLoad(d.fr);ghLoad(d.gh);structLoad(d.br);fenceLoad(d.fn);cellLoad(d.pf);
   doorsLoad(d.doors);
-  stashLoad(d.bx);wellLoad(d.wl);
+  stashLoad(d.bx);wellLoad(d.wl);logLoad(d.lg);
   if(P){P.hold=null;}EAT=null;eatLock=false;
   decals=(d.decals||[]).map(a=>({x:a[0],y:a[1],l:Number.isFinite(a[2])?a[2]:20})).filter(a=>a.l>0);
   rebuildSolidGrid();
@@ -452,7 +452,7 @@ function closeTool(){   // guarda a ferramenta de construcao (caixa de materiais
 }
 function cycleWeapon(){
   if(state!=='play'||!P)return;
-  closeTool();
+  if(P.tool){closeTool();updateWeaponHud();beep(300,.05,'square',.04);return;}   // fechar a caixa de materiais so volta para a arma que ja estava na mao
   if(P.hold){putAwayHold();return;}
   const l=weaponList();if(!l.length)return;
   const i=l.indexOf(P.weapon);P.weapon=l[(Math.max(-1,i)+1)%l.length];
@@ -584,6 +584,7 @@ function pickTarget(){
   const ch=nearestChest();if(ch)add({k:'chest',d:Math.max(0,Math.hypot(ch.x-P.x,ch.y-P.y)-P.r-3),b:0,ch},ch.x,ch.y,'c'+ch.x+','+ch.y);
   {const bx=window.stashNearby&&!P.inside&&stashNearby();if(bx)add({k:'stash',d:Math.max(0,Math.hypot(bx.x-P.x,bx.y-P.y)-P.r-8),b:0,bx},bx.x,bx.y,'x'+bx.x+','+bx.y);}
   {const wl=window.wellNearby&&!P.inside&&wellNearby();if(wl)add({k:'well',d:Math.max(0,Math.hypot(wl.x-P.x,wl.y-P.y)-P.r-10),b:0,wl},wl.x,wl.y,'w'+wl.x+','+wl.y);}
+  {const lg=window.logNearby&&!P.inside&&!P.sitting&&logNearby();if(lg)add({k:'log',d:Math.max(0,logDist(lg,P.x,P.y)-P.r),b:2,lg},lg.x,lg.y,'l'+lg.x+','+lg.y);}
   for(const q of plotCands())add(q,q.px,q.py,q.key);
   for(const q of fruitCands())add(q,q.px,q.py,q.key);
   for(const q of doorCands())add({k:'door',d:q.ed,b:-3,dr:q.dr},q.px,q.py,'d'+q.dr.bi+'.'+q.dr.di);
@@ -611,7 +612,7 @@ function pickTarget(){
     if(a.s<bs){bs=a.s;best=a;}
   }
   /* itens no chão têm prioridade sobre dormir, porta, água (pia/torneira) e carro destruído (a carcaça é grande e ficava na frente do item ao lado dela) */
-  if(best.k==='door'||best.k==='fgate'||best.k==='bed'||best.k==='tap'||best.k==='well'||(best.k==='veh'&&(best.v.destroyed||best.v.dying))){
+  if(best.k==='door'||best.k==='fgate'||best.k==='bed'||best.k==='tap'||best.k==='well'||best.k==='log'||(best.k==='veh'&&(best.v.destroyed||best.v.dying))){
     let bi=null;for(const a of c)if(a.k==='item'&&a.take&&(!bi||a.s<bi.s))bi=a;
     if(bi)best=bi;
   }
@@ -757,6 +758,7 @@ function pickup(){
   if(P.inVehicle){exitVehicle();return;}
   if(P.fish){cancelFishing(P.fish.ph===2?'Você soltou a linha':'Você recolheu a linha');return;}
   if(P.sleeping){wakeUp(false);return;}
+  if(P.sitting){logStand();return;}
 
   const cf=nearestCampfire()||nearestStove();
   const ck=cf&&P.hold?cookOf(P.hold):null;
@@ -789,6 +791,7 @@ function pickup(){
   if(TG&&TG.k==='chest'){openChest(TG.ch,false);return;}
   if(TG&&TG.k==='stash'){openStash(TG.bx);return;}
   if(TG&&TG.k==='well'){wellUse(TG.wl);return;}
+  if(TG&&TG.k==='log'){logSit(TG.lg);return;}
   if(TG&&TG.k==='plot'){plotDo(TG);return;}
   if(TG&&TG.k==='fruit'){fruitPick(TG.o);return;}
   if(TG&&TG.k==='door'){setDoor(TG.dr,TG.dr.open?0:1);return;}
@@ -938,6 +941,7 @@ function hurt(n,bleedChance){
   if(P.inVehicle)return; // dentro de um veículo o jogador nunca leva dano: só o veículo sofre
   if(P._grace>0)return; // acabou de reconectar
   if(P.sleeping)wakeUp(true);
+  if(P.sitting)logStand(true);
   if(EAT){EAT=null;eatLock=true;}
   P.hp-=n;flash=.45;shake=4;
   if(P.fish)cancelFishing('A linha se soltou!');
@@ -998,7 +1002,7 @@ function die(){
   if(!P || P.dead) return;
   closeWeaponWheel();closeChat();
   statBump('deaths');
-  P.sleeping=null;SLP.fade=0;P.hp=0;P.dead=true;P.fish=null;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;
+  P.sleeping=null;P.sitting=null;SLP.fade=0;P.hp=0;P.dead=true;P.fish=null;atkHeld=false;sprintHeld=false;touchGas=0;touchSteer=0;
   if(P.inVehicle){ try{exitVehicle();}catch(e){} }
   restoreWalkHUD();
   beep(200,.6,'sawtooth',.08,-150);boom(.5,.3,200);

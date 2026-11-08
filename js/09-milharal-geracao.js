@@ -211,7 +211,7 @@ function genWorld(seed) {
   solidGrid=null;SPG=null;FIELD=null;LM=null;chestList=[];   // grades de colisão do mundo anterior não podem vazar para a geração (senão o mesmo seed gera mundos diferentes)
   try {
   cityGardens=[];cityYards=[];cityPaths=[];cityDecor=[];fenceCityClear();ghLoad([]);
-  trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];tents=[];spits=[];decorations=[];animals=[];if(window.stashReset)stashReset();if(window.wellReset)wellReset();
+  trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];tents=[];spits=[];decorations=[];animals=[];if(window.stashReset)stashReset();if(window.wellReset)wellReset();if(window.logReset)logReset();
   cityInter=[];cityCrash=null;lampList=[];ORLA=null;
   plane=null;
 
@@ -412,6 +412,7 @@ function genWorld(seed) {
   rebuildSolidGrid();
   try{gardensGen();}catch(e){console.warn('[hortas]',e);}
   try{wellsGen();}catch(e){console.warn('[pocos]',e);}
+  try{logsGen();}catch(e){console.warn('[troncos]',e);}
   BASE_TREES=trees.map(t=>t.x+','+t.y);BASE_ROCKS=rocks.map(t=>t.x+','+t.y);regrowInit(); // referência para sincronizar o que foi derrubado/quebrado
   buildMinimap();
   }catch(e){

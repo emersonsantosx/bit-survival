@@ -130,7 +130,7 @@ function humanBody(R,o,face){
   const back=fy<-.5,front=fy>.2,ex=fx>.45?1:(fx<-.45?-1:0);
   const eL=ex>0?0:(ex<0?-3:-2),eR=ex>0?2:(ex<0?-1:1);
   const sbn=h=>{if(ex>=0)R(-3,-13,1,h,hair);if(ex<=0)R(2,-13,1,h,hair);}; // costeleta só do lado de trás do rosto
-  const step=o.moving?Math.sin(o.anim):0;
+  const step=o.moving&&!o.sit?Math.sin(o.anim):0;
   const l1=step>.3?-1:0,l2=step<-.3?-1:0;
   const skin=o.skin,shirt=o.shirt,hair=S.hair||o.hair||'#222';
   const pants=S.pants||skin,boot=S.boot===null?skin:(S.boot||'#241c16');
