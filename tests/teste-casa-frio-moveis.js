@@ -7,7 +7,7 @@ const { chromium } = require('playwright');
 const pg=await (await b.newContext({viewport:{width:900,height:600}})).newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.goto('file://'+file);await pg.waitForTimeout(300);
 // ---------- frio ----------
-const f=await pg.evaluate(()=>{localStorage.clear();selectedMap='snow';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;vehicles.length=0;trees.length=0;rocks.length=0;decorations.length=0;rebuildSolidGrid();
+const f=await pg.evaluate(()=>{localStorage.clear();selectedMap='snow';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;vehicles.length=0;trees.length=0;rocks.length=0;if(window.logList)logList().length=0;decorations.length=0;rebuildSolidGrid();
  const real=performance.now.bind(performance);let off=0;performance.now=()=>real()+off;const tick=()=>{off+=1000;};
  const o={};weather='snow';T=DAY_SECONDS*.1;P.inside=null;P.inVehicle=null;P.dead=false;
  let cx=0,cy=0,found=false;for(let i=0;i<900&&!found;i++){cx=30+(i*7)%100;cy=30+(i*11)%80;let free=true;for(let a=-2;a<=5&&free;a++)for(let c=-2;c<=5&&free;c++){const x=(cx+a)*16+8,y=(cy+c)*16+8;if(bldNear(x,y,24)||pointInLake(x,y)||solidPoint(x,y,10))free=false;}found=free;}

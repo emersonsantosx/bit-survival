@@ -13,7 +13,7 @@ const run=(map,kind)=>pg.evaluate(({map,kind})=>{
   if(!t){o.none=true;return o;}
   const f=fruitOf(t);o.fruit=f;
   // limpa em volta, fica ao lado e derruba com o machado
-  trees=[t];decorations.length=0;items.length=0;rocks.length=0;vehicles.length=0;rebuildSolidGrid();
+  trees=[t];decorations.length=0;items.length=0;rocks.length=0;if(window.logList)logList().length=0;vehicles.length=0;rebuildSolidGrid();
   P.inside=null;P.inVehicle=null;P.dead=false;P.inv=[];P.x=t.x-10;P.y=t.y+2;P.face=0;addMeleeWeapon('axe');P.weapon='axe';
   if(kind==='regrowing'){fruitPick(t);}
   o.ripe=!!fruitRipe(t);

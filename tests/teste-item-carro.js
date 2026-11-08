@@ -6,7 +6,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch();let bad=0;const ok=(c,m)=>{console.log(c?'OK  ':'FAIL',m);if(!c)bad++;};
 const pg=await (await b.newContext({viewport:{width:900,height:600}})).newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.goto('file://'+file);await pg.waitForTimeout(300);
-const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;trees.length=0;rocks.length=0;decorations.length=0;vehicles.length=0;campfires.length=0;chestList.length=0;blds.length=0;walls.length=0;tents.length=0;rebuildSolidGrid();P.inside=null;P.dead=false;   // mundo sorteado: tira o que pode competir com o carro (bau, portas, camas)
+const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;trees.length=0;rocks.length=0;if(window.logList)logList().length=0;decorations.length=0;vehicles.length=0;campfires.length=0;chestList.length=0;blds.length=0;walls.length=0;tents.length=0;rebuildSolidGrid();P.inside=null;P.dead=false;   // mundo sorteado: tira o que pode competir com o carro (bau, portas, camas)
  const o={};const cx=900,cy=900;
  const mkCar=(extra)=>{vehicles.length=0;vehicles.push(Object.assign({id:1,x:cx,y:cy,w:36,h:20,col:'#c33',looted:true,spd:0,face:0,hp:100,maxHp:100},extra||{}));};
  const setup=(side)=>{   // jogador encostado no carro e o item um pouco alem, do lado 'side' (0 direita, 1 baixo, 2 esquerda, 3 cima)

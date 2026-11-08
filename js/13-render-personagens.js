@@ -137,10 +137,17 @@ function humanBody(R,o,face){
   const os=S.os||'tee',hs=S.hs||'short';
   const sd=Sh(shirt,-.25),sl=Sh(shirt,.25);
   // pernas e botas
-  if(S.shorts){R(-4,-2+l1,3,2,pants);R(1,-2+l2,3,2,pants);R(-4,0+l1,3,3,skin);R(1,0+l2,3,3,skin);}
+  if(o.sit){   // sentado (tronco): visto de lado a coxa vai para a frente e a canela cai; de frente os joelhos sobem; de costas as pernas ficam escondidas atras do corpo
+    const bare=!!S.shorts||os==='dress'||os==='gown',th=S.shorts?pants:(bare?skin:pants),sh=bare?skin:pants;
+    if(ex!==0){
+      const m=ex>0?1:-1,Rm=(x,y,w,h,c)=>R(m>0?x:-x-w,y,w,h,c);   // desenha para a direita e espelha quando olha para a esquerda
+      Rm(-3,-2,8,3,th);Rm(-3,1,8,1,Sh(th,-.25));Rm(3,1,2,4,sh);Rm(3,4,4,2,boot);Rm(-2,-2,2,1,Sh(th,.15));
+    }else if(fy<-.5){R(-4,-2,3,2,pants);R(1,-2,3,2,pants);R(-4,0,3,1,Sh(pants,-.3));R(1,0,3,1,Sh(pants,-.3));}
+    else{R(-4,-2,3,3,th);R(1,-2,3,3,th);R(-4,1,3,1,Sh(th,-.25));R(1,1,3,1,Sh(th,-.25));R(-4,2,3,3,sh);R(1,2,3,3,sh);R(-4,4,3,2,boot);R(1,4,3,2,boot);}
+  }else if(S.shorts){R(-4,-2+l1,3,2,pants);R(1,-2+l2,3,2,pants);R(-4,0+l1,3,3,skin);R(1,0+l2,3,3,skin);}
   else if(os==='dress'||os==='gown'){R(-4,-2+l1,3,5,skin);R(1,-2+l2,3,5,skin);}
   else{R(-4,-2+l1,3,5,pants);R(1,-2+l2,3,5,pants);}
-  R(-4,1+l1,3,2,boot);R(1,1+l2,3,2,boot);
+  if(!o.sit){R(-4,1+l1,3,2,boot);R(1,1+l2,3,2,boot);}
   if(z&&kind===0&&S.os==='gown'){R(-4,-1+l1,3,1,'#e8e4d8');}                 // bandagem na perna do paciente
   // mochila (de lado/frente aparece atrás; de costas cobre as costas)
   if(S.acc==='pack'&&!back){R(-5,-8,1,5,S.pack);R(4,-8,1,5,S.pack);}
@@ -394,7 +401,7 @@ const HELD={
   pistol:{ax:2,ay:3,gun:1,s:.8},smg:{ax:3,ay:3,gun:1,s:.88},shotgun:{ax:6,ay:3,gun:1,s:.92},rifle:{ax:5,ay:3,gun:1,s:.92},
   bow:{ax:3,ay:5,off:3},
   bat:{ax:1,ay:9,rot:Math.PI/4},axe:{ax:4,ay:9,rot:Math.PI/4},pickaxe:{ax:2,ay:9,rot:Math.PI/4},
-  hoe:{ax:1,ay:9,rot:Math.PI/4,s:1.1},fence:{ax:1,ay:9,rot:Math.PI/4,s:1.0},gate:{ax:1,ay:9,rot:Math.PI/4,s:1.0},wall:{ax:1,ay:9,rot:Math.PI/4,s:1.0},door:{ax:1,ay:9,rot:Math.PI/4,s:1.0},floor:{ax:1,ay:9,rot:Math.PI/4,s:1.0},roof:{ax:1,ay:9,rot:Math.PI/4,s:1.0},mattress:{ax:1,ay:9,rot:Math.PI/4,s:1.0},katana:{ax:1,ay:9,rot:Math.PI/4,s:1.2},spear:{ax:1,ay:9,rot:Math.PI/4,s:1.5},fishingrod:{ax:1,ay:9,rot:Math.PI/4,s:1.3}
+  hoe:{ax:1,ay:9,rot:Math.PI/4,s:1.1},fence:{ax:1,ay:9,rot:Math.PI/4,s:1.0},gate:{ax:1,ay:9,rot:Math.PI/4,s:1.0},wall:{ax:1,ay:9,rot:Math.PI/4,s:1.0},door:{ax:1,ay:9,rot:Math.PI/4,s:1.0},floor:{ax:1,ay:9,rot:Math.PI/4,s:1.0},roof:{ax:1,ay:9,rot:Math.PI/4,s:1.0},mattress:{ax:1,ay:9,rot:Math.PI/4,s:1.0},log:{ax:1,ay:9,rot:Math.PI/4,s:1.0},katana:{ax:1,ay:9,rot:Math.PI/4,s:1.2},spear:{ax:1,ay:9,rot:Math.PI/4,s:1.5},fishingrod:{ax:1,ay:9,rot:Math.PI/4,s:1.3}
 };
 /* arma branca (machado, picareta, taco, espada, lanca): olhando para a esquerda o desenho e o balanco sao o ESPELHO do golpe para a direita (antes, para a esquerda a arma ia de baixo para cima e a cabeca ficava de ponta-cabeca) */
 function meleeLeft(wpn,face){const H=HELD[wpn];return !!H&&!H.gun&&wpn!=='bow'&&Math.cos(face)<0;}
@@ -425,7 +432,7 @@ function armLine(sx,sy,ex,ey,sleeve,skin,fr){
   ctx.restore();
 }
 function punchHand(h,sw){if(sw>0&&!h._pon)h._ph=(h._ph|0)^1;h._pon=sw>0;return h._ph|0;} // alterna soco direito/esquerdo a cada golpe
-const TWO_HAND={pistol:1,rifle:1,shotgun:1,smg:1,bow:1,bat:1,axe:1,pickaxe:1,katana:1,spear:1,fishingrod:1,hoe:1,fence:1,gate:1,wall:1,door:1,floor:1,roof:1,mattress:1}; // armas de duas mãos
+const TWO_HAND={pistol:1,rifle:1,shotgun:1,smg:1,bow:1,bat:1,axe:1,pickaxe:1,katana:1,spear:1,fishingrod:1,hoe:1,fence:1,gate:1,wall:1,door:1,floor:1,roof:1,mattress:1,log:1}; // armas de duas mãos
 function human(x,y,face,o){
   humanDraw(x,y,face,o);
   let d=lakeDepth(x,y);
@@ -441,6 +448,7 @@ function humanDraw(x,y,face,o){
   if(depth){offsetY=depth*9+Math.sin(T*5+x*.07)*.6*depth;}   // afunda até só a cabeça ficar para fora e balança na água
   if(scaleM!==1)ctx.scale(scaleM,scaleM);
   ctx.translate(0,offsetY);
+  if(o.sit)ctx.translate(0,3);   // sentado: o quadril desce para o tronco
   if(depth){ctx.beginPath();ctx.rect(-40,-80,80,80+(3-depth*12)-0);ctx.clip();}   // corta tudo abaixo da linha d'água (pescoço quando fundo)
   if(o.crawler){
     shadow(0,2,8,3);
@@ -1861,6 +1869,7 @@ function drawItem(it,near){
     case'door':R(x-4,y-7+b,8,7,'#7a5230');R(x-4,y-7+b,8,1,'#946238');R(x+1,y-4+b,2,2,'#e0c050');break;
     case'floor':R(x-5,y-5+b,10,5,'#a97c45');R(x-5,y-3+b,10,1,'#6a4a28');R(x-5,y-1+b,10,1,'#6a4a28');R(x-5,y-5+b,10,1,'#c79a62');break;
     case'mattress':R(x-5,y-6+b,10,7,'#4e3220');R(x-4,y-5+b,8,5,'#d6d2c4');R(x-4,y-5+b,3,5,'#f4f0e6');R(x-1,y-5+b,5,5,'#3a5a8a');break;
+    case'log':R(x-6,y-6+b,12,6,'#2e2014');R(x-5,y-5+b,10,4,'#6b4a2e');R(x-5,y-5+b,10,1,'#8a6238');R(x-7,y-5+b,2,5,'#d9b27a');break;
     case'roof':R(x-5,y-7+b,10,7,'#b44a3a');R(x-5,y-7+b,10,1,'#d9705c');for(let i=0;i<3;i++)R(x-5,y-5+b+i*2,10,1,'#7a2e24');break;
     case'fence':for(let i=0;i<4;i++){R(x-5+i*3,y-6+b,2,6,'#9a6a3a');}R(x-5,y-4+b,10,1,'#5a3c20');break;
     case'hoe':for(let i=0;i<10;i++)R(x-5+i,y-3+b-(i>>2),1,1,'#8a6a3a');R(x+3,y-7+b,4,3,'#c0c8d4');break;

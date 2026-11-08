@@ -25,7 +25,7 @@ for(const m of ['forest','snow','desert','city']){
 /* 2) craft e agua na floresta */
 await nw('forest');
 const c=await pg.evaluate(()=>{
-  trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;rebuildSolidGrid();
+  trees.length=0;rocks.length=0;if(window.logList)logList().length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;rebuildSolidGrid();
   P.x=1600;P.y=1600;P.face=0;P.inv=[{t:'stone',n:8},{t:'wood',n:4}];
   const n0=wellList().length,r=RECIPES.find(q=>q.out==='well');craft(r);
   const o={rec:!!r,n:wellList().length-n0,left:P.inv.length,built:wellList().filter(w=>!w.g).length};
@@ -58,7 +58,7 @@ ok(h.near===true&&h.far===false,'canteiro perto do poco fica umido, longe nao');
 /* 6) deserto: poucos goles, volta devagar; pode fabricar em qualquer lugar (nao so perto de oasis) */
 await nw('desert');
 const dz=await pg.evaluate(()=>{
-  trees.length=0;rocks.length=0;blds.length=0;rebuildSolidGrid();
+  trees.length=0;rocks.length=0;if(window.logList)logList().length=0;blds.length=0;rebuildSolidGrid();
   let fx=null,fy=null;for(let k=0;k<800&&fx===null;k++){const x=400+Math.random()*(WW-800),y=400+Math.random()*(WH-800);if(!lakes.some(q=>Math.hypot(x-q.cx,y-q.cy)<q.r+600)&&!solidPoint(x,y,30)&&!pointInLake(x,y)){fx=x;fy=y;}}
   const o={foundFar:fx!==null};P.x=fx;P.y=fy;P.face=0;P.inv=[{t:'stone',n:8},{t:'wood',n:4}];
   const n0=wellList().length;craft(RECIPES.find(q=>q.out==='well'));o.farBuilt=wellList().length-n0;

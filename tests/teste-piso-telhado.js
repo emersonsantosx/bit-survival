@@ -7,7 +7,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch();let bad=0;const ok=(c,m)=>{console.log(c?'OK  ':'FAIL',m);if(!c)bad++;};
 const pg=await (await b.newContext({viewport:{width:900,height:600}})).newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.goto('file://'+file);await pg.waitForTimeout(300);
-const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;trees.length=0;rocks.length=0;decorations.length=0;vehicles.length=0;rebuildSolidGrid();P.inside=null;P.dead=false;
+const r=await pg.evaluate(()=>{localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;trees.length=0;rocks.length=0;if(window.logList)logList().length=0;decorations.length=0;vehicles.length=0;rebuildSolidGrid();P.inside=null;P.dead=false;
  const o={};for(let i=0;i<80;i++)addItem('wood');
  const rf=RECIPES.find(q=>q.out==='floor'),rr=RECIPES.find(q=>q.out==='roof');o.rec=!!rf&&!!rr;
  const w0=countInv('wood');craft(rf);craft(rr);o.tools=toolList().includes('floor')&&toolList().includes('roof');o.recCost=w0-countInv('wood');

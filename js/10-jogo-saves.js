@@ -420,9 +420,9 @@ function weaponList(){
   return l;
 }
 /* ferramentas de construcao (enxada, cerca, portao): nao entram no arsenal das armas, tem botao proprio na HUD */
-const BUILD_TOOLS=['hoe','fence','gate','wall','door','floor','roof','mattress'];
-const FENCE_ICON={fence:'fence',gate:'gate',wall:'wall',door:'door',floor:'floor',roof:'roof',mattress:'mattress'};   // ferramentas do botao de construir que nao sao a enxada (modulos 19-cerca e 20-piso-telhado)
-const CELL_TOOLS={floor:1,roof:1,mattress:1};   // as que agem num quadrado (modulo 20); as outras agem numa borda da grade (modulo 19)
+const BUILD_TOOLS=['hoe','fence','gate','wall','door','floor','roof','mattress','log'];
+const FENCE_ICON={fence:'fence',gate:'gate',wall:'wall',door:'door',floor:'floor',roof:'roof',mattress:'mattress',log:'log'};   // ferramentas do botao de construir que nao sao a enxada (modulos 19-cerca e 20-piso-telhado)
+const CELL_TOOLS={floor:1,roof:1,mattress:1,log:1};   // as que agem num quadrado (modulo 20); as outras agem numa borda da grade (modulo 19)
 function toolList(){return Array.isArray(P?.tools)?P.tools.filter(k=>BUILD_TOOLS.includes(k)):[];}
 function addTool(key){
   if(!P||!BUILD_TOOLS.includes(key))return;
@@ -458,7 +458,7 @@ function cycleWeapon(){
   const i=l.indexOf(P.weapon);P.weapon=l[(Math.max(-1,i)+1)%l.length];
   beep(300,.05,'square',.04);updateWeaponHud();     // o botão de trocar arma já mostra a arma: sem aviso no topo
 }
-const WEAPON_ICON={hoe:'hoe',fence:'fence',gate:'gate',wall:'wall',door:'door',floor:'floor',roof:'roof',mattress:'mattress',fists:'fists',bat:'bat',axe:'axe',pickaxe:'pickaxe',katana:'katana',spear:'spear',bow:'bow',pistol:'pistol',smg:'smg',shotgun:'shotgun',rifle:'rifle',fishingrod:'rod'};
+const WEAPON_ICON={hoe:'hoe',fence:'fence',gate:'gate',wall:'wall',door:'door',floor:'floor',roof:'roof',mattress:'mattress',log:'log',fists:'fists',bat:'bat',axe:'axe',pickaxe:'pickaxe',katana:'katana',spear:'spear',bow:'bow',pistol:'pistol',smg:'smg',shotgun:'shotgun',rifle:'rifle',fishingrod:'rod'};
 let weaponWheelOpen=false, weaponWheelOpenedAt=0;
 function updateWeaponHud(){const el=$('wpn'),sw=$('swap');if(el)el._sig=null;if(sw)sw._sig=null;}   // o HUD redesenha a arma no próximo quadro
 function closeWeaponWheel(){weaponWheelOpen=false;const el=$('weapon-wheel');if(el)el.classList.add('hide');}
@@ -758,7 +758,7 @@ function pickup(){
   if(P.inVehicle){exitVehicle();return;}
   if(P.fish){cancelFishing(P.fish.ph===2?'Você soltou a linha':'Você recolheu a linha');return;}
   if(P.sleeping){wakeUp(false);return;}
-  if(P.sitting){logStand();return;}
+  if(P.sitting){logStand();return;}   // sentado: o botao de interacao levanta (o analogico tambem)
 
   const cf=nearestCampfire()||nearestStove();
   const ck=cf&&P.hold?cookOf(P.hold):null;
