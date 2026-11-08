@@ -12,12 +12,15 @@ for(const m of ['forest','snow','desert','city']){
   const give=(t,n)=>{for(let i=0;i<n;i++)addItem(t);};
   P.pack=true;give('wood',30);give('cloth',10);give('water',3);give('seed_corn',2);give('seed_potato',2);give('seed_melon',2);
   // ponto livre (na cidade: dentro de um jardim; na neve: dentro da estufa)
+  const ar=(dx)=>{const cx=Math.floor((P.x+dx)/16),cy=Math.floor(P.y/16);const n=plotList().length;plotDo({act:'ARAR',cell:{cx,cy}});return plotList().find(p=>p.cx===cx&&p.cy===cy);};
+  let p1,p2,p3;
+  for(let tr=0;tr<(m==='snow'?1:25);tr++){   // se o ponto sorteado nao aceita os 3 canteiros (poco, cerca, etc. por perto), sorteia outro
   let sx,sy;
   for(let k=0;k<60000;k++){const x=200+Math.random()*(WW-400),y=200+Math.random()*(WH-400);if(pointInLake(x,y)||solidPoint(x,y,selectedMap==='city'?14:40)||bldNear(x,y,selectedMap==='city'?20:60))continue;if(selectedMap==='city'&&!(inCityGarden(x,y)&&inCityGarden(x-14,y-14)&&inCityGarden(x+14,y+14)))continue;if(onCityRoad(x,y,40))continue;if(selectedMap!=='snow'&&[0,16,-16].some(dx=>soilBad((Math.floor((x+dx)/16))*16+8,Math.floor(y/16)*16+8)))continue;if(m==='snow'){P.x=x;P.y=y;P.face=0;P.inside=null;if(!ghSpot())continue;}sx=Math.round(x);sy=Math.round(y);break;}
   P.x=sx;P.y=sy;P.face=0;P.inside=null;P.tool='hoe';
   if(m==='snow'){craft(RECIPES.find(r=>r.out==='greenhouse'));o.gh=ghList().length;const g=ghList()[0];P.x=g.x+24;P.y=g.y+24;P.face=0;}
-  const ar=(dx)=>{const cx=Math.floor((P.x+dx)/16),cy=Math.floor(P.y/16);const n=plotList().length;plotDo({act:'ARAR',cell:{cx,cy}});return plotList().find(p=>p.cx===cx&&p.cy===cy);};
-  const p1=ar(0),p2=ar(16),p3=ar(-16);o.plots=plotList().length;
+  p1=ar(0);p2=ar(16);p3=ar(-16);if(p1&&p2&&p3)break;plotsLoad([]);}
+  o.plots=plotList().length;
   P.hold=null;plotDo({act:'PLANTAR',p:p1});o.noHand=p1.c===null&&!plotCands().some(c=>c.act==='PLANTAR');   // sem semente na mao nao planta
   const plant=(p,seed)=>{msgs.length=0;for(const s of P.inv.filter(s=>/^seed_/.test(s.t))){P.hold=s.t;plotDo({act:'PLANTAR',p});if(p.c)break;}return p.c;};   // segura cada semente ate uma vingar
   // melancia fora do deserto deve recusar
