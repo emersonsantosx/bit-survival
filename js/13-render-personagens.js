@@ -2006,8 +2006,8 @@ function drawInterior(b){
   ctx.drawImage(b._fc,b.x,b.y);
   ctx.restore();ctx.imageSmoothingEnabled=sm;
   drawDoors(b);
-  const near=nearestItem();
-  for(const it of items)if(it.x>=b.x&&it.x<=b.x+b.w&&it.y>=b.y&&it.y<=b.y+b.h&&seeIn(b,it.x,it.y))drawItem(it,it===near);
+  const near=nearestItem(),mine=[];roomsAt(b,P.x,P.y-2,mine);   // item so aparece no comodo do proprio jogador (o comodo de outro jogador mostra os moveis, nao o chao)
+  for(const it of items)if(it.x>=b.x&&it.x<=b.x+b.w&&it.y>=b.y&&it.y<=b.y+b.h&&mine.some(r=>it.x>=r.x-3&&it.x<=r.x+r.w+3&&it.y>=r.y-3&&it.y<=r.y+r.h+3))drawItem(it,it===near);
 }
 /* item dentro da planta de uma casa: de fora (a pé ou de carro) ele nunca aparece, só quando o jogador está dentro e no cômodo certo */
 function itemIndoor(it){

@@ -65,6 +65,8 @@ const rm=await pg.evaluate(()=>{
   o.dist=Math.round(Math.hypot(ix-P.x,iy-P.y));
   o.other=nearestItem()===null;
   o.drawn=(b=>{b._vis=visRooms(b);return seeIn(b,ix,iy);})(bd);
+  // multiplayer: outro jogador dentro do comodo vizinho nao libera o item dele para mim
+  remotePlayers={p1:{x:ix,y:iy,alive:true,inVehicle:false,name:'x'}};o.remoteNo=nearestItem()===null;remotePlayers={};
   // de fora da casa: nao pega item de dentro (mesmo colado na parede)
   items.length=0;P.inside=null;P.x=bd.x-4;P.y=bd.y+bd.h/2;items.push({t:'wood',x:bd.x+10,y:bd.y+bd.h/2});
   o.outside=nearestItem()===null;
@@ -72,6 +74,7 @@ const rm=await pg.evaluate(()=>{
 console.log(JSON.stringify(rm));
 ok(rm.same,'dentro do comodo, o item dele pode ser pego');
 ok(rm.other&&rm.dist<24,'item do comodo vizinho (a '+rm.dist+' px, colado na parede) nao pode ser pego');
+ok(rm.remoteNo,'multiplayer: outro jogador no comodo vizinho nao libera o item para mim');
 ok(rm.drawn===false,'item do comodo vizinho tambem nao aparece');
 ok(rm.outside,'de fora da casa nao se pega item de dentro');
 
