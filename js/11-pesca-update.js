@@ -1288,7 +1288,6 @@ function updateHud(force){
   else if((P._scap||100)<65){st='FRACO';stk='stam';}
   if(!st&&MP.active&&MP.isHost&&MP.guestAway)st='CONVIDADO OFFLINE';
   const stat=$('stat');if(stat){stat.textContent=st;stat.style.opacity=st?'1':'0';stat.className=stk?'s-'+stk:'';} // a cor do aviso segue a cor da barra correspondente
-  const PICK_ICON={ARAR:'c_hand',PLANTAR:'c_hand',COLHER:'c_hand',REGAR:'drop',FECHAR:'c_door',PORTA:'c_door','PORTÃO':'c_door',ABRIR:'c_chest',PEGAR:'c_hand','ÁGUA':'drop',ASSAR:'c_flame',ENTRAR:'c_door',DORMIR:'c_bed',LEVANTAR:'c_bed'};
   {const at=$('atk'),want=(P.hold&&EATABLE(P.hold))?'c_eat':'c_atk';
    if(at&&at.dataset.ic!==want){at.dataset.ic=want;at.setAttribute('aria-label',(P.hold&&EATABLE(P.hold))?'Comer':'Atacar');at.innerHTML=pxIcon(want,4);}}
   let canInteract=false,btnText='PEGAR';
@@ -1309,14 +1308,16 @@ function updateHud(force){
   if(!TG&&nearestCactus()){canInteract=true;btnText='ÁGUA';}
   if(cf && P.hold && cookOf(P.hold)){canInteract=true;btnText='ASSAR';}
   if(P.sleeping||P.sitting){canInteract=true;btnText='LEVANTAR';}
+  if(P.fish){canInteract=true;btnText='RECOLHER';}   // pickup() recolhe a linha primeiro
   else if(TG&&TG.k==='bed'){btnText='DORMIR';}
   {const fb=$('bflash');if(fb){const sh=!!P.torch&&!P.dead;if(fb._sh!==sh||fb._on!==!!P.flashOn){fb._sh=sh;fb._on=!!P.flashOn;updateFlashBtn();}}}
   {const hb=$('hoe');if(hb)hb.classList.toggle('hide',!(!!P.tool&&!P.inVehicle&&!P.dead&&!P.sleeping));}
   {const hb=$('hoe'),want=FENCE_ICON[P.tool]||'hoe';if(hb&&hb.dataset.ic!==want){hb.dataset.ic=want;hb.setAttribute('aria-label',{fence:'Construir cerca',gate:'Construir portão',wall:'Construir parede',door:'Construir porta',floor:'Construir piso',roof:'Construir telhado',mattress:'Montar cama',log:'Colocar tronco'}[want]||'Arar a terra');hb.innerHTML=pxIcon(want,4);}}   // botao de construir: ARAR com a enxada, a peca da ferramenta nas outras
   {const tb=$('tools');if(tb){const l=toolList(),show=l.length>0&&!P.inVehicle&&!P.dead&&!P.sleeping,want=P.tool||'toolbox';tb.classList.toggle('hide',!show);tb.classList.toggle('act',!!P.tool);
     if(tb.dataset.ic!==want){tb.dataset.ic=want;tb.setAttribute('aria-label',P.tool?'Guardar ferramenta de construção':'Ferramentas de construção');tb.innerHTML=pxIcon(want,P.tool?3:3);}}}
+  {const ve=$('v-exit');if(ve&&P.inVehicle){const ic='a_'+vehKind()+'_out';if(ve.dataset.ic!==ic){ve.dataset.ic=ic;ve.innerHTML=pxIcon(ic,2);}}}   // sair: o veiculo do mapa com a seta para cima
   const pick_=$('pick');
-  if(pick_){if(pick_.dataset.st!==btnText){pick_.dataset.st=btnText;pick_.setAttribute('aria-label',btnText==='ABRIR'?'Abrir baú':btnText==='ÁGUA'?'Beber água':btnText==='ASSAR'?'Assar':btnText==='ENTRAR'?'Entrar':btnText==='FECHAR'?'Fechar porta':btnText==='PORTA'?'Abrir porta':btnText==='PORTÃO'?'Abrir portão':btnText==='DORMIR'?'Dormir':btnText==='LEVANTAR'?'Levantar':'Pegar');if(plotAria[btnText])pick_.setAttribute('aria-label',plotAria[btnText]);pick_.innerHTML=pxIcon(PICK_ICON[btnText]||'c_hand',3);}
+  if(pick_){const ic=actionIcon(btnText,TG,P);if(pick_.dataset.st!==btnText||pick_.dataset.ic!==ic){pick_.dataset.st=btnText;pick_.dataset.ic=ic;pick_.setAttribute('aria-label',(window.plotAria&&plotAria[btnText])||ACTION_ARIA[btnText]||'Pegar');pick_.innerHTML=pxIcon(ic,3);}   // o icone mostra o alvo e o resultado (modulo 25)
     pick_.classList.toggle('hot',canInteract);}
 }
 

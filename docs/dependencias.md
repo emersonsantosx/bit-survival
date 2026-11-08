@@ -10,12 +10,12 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 |---|---:|---:|---:|---:|---:|---:|
 | 01-base | 45 | 40 | 5 | 0 | 0 | 22 |
 | 02-audio | 68 | 32 | 35 | 1 | 5 | 19 |
-| 03-dados | 47 | 34 | 13 | 0 | 2 | 19 |
+| 03-dados | 47 | 35 | 12 | 0 | 2 | 20 |
 | 04-estado | 84 | 79 | 5 | 0 | 6 | 21 |
 | 05-geometria | 57 | 42 | 15 | 0 | 10 | 17 |
 | 06-interiores-portas | 36 | 18 | 18 | 0 | 7 | 6 |
 | 07-loot-mapa | 62 | 30 | 32 | 0 | 13 | 8 |
-| 08-cidade-vilas-marcos | 44 | 23 | 20 | 1 | 11 | 15 |
+| 08-cidade-vilas-marcos | 44 | 23 | 20 | 1 | 11 | 16 |
 | 09-milharal-geracao | 63 | 36 | 27 | 0 | 12 | 9 |
 | 10-jogo-saves | 112 | 74 | 38 | 0 | 13 | 13 |
 | 11-pesca-update | 27 | 11 | 16 | 0 | 13 | 16 |
@@ -32,35 +32,37 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 22-bau | 0 | 0 | 0 | 0 | 9 | 0 |
 | 23-poco | 0 | 0 | 0 | 0 | 9 | 0 |
 | 24-tronco | 0 | 0 | 0 | 0 | 9 | 0 |
+| 25-icones-acoes | 0 | 0 | 0 | 0 | 2 | 0 |
 
 ## Matriz: quantos usos cada arquivo (linha) faz de globais de outro (coluna)
 
-| de \ para | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 01-base | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 02-audio | 25 | . |  | 40 | 4 |  |  | 2 | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 03-dados | 1 |  | . | 19 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 04-estado | 23 | 1 | 3 | . |  |  |  |  |  | 3 |  | 2 |  |  | 2 |  |  |  |  |  |  |  |  |  |
-| 05-geometria | 118 | 7 | 27 | 147 | . | 6 |  | 5 | 9 |  | 2 | 1 | 11 |  |  |  |  |  |  |  |  |  |  |  |
-| 06-interiores-portas | 42 | 11 | 7 | 36 | 1 | . |  |  |  |  |  | 1 | 30 |  |  |  |  |  |  |  |  |  |  |  |
-| 07-loot-mapa | 124 | 3 | 30 | 127 | 2 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |
-| 08-cidade-vilas-marcos | 119 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |
-| 09-milharal-geracao | 203 | 10 | 87 | 273 | 40 |  | 1 | 35 | . | 3 | 3 | 6 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |
-| 10-jogo-saves | 91 | 51 | 47 | 685 | 17 | 2 | 12 | 10 | 7 | . | 88 | 25 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |
-| 11-pesca-update | 231 | 37 | 49 | 834 | 59 | 2 | 3 | 4 | 19 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |
-| 12-crafting-multiplayer | 55 | 37 | 29 | 608 | 12 | 1 | 6 | 5 | 11 | 38 | 39 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |
-| 13-render-personagens | 321 | 40 | 20 | 260 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 608 | 13 | 16 | 316 | 13 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |
-| 15-missoes-ui-controles | 191 | 58 | 21 | 251 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |
-| 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |
-| 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |
-| 18-plantacao | 36 | 6 | 22 | 77 | 16 |  |  | 13 | 1 | 1 | 8 | 3 | 139 |  | 1 |  |  | . |  |  |  |  |  |  |
-| 19-cerca | 34 | 11 | 3 | 101 | 12 |  |  | 1 |  | 4 | 4 | 5 | 70 |  |  |  |  |  | . |  |  |  |  |  |
-| 20-piso-telhado | 39 | 3 | 6 | 37 | 6 |  |  | 1 |  |  | 2 | 2 | 30 |  |  |  |  |  |  | . |  |  |  |  |
-| 21-frutiferas | 17 | 1 | 7 | 25 | 2 |  |  |  |  |  | 1 | 3 | 13 |  | 1 |  |  |  |  |  | . |  |  |  |
-| 22-bau | 14 | 13 | 11 | 63 | 11 |  |  | 1 |  | 3 | 8 | 6 |  |  |  |  |  |  |  |  |  | . |  |  |
-| 23-poco | 15 | 4 | 4 | 51 | 14 |  |  | 2 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  | . |  |
-| 24-tronco | 23 | 5 | 4 | 98 | 14 |  |  | 1 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  |  | . |
+| de \ para | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 01-base | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 02-audio | 25 | . |  | 40 | 4 |  |  | 2 | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 03-dados | 1 |  | . | 19 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 04-estado | 23 | 1 | 3 | . |  |  |  |  |  | 3 |  | 2 |  |  | 2 |  |  |  |  |  |  |  |  |  |  |
+| 05-geometria | 118 | 7 | 27 | 147 | . | 6 |  | 5 | 9 |  | 2 | 1 | 11 |  |  |  |  |  |  |  |  |  |  |  |  |
+| 06-interiores-portas | 42 | 11 | 7 | 36 | 1 | . |  |  |  |  |  | 1 | 30 |  |  |  |  |  |  |  |  |  |  |  |  |
+| 07-loot-mapa | 124 | 3 | 30 | 127 | 2 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |  |
+| 08-cidade-vilas-marcos | 119 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |
+| 09-milharal-geracao | 203 | 10 | 87 | 273 | 40 |  | 1 | 35 | . | 3 | 3 | 6 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |
+| 10-jogo-saves | 91 | 51 | 47 | 685 | 17 | 2 | 12 | 10 | 7 | . | 88 | 25 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |  |
+| 11-pesca-update | 232 | 37 | 50 | 837 | 59 | 2 | 3 | 5 | 19 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
+| 12-crafting-multiplayer | 55 | 37 | 29 | 608 | 12 | 1 | 6 | 5 | 11 | 38 | 39 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
+| 13-render-personagens | 321 | 40 | 20 | 260 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
+| 14-arquitetura-luz-ambiente | 608 | 13 | 16 | 316 | 13 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
+| 15-missoes-ui-controles | 191 | 58 | 21 | 251 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
+| 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |
+| 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |
+| 18-plantacao | 36 | 6 | 22 | 77 | 16 |  |  | 13 | 1 | 1 | 8 | 3 | 139 |  | 1 |  |  | . |  |  |  |  |  |  |  |
+| 19-cerca | 34 | 11 | 3 | 101 | 12 |  |  | 1 |  | 4 | 4 | 5 | 70 |  |  |  |  |  | . |  |  |  |  |  |  |
+| 20-piso-telhado | 39 | 3 | 6 | 37 | 6 |  |  | 1 |  |  | 2 | 2 | 30 |  |  |  |  |  |  | . |  |  |  |  |  |
+| 21-frutiferas | 17 | 1 | 7 | 25 | 2 |  |  |  |  |  | 1 | 3 | 13 |  | 1 |  |  |  |  |  | . |  |  |  |  |
+| 22-bau | 14 | 13 | 11 | 63 | 11 |  |  | 1 |  | 3 | 8 | 6 |  |  |  |  |  |  |  |  |  | . |  |  |  |
+| 23-poco | 15 | 4 | 4 | 51 | 14 |  |  | 2 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  | . |  |  |
+| 24-tronco | 23 | 5 | 4 | 98 | 14 |  |  | 1 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  |  | . |  |
+| 25-icones-acoes |  |  | 13 |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |
 
 (colunas = os dois primeiros digitos do nome do arquivo)
 
@@ -68,7 +70,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 20 | 1886 |
+| P | let | 04-estado:14 | 20 | 1889 |
 | MP | let | 04-estado:19 | 20 | 567 |
 | selectedMap | let | 04-estado:3 | 20 | 214 |
 | beep | funcao | 02-audio:42 | 19 | 133 |
@@ -113,16 +115,16 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | day | let | 04-estado:14 | 7 | 26 |
 | countInv | funcao | 04-estado:261 | 7 | 23 |
 | pick | const | 01-base:18 | 7 | 22 |
+| vehKind | funcao | 08-cidade-vilas-marcos:353 | 7 | 16 |
 | atkHeld | let | 04-estado:16 | 7 | 15 |
 | pushOut | funcao | 05-geometria:396 | 7 | 14 |
 | sprintHeld | let | 04-estado:16 | 7 | 13 |
-| $ | const | 01-base:2 | 6 | 153 |
+| $ | const | 01-base:2 | 6 | 154 |
 | Z | let | 01-base:47 | 6 | 107 |
 | plane | let | 04-estado:13 | 6 | 62 |
 | joy | const | 04-estado:183 | 6 | 54 |
 | decorations | let | 04-estado:10 | 6 | 38 |
 | DAY_SECONDS | const | 03-dados:8 | 6 | 27 |
-| vehKind | funcao | 08-cidade-vilas-marcos:353 | 6 | 14 |
 | weatherTimer | let | 04-estado:7 | 6 | 13 |
 | setRain | funcao | 02-audio:601 | 6 | 11 |
 | bldNear | funcao | 05-geometria:579 | 6 | 11 |
@@ -135,7 +137,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 - **01-base** (5): makeLightSprite, mmC, IS_MOBILE, dispH, PERF_TIERS
 - **02-audio** (35): muted, gAtk, ambientSrc, ambientGain, rainNoise, ACT, sndBusy, _sndT, sndThrottle, stepNoise, VOICE_BOOST, voice, ZVB, creatureGain, AVB, musicWanted, musicOn, musicGain, musicTimer, musicNext, musicStepN, musicVerb, MUSIC_BASE, MUSIC_STEP, MUSIC_CACHE, ...
-- **03-dados** (13): PXPAL, PXG, pxLines, pxRot, PXURL, pxData, PXCV, hydratePx, FISH_TPL, fishGrid, FISH_POOL, SEED_POOL, ZUNLOCK
+- **03-dados** (12): PXPAL, pxLines, pxRot, PXURL, pxData, PXCV, hydratePx, FISH_TPL, fishGrid, FISH_POOL, SEED_POOL, ZUNLOCK
 - **04-estado** (5): chatLog, chatUnread, chatTime, chatAddHistory, chatShowEmpty
 - **05-geometria** (15): iceOf, orlaHit, _PAVE, _SANDP, orlaPatterns, TERR, CAR_TOP, SPG_C, spgSync, WG_C, WG, wallGrid, SOLID_GRID, wallBlockerAt, obbHitsCircle
 - **06-interiores-portas** (18): FURN, ROOMFURN, BLD_ROOMS, ROOM_FLOOR, rectsHit, intConnected, intUnreached, DOOR_BREAK, doorHearable, doorSound, intBlocked, bldSpawnPoint, roomSpawnPoint, FLOOT, furnLootTable, SEED_BONUS, bonusSpot, FLASH_BONUS
