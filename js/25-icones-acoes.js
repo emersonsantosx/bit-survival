@@ -16,7 +16,7 @@ const compose=(top,base)=>padTo(top,W).concat([ '.'.repeat(W) ],padTo(base,W));
 const CAR=['...kkkkkkk...','..kSbbSbbSk..','.kSSbbSbbSSk.','kkkkkkkkkkkkk','kRRRRRRRRRRYk','kRRRRRRRRRRRk','kKKKkRRRkKKKk','kKSKk...kKSKk','.kKk.....kKk.'];
 const ATV=['.....kkk.....','....kSSSkkk..','...kkkkkkRRk.','..kRRRRRRRRRk','.kRRRRRRRRRRk','kKKKkkkkkKKKk','kKSSKRRRkKSSK','kKSSKk..kKSSK','.kKKk....kKKk'];
 const BUGGY=['..kkkkkkkkk..','..k..SSS..k..','..kkkkkkkkk..','kOOOOOOOOOOOk','kOOOOOOOOOOYk','.kKKKk.kKKKk.','kKSSKkkkKSSKk','kKSSKk.kKSSKk','.kKKk...kKKk.'];
-const SLED=['.........kkk.','..kkkkkkkRRRk','.kRRRRRRRRRRk','kRRYRRRRRRRRk','kkkkkkkkkkkkk','kSSSSSSSSSSSk','sS.........Sk','kkkkkkkkkkkk.'];
+const SLED=['.............','.kk..........','.kRk.....kkk.','.kRRkkkkkkRRk','.kRRRRRRRRRRk','.kkkkkkkkkkkk','..kk......kk.','kSSSSSSSSSSSk','sSkkkkkkkkkkS'];   // banco com encosto e dois patins
 const VEH={car:CAR,atv:ATV,buggy:BUGGY,sled:SLED};
 
 for(const k in VEH){PXG['a_'+k+'_in']=compose(ARR_DN,VEH[k]);PXG['a_'+k+'_out']=compose(ARR_UP,VEH[k]);}
@@ -32,7 +32,7 @@ PXG.a_bed_z=padTo(['.......YYYY','.........Y.','........Y..','.......YYYY'],W).c
 /* ---- portas, portao e bau (mostram o resultado da acao) ---- */
 PXG.a_door=['.kkkkkkkkk.','kNNNNNNNNNk','kNnnnnnnnNk','kNnNNNNNnNk','kNnNnnnNnNk','kNnNnnnNnNk','kNnNNNNNnNk','kNnnnnnnYNk','kNnnnnnnnNk','kNnnnnnnnNk','kNnnnnnnnNk','kkkkkkkkkkk'];
 PXG.a_door_open=['.kkkkkkkkk.','kNNNNNNNNNk','kNKKKKKKKNk','kNnKKKKKKNk','kNnnKKYKKNk','kNnnKKKKKNk','kNnnKKKKKNk','kNnnKKKKKNk','kNnKKKKKKNk','kNnKKKKKKNk','kNKKKKKKKNk','kkkkkkkkkkk'];
-PXG.a_gate_open=['kNk.......kNk','kNkNNN....kNk','kNkNkNNN..kNk','kNkNNNNNN.kNk','kNkNkNNN..kNk','kNkNNN....kNk','kNk.......kNk','kkk.......kkk'];
+PXG.a_gate_open=['kNk.......kNk','kNk.....kkkNk','kNk..kkkNNNNk','kNkkkNkNkNkNk','kNkNkNkNkNkNk','kNk.kkkNNNNNk','kNk.....kkkNk','kNk.......kNk','kkk.......kkk'];   // folha ripada girada em perspectiva, presa ao poste da direita
 PXG.a_chest_open=['.kkkkkkkkk.','kNNNNNNNNNk','kNeeeeeeeNk','kNNNNNNNNNk','.kkkkkkkkk.','...........','kkkkkkkkkkk','kYYYWYYYYYk','kNNNNNNNNNk','kNNNNYNNNNk','kNNNNNNNNNk','.kkkkkkkkk.'];
 
 /* ---- horta ---- */
