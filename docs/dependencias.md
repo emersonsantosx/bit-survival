@@ -18,7 +18,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 08-cidade-vilas-marcos | 44 | 23 | 20 | 1 | 11 | 16 |
 | 09-milharal-geracao | 63 | 36 | 27 | 0 | 12 | 9 |
 | 10-jogo-saves | 112 | 74 | 38 | 0 | 13 | 13 |
-| 11-pesca-update | 27 | 11 | 16 | 0 | 13 | 16 |
+| 11-pesca-update | 34 | 11 | 23 | 0 | 13 | 16 |
 | 12-crafting-multiplayer | 41 | 17 | 24 | 0 | 13 | 18 |
 | 13-render-personagens | 96 | 48 | 48 | 0 | 12 | 14 |
 | 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 12 | 0 |
@@ -48,7 +48,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 08-cidade-vilas-marcos | 119 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |
 | 09-milharal-geracao | 203 | 10 | 87 | 273 | 40 |  | 1 | 35 | . | 3 | 3 | 6 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |
 | 10-jogo-saves | 91 | 51 | 47 | 685 | 17 | 2 | 12 | 10 | 7 | . | 88 | 25 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |  |
-| 11-pesca-update | 232 | 37 | 50 | 837 | 59 | 2 | 3 | 5 | 19 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
+| 11-pesca-update | 241 | 39 | 50 | 867 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 37 | 29 | 608 | 12 | 1 | 6 | 5 | 11 | 38 | 39 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 321 | 40 | 20 | 260 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 608 | 13 | 16 | 316 | 13 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
@@ -70,17 +70,17 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 20 | 1889 |
+| P | let | 04-estado:14 | 20 | 1917 |
 | MP | let | 04-estado:19 | 20 | 567 |
 | selectedMap | let | 04-estado:3 | 20 | 214 |
-| beep | funcao | 02-audio:42 | 19 | 133 |
-| rnd | const | 01-base:16 | 18 | 424 |
+| beep | funcao | 02-audio:42 | 19 | 135 |
+| rnd | const | 01-base:16 | 18 | 432 |
 | sendEvt | funcao | 12-crafting-multiplayer:115 | 17 | 60 |
-| toast | funcao | 11-pesca-update:1241 | 16 | 197 |
-| clamp | const | 01-base:4 | 16 | 97 |
+| toast | funcao | 11-pesca-update:1253 | 16 | 200 |
+| clamp | const | 01-base:4 | 16 | 98 |
 | WW | let | 03-dados:2 | 16 | 95 |
 | WH | let | 03-dados:2 | 16 | 84 |
-| parts | let | 04-estado:10 | 16 | 72 |
+| parts | let | 04-estado:10 | 16 | 74 |
 | T | let | 04-estado:14 | 15 | 113 |
 | items | let | 04-estado:10 | 15 | 61 |
 | solidPoint | funcao | 05-geometria:325 | 15 | 35 |
@@ -89,16 +89,16 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | R | funcao | 13-render-personagens:2 | 12 | 1238 |
 | weather | let | 04-estado:6 | 12 | 88 |
 | trees | let | 04-estado:10 | 12 | 51 |
-| pointInLake | funcao | 05-geometria:111 | 12 | 41 |
+| pointInLake | funcao | 05-geometria:111 | 12 | 42 |
 | zombies | let | 04-estado:10 | 11 | 58 |
-| campfires | let | 04-estado:10 | 11 | 41 |
+| campfires | let | 04-estado:10 | 11 | 40 |
 | state | let | 04-estado:2 | 10 | 93 |
 | tents | let | 04-estado:10 | 10 | 23 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |
 | remotePlayers | let | 04-estado:11 | 9 | 91 |
 | rint | const | 01-base:17 | 9 | 72 |
 | ITEMS | const | 03-dados:166 | 9 | 61 |
-| dark | let | 04-estado:14 | 9 | 58 |
+| dark | let | 04-estado:14 | 9 | 57 |
 | animals | let | 04-estado:10 | 9 | 37 |
 | ORLA | let | 05-geometria:123 | 9 | 37 |
 | rebuildSolidGrid | funcao | 05-geometria:365 | 9 | 33 |
@@ -145,7 +145,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **08-cidade-vilas-marcos** (20): bldDims, bldDims0, bldSize, cityPickType, cityFillBlock, cityRubble, cityPark, cityHouseFence, bldSizeRural, ruralPickType, genTown, ruralCarFree, SLED_COLS, BUGGY_COLS, ATV_COLS, prints, LM_SIDE_D, LM_SIDE_S, chestLoot, lmCurse
 - **09-milharal-geracao** (27): CORNT, genField, YT, _stalkCache, worldFlavor, MM_K, buildMinimap, bigBase, ANIMAL_PREY, BIRD_MAP, BIRD_FLOCK, birds, birdsReady, flockT, birdChirpT, birdSeq, BKEYS, BST, birdAnchors, birdOK, birdSound, newBird, initBirds, birdTakeoff, updateBirdsGuest, ...
 - **10-jogo-saves** (38): SAVE_KEY, SAVE_PREFIX, SAVE_VER, slotKey, autoSlot, packObj, canSave, saveWorldOk, icePack, iceLoad, doorsPack, doorsLoad, normalizeLoadout, GUEST_SKIP, guestKey, guestForget, FRUIT_FOOD, eatLock, SEED_OF, seedGain, giveSeedFor, applyUse, consumeOne, putAwayHold, closeTool, ...
-- **11-pesca-update** (16): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, updateP, updateZ
+- **11-pesca-update** (23): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, BURN_R, BURN_T, BURN_DPS, burnTick, updateP, updateZ, CHAINSAW_LEN, CHAINSAW_R, chainsawHit
 - **12-crafting-multiplayer** (24): canCraft, craft, handleEvt, loadPeerJS, makeRoomCode, hostRetryTimer, hostOpenPeer, hostSignalRetry, RECONN_MAX_MS, showReconnectUI, updateReconnectUI, hideReconnectUI, mpReconnectFail, mpGuestReconnectAttempt, hostResumeGuest, guestResumed, hostBuildWorld, setupConn, handleNetData, vehSetTarget, applySnapshot, goneList, applyGone, enterMultiplayerGame
 - **13-render-personagens** (48): skinLook, snowOutfit, _shc, Sh, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, TSP, treeSprite, treeShadow, drawOpenVeh, vehDriverLook, drawRider, obsStopDrone, obsStartDrone, obsStatic, obsSpotOk, ...
 - **15-missoes-ui-controles** (62): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACHD, achSave, achChime, achCheck, achSet, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, renderAch, renderHostWorlds, lockHostWorlds, bindSlider, bindToggle, bindSeg, slotMode, ...
