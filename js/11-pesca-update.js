@@ -457,6 +457,20 @@ function tempTick(dt){
   P._tc=code;
 }
 /* Desgaste de sobrevivência: vale a pé e dirigindo */
+/* Queimadura: encostar na fogueira queima por 5 s (um pouco de dano por segundo, renovado enquanto estiver no fogo); lago ou fonte apagam na hora. */
+const BURN_R=13,BURN_T=5,BURN_DPS=1.8;
+function burnTick(dt){
+  const inWater=!P.inVehicle&&(pointInLake(P.x,P.y)||nearFountain(P.x,P.y));
+  let touch=false;
+  if(!P.inVehicle&&!inWater)for(const c of campfires){if(Math.hypot(c.x-P.x,c.y-P.y)<BURN_R){touch=true;break;}}
+  if(inWater&&P.burn>0){P.burn=0;toast('A água apagou a queimadura');beep(500,.1,'sine',.04,-120);for(let i=0;i<6;i++)parts.push({x:P.x+rnd(-4,4),y:P.y-6,vx:rnd(-10,10),vy:rnd(-30,-10),t:.4,c:'#cfe8ff'});}
+  if(touch){if(!(P.burn>0)){toast('Você se queimou na fogueira!');beep(180,.12,'sawtooth',.06,-40);flash=Math.max(flash,.25);}P.burn=BURN_T;}
+  if(P.burn>0){
+    P.burn=Math.max(0,P.burn-dt);P.hp-=BURN_DPS*dt;
+    if(Math.random()<dt*14)parts.push({x:P.x+rnd(-4,4),y:P.y-rnd(2,12),vx:rnd(-6,6),vy:rnd(-34,-14),t:rnd(.3,.5),c:Math.random()<.5?'#ff8a30':'#ffd040'});
+    if(P.burn===0)toast('A queimadura passou');
+  }
+}
 function survivalTick(dt){
   tempTick(dt);
   const rest=!P.moving&&!P.sprint;                          // parado (ou sentado no carro): corpo gasta menos
@@ -480,9 +494,10 @@ function survivalTick(dt){
   if(P.food<=0)P.hp-=.7*dt;
   if(P.water<=0)P.hp-=1*dt;
   if(P._tdmg>0)P.hp-=P._tdmg*dt;
+  burnTick(dt);
   if(sick)P.hp-=.25*dt;
   // regeneração: só com o corpo bem nutrido, sem ferida aberta, sem enjoo e sem temperatura extrema; parado cura mais rápido e gasta comida e água
-  if(!P.bleed&&!sick&&!(P._tdmg>0)&&P.hp<100){
+  if(!P.bleed&&!sick&&!(P._tdmg>0)&&!(P.burn>0)&&P.hp<100){
     const q=clamp((nut-25)/40,0,1),rate=(rest?.75:.4)*q;
     if(rate>0){P.hp=Math.min(100,P.hp+rate*dt);P.food=Math.max(0,P.food-rate*.1*dt);P.water=Math.max(0,P.water-rate*.08*dt);}
   }
@@ -833,19 +848,7 @@ function updateZ(z,dt){
       z._sx=z.x;z._sy=z.y;z._sk=0;
     }
   }
-  if(dark>.3&&z.kind!==9){
-    let nearFire=false;
-    for(const c of campfires)if(Math.hypot(c.x-z.x,c.y-z.y)<70){nearFire=true;break;}
-    if(nearFire){
-      z.lock=0;
-      let closest=null,cd=999;
-      for(const c of campfires){const dd=Math.hypot(c.x-z.x,c.y-z.y);if(dd<cd){cd=dd;closest=c;}}
-      if(closest&&cd<70){
-        const a=Math.atan2(z.y-closest.y,z.x-closest.x);
-        stepMove(z,Math.cos(a)*40*dt,Math.sin(a)*40*dt,z.r);
-      }
-    }
-  }
+  // a fogueira nao afasta mais nenhum monstro: eles chegam perto dela como em qualquer outro lugar (a luz so mostra onde eles estao)
   // Melee hit: only damages the local player (remote damage is handled by their own client via proximity + snapshot)
   if(!z.ranged&&targetIsLocal&&P.inVehicle&&!P.dead&&z.cd<=0){
     // Jogador dentro do carro: o zumbi bate na lataria (o carro sofre o dano, o jogador fica protegido)
@@ -855,7 +858,7 @@ function updateZ(z,dt){
       carTakeHit(v,z.dmg*0.2);
       z.cd=z.berserk||z.kind===8?0.75:1.1;z.lunge=.15;
     }
-  } else if(!z.ranged&&targetIsLocal&&d<z.r*(z.kind===9?1.45:1)+P.r+(z.kind===9?12:6)&&z.cd<=0&&!P.dead&&!wallBlocks(z.x,z.y,P.x,P.y)){
+  } else if(!z.ranged&&targetIsLocal&&(d<z.r*(z.kind===9?1.45:1)+P.r+(z.kind===9?12:6)||chainsawHit(z,P.x,P.y,P.r))&&z.cd<=0&&!P.dead&&!wallBlocks(z.x,z.y,P.x,P.y)){
     const knock=z.kind===2||z.kind===3||z.kind===7;
     hurt(z.dmg, z.kind===3?.65:z.kind===2||z.kind===7?.5:z.kind===8?.35:.25);
     zombieVoice(z,'attack');
@@ -865,6 +868,15 @@ function updateZ(z,dt){
       stepMove(P,Math.cos(a)*22,Math.sin(a)*22,P.r);
     }
   }
+}
+/* Motosserra do Acougueiro (kind 2): a lamina e um segmento a frente dele (cabo+motor+lamina ~ 31 px, o mesmo do desenho) e machuca quem encostar nela,
+   nao so quem encosta no corpo. Usado pelo anfitrião/solo (golpe local) e pelo convidado (golpe no proprio cliente). */
+const CHAINSAW_LEN=31,CHAINSAW_R=4;
+function chainsawHit(z,tx,ty,tr){
+  if(!z||z.kind!==2||z.dead)return false;
+  const L=CHAINSAW_LEN*zombieScale(z),vx=Math.cos(z.face||0)*L,vy=Math.sin(z.face||0)*L,px=tx-z.x,py=ty-z.y,l2=vx*vx+vy*vy;
+  const t=l2>0?clamp((px*vx+py*vy)/l2,0,1):0;
+  return Math.hypot(px-vx*t,py-vy*t)<tr+CHAINSAW_R;
 }
 function update(dt){
   if(!P||!isFinite(dt))return;
@@ -1123,7 +1135,7 @@ function update(dt){
       z._hitCD = (z._hitCD||0) - dt;
       const dd=Math.hypot(z.x-P.x,z.y-P.y);
       const ys=z.kind===9?1.45:1,zr=(z.r||5)*ys;                          // Yeti é grande: alcance maior (igual ao do anfitrião)
-      let reach=dd < zr+P.r+(z.kind===9?12:6) && !wallBlocks(z.x,z.y,P.x,P.y);
+      let reach=(dd < zr+P.r+(z.kind===9?12:6)||chainsawHit(z,P.x,P.y,P.r)) && !wallBlocks(z.x,z.y,P.x,P.y);
       if(P.inVehicle){ // dentro do carro: o alcance e medido ate a lataria
         const v=P.inVehicle;vehHalf(v);
         reach=Math.hypot(Math.max(0,Math.abs(z.x-v.x)-v._hx),Math.max(0,Math.abs(z.y-v.y)-v._hy))<zr+3;

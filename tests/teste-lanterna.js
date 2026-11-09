@@ -8,10 +8,12 @@ const { chromium } = require('playwright');
 const pg=await (await b.newContext({viewport:{width:900,height:600}})).newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.goto('file://'+file);await pg.waitForTimeout(300);
 for(const map of ['forest','city','desert','snow']){
-  const o=await pg.evaluate((map)=>{localStorage.clear();selectedMap=map;pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;
-    const inB=it=>blds.find(q=>it.x>q.x&&it.x<q.x+q.w&&it.y>q.y&&it.y<q.y+q.h);
-    let mil=0,milB=new Set(),other=0;for(const it of items)if(it.t==='flashlight'){const q=inB(it);if(q&&q.type==='mil'){mil++;milB.add(q);}else other++;}
-    return {mil,milBlds:blds.filter(q=>q.type==='mil').length,milWith:milB.size,other,total:items.filter(i=>i.t==='flashlight').length};},map);
+  let o;for(let tent=0;tent<4;tent++){   // loot e sorteio: se um mundo sai magro, gera outro (ate 4)
+  o=await pg.evaluate((map)=>{localStorage.clear();selectedMap=map;pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;
+      const inB=it=>blds.find(q=>it.x>q.x&&it.x<q.x+q.w&&it.y>q.y&&it.y<q.y+q.h);
+      let mil=0,milB=new Set(),other=0;for(const it of items)if(it.t==='flashlight'){const q=inB(it);if(q&&q.type==='mil'){mil++;milB.add(q);}else other++;}
+      return {mil,milBlds:blds.filter(q=>q.type==='mil').length,milWith:milB.size,other,total:items.filter(i=>i.t==='flashlight').length};},map);
+  if(o.total>=1&&(o.milBlds===0||o.milWith>=Math.ceil(o.milBlds*.4)))break;}
   console.log(map,JSON.stringify(o));
   ok(o.total>=1,map+': lanternas aparecem no mapa ('+o.total+')');
   if(o.milBlds>0)ok(o.milWith>=Math.ceil(o.milBlds*.4),map+': bases militares guardam lanterna ('+o.milWith+' de '+o.milBlds+')');

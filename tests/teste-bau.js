@@ -13,7 +13,7 @@ const r=await pg.evaluate(()=>{
   o.recipe=!!rec&&JSON.stringify(rec.need)==='{"wood":6}';
   o.inLoot=Object.values(LOOT).some(t=>'stash' in t)||'stash' in OUT_LOOT;
   // lugar livre
-  trees.length=0;rocks.length=0;if(window.logList)logList().length=0;rebuildSolidGrid();P.inside=null;P.inv=[{t:'wood',n:5}];P.x=1700;P.y=1700;P.face=0;
+  trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;if(window.logList)logList().length=0;if(window.wellList)wellList().length=0;rebuildSolidGrid();P.inside=null;P.inv=[{t:'wood',n:5}];P.x=1700;P.y=1700;P.face=0;
   o.cantCraft5=!canCraft(rec);craft(rec);o.noneBuilt=stashList().length===0&&countInv('wood')===5;
   P.inv=[{t:'wood',n:8},{t:'stone',n:3}];craft(rec);
   o.built=stashList().length===1;o.woodLeft=countInv('wood');
@@ -88,7 +88,7 @@ ok(m.whitelist&&m.junk,'eventos liberados na rede e lixo e ignorado');
 /* arrastar com o mouse de verdade: mochila -> bau, bau -> mochila, reordenar nos dois lados */
 await pg.evaluate(()=>{
   localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];
-  trees.length=0;rocks.length=0;if(window.logList)logList().length=0;rebuildSolidGrid();P.inside=null;P.pack=true;P.x=1700;P.y=1700;P.face=0;
+  trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;if(window.logList)logList().length=0;if(window.wellList)wellList().length=0;rebuildSolidGrid();P.inside=null;P.pack=true;P.x=1700;P.y=1700;P.face=0;
   P.inv=[{t:'wood',n:8}];craft(RECIPES.find(q=>q.out==='stash'));
   P.inv=[{t:'stone',n:3},{t:'cloth',n:2},{t:'food',n:1}];const s=stashList()[0];s.s=[{t:'water',n:2},{t:'bandage',n:1}];
   P.x=s.x-20;P.y=s.y;state='play';openStash(s);craftReadyAt=0;buildInv();
