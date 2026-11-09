@@ -34,10 +34,10 @@ const r=await pg.evaluate(()=>{
   // bau
   stashLoad([[(bx+11)*16+8,(by+11)*16+8,[]]]);o.onStash=!at(11,11);
   // o sorteio de verdade nunca coloca arvore dentro da base: 400 tentativas
-  const base=trees.length+rocks.length;let bad=0;
+  const base=trees.length+rocks.length,baseT=trees.length,baseR=rocks.length;let bad=0;   // so conta o que nasce depois (o mundo sorteado pode ter arvore na borda da area)
   const inBase=(a)=>a.x>=(bx-2)*16&&a.x<=(bx+7)*16&&a.y>=(by-2)*16&&a.y<=(by+7)*16;
   for(let k=0;k<400;k++){regrowOne(true);regrowOne(false);}
-  o.grew=trees.length+rocks.length-base;o.inBase=trees.concat(rocks).filter(inBase).length;
+  o.grew=trees.length+rocks.length-base;o.inBase=trees.slice(baseT).concat(rocks.slice(baseR)).filter(inBase).length;
   return o;});
 console.log(JSON.stringify(r));
 ok(r.found&&r.control,'controle: sem construcao o ponto e livre para renascer');
