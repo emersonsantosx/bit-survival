@@ -26,7 +26,7 @@ ok(sc===-1||sc>=1,'neve: troncos ao redor da fogueira do acampamento ('+sc+')');
 /* 2) craft so com madeira */
 await nw('forest');
 const c=await pg.evaluate(()=>{
-  trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;logList().length=0;rebuildSolidGrid();
+  trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;campfires.length=0;{const fora=vehicles.filter(v=>Math.hypot(v.x-1600,v.y-1600)>400);vehicles.length=0;vehicles.push(...fora);}if(window.wellList)wellList().length=0;if(window.stashList)stashList().length=0;logList().length=0;rebuildSolidGrid();
   P.x=1600;P.y=1600;P.face=0;const r=RECIPES.find(q=>q.out==='log');
   P.inv=[{t:'wood',n:1}];craft(r);const semTool=!toolList().includes('log');
   P.inv=[{t:'wood',n:2+4}];craft(r);
@@ -55,7 +55,7 @@ const s=await pg.evaluate(()=>{
   P.hp=100;logSit(L);hurt(5);o.hurtStand=!!P.sitting;
   P.weapon='fists';P.cd=0;attack();o.atkStand=!!P.sitting;logStand(true);
   return o;});
-ok(s.tgt==='log','o tronco vira alvo de interacao perto dele');
+ok(s.tgt==='log','o tronco vira alvo de interacao perto dele (alvo: '+s.tgt+')');
 ok(s.sit&&s.atSeat,'SENTAR coloca o jogador num dos lugares do tronco');
 ok(s.still&&s.stam>50,'sentado recupera folego rapido ('+Math.round(s.stam)+')');
 ok(s.stood&&s.free,'mexer o direcional levanta, em lugar livre');
@@ -79,7 +79,7 @@ if(f.nolake)console.log('SKIP pesca sentado (sem lago neste mundo)');
 else{ok(f.sit&&f.fishing&&f.stillSit,'com a vara, ATACAR lanca a linha e o jogador continua sentado');
 ok(f.stillSit2,'continua sentado e pescando enquanto espera');ok(f.stoodByJoy,'mexer o analogico levanta');}
 await nw('forest');
-await pg.evaluate(()=>{trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;logList().length=0;rebuildSolidGrid();P.x=1600;P.y=1600;P.face=0;logBuild({x:1600,y:1640,a:'h'});});
+await pg.evaluate(()=>{trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;chestList.length=0;campfires.length=0;{const fora=vehicles.filter(v=>Math.hypot(v.x-1600,v.y-1600)>400);vehicles.length=0;vehicles.push(...fora);}if(window.wellList)wellList().length=0;if(window.stashList)stashList().length=0;logList().length=0;rebuildSolidGrid();P.x=1600;P.y=1600;P.face=0;logBuild({x:1600,y:1640,a:'h'});});
 
 /* 3c) so duas posicoes por tronco, escolhidas pelo jogador (fogueira e lago nao mexem); o lado vem de onde o jogador chega */
 const fc=await pg.evaluate(()=>{

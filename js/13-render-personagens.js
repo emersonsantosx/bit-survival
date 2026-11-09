@@ -1853,7 +1853,7 @@ function drawItem(it,near){
     case'wood':R(x-5,y-3+b,10,4,'#8a5a2a');R(x-3,y-5+b,6,2,'#a07040');break;
     case'stone':R(x-4,y-5+b,8,7,'#9a9aa0');R(x-2,y-7+b,4,3,'#c0c0c8');break;
     case'water':R(x-2,y-8+b,4,2,'#dddddd');R(x-3,y-6+b,6,7,'#4aa3e8');break;
-    case'cloth':R(x-5,y-5+b,10,6,'#b8b090');R(x-3,y-5+b,2,6,'#8a8468');R(x+2,y-3+b,2,1,'#8a8468');R(x-5,y+1+b,2,1,'#b8b090');R(x+1,y+1+b,2,1,'#b8b090');break;
+    case'cloth':R(x-5,y-5+b,10,6,'#c8924e');R(x-5,y-5+b,10,2,'#d9a066');R(x-3,y-3+b,6,1,'#8a5a2a');R(x+2,y-2+b,3,3,'#a8703a');R(x-5,y+1+b,2,1,'#5a3a24');R(x-1,y+1+b,2,1,'#5a3a24');R(x+3,y+1+b,2,1,'#5a3a24');break;
     case'bandage':R(x-4,y-5+b,8,5,'#f2f2f2');R(x-1,y-5+b,2,5,'#dd3333');break;
     case'medkit':R(x-5,y-7+b,10,7,'#f2f2f2');R(x-1,y-6+b,2,5,'#dd2222');break;
     case'ammo':R(x-4,y-5+b,8,5,'#c9a33a');break;

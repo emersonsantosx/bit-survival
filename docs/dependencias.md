@@ -86,7 +86,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | solidPoint | funcao | 05-geometria:325 | 15 | 35 |
 | ctx | const | 01-base:27 | 14 | 972 |
 | blds | let | 04-estado:10 | 14 | 57 |
-| R | funcao | 13-render-personagens:2 | 12 | 1238 |
+| R | funcao | 13-render-personagens:2 | 12 | 1240 |
 | weather | let | 04-estado:6 | 12 | 88 |
 | trees | let | 04-estado:10 | 12 | 51 |
 | pointInLake | funcao | 05-geometria:111 | 12 | 42 |
