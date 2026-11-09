@@ -9,7 +9,7 @@ await pg.goto('file://'+file);await pg.waitForTimeout(300);
 // ---------- frio ----------
 const f=await pg.evaluate(()=>{localStorage.clear();selectedMap='snow';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];items.length=0;vehicles.length=0;trees.length=0;rocks.length=0;if(window.logList)logList().length=0;decorations.length=0;rebuildSolidGrid();
  const real=performance.now.bind(performance);let off=0;performance.now=()=>real()+off;const tick=()=>{off+=1000;};
- const o={};weather='snow';T=DAY_SECONDS*.1;P.inside=null;P.inVehicle=null;P.dead=false;
+ const o={};weather='snow';if(typeof blizzK!=='undefined')blizzK=0;T=DAY_SECONDS*.1;P.inside=null;P.inVehicle=null;P.dead=false;
  let cx=0,cy=0,found=false;for(let i=0;i<900&&!found;i++){cx=30+(i*7)%100;cy=30+(i*11)%80;let free=true;for(let a=-2;a<=5&&free;a++)for(let c=-2;c<=5&&free;c++){const x=(cx+a)*16+8,y=(cy+c)*16+8;if(bldNear(x,y,24)||pointInLake(x,y)||solidPoint(x,y,10))free=false;}found=free;}
  o.spot=found;fenceLoad([]);cellLoad(null);
  const wall=(d,x,y,g,op)=>fenceRemote({x,y,d,g:g||2,o:op||0});
@@ -33,7 +33,10 @@ const f=await pg.evaluate(()=>{localStorage.clear();selectedMap='snow';pendingSl
  o.tOpen=tOpen;o.tRoof=tRoof;o.tSealed=tSealed;
  // temperatura do corpo: dentro da casa fechada esfria bem menos
  P.temp=0;for(let i=0;i<400;i++){P.x=(cx+1)*16;tick();tempTick(.25);}o.bodyIn=P.temp;
- P.temp=0;P.x=(cx+10)*16;P.y=(cy+10)*16;for(let i=0;i<400;i++){tick();tempTick(.25);}o.bodyOut=P.temp;
+ // ao relento de verdade: ponto longe de predio, barraca, fogueira e lago (o mundo sorteado pode ter um deles em (cx+10,cy+10))
+ let ox=(cx+10)*16,oy=(cy+10)*16;outer:for(let r=10;r<60;r+=3)for(let a=0;a<12;a++){const x=(cx+1)*16+Math.cos(a*.5236)*r*16,y=(cy+1)*16+Math.sin(a*.5236)*r*16;if(x<100||y<100||x>WW-100||y>WH-100)continue;
+  if(bldNear(x,y,60)||bldAt(x,y)||pointInLake(x,y)||nearTent(x,y,80)||solidPoint(x,y,24)||campfires.some(c=>Math.hypot(c.x-x,c.y-y)<140))continue;P.x=x;P.y=y;if(shelterAt(x,y)===0){ox=x;oy=y;break outer;}}
+ P.temp=0;P.wet=0;P.x=ox;P.y=oy;for(let i=0;i<400;i++){tick();tempTick(.25);}o.bodyOut=P.temp;
  return o;});
 console.log(JSON.stringify(f));
 ok(f.spot,'achou area livre');
