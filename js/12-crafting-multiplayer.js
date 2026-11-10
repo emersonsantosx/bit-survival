@@ -16,11 +16,6 @@ function craft(r){
     if(!sp){toast(P.inside?'Monte a estufa ao ar livre':'Sem espaço livre para a estufa aqui');beep(120,.1,'square',.05);return;}
     P._gh=sp;
   }
-  if(out==='stash'){
-    const sp=stashSpot();
-    if(!sp){toast(P.inside?'Monte o baú ao ar livre':'Sem espaço para o baú aqui');beep(120,.1,'square',.05);return;}
-    P._sb=sp;
-  }
   if(out==='well'){
     const why=wellWhy();
     if(why){toast(why);beep(120,.1,'square',.05);return;}
@@ -36,8 +31,6 @@ function craft(r){
   if(out==='greenhouse'){
     const sp=P._gh||ghSpot();P._gh=null;
     if(sp){ghBuild(sp);toast('Estufa montada! Use a enxada dentro dela para arar');buildSound();}
-  }else if(out==='stash'){
-    const sp=P._sb||stashSpot();P._sb=null;stashBuild(sp);
   }else if(out==='well'){
     const sp=P._wp||wellSpot();P._wp=null;wellBuild(sp);
 

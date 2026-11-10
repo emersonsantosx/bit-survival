@@ -1870,6 +1870,7 @@ function drawItem(it,near){
     case'floor':R(x-5,y-5+b,10,5,'#a97c45');R(x-5,y-3+b,10,1,'#6a4a28');R(x-5,y-1+b,10,1,'#6a4a28');R(x-5,y-5+b,10,1,'#c79a62');break;
     case'mattress':R(x-5,y-6+b,10,7,'#4e3220');R(x-4,y-5+b,8,5,'#d6d2c4');R(x-4,y-5+b,3,5,'#f4f0e6');R(x-1,y-5+b,5,5,'#3a5a8a');break;
     case'log':R(x-6,y-6+b,12,6,'#2e2014');R(x-5,y-5+b,10,4,'#6b4a2e');R(x-5,y-5+b,10,1,'#8a6238');R(x-7,y-5+b,2,5,'#d9b27a');break;
+    case'stash':R(x-5,y-6+b,10,7,'#4a2e1a');R(x-4,y-5+b,8,3,'#b07a3e');R(x-4,y-2+b,8,3,'#8a5a2a');R(x-3,y-5+b,1,6,'#6a7280');R(x+2,y-5+b,1,6,'#6a7280');R(x-1,y-3+b,2,2,'#ffd84a');break;
     case'roof':R(x-5,y-7+b,10,7,'#b44a3a');R(x-5,y-7+b,10,1,'#d9705c');for(let i=0;i<3;i++)R(x-5,y-5+b+i*2,10,1,'#7a2e24');break;
     case'fence':for(let i=0;i<4;i++){R(x-5+i*3,y-6+b,2,6,'#9a6a3a');}R(x-5,y-4+b,10,1,'#5a3c20');break;
     case'hoe':for(let i=0;i<10;i++)R(x-5+i,y-3+b-(i>>2),1,1,'#8a6a3a');R(x+3,y-7+b,4,3,'#c0c8d4');break;
