@@ -1,4 +1,4 @@
-/* Bau de madeira: so se fabrica com madeira (6), monta na frente do jogador, guarda 15 tipos de item, abre pelo botao de interagir,
+/* Bau de madeira: so de madeira: fabricar da a ferramenta (2), cada bau posicionado custa 4, previa na casa da grade a frente, vira para quem coloca, guarda 15 tipos de item, abre pelo botao de interagir,
    fica salvo, so desmonta vazio, sincroniza no multiplayer e nao existe em nenhuma tabela de loot.
    Uso: node tests/teste-bau.js [caminho/index.html]. Sai com codigo 1 se algo falhar. */
 const path = require('path');
@@ -10,14 +10,33 @@ await pg.goto('file://'+file);await pg.waitForTimeout(300);
 const r=await pg.evaluate(()=>{
   localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];
   const o={};const rec=RECIPES.find(q=>q.out==='stash');
-  o.recipe=!!rec&&JSON.stringify(rec.need)==='{"wood":6}';
+  o.recipe=!!rec&&JSON.stringify(rec.need)==='{"wood":2}'&&BUILD_TOOLS.includes('stash');
   o.inLoot=Object.values(LOOT).some(t=>'stash' in t)||'stash' in OUT_LOOT;
   // lugar livre
-  trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;if(window.logList)logList().length=0;if(window.wellList)wellList().length=0;rebuildSolidGrid();P.inside=null;P.inv=[{t:'wood',n:5}];P.x=1700;P.y=1700;P.face=0;
-  o.cantCraft5=!canCraft(rec);craft(rec);o.noneBuilt=stashList().length===0&&countInv('wood')===5;
+  trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;if(window.logList)logList().length=0;if(window.wellList)wellList().length=0;rebuildSolidGrid();P.inside=null;P.inv=[{t:'wood',n:1}];P.x=1700;P.y=1700;P.face=0;
+  o.cantCraft1=!canCraft(rec);craft(rec);o.noneBuilt=stashList().length===0&&countInv('wood')===1&&!toolList().includes('stash');
   P.inv=[{t:'wood',n:8},{t:'stone',n:3}];craft(rec);
+  o.toolOnly=stashList().length===0&&P.tool==='stash'&&toolList().includes('stash')&&countInv('wood')===6;   // fabricar nao faz o bau aparecer
+  craft(rec);o.noDup=countInv('wood')===6;
+  // previa: casa da grade a frente, virado para quem coloca
+  const orient={};
+  for(const [n,a] of [['cima',-Math.PI/2],['baixo',Math.PI/2],['direita',0],['esquerda',Math.PI]]){P.face=a;const it=stashIntent();orient[n]=[it.o,it.bad,(it.x-8)%16===0,(it.y-13)%16===0];}
+  o.orient=orient;
+  o.orientOk=orient.cima[0]===0&&orient.baixo[0]===1&&orient.direita[0]===2&&orient.esquerda[0]===3&&Object.values(orient).every(q=>!q[1]&&q[2]&&q[3]);
+  P.face=0;
+  P.inv=[{t:'wood',n:3}];const bad3=stashIntent().bad;stashPlace(false);o.noWood=!!bad3&&stashList().length===0;
+  P.inv=[{t:'wood',n:6},{t:'stone',n:3}];
+  try{ctx.save();drawStashGhost();ctx.restore();o.ghostDraws=true;}catch(e){o.ghostDraws=false;}
+  stashPlace(true);o.quietNoop=stashList().length===0;
+  stashPlace(false);
   o.built=stashList().length===1;o.woodLeft=countInv('wood');
-  const s=stashList()[0];o.front=Math.hypot(s.x-P.x,s.y-P.y)<=50;o.solid=querySolidNear(s.x,s.y,8).length>0;
+  const s=stashList()[0];o.front=Math.hypot(s.x-P.x,s.y-P.y)<=50;o.solid=querySolidNear(s.x,s.y,8).length>0;o.facing=s.o===2;
+  o.sameCell=!!stashIntent().bad;   // a casa ja esta ocupada
+  // vizinho encostado e permitido (organizar em fileira), mesmo lugar nao
+  {P.x=s.x;P.y=s.y+40;P.face=-Math.PI/2;const q=stashIntent();o.rowOk=true;
+   const nb={x:s.x+16,y:s.y};P.inv=[{t:'wood',n:8}];P.tool='stash';P.x=nb.x;P.y=nb.y+26;P.face=-Math.PI/2;const q2=stashIntent();o.rowSpot=q2.x===nb.x&&q2.y===nb.y&&!q2.bad;
+   if(o.rowSpot){stashPlace(false);o.rowBuilt=stashList().length===2;const s3=stashList()[1];s3.s=[];stashList().splice(1,1);rebuildSolidGrid();}
+   P.inv=[{t:'wood',n:2},{t:'stone',n:3}];P.x=1700;P.y=1700;P.face=0;}
   // botao de interagir
   P.x=s.x-20;P.y=s.y+2;P.face=0;state='play';
   const tg=pickTarget();o.target=tg&&tg.k;update(.05);o.btn=(document.getElementById('pick')||{}).dataset&&document.getElementById('pick').dataset.st;
@@ -55,9 +74,13 @@ const r=await pg.evaluate(()=>{
   s2.s=[];stashDismantle();o.dismantled=stashList().length===0&&countInv('wood')===w0+4&&state==='play';
   return o;});
 console.log(JSON.stringify(r));
-ok(r.recipe,'receita: so madeira (6)');ok(!r.inLoot,'nao aparece em nenhuma tabela de loot');
-ok(r.cantCraft5&&r.noneBuilt,'com 5 madeiras nao fabrica e nao gasta nada');
-ok(r.built&&r.woodLeft===2&&r.front&&r.solid,'com 8 madeiras fabrica: gasta 6, monta na frente e bloqueia a passagem');
+ok(r.recipe,'receita: ferramenta Bau, so madeira (2)');ok(!r.inLoot,'nao aparece em nenhuma tabela de loot');
+ok(r.cantCraft1&&r.noneBuilt,'com 1 madeira nao fabrica e nao gasta nada');
+ok(r.toolOnly&&r.noDup,'fabricar gasta 2 madeiras e so da a ferramenta: o bau NAO aparece de imediato');
+ok(r.orientOk,'a previa fica na casa da grade a frente e o bau vira para quem coloca ('+JSON.stringify(r.orient)+')');
+ok(r.noWood&&r.ghostDraws&&r.quietNoop,'sem 4 madeiras nao posiciona; previa desenha; segurar o botao nao repete');
+ok(r.built&&r.woodLeft===2&&r.front&&r.solid&&r.facing,'posicionar gasta 4 madeiras, fica na frente, virado para o jogador e bloqueia a passagem');
+ok(r.sameCell&&r.rowSpot&&r.rowBuilt,'a mesma casa nao aceita outro bau, mas o vizinho encostado sim (fileira organizada)');
 ok(r.target==='stash'&&r.btn==='ABRIR','o botao de interagir mostra ABRIR perto do bau');
 ok(r.opened&&r.gridSlots===15,'abre a tela do bau com 15 espacos');
 ok(r.aligned,'as molduras do bau e da mochila tem o mesmo tamanho e ficam alinhadas (topo e altura iguais, 15 casas cada) ('+JSON.stringify(r.rects)+')');
@@ -72,24 +95,24 @@ ok(r.refusedFull&&r.dismantled,'so desmonta vazio, e devolve 4 madeiras');
 const m=await pg.evaluate(()=>{
   localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;
   const o={};
-  handleEvt('stashAdd',{x:900,y:900});o.add=stashList().length===1;
+  handleEvt('stashAdd',{x:900,y:900,o:3});o.add=stashList().length===1&&stashList()[0].o===3;
   handleEvt('stashSet',{x:900,y:900,s:[['wood',4],['food',2],['naoexiste',9],['wood',3]]});o.set=JSON.stringify(stashList()[0].s)==='[{"t":"wood","n":4},{"t":"food","n":2}]';
   handleEvt('stashSet',{x:1200,y:1200,s:[['stone',1]]});o.createdOnSet=stashList().length===2;
-  const snap=packSnapshot();o.snap=Array.isArray(snap.bx)&&snap.bx.length===2;
+  const snap=packSnapshot();o.snap=Array.isArray(snap.bx)&&snap.bx.length===2;o.snapO=snap.bx.some(q=>q[3]===3);
   handleEvt('stashDel',{x:900,y:900});o.del=stashList().length===1;
-  stashLoad([]);stashSnapshot(snap.bx);o.fromSnap=stashList().length===2&&stashList().some(q=>q.s.length===2);
+  stashLoad([]);stashSnapshot(snap.bx);o.fromSnap=stashList().length===2&&stashList().some(q=>q.s.length===2)&&stashList().some(q=>q.o===3);
   o.whitelist=NET_OK_EVT.has('stashSet')&&NET_OK_EVT.has('stashAdd')&&NET_OK_EVT.has('stashDel');
   handleEvt('stashSet',{x:'a',y:null,s:5});o.junk=stashList().length===2;
   return o;});
 console.log(JSON.stringify(m));
 ok(m.add&&m.set&&m.createdOnSet,'eventos stashAdd/stashSet criam e atualizam (itens invalidos sao ignorados)');
-ok(m.snap&&m.fromSnap&&m.del,'snapshot leva os baus ao convidado; stashDel remove');
+ok(m.snap&&m.snapO&&m.fromSnap&&m.del,'snapshot leva os baus ao convidado; stashDel remove');
 ok(m.whitelist&&m.junk,'eventos liberados na rede e lixo e ignorado');
 /* arrastar com o mouse de verdade: mochila -> bau, bau -> mochila, reordenar nos dois lados */
 await pg.evaluate(()=>{
   localStorage.clear();selectedMap='forest';pendingSlot=1;showScreen(null);newGame();window.requestAnimationFrame=()=>0;zombies=[];animals=[];
   trees.length=0;rocks.length=0;blds.length=0;lakes.length=0;items.length=0;if(window.logList)logList().length=0;if(window.wellList)wellList().length=0;rebuildSolidGrid();P.inside=null;P.pack=true;P.x=1700;P.y=1700;P.face=0;
-  P.inv=[{t:'wood',n:8}];craft(RECIPES.find(q=>q.out==='stash'));
+  P.inv=[{t:'wood',n:8}];craft(RECIPES.find(q=>q.out==='stash'));stashPlace(false);
   P.inv=[{t:'stone',n:3},{t:'cloth',n:2},{t:'food',n:1}];const s=stashList()[0];s.s=[{t:'water',n:2},{t:'bandage',n:1}];
   P.x=s.x-20;P.y=s.y;state='play';openStash(s);craftReadyAt=0;buildInv();
 });

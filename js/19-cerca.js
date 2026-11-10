@@ -52,6 +52,7 @@ function fenceIntent(){
 function send(f,g){if(MP.active)sendEvt('fenceSet',{x:f.x,y:f.y,d:f.d,g:g,o:f.o?1:0});}
 function fenceBuild(quiet){
   if(P&&P.tool==='log'){if(window.logPlace)logPlace(quiet);return;}   // tronco (modulo 24)
+  if(P&&P.tool==='stash'){if(window.stashPlace)stashPlace(quiet);return;}   // bau (modulo 22)
   if(P&&CELL_TOOLS[P.tool]){if(window.cellBuild)cellBuild(quiet);return;}   // piso e telhado (modulo 20)
   if(!P||P.dead||P.inVehicle||P.inside||!isFT(P.tool))return;
   const it=fenceIntent(),e=it.e;
@@ -378,6 +379,7 @@ function wallsHitVehicle(cx,cy,c,s,L,W,R){
 /* fantasma das ferramentas Cerca e Portao: verde = poe, azul = troca a cerca por portao, vermelho = nao pode */
 function drawFenceGhost(){
   if(P&&P.tool==='log'){if(window.drawLogGhost)drawLogGhost();return;}
+  if(P&&P.tool==='stash'){if(window.drawStashGhost)drawStashGhost();return;}
   if(P&&CELL_TOOLS[P.tool]){if(window.drawCellGhost)drawCellGhost();return;}
   if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||!isFT(P.tool))return;
   const it=fenceIntent(),e=it.e,x=e.x*CELL,y=e.y*CELL,a=.6+.25*Math.sin(T*6);

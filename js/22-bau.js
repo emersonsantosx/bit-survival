@@ -1,44 +1,71 @@
 /* ============ BAU DE MADEIRA (guarda 15 itens) ============
-   Fabricado so no crafting, so com madeira (nao existe em nenhuma tabela de loot). Ao fabricar, ele e montado na frente do jogador, ao ar livre.
-   Cada bau tem 15 espacos (um por tipo de item, qualquer quantidade, igual a mochila). Chegue perto e use o botao de interagir (ABRIR):
-   toque num item da mochila para guardar, toque num item do bau para pegar. So da para desmontar vazio (devolve parte da madeira).
-   Estado: stashes = [{x,y,s:[{t,n},...]}]. Save: stashPack/stashLoad. Multiplayer: eventos stashAdd, stashSet (conteudo inteiro) e stashDel;
+   So de madeira (nao existe em nenhuma tabela de loot). Fabricar da a FERRAMENTA Bau (2 madeiras), igual ao tronco, a parede e a cerca: ela vai para o botao de construir
+   e cada bau posicionado custa 4 madeiras. A previa (verde = pode, vermelho = nao cabe) fica na casa da grade a frente do jogador e o bau fica VIRADO PARA QUEM O COLOCA:
+   olhando para cima ele mostra a frente, olhando para baixo mostra as costas, olhando para os lados mostra o lado com o fecho virado para o jogador. Nada de bau aparecendo do nada.
+   Chegue perto e use o botao de interagir (ABRIR): toque num item da mochila para guardar, toque num item do bau para pegar. So da para desmontar vazio (devolve as 4 madeiras).
+   Estado: stashes = [{x,y,o,s:[{t,n},...]}], o = 0 frente (para baixo), 1 costas (para cima), 2 virado para a esquerda, 3 virado para a direita.
+   Save: stashPack/stashLoad. Multiplayer: eventos stashAdd, stashSet (conteudo inteiro) e stashDel;
    quem entra depois recebe os baus no snapshot (so cria os que faltam, o conteudo vem dos eventos). Modulo no padrao dos 18..21: IIFE + window.*  */
 (function(){
-const SLOTS=15,COST=6,REFUND=4,MAXN=9999;
+const SLOTS=15,COST=4,REFUND=4,MAXN=9999,CELL=16;
 let stashes=[],open=null,openAt=0;
 const R2=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
+const cleanO=o=>(o===1||o===2||o===3)?o:0;
 
 /* ---------- espaco e montagem ---------- */
+/* o ponto (x,y) e o pe do bau; ele ocupa a casa da grade de 16 px (x-8..x+8). Baus vizinhos podem encostar um no outro */
 function spotOk(x,y){
   if(x<40||y<40||x>WW-40||y>WH-40)return false;
-  if(solidPoint(x,y,11)||pointInLake(x,y+8))return false;
-  if(selectedMap==='city'&&onCityRoad(x,y,14))return false;
+  for(const q of [[x-6,y-4],[x,y-4],[x+6,y-4]])if(solidPoint(q[0],q[1],4))return false;
+  if(pointInLake(x,y+3)||pointInLake(x,y-8))return false;
+  if(selectedMap==='city'&&onCityRoad(x,y,8))return false;
   if(window.playerWallBlocks&&playerWallBlocks(P.x,P.y,x,y))return false;
-  if(stashes.some(s=>Math.hypot(s.x-x,s.y-y)<26))return false;
+  if(stashes.some(s=>Math.abs(s.x-x)<15&&Math.abs(s.y-y)<12))return false;
   if(campfires.some(c=>Math.hypot(c.x-x,c.y-y)<22))return false;
   if(tents.some(t=>Math.hypot(t.x-x,t.y-y)<34))return false;
+  if(window.wellList&&wellList().some(w=>Math.hypot(w.x-x,w.y-y)<30))return false;
+  if(window.logList&&logList().some(l=>Math.hypot(l.x-x,l.y-y)<26))return false;
   return true;
 }
-function stashSpot(){
-  if(!P||P.inside||bldAt(P.x,P.y))return null;
-  for(const d of [26,34,44]){
-    for(const da of [0,.5,-.5,1,-1,1.6,-1.6,3.14]){
-      const a=(P.face||0)+da,x=Math.round(P.x+Math.cos(a)*d),y=Math.round(P.y+Math.sin(a)*d);
-      if(spotOk(x,y))return {x,y};
-    }
-  }
-  return null;
+/* o que o botao faz agora: casa da grade a frente do jogador + lado para onde o bau fica virado (para quem o coloca) */
+function stashIntent(){
+  const ang=P.face||0,fx=Math.cos(ang),fy=Math.sin(ang);
+  const x=Math.floor((P.x+fx*26)/CELL)*CELL+CELL/2,y=Math.floor((P.y+fy*26)/CELL)*CELL+13;
+  const o=Math.abs(fy)>=Math.abs(fx)?(fy>=0?1:0):(fx>=0?2:3);
+  let bad=null;
+  if(P.inside||bldAt(P.x,P.y))bad='Monte o baú ao ar livre';
+  else if(countInv('wood')<COST)bad='Precisa de '+COST+' madeiras';
+  else if(stashes.length>=200)bad='Baús demais';
+  else if(!spotOk(x,y))bad='Sem espaço para o baú aqui';
+  return {x,y,o,bad};
+}
+function stashSpot(){const it=P&&!P.inside&&stashIntent();return it&&!it.bad?{x:it.x,y:it.y,o:it.o}:null;}
+function stashPlace(quiet){
+  if(!P||P.dead||P.inVehicle||P.sleeping||P.sitting||P.tool!=='stash')return;
+  if(quiet)return;   // segurar o botao nao repete: um bau por toque
+  const it=stashIntent();
+  if(it.bad){toast(it.bad);beep(130,.08,'square',.04);return;}
+  removeInv('wood',COST);stashBuild(it);
 }
 function stashBuild(sp){
-  sp=sp||stashSpot()||{x:Math.round(P.x+26),y:Math.round(P.y)};
-  stashes.push({x:sp.x,y:sp.y,s:[]});rebuildSolidGrid();pushOut(P,P.r);
+  sp=sp||stashSpot()||{x:Math.round(P.x+26),y:Math.round(P.y),o:0};
+  const o=cleanO(sp.o);
+  stashes.push({x:sp.x,y:sp.y,o,s:[]});rebuildSolidGrid();pushOut(P,P.r);
   if(MP.active){
-    sendEvt('stashAdd',{x:sp.x,y:sp.y});
+    sendEvt('stashAdd',{x:sp.x,y:sp.y,o});
     if(MP.isHost&&MP.conn&&MP.conn.open){try{MP.conn.send(packSnapshot());}catch(e){}}
   }
-  toast('Baú montado! Chegue perto e use ABRIR');buildSound();
+  toast('Baú posicionado! Chegue perto e use ABRIR');buildSound();
   for(let i=0;i<8;i++)parts.push({x:sp.x+rnd(-8,8),y:sp.y-2,vx:rnd(-18,18),vy:rnd(-26,-6),t:.4,c:'#c8924e'});
+}
+function drawStashGhost(){
+  if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||P.sitting||P.tool!=='stash')return;
+  const it=stashIntent(),a=.55+.2*Math.sin(T*6),c=it.bad?'230,90,80':'110,220,110',x0=it.x-CELL/2,y0=it.y-13;
+  ctx.save();ctx.globalAlpha=.6;drawStash({x:it.x,y:it.y,o:it.o,s:[]});ctx.restore();
+  ctx.fillStyle='rgba('+c+','+(a*.3).toFixed(2)+')';ctx.fillRect(x0,y0,CELL,CELL);
+  ctx.fillStyle='rgba('+c+','+a.toFixed(2)+')';
+  ctx.fillRect(x0,y0,CELL,1);ctx.fillRect(x0,y0+CELL-1,CELL,1);ctx.fillRect(x0,y0,1,CELL);ctx.fillRect(x0+CELL-1,y0,1,CELL);
+  if(it.bad)ctx.fillRect(it.x-1,y0+CELL/2-1,2,2);
 }
 const find=(x,y)=>stashes.find(s=>Math.abs(s.x-x)<8&&Math.abs(s.y-y)<8)||null;
 function stashNearby(){
@@ -182,35 +209,45 @@ function closeStash(){
 }
 function stashIsOpen(){return !!open;}
 
-/* ---------- desenho: bau de madeira com cintas de ferro, tampa e fecho ---------- */
+/* ---------- desenho: bau de madeira com cintas de ferro, tampa e fecho (virado para um dos 4 lados) ---------- */
 function drawStash(s){
-  const x=Math.round(s.x),y=Math.round(s.y);
-  ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+3,11,3.5,0,0,6.283);ctx.fill();
-  R2(x-9,y-11,18,13,'#4a2e1a');                       // contorno
-  R2(x-8,y-10,16,5,'#b07a3e');R2(x-8,y-10,16,1,'#d6a468');          // tampa
-  R2(x-8,y-5,16,6,'#8a5a2a');R2(x-8,y-5,16,1,'#5a3a24');            // corpo
-  R2(x-6,y-10,2,11,'#6a7280');R2(x+4,y-10,2,11,'#6a7280');R2(x-6,y-10,2,1,'#c0c8d4');R2(x+4,y-10,2,1,'#c0c8d4');   // cintas de ferro
-  R2(x-2,y-7,4,4,'#ffd84a');R2(x-1,y-6,2,2,'#8a5a2a');              // fecho
-  if(s.s&&s.s.length){R2(x-7,y-11,2,1,'#d33');}                      // marca discreta: tem coisa dentro
-  R2(x-9,y,3,2,'#4a2e1a');R2(x+6,y,3,2,'#4a2e1a');                    // pes
+  const x=Math.round(s.x),y=Math.round(s.y),o=cleanO(s.o);
+  ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+3,o>=2?9:10,3.5,0,0,6.283);ctx.fill();
+  if(o>=2){   // de lado: mais estreito, com o fecho no lado que olha para o jogador
+    R2(x-7,y-11,14,13,'#4a2e1a');                       // contorno
+    R2(x-6,y-10,12,5,'#b07a3e');R2(x-6,y-10,12,1,'#d6a468');          // tampa
+    R2(x-6,y-5,12,6,'#8a5a2a');R2(x-6,y-5,12,1,'#5a3a24');            // corpo
+    R2(x-4,y-10,2,11,'#6a7280');R2(x+2,y-10,2,11,'#6a7280');R2(x-4,y-10,2,1,'#c0c8d4');R2(x+2,y-10,2,1,'#c0c8d4');   // cintas
+    const lx=o===2?x-7:x+5;R2(lx,y-8,2,4,'#ffd84a');R2(lx+(o===2?0:1),y-7,1,2,'#8a5a2a');   // fecho na ponta virada para o jogador
+    R2(x-7,y,3,2,'#4a2e1a');R2(x+4,y,3,2,'#4a2e1a');
+  }else{      // de frente (0) ou de costas (1)
+    R2(x-8,y-11,16,13,'#4a2e1a');                       // contorno
+    R2(x-7,y-10,14,5,'#b07a3e');R2(x-7,y-10,14,1,'#d6a468');          // tampa
+    R2(x-7,y-5,14,6,'#8a5a2a');R2(x-7,y-5,14,1,'#5a3a24');            // corpo
+    R2(x-5,y-10,2,11,'#6a7280');R2(x+3,y-10,2,11,'#6a7280');R2(x-5,y-10,2,1,'#c0c8d4');R2(x+3,y-10,2,1,'#c0c8d4');   // cintas de ferro
+    if(o===0){R2(x-2,y-7,4,4,'#ffd84a');R2(x-1,y-6,2,2,'#8a5a2a');}            // fecho
+    else{R2(x-3,y-6,2,2,'#3a3a44');R2(x+1,y-6,2,2,'#3a3a44');}                 // dobradicas (costas)
+    R2(x-8,y,3,2,'#4a2e1a');R2(x+5,y,3,2,'#4a2e1a');                            // pes
+  }
+  if(s.s&&s.s.length){R2(x-6,y-11,2,1,'#d33');}                      // marca discreta: tem coisa dentro
 }
 function stashDepth(s){return s.y;}
 
 /* ---------- save e rede ---------- */
 const cleanSlots=a=>{const out=[];if(Array.isArray(a))for(const q of a){const t=Array.isArray(q)?q[0]:q&&q.t,n=Array.isArray(q)?q[1]:q&&q.n;if(typeof t==='string'&&ITEMS[t]&&Number.isFinite(n)&&n>=1&&!out.some(o=>o.t===t)&&out.length<SLOTS)out.push({t:t,n:Math.min(MAXN,Math.floor(n))});}return out;};
-function stashPack(){return stashes.map(s=>[Math.round(s.x),Math.round(s.y),s.s.map(q=>[q.t,q.n])]);}
+function stashPack(){return stashes.map(s=>[Math.round(s.x),Math.round(s.y),s.s.map(q=>[q.t,q.n]),cleanO(s.o)]);}
 function stashLoad(a){
   stashes=[];
-  if(Array.isArray(a))for(const q of a.slice(0,200)){if(Array.isArray(q)&&Number.isFinite(q[0])&&Number.isFinite(q[1]))stashes.push({x:q[0],y:q[1],s:cleanSlots(q[2])});}
+  if(Array.isArray(a))for(const q of a.slice(0,200)){if(Array.isArray(q)&&Number.isFinite(q[0])&&Number.isFinite(q[1]))stashes.push({x:q[0],y:q[1],o:cleanO(q[3]),s:cleanSlots(q[2])});}
   rebuildSolidGrid();
 }
 function stashReset(){stashes=[];open=null;}
 function stashRemote(kind,d){
   if(!d||!Number.isFinite(d.x)||!Number.isFinite(d.y))return;
   let s=find(d.x,d.y);
-  if(kind==='stashAdd'){if(!s&&stashes.length<200){stashes.push({x:d.x,y:d.y,s:[]});rebuildSolidGrid();}}
+  if(kind==='stashAdd'){if(!s&&stashes.length<200){stashes.push({x:d.x,y:d.y,o:cleanO(d.o),s:[]});rebuildSolidGrid();}}
   else if(kind==='stashSet'){
-    if(!s&&stashes.length<200){s={x:d.x,y:d.y,s:[]};stashes.push(s);rebuildSolidGrid();}
+    if(!s&&stashes.length<200){s={x:d.x,y:d.y,o:cleanO(d.o),s:[]};stashes.push(s);rebuildSolidGrid();}
     if(s){s.s=cleanSlots(d.s);if(open===s)render_();}
   }else if(kind==='stashDel'){
     if(s){if(open===s)closeStash();stashes.splice(stashes.indexOf(s),1);rebuildSolidGrid();}
@@ -221,12 +258,12 @@ function stashSnapshot(a){   // convidado que entra depois: cria os baus que fal
   let ch=false;
   for(const q of a.slice(0,200)){
     if(!Array.isArray(q)||!Number.isFinite(q[0])||!Number.isFinite(q[1])||find(q[0],q[1]))continue;
-    stashes.push({x:q[0],y:q[1],s:cleanSlots(q[2])});ch=true;
+    stashes.push({x:q[0],y:q[1],o:cleanO(q[3]),s:cleanSlots(q[2])});ch=true;
   }
   if(ch)rebuildSolidGrid();
 }
 
-window.stashSpot=stashSpot;window.stashBuild=stashBuild;window.stashNearby=stashNearby;window.openStash=openStash;window.closeStash=closeStash;window.stashIsOpen=stashIsOpen;
+window.stashSpot=stashSpot;window.stashIntent=stashIntent;window.stashPlace=stashPlace;window.drawStashGhost=drawStashGhost;window.stashBuild=stashBuild;window.stashNearby=stashNearby;window.openStash=openStash;window.closeStash=closeStash;window.stashIsOpen=stashIsOpen;
 window.drawStash=drawStash;window.stashDepth=stashDepth;window.stashPack=stashPack;window.stashLoad=stashLoad;window.stashReset=stashReset;window.stashRemote=stashRemote;window.stashSnapshot=stashSnapshot;
 window.stashList=()=>stashes;window.stashTakeAll=takeAll;window.stashDismantle=dismantle;window.stashDeposit=deposit;window.stashWithdraw=withdraw;window.stashMove=moveTo;window.STASH_SLOTS=SLOTS;window.STASH_COST=COST;
 })();
