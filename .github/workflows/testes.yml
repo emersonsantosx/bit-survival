@@ -20,7 +20,16 @@ jobs:
         run: npm install
 
       - name: Instalar navegador do Playwright
-        run: npx playwright install --with-deps chromium
+        # Falha de rede temporaria (apt nao resolve security.ubuntu.com) derrubava tudo: atualiza a lista e tenta de novo ate 4 vezes
+        timeout-minutes: 12
+        run: |
+          for i in 1 2 3 4; do
+            sudo apt-get update -o Acquire::Retries=5 -o Acquire::http::Timeout=20 || true
+            if npx playwright install --with-deps chromium; then exit 0; fi
+            echo "Tentativa $i falhou, esperando para tentar de novo..."
+            sleep $((i * 20))
+          done
+          exit 1
 
       - name: Rodar testes
         run: npm test

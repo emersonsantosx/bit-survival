@@ -253,12 +253,21 @@ function stashRemote(kind,d){
     if(s){if(open===s)closeStash();stashes.splice(stashes.indexOf(s),1);rebuildSolidGrid();}
   }
 }
-function stashSnapshot(a){   // convidado que entra depois: cria os baus que faltam (o conteudo ja vem junto)
+function stashSnapshot(a,mode){   // mode 0: so cria os que faltam; 1: tambem iguala o conteudo; 2: tambem tira os que o anfitriao nao tem
   if(!Array.isArray(a))return;
-  let ch=false;
+  let ch=false;const keep=new Set();
   for(const q of a.slice(0,200)){
-    if(!Array.isArray(q)||!Number.isFinite(q[0])||!Number.isFinite(q[1])||find(q[0],q[1]))continue;
-    stashes.push({x:q[0],y:q[1],o:cleanO(q[3]),s:cleanSlots(q[2])});ch=true;
+    if(!Array.isArray(q)||!Number.isFinite(q[0])||!Number.isFinite(q[1]))continue;
+    const s=find(q[0],q[1]);
+    if(s){
+      keep.add(s);
+      if(mode>=1){const ns=cleanSlots(q[2]);if(JSON.stringify(ns)!==JSON.stringify(s.s)){s.s=ns;if(open===s)render_();}}
+      continue;
+    }
+    const n={x:q[0],y:q[1],o:cleanO(q[3]),s:cleanSlots(q[2])};stashes.push(n);keep.add(n);ch=true;
+  }
+  if(mode===2){
+    for(let i=stashes.length-1;i>=0;i--)if(!keep.has(stashes[i])){if(open===stashes[i])closeStash();stashes.splice(i,1);ch=true;}
   }
   if(ch)rebuildSolidGrid();
 }

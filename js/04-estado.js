@@ -119,7 +119,7 @@ function fitChatPanel(){
   const p=$('chat-panel'); if(!p||!chatOpen) return;
   const vv=window.visualViewport;
   if(!vv){ return; }
-  const w=Math.min(420,vv.width);
+  const w=Math.min(420*(window.UIS||1),vv.width);
   p.style.top=vv.offsetTop+'px';
   p.style.height=vv.height+'px';
   p.style.width=w+'px';

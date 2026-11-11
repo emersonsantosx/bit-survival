@@ -94,7 +94,9 @@ const pl=await pg.evaluate(()=>{
   {const f=free();const p=till(f);P.inv=[];addItem('seed_apple');P.hold='seed_apple';plotDo({act:'PLANTAR',p});o.appleInDesert=p.c;}
   // neve: estufa aceita tudo
   w('snow');
-  {const sp=ghSpot();o.snowSpot=!!sp;if(sp){ghBuild(sp);const g=ghList()[0];const p=(()=>{P.tool='hoe';P.x=g.x+8-14+16;P.y=g.y+24;P.face=0;hoeTill(true);return plotList()[0];})();addItem('seed_apple');P.hold='seed_apple';plotDo({act:'PLANTAR',p});o.snowApple=p&&p.c;}}
+  {let sp=ghSpot();   // o mundo e sorteado: se o ponto de nascimento estiver cercado de arvore/pedra, procura outro lugar livre para a estufa
+   for(let i=0;i<400&&!sp;i++){P.x=(60+((i*37)%120))*16+8;P.y=(60+((i*53)%90))*16+8;P.face=0;sp=ghSpot();}
+   o.snowSpot=!!sp;if(sp){ghBuild(sp);const g=ghList()[0];const p=(()=>{P.tool='hoe';P.x=g.x+8-14+16;P.y=g.y+24;P.face=0;hoeTill(true);return plotList()[0];})();addItem('seed_apple');P.hold='seed_apple';plotDo({act:'PLANTAR',p});o.snowApple=p&&p.c;}}
   return o;});
 console.log(JSON.stringify(pl));
 for(const c of ['tomato','carrot','apple','berry']){const q=pl[c];ok(q&&q.planted&&q.ripe&&q.got>=3,'planta e colhe '+c+' ('+JSON.stringify(q)+')');}

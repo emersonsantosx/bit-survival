@@ -131,6 +131,19 @@ function icePack(){const o=[];lakes.forEach((l,i)=>{if(l.holes)for(const h of l.
 function iceLoad(a){if(Array.isArray(a))for(const q of a.slice(0,400)){const l=Array.isArray(q)&&lakes[q[0]];if(l&&l.frozen&&Number.isFinite(q[1])&&Number.isFinite(q[2])){if(!l.holes)l.holes=[];l.holes.push({x:q[1],y:q[2],r:16});}}}
 function doorsPack(){const o=[];blds.forEach((b,bi)=>{if(b.doors)b.doors.forEach((d,di)=>{if(d.open)o.push([bi,di,d.open]);});});return o;}
 function doorsLoad(a){if(Array.isArray(a))for(const q of a.slice(0,4000)){const bb=Array.isArray(q)&&blds[q[0]],dd=bb&&bb.doors&&bb.doors[q[1]];if(dd&&(q[2]===1||q[2]===2)){dd.open=q[2];if(q[2]===2)dd.hp=0;}}}
+/* convidado: portas e gelo iguais aos do anfitriao (vem no snapshot completo) */
+function doorsSync(a){
+  if(!Array.isArray(a))return;
+  const want=new Map();for(const q of a)if(Array.isArray(q)&&(q[2]===1||q[2]===2))want.set(q[0]+','+q[1],q[2]);
+  blds.forEach((b,bi)=>{if(b.doors)b.doors.forEach((d,di)=>{const w=want.get(bi+','+di)||0,cur=d.open||0;if(cur!==w&&cur!==2)setDoor(d,w,true);});});
+}
+function iceSync(a){
+  if(!Array.isArray(a))return;
+  for(const q of a.slice(0,400)){
+    const l=Array.isArray(q)&&lakes[q[0]];
+    if(l&&l.frozen&&Number.isFinite(q[1])&&Number.isFinite(q[2])&&!(l.holes||[]).some(h=>Math.abs(h.x-q[1])<4&&Math.abs(h.y-q[2])<4))addIceHole(l,q[1],q[2],true);
+  }
+}
 function worldExtraPack(){return {rl:lootStatePack(),dr:doorsPack(),ice:icePack()};}
 function worldExtraApply(o){if(!o||typeof o!=='object')return;if(Array.isArray(o.rl))lootStateLoad(o.rl.slice(0,3000));doorsLoad(o.dr);iceLoad(o.ice);}
 /* devolve ao mundo recem-gerado (genWorld) tudo o que o save guardou, menos jogador e zumbis. Serve ao CONTINUAR e ao multiplayer */
@@ -492,7 +505,7 @@ function buildWeaponWheel(){
   const root=$('weapon-wheel'),ring=$('weapon-wheel-ring');if(!root||!ring||!P)return;
   ring.querySelectorAll('.weapon-option,#weapon-wheel-hint').forEach(e=>e.remove());
   const list=weaponList();
-  const title=$('weapon-wheel-title');if(title)title.innerHTML='ARSENAL · '+list.length+' ARMAS<br><span style="color:#aaa;font-size:10px">toque = equipar · segure 2s = dropar</span>';
+  const title=$('weapon-wheel-title');if(title)title.innerHTML='ARSENAL · '+list.length+' ARMAS<br><span style="color:#aaa;font-size:calc(10px*var(--ui,1))">toque = equipar · segure 2s = dropar</span>';
   list.forEach(key=>{
     const w=WEAPONS[key];if(!w)return;
     const btn=document.createElement('button');btn.type='button';

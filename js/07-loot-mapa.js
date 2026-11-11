@@ -31,11 +31,11 @@ function drawPingBadge(){
   pingBadge=null;
   const it=pingCandidate();if(!it)return;
   const bob=Math.sin(performance.now()/260)*1.5;
-  const x=(it.x-camX)*Z,y=Math.max(16,(it.y-camY)*Z-31*Z+bob);
+  const x=(it.x-camX)*Z,y=Math.max(16*HU,(it.y-camY)*Z-31*Z+bob*HU);
   pingBadge={x,y,it};
   const mine=pings.find(q=>q.mine&&Math.abs(q.x-it.x)<3&&Math.abs(q.y-it.y)<3);
   const col=mine?'#4aa3ff':'#ffd84a';
-  ctx.save();ctx.translate(x,y);
+  ctx.save();ctx.translate(x,y);ctx.scale(HU,HU);   // tamanho fixo em px de referencia (HU compensa o canvas esticado e o aparelho)
   ctx.globalAlpha=.82;
   ctx.fillStyle='rgba(10,14,20,.78)';ctx.beginPath();ctx.arc(0,0,11,0,6.283);ctx.fill();
   ctx.lineWidth=1.5;ctx.strokeStyle=col;ctx.stroke();
@@ -47,7 +47,7 @@ function drawPingBadge(){
 function pingBadgeHit(p){            // p: ponto do toque em pixels do canvas
   const b=pingBadge;if(!b||!b.it||!items.includes(b.it))return null;
   const sx=(b.it.x-camX)*Z,sy=(b.it.y-camY)*Z;
-  if(Math.hypot(p.x-b.x,p.y-b.y)<24||Math.hypot(p.x-sx,p.y-(sy-5*Z))<14)return b.it;
+  if(Math.hypot(p.x-b.x,p.y-b.y)<24*HU||Math.hypot(p.x-sx,p.y-(sy-5*Z))<14*HU)return b.it;
   return null;
 }
 function allyHasFirearm(t){for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.alive!==false&&Array.isArray(rp.fw)&&rp.fw.includes(t))return true;}return false;}
@@ -87,13 +87,13 @@ function drawPingsWorld(){
 /* na tela: marcador fora da tela vira uma seta na borda apontando para o item, com a distância */
 function drawPingsEdge(){
   if(!pings.length||!P)return;
-  const m=26;
+  const m=26*HU;
   for(const q of pings){
     const sx=(q.x-camX)*Z,sy=(q.y-camY)*Z;
     if(sx>=m&&sx<=W-m&&sy>=m&&sy<=H-m)continue;
     const cx=W/2,cy=H/2,dx=sx-cx,dy=sy-cy,k=Math.min((W/2-m)/Math.max(1,Math.abs(dx)),(H/2-m)/Math.max(1,Math.abs(dy)));
     const ex=cx+dx*k,ey=cy+dy*k,a=Math.atan2(dy,dx),c=pingCol(q);
-    ctx.save();ctx.translate(ex,ey);
+    ctx.save();ctx.translate(ex,ey);ctx.scale(HU,HU);
     ctx.fillStyle='rgba(0,0,0,.55)';ctx.beginPath();ctx.arc(0,0,15,0,6.283);ctx.fill();
     ctx.rotate(a);ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(15,0);ctx.lineTo(7,-6);ctx.lineTo(7,6);ctx.closePath();ctx.fill();
     ctx.rotate(-a);

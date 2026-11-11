@@ -413,7 +413,7 @@ function genWorld(seed) {
   try{gardensGen();}catch(e){console.warn('[hortas]',e);}
   try{wellsGen();}catch(e){console.warn('[pocos]',e);}
   try{logsGen();}catch(e){console.warn('[troncos]',e);}
-  BASE_TREES=trees.map(t=>t.x+','+t.y);BASE_ROCKS=rocks.map(t=>t.x+','+t.y);regrowInit(); // referência para sincronizar o que foi derrubado/quebrado
+  BASE_TREES=trees.map(t=>t.x+','+t.y);BASE_ROCKS=rocks.map(t=>t.x+','+t.y);BASE_TOBJ=new Map(trees.map(t=>[t.x+','+t.y,Object.assign({},t)]));BASE_ROBJ=new Map(rocks.map(t=>[t.x+','+t.y,Object.assign({},t)]));regrowInit(); // referência para sincronizar o que foi derrubado/quebrado
   buildMinimap();
   }catch(e){
     console.error('[genWorld] FALHOU na linha:',e.stack);

@@ -56,12 +56,13 @@
     function fit(){
       const lg=document.getElementById('logoCv'),sc=document.getElementById('sceneCv'),card=document.querySelector('#menu .card');
       if(!lg||!sc||!card)return;
-      const land=innerWidth>innerHeight&&innerHeight<=520;
-      const maxW=land?Math.min(innerWidth*.45,360):Math.min(innerWidth-40,340);
-      const maxH=land?innerHeight*.5:innerHeight*.3;
+      const u=window.UIS||1,iw=innerWidth/u,ih=innerHeight/u;   // medidas em "px de referencia" (a tela ja dividida pela escala da UI)
+      const land=iw>ih&&ih<=520;
+      const maxW=land?Math.min(iw*.45,360):Math.min(iw-40,340);
+      const maxH=land?ih*.5:ih*.3;
       const sL=Math.max(2,Math.min(Math.floor(maxW/46),Math.floor(maxH/37),8));
-      lg.style.width=46*sL+'px';lg.style.height=37*sL+'px';
-      sc.style.width=46*sL+'px';sc.style.height=14*sL+'px'; // mesma grade de pixels do logotipo
+      lg.style.width=46*sL*u+'px';lg.style.height=37*sL*u+'px';
+      sc.style.width=46*sL*u+'px';sc.style.height=14*sL*u+'px'; // mesma grade de pixels do logotipo
     }
     function drawIcons(){
       document.querySelectorAll('canvas.ico[data-art]').forEach(cv=>{

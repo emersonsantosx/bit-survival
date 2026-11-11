@@ -105,10 +105,14 @@ function refreshCraft(){
 }
 
 /* ============ EVENTOS REPLICADOS ============ */
+/* Eventos que mexem em estrutura do mundo: quem acabou de mandar um deles nao aceita a "correcao" do snapshot por um instante
+   (o anfitriao ainda pode nao ter recebido, e a peca sumiria e voltaria na tela) */
+const STRUCT_EVT=new Set(['fenceSet','cellSet','plotSet','structBreak','ghAdd','stashAdd','stashSet','stashDel','wellAdd','logAdd','campfireAdded','campfireRemoved','tentAdded','doorSet','fruitSet','iceBreak','chestOpen']);
+const LOCAL_GRACE=2200;
 function sendEvt(kind, data){
-  // Allow events during play AND craft (campfire is crafted in craft menu!)
-  if(!MP.active || !MP.connected) return;
-  if(state!=='play' && state!=='craft') return;
+  // Vale em qualquer momento da partida (pausa, mapa, morto...): antes so em jogo/criacao e o evento se perdia para sempre
+  if(!MP.active || !MP.connected || !MP.gameStarted || state==='menu') return;
+  {const nt=performance.now();if(STRUCT_EVT.has(kind))MP._tStruct=nt;else if(kind==='treeDmg'||kind==='rockDmg')MP._tTree=nt;}
   if(!MP.isHost && data){
     const now=performance.now();
     if(kind==='itemRemoved')recentRemoved.push({x:data.x,y:data.y,at:now});
@@ -441,7 +445,7 @@ function showReconnectUI(){
   if(!el){
     el=document.createElement('div');el.id='reconn';
     el.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(0,0,0,.62);color:#fff;font-family:inherit;text-align:center;padding:20px';
-    el.innerHTML='<div>'+pxIcon('wifioff',5)+'</div><div style="font-size:16px;font-weight:700">Conexão perdida</div><div id="reconnMsg" style="font-size:13px;opacity:.85;max-width:260px"></div><button id="reconnQuit" style="margin-top:8px;padding:8px 18px;border-radius:8px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font-size:13px">Sair da partida</button>';
+    el.innerHTML='<div>'+pxIcon('wifioff',5)+'</div><div style="font-size:calc(16px*var(--ui,1));font-weight:700">Conexão perdida</div><div id="reconnMsg" style="font-size:calc(13px*var(--ui,1));opacity:.85;max-width:calc(260px*var(--ui,1))"></div><button id="reconnQuit" style="margin-top:calc(8px*var(--ui,1));padding:calc(8px*var(--ui,1)) calc(18px*var(--ui,1));border-radius:calc(8px*var(--ui,1));border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font-size:calc(13px*var(--ui,1))">Sair da partida</button>';
     document.body.appendChild(el);
     el.querySelector('#reconnQuit').addEventListener('click',()=>{MP.reconnecting=false;quitToMenu();});
   }
@@ -775,8 +779,16 @@ function vehSetTarget(v,x,y,f){
 function applySnapshot(snap){
   if(!snap || typeof snap !== 'object' || !MP.active) return;
   if(!MP.isHost&&Array.isArray(snap.ch))snap.ch.forEach((v,i)=>{if(chestList[i]&&v===1)chestList[i].open=true;});
-  if(!MP.isHost&&(Array.isArray(snap.tg)||Array.isArray(snap.rg))){ // árvores/pedras que já foram destruídas (garante o mesmo mapa mesmo após queda de conexão)
-    const c1=applyGone(BASE_TREES,trees,snap.tg),c2=applyGone(BASE_ROCKS,rocks,snap.rg);
+  const nowS=performance.now();
+  const quiet=nowS-(MP._tStruct||0)>LOCAL_GRACE;                 // nada nosso em transito: pode aceitar a versao do anfitriao
+  const smode=!quiet?0:(snap.vfull===true?2:1);                  // 0: so soma, 1: soma e atualiza, 2: tambem tira o que o anfitriao nao tem
+  if(!MP.isHost&&(Array.isArray(snap.tg)||Array.isArray(snap.rg))){ // árvores/pedras: o mapa do convidado fica IGUAL ao do anfitrião (tira o que sumiu E devolve o que o anfitrião ainda tem)
+    let c1=applyGone(BASE_TREES,trees,snap.tg),c2=applyGone(BASE_ROCKS,rocks,snap.rg);
+    if(nowS-(MP._tTree||0)>LOCAL_GRACE){
+      if(restoreBase(BASE_TREES,BASE_TOBJ,trees,snap.tg))c1=true;
+      if(restoreBase(BASE_ROCKS,BASE_ROBJ,rocks,snap.rg))c2=true;
+      hpApply(trees,snap.th,4);hpApply(rocks,snap.rh,5);
+    }
     if(c1||c2)rebuildSolidGrid();
   }
   if(!MP.isHost&&(Array.isArray(snap.tn)||Array.isArray(snap.rn))){const c1=grownApply(trees,snap.tn),c2=grownApply(rocks,snap.rn);if(c1||c2)rebuildSolidGrid();}
@@ -800,15 +812,16 @@ function applySnapshot(snap){
   // Campfires: merge (never wipe guest-only events that arrived slightly earlier)
   if(Array.isArray(snap.campfires)){
     const merged = snap.campfires.map(c=>({x:c.x,y:c.y,t:c.t||0,flicker:c.flicker||0}));
-    for(const c of campfires){
+    if(smode<2)for(const c of campfires){   // fogueira so nossa (acabamos de acender): fica ate o anfitriao confirmar
       if(!merged.some(m=>Math.abs(m.x-c.x)<8&&Math.abs(m.y-c.y)<8)){
         merged.push({x:c.x,y:c.y,t:c.t||0,flicker:c.flicker||0});
       }
     }
     campfires = merged;
   }
-  plotsApplySnapshot(snap.plots);if(Array.isArray(snap.fr))for(const a of snap.fr)if(Array.isArray(a))fruitRemote({x:a[0],y:a[1],r:a[2]});if(Array.isArray(snap.br))for(const k of snap.br)structRemote(k);fenceApplySnapshot(snap.fn);cellApplySnapshot(snap.pf);if(Array.isArray(snap.gh))for(const a of snap.gh)if(Array.isArray(a))ghRemote({x:a[0],y:a[1]});
-  stashSnapshot(snap.bx);wellSnapshot(snap.wl);logSnapshot(snap.lg);
+  plotsApplySnapshot(snap.plots,smode);if(Array.isArray(snap.fr))for(const a of snap.fr)if(Array.isArray(a))fruitRemote({x:a[0],y:a[1],r:a[2]});if(Array.isArray(snap.br))for(const k of snap.br)structRemote(k);fenceApplySnapshot(snap.fn,smode);cellApplySnapshot(snap.pf,smode);if(Array.isArray(snap.gh))for(const a of snap.gh)if(Array.isArray(a))ghRemote({x:a[0],y:a[1]});
+  stashSnapshot(snap.bx,smode);wellSnapshot(snap.wl);logSnapshot(snap.lg);
+  if(smode===2){doorsSync(snap.dr);iceSync(snap.ice);}   // portas e gelo quebrado tambem ficam iguais (antes so na entrada)
   if(Array.isArray(snap.tents)){
     let ch=false;
     for(const a of snap.tents){if(Array.isArray(a)&&isFiniteNum(a[0])&&isFiniteNum(a[1])&&!tents.some(t=>Math.abs(t.x-a[0])<10&&Math.abs(t.y-a[1])<10)){tents.push({x:a[0],y:a[1]});ch=true;}}
@@ -958,8 +971,21 @@ function applySnapshot(snap){
   if(Number.isFinite(snap.weatherTimer)) weatherTimer=clamp(snap.weatherTimer,0,300);
   if(Number.isFinite(snap.kills)) kills = snap.kills;
 }
-let BASE_TREES=[],BASE_ROCKS=[];
+let BASE_TREES=[],BASE_ROCKS=[],BASE_TOBJ=new Map(),BASE_ROBJ=new Map();
 function goneList(base,arr){const cur=new Set(arr.map(t=>t.x+','+t.y));const g=[];for(const k of base)if(!cur.has(k))g.push(k);return g;}
+/* o convidado perdeu uma árvore/pedra que o anfitrião ainda tem (golpe perdido, queda de conexão...): devolve do mapa original */
+function restoreBase(base,objs,arr,gone){
+  if(!Array.isArray(gone)||!objs||!objs.size)return false;
+  const g=new Set(gone),have=new Set(arr.map(t=>t.x+','+t.y));let ch=false;
+  for(const k of base){if(g.has(k)||have.has(k))continue;const o=objs.get(k);if(o){arr.push(Object.assign({},o));ch=true;}}
+  return ch;
+}
+function hpPack(arr,full){const o=[];for(const t of arr)if(Number.isFinite(t.hp)&&t.hp<full-.001)o.push([t.x,t.y,Math.round(t.hp*100)/100]);return o;}
+function hpApply(arr,list,full){
+  if(!Array.isArray(list))return;
+  const m=new Map();for(const a of list)if(Array.isArray(a)&&Number.isFinite(a[2]))m.set(a[0]+','+a[1],a[2]);
+  for(const o of arr){const h=m.get(o.x+','+o.y);if(h!==undefined)o.hp=h;else if(Number.isFinite(o.hp)&&o.hp<full-.001)o.hp=full;}
+}
 function applyGone(base,arr,gone){
   if(!Array.isArray(gone)||!gone.length)return false;
   const g=new Set(gone);let ch=false;
@@ -1028,6 +1054,9 @@ function packSnapshot(){
   const nowMs=performance.now();
   const fullV=!(MP._vNext>nowMs);
   if(fullV) MP._vNext=nowMs+3000;
+  // Listas grandes e quase paradas (cercas, pisos, baús, estruturas quebradas...) só vão quando mudam ou no snapshot completo (3 s)
+  const sentL=MP._last||(MP._last={});
+  const delta=(k,v)=>{const j=JSON.stringify(v);if(fullV||sentL[k]!==j){sentL[k]=j;return v;}return undefined;};
   const vPack=[];
   for(const v of vehicles){
     let inc=fullV||!!v.driverId||!!v.dying||Math.abs(v.spd||0)>1;
@@ -1041,9 +1070,11 @@ function packSnapshot(){
     an:aPack,
     vehicles:vPack,vfull:fullV,
     campfires:campfires.map(c=>({x:Math.round(c.x),y:Math.round(c.y),t:c.t||0,flicker:+(c.flicker||0).toFixed(2)})),
-    tents:tents.map(t=>[Math.round(t.x),Math.round(t.y)]),
-    bx:stashPack(),wl:wellPack(),lg:logPack(),
-    plots:plotsPack(),fr:fruitPack(),gh:ghPack(),fn:fencePack(),br:structPack(),pf:cellPack(),
+    tents:delta('tt',tents.map(t=>[Math.round(t.x),Math.round(t.y)])),
+    bx:delta('bx',stashPack()),wl:delta('wl',wellPack()),lg:delta('lg',logPack()),
+    plots:plotsPack(),fr:fruitPack(),gh:delta('gh',ghPack()),fn:delta('fn',fencePack()),br:delta('br',structPack()),pf:delta('pf',cellPack()),
+    dr:fullV?doorsPack():undefined,ice:fullV?icePack():undefined,
+    th:fullV?hpPack(trees,4):undefined,rh:fullV?hpPack(rocks,5):undefined,
     sc:SCW.on?1:0,
     bd:packBirds(),
     tg:fullV?goneList(BASE_TREES,trees):undefined,rg:fullV?goneList(BASE_ROCKS,rocks):undefined,tn:fullV?grownPack(trees):undefined,rn:fullV?grownPack(rocks):undefined,

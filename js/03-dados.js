@@ -150,7 +150,7 @@ function pxCanvas(name){
 function pxIcon(name,s){
   const d=pxData(name);if(!d)return '';
   s=s||2;
-  return '<img class="pxi" alt="" draggable="false" src="'+d.url+'" style="width:'+(d.w*s)+'px;height:'+(d.h*s)+'px">';
+  return '<img class="pxi" alt="" draggable="false" src="'+d.url+'" style="width:calc('+(d.w*s)+'px*var(--ui,1));height:calc('+(d.h*s)+'px*var(--ui,1))">';
 }
 /* escolhe o maior multiplo inteiro que cabe em maxW x maxH (px de CSS) */
 function pxFit(name,maxW,maxH){
