@@ -925,11 +925,11 @@ function drawLighting(sx,sy){
       }
     }
     const beams=[];   // lanternas acesas (a minha e as dos aliados)
-    if(P&&P.torch&&P.flashOn&&!P.dead&&!P.inVehicle){
+    if(P&&P.torch&&P.flashOn&&!P.dead&&!P.inVehicle&&!P.sleeping){   // dormindo a lanterna nao ilumina
       const tl=flashReach(P.x,P.y,P.face);P._fLen=P._fLen?P._fLen+(tl-P._fLen)*.3:tl;
       beams.push({x:P.x,y:P.y,a:P.face,len:P._fLen});
     }
-    for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.lt&&rp.alive!==false&&!rp.inVehicle&&Number.isFinite(rp.x)&&Number.isFinite(rp.face))beams.push({x:rp.x,y:rp.y,a:rp.face,len:130});}
+    for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.lt&&!rp.sl&&rp.alive!==false&&!rp.inVehicle&&Number.isFinite(rp.x)&&Number.isFinite(rp.face)&&(!bldAt(rp.x,rp.y)||bldAt(rp.x,rp.y)===(P&&P.inside)))beams.push({x:rp.x,y:rp.y,a:rp.face,len:130});}
     for(const bm of beams){
       const [bx,by]=sp(bm.x+Math.cos(bm.a)*5,bm.y-7);
       if(bx<-200*Z||by<-200*Z||bx>W+200*Z||by>H+200*Z)continue;
@@ -1441,5 +1441,6 @@ function render(){
 // constantes e variaveis (expostas depois de criadas)
 window.fracHash=fracHash;
 window.SUN=SUN;
+window.lightBeams=()=>drawLighting._beams||[];   // lanternas acesas desenhadas no ultimo quadro (para os testes)
 Object.defineProperty(window,'blizzK',{get:()=>blizzK,set:v=>{blizzK=v;},configurable:true});   // variavel que muda: os outros arquivos sempre leem o valor atual
 })();
