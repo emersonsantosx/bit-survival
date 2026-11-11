@@ -216,11 +216,16 @@ function cellRemote(d){
   else map.delete(k);
   ver++;if(d.k==='r'||!d.on)roofRecalc(true);else recalc();
 }
-function cellApplySnapshot(d){
+function cellApplySnapshot(d,mode){
   if(!d)return;
   if(Array.isArray(d.f))for(const a of d.f)if(Array.isArray(a))cellRemote({k:'f',x:a[0],y:a[1],on:1});
   if(Array.isArray(d.r))for(const a of d.r)if(Array.isArray(a))cellRemote({k:'r',x:a[0],y:a[1],on:1});
   if(Array.isArray(d.b))for(const a of d.b)if(Array.isArray(a))cellRemote({k:'b',x:a[0],y:a[1],s:a[2],on:1});
+  if(mode===2){   // piso, telhado e cama que o anfitriao nao tem mais saem tambem aqui
+    const keep=(arr,m)=>{const ks=new Set();if(Array.isArray(arr))for(const a of arr)if(Array.isArray(a))ks.add(key(Math.round(a[0]),Math.round(a[1])));let ch=false;for(const k of [...m.keys()])if(!ks.has(k)){m.delete(k);ch=true;}return ch;};
+    const c1=keep(d.f,floors),c2=keep(d.r,roofs),c3=keep(d.b,beds);
+    if(c1||c2||c3){ver++;roofRecalc(true);}
+  }
 }
 
 window.cellBuild=cellBuild;window.cellIntent=cellIntent;window.drawCellGhost=drawCellGhost;window.drawFloors=drawFloors;window.drawRoofs=drawRoofs;

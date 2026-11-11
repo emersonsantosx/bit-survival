@@ -53,7 +53,7 @@
   <button class="btn" id="swap" aria-label="Trocar arma" data-px="c_swap" data-s="3"></button>
   <div id="weapon-wheel" class="hide" aria-label="Seletor de armas">
     <div class="weapon-wheel-ring" id="weapon-wheel-ring">
-      <div class="weapon-wheel-title" id="weapon-wheel-title">ARSENAL<br><span style="color:#aaa;font-size:10px">toque na arma para equipar</span></div>
+      <div class="weapon-wheel-title" id="weapon-wheel-title">ARSENAL<br><span style="color:#aaa;font-size:calc(10px*var(--ui,1))">toque na arma para equipar</span></div>
     </div>
     <div id="weapon-wheel-hint">Toque em qualquer arma para equipá-la</div>
   </div>
@@ -118,7 +118,7 @@
         <span class="map-desc">Ruas, prédios, lojas e carros</span>
       </button>
     </div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
+    <div style="display:flex;gap:calc(8px*var(--ui,1));justify-content:center;margin-top:calc(10px*var(--ui,1));flex-wrap:wrap">
       <button class="go" id="btnStart" style="margin:0">INICIAR PARTIDA</button>
       <button class="back" id="btnBackMap" style="margin:0">VOLTAR</button>
     </div>
@@ -126,11 +126,11 @@
 </div>
 
 <div id="slotscreen" class="screen hide">
-  <div class="card" style="width:100%;max-width:600px;align-items:center">
+  <div class="card" style="width:100%;max-width:calc(600px*var(--ui,1));align-items:center">
     <h2 id="slotTitle">ESCOLHA O SLOT</h2>
-    <p id="slotHint" style="font-size:10px;margin:0 0 6px"></p>
+    <p id="slotHint" style="font-size:calc(10px*var(--ui,1));margin:0 0 calc(6px*var(--ui,1))"></p>
     <div class="sv-grid" id="slotGrid"></div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:8px"><button class="back" id="btnBackSlot" style="margin:0">VOLTAR</button></div>
+    <div style="display:flex;gap:calc(8px*var(--ui,1));justify-content:center;margin-top:calc(8px*var(--ui,1))"><button class="back" id="btnBackSlot" style="margin:0">VOLTAR</button></div>
   </div>
   <div id="slotConfirm" class="sv-confirm hide"><div class="box"><p id="slotConfirmTxt"></p><div class="row"><button class="go" id="slotYes" style="margin:0">CONFIRMAR</button><button class="back" id="slotNo" style="margin:0">CANCELAR</button></div></div></div>
 </div>
@@ -148,7 +148,7 @@
       <button class="map-opt skin-opt" data-skin="6" aria-label="Skin 7"><canvas width="16" height="26"></canvas></button>
       <button class="map-opt skin-opt" data-skin="7" aria-label="Skin 8"><canvas width="16" height="26"></canvas></button>
     </div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
+    <div style="display:flex;gap:calc(8px*var(--ui,1));justify-content:center;margin-top:calc(10px*var(--ui,1));flex-wrap:wrap">
       <button class="back" id="btnBackSkins" style="margin:0">VOLTAR</button>
     </div>
   </div>
@@ -164,7 +164,7 @@
     <div class="ach-sum" id="achSum"></div>
     <div class="ach-list" id="achList"></div>
     <div class="ach-stats hide" id="achStats"></div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">
+    <div style="display:flex;gap:calc(8px*var(--ui,1));justify-content:center;margin-top:calc(8px*var(--ui,1));flex-wrap:wrap">
       <button class="back" id="btnBackAch" style="margin:0">VOLTAR</button>
     </div>
   </div>
@@ -173,7 +173,7 @@
 <div id="mpscreen" class="screen hide">
   <div class="card">
     <h2>MULTIPLAYER</h2>
-    <p style="font-size:11px;margin-top:0">Jogue com um amigo via conexão direta P2P</p>
+    <p style="font-size:calc(11px*var(--ui,1));margin-top:0">Jogue com um amigo via conexão direta P2P</p>
     <div class="menu-btns">
       <button class="menu-btn mp" id="btnMPHost">CRIAR SALA (Host)</button>
       <button class="menu-btn mp" id="btnMPJoin">ENTRAR EM SALA</button>
@@ -185,25 +185,25 @@
 <div id="mphostscreen" class="screen hide">
   <div class="card">
     <h2>CRIAR SALA</h2>
-    <p style="font-size:11px">Digite seu nome, escolha o mundo e compartilhe o código</p>
+    <p style="font-size:calc(11px*var(--ui,1))">Digite seu nome, escolha o mundo e compartilhe o código</p>
     <input type="text" id="hostName" class="name-input" placeholder="SEU NOME" maxlength="12" autocomplete="off">
     <div class="map-grid mp-worlds" id="hostWorlds"></div>
     <p id="hostWorldNote" class="mp-note"></p>
-    <div class="map-grid" id="mpMapGrid" style="margin:6px 0">
+    <div class="map-grid" id="mpMapGrid" style="margin:calc(6px*var(--ui,1)) 0">
       <button class="map-opt selected" data-mp-map="forest"><span class="ic"><canvas class="ico" data-art="tree" width="9" height="9"></canvas></span><span>FLORESTA</span></button>
       <button class="map-opt" data-mp-map="desert"><span class="ic"><canvas class="ico" data-art="cactus" width="9" height="9"></canvas></span><span>DESERTO</span></button>
       <button class="map-opt" data-mp-map="snow"><span class="ic"><canvas class="ico" data-art="pine" width="9" height="9"></canvas></span><span>NEVE</span></button>
       <button class="map-opt" data-mp-map="city"><span class="ic"><canvas class="ico" data-art="city" width="9" height="9"></canvas></span><span>CIDADE</span></button>
     </div>
     <div id="hostCodeWrap" class="hide">
-      <p style="font-size:11px">Compartilhe este código com seu amigo:</p>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin:6px 0">
+      <p style="font-size:calc(11px*var(--ui,1))">Compartilhe este código com seu amigo:</p>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:calc(8px*var(--ui,1));margin:calc(6px*var(--ui,1)) 0">
         <div class="room-code" id="hostCode">------</div>
-        <button class="menu-btn" id="btnCopyCode" style="padding:12px 22px;font-size:13px;width:auto;min-width:160px">COPIAR CÓDIGO</button>
+        <button class="menu-btn" id="btnCopyCode" style="padding:calc(12px*var(--ui,1)) calc(22px*var(--ui,1));font-size:calc(13px*var(--ui,1));width:auto;min-width:calc(160px*var(--ui,1))">COPIAR CÓDIGO</button>
       </div>
       <div class="mp-status" id="hostStatus">Aguardando conexão...</div>
     </div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
+    <div style="display:flex;gap:calc(8px*var(--ui,1));justify-content:center;margin-top:calc(10px*var(--ui,1));flex-wrap:wrap">
       <button class="go" id="btnHostCreate" style="margin:0">CRIAR SALA</button>
       <button class="back" id="btnHostBack" style="margin:0">VOLTAR</button>
     </div>
@@ -213,11 +213,11 @@
 <div id="mpjoinscreen" class="screen hide">
   <div class="card">
     <h2>ENTRAR EM SALA</h2>
-    <p style="font-size:11px">Digite seu nome e o código do Host</p>
+    <p style="font-size:calc(11px*var(--ui,1))">Digite seu nome e o código do Host</p>
     <input type="text" id="joinName" class="name-input" placeholder="SEU NOME" maxlength="12" autocomplete="off">
     <input type="text" id="joinCode" class="room-input" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters">
     <div class="mp-status" id="joinStatus"></div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
+    <div style="display:flex;gap:calc(8px*var(--ui,1));justify-content:center;margin-top:calc(10px*var(--ui,1));flex-wrap:wrap">
       <button class="go" id="btnJoinConnect" style="margin:0">CONECTAR</button>
       <button class="back" id="btnJoinBack" style="margin:0">VOLTAR</button>
     </div>
@@ -238,20 +238,20 @@
         <div class="cfg-row"><label>Passos</label><input type="range" id="cfg_step" min="0" max="100" value="80"><span class="val" id="v_step">80%</span></div>
       </div>
       <h3>DESEMPENHO</h3>
-      <p style="font-size:10px;margin:0 0 6px;text-align:left">O jogo começa em qualidade Alta e 60 FPS. Com o ajuste automático ligado, ele só reduz os efeitos se o seu aparelho não aguentar.</p>
+      <p style="font-size:calc(10px*var(--ui,1));margin:0 0 calc(6px*var(--ui,1));text-align:left">O jogo começa em qualidade Alta e 60 FPS. Com o ajuste automático ligado, ele só reduz os efeitos se o seu aparelho não aguentar.</p>
       <div class="cfg-grid">
         <div class="cfg-seg" id="cfg_quality"><label>Qualidade dos efeitos</label><div class="opts"><button type="button" data-v="2">ECONOMIA</button><button type="button" data-v="1">MÉDIA</button><button type="button" data-v="0">ALTA</button></div></div>
         <div class="cfg-seg" id="cfg_fps"><label>Limite de FPS</label><div class="opts"><button type="button" data-v="30">30</button><button type="button" data-v="60">60</button><button type="button" data-v="0">MÁXIMO</button></div></div>
         <div class="cfg-toggle on" id="cfg_autoperf"><label>Ajuste automático de desempenho</label><div class="sw"></div></div>
       </div>
       <h3>INTERFACE</h3>
-      <p style="font-size:10px;margin:0 0 6px;text-align:left">Botões, inventário, pause e craft nunca são ocultados.</p>
+      <p style="font-size:calc(10px*var(--ui,1));margin:0 0 calc(6px*var(--ui,1));text-align:left">Botões, inventário, pause e craft nunca são ocultados.</p>
       <div class="cfg-grid">
         <div class="cfg-toggle on" id="cfg_hud"><label>Barras e textos (vida, fome, relógio)</label><div class="sw"></div></div>
         <div class="cfg-toggle on" id="cfg_minimap"><label>Minimapa e relógio</label><div class="sw"></div></div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">
+    <div style="display:flex;gap:calc(8px*var(--ui,1));justify-content:center;margin-top:calc(8px*var(--ui,1));flex-wrap:wrap">
       <button class="go danger" id="btnReset" style="margin:0">RESTAURAR</button>
       <button class="back" id="btnBackCfg" style="margin:0">VOLTAR</button>
     </div>
@@ -270,7 +270,7 @@
       </div>
       <div class="inv-det" id="invdet"></div>
     </div>
-    <button class="back" id="invclose" style="margin:8px 0 0">FECHAR</button>
+    <button class="back" id="invclose" style="margin:calc(8px*var(--ui,1)) 0 0">FECHAR</button>
   </div>
 </div>
 
@@ -314,21 +314,21 @@
     <div class="ui-scroll">
       <div id="craftlist" class="craft-grid"></div>
     </div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">
+    <div style="display:flex;gap:calc(8px*var(--ui,1));justify-content:center;margin-top:calc(8px*var(--ui,1));flex-wrap:wrap">
       <button class="back" id="craftclose" style="margin:0">FECHAR</button>
     </div>
   </div>
 </div>
 
 <div id="pausescr" class="screen hide">
-  <div class="card" style="max-width:420px">
-    <h1 style="margin-bottom:12px">PAUSADO</h1>
-    <p style="font-size:11px;margin:0 0 14px">Toque em uma opção abaixo</p>
-    <div class="menu-btns" style="gap:12px;margin:0">
-      <button class="menu-btn sec" id="pauseFS" style="padding:14px 22px">TELA CHEIA</button>
-      <button class="menu-btn sec" id="pauseCfg" style="padding:14px 22px">CONFIGURAÇÕES</button>
-      <button class="menu-btn" id="resume" style="padding:16px 22px;margin-top:8px">CONTINUAR</button>
-      <button class="menu-btn danger" id="quitmenu" style="padding:14px 22px">MENU PRINCIPAL</button>
+  <div class="card" style="max-width:calc(420px*var(--ui,1))">
+    <h1 style="margin-bottom:calc(12px*var(--ui,1))">PAUSADO</h1>
+    <p style="font-size:calc(11px*var(--ui,1));margin:0 0 calc(14px*var(--ui,1))">Toque em uma opção abaixo</p>
+    <div class="menu-btns" style="gap:calc(12px*var(--ui,1));margin:0">
+      <button class="menu-btn sec" id="pauseFS" style="padding:calc(14px*var(--ui,1)) calc(22px*var(--ui,1))">TELA CHEIA</button>
+      <button class="menu-btn sec" id="pauseCfg" style="padding:calc(14px*var(--ui,1)) calc(22px*var(--ui,1))">CONFIGURAÇÕES</button>
+      <button class="menu-btn" id="resume" style="padding:calc(16px*var(--ui,1)) calc(22px*var(--ui,1));margin-top:calc(8px*var(--ui,1))">CONTINUAR</button>
+      <button class="menu-btn danger" id="quitmenu" style="padding:calc(14px*var(--ui,1)) calc(22px*var(--ui,1))">MENU PRINCIPAL</button>
     </div>
   </div>
 </div>
@@ -336,13 +336,13 @@
 <div id="bigmap" class="hide"><div class="bmbox"><canvas id="bmc" width="300" height="300"></canvas><div id="bmz"><button id="bmzin" aria-label="Aproximar">+</button><button id="bmzout" aria-label="Afastar">-</button><button id="bmctr" aria-label="Centralizar em você">&#9678;</button></div><div id="bmleg"></div><div id="bmhint">Toque para marcar um ponto, ou no aliado para segui-lo. Arraste para mover, pinça ou +/- para zoom. Toque fora para fechar</div><button id="bmx" aria-label="Fechar mapa">X</button></div></div>
 <div id="loading" class="hide"><div class="lt" id="loadMsg">GERANDO O MUNDO...</div><div class="lb"><i></i><i></i><i></i><i></i></div></div>
 <div id="deadscr" class="screen hide">
-  <div class="card" style="max-width:420px">
+  <div class="card" style="max-width:calc(420px*var(--ui,1))">
     <h2 id="deadtitle">VOCÊ MORREU</h2>
     <p id="deadtxt"></p>
-    <div class="menu-btns" style="gap:12px">
-      <button class="menu-btn" id="btnRespawn" style="display:none;padding:16px 22px">RESSUSCITAR</button>
-      <button class="menu-btn" id="again" style="padding:16px 22px">TENTAR DE NOVO</button>
-      <button class="menu-btn sec" id="deadMenu" style="padding:14px 22px">MENU PRINCIPAL</button>
+    <div class="menu-btns" style="gap:calc(12px*var(--ui,1))">
+      <button class="menu-btn" id="btnRespawn" style="display:none;padding:calc(16px*var(--ui,1)) calc(22px*var(--ui,1))">RESSUSCITAR</button>
+      <button class="menu-btn" id="again" style="padding:calc(16px*var(--ui,1)) calc(22px*var(--ui,1))">TENTAR DE NOVO</button>
+      <button class="menu-btn sec" id="deadMenu" style="padding:calc(14px*var(--ui,1)) calc(22px*var(--ui,1))">MENU PRINCIPAL</button>
     </div>
   </div>
 </div>

@@ -1223,7 +1223,7 @@ function update(dt){
         MP.snapT=snapInterval;
         const dch=MP.conn&&MP.conn.dataChannel;
         if(dch&&dch.bufferedAmount>80*1024){ MP.snapT=Math.max(snapInterval,0.25); } // canal congestionado: pula este snapshot em vez de acumular atraso
-        else if(!mpSend(packSnapshot())) MP.failCount=(MP.failCount||0)+2;
+        else if(!mpSend(packSnapshot())){ MP.failCount=(MP.failCount||0)+2; MP._last=null; MP._vNext=0; }   // nao saiu: o proximo leva tudo de novo
       }
     }
     // Timeout: sem pacote por 15s (mais tolerante em 4G)

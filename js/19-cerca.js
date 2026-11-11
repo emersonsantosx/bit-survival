@@ -421,7 +421,12 @@ function fenceRemote_(d){
   if(fences.length>=FENCE_MAX+2000)return;
   const g=gv(d.g),n={x:Math.round(d.x),y:Math.round(d.y),d:d.d,g:g,o:(g===1||g===3)&&d.o?1:0};addPiece(n);
 }
-function fenceApplySnapshot(a){if(Array.isArray(a))for(const r of a)if(Array.isArray(r))fenceRemote({x:r[0],y:r[1],d:r[2]===1?'v':'h',g:gv(r[3]),o:r[4]?1:0});}
+function fenceApplySnapshot(a,mode){   // mode 2: tambem tira as pecas que o anfitriao nao tem (antes so somava e a diferenca ficava para sempre)
+  if(!Array.isArray(a))return;
+  const have=new Set();
+  for(const r of a)if(Array.isArray(r)){const d=r[2]===1?'v':'h';have.add(fkey(r[0],r[1],d));fenceRemote({x:r[0],y:r[1],d:d,g:gv(r[3]),o:r[4]?1:0});}
+  if(mode===2){remoteOp=true;try{for(const f of fences.slice())if(!f.s&&!have.has(fkey(f.x,f.y,f.d)))dropPiece(f);}finally{remoteOp=false;}}
+}
 
 window.cellWalled=cellWalled;window.cellWallDirs=cellWallDirs;window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
 window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;

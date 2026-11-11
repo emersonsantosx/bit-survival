@@ -47,6 +47,30 @@ const IS_MOBILE=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'')
 let W=0,H=0,dispW=0,dispH=0,Z=2,camX=0,camY=0;
 let JR=48,JK=22; // raio do joystick e do botão em px de canvas (resize() ajusta à escala)
 let mmDrawT=0;
+/* ===== Escala da interface (UI) igual em qualquer celular =====
+   O CSS foi desenhado para telas de ~411 px de altura (S21 FE). Aparelhos com mais pixels CSS na mesma tela fisica (ex.: Redmi com densidade menor)
+   ficavam com botoes menores, SEM o layout compacto (as regras @media de altura) e com o que e desenhado no canvas gigante (o canvas e esticado d vezes).
+   Aqui: UIS = fator de escala (1 ate UI_REF=411 px de lado curto, a tela do S21 FE; depois cresce junto, ate 1.6). Todo px do CSS vira calc(Npx*var(--ui)),
+   e os antigos @media de altura/largura viraram classes no <html> (land, hle520, wle560...) calculadas com a tela JA dividida por UIS,
+   entao um aparelho maior cai no mesmo layout que o S21. HU = pixels de canvas por "px de referencia" (para marcadores desenhados no canvas). */
+const UI_REF=411,UI_MAX=1.6,MQ_H=[340,350,360,380,420,430,520],MQ_W=[420,560,700];
+let UIS=1,HU=1;
+function uiClasses(iw,ih,u){
+  const eh=ih/u,ew=iw/u,c=[iw>ih?'land':'port'];
+  for(const n of MQ_H)if(eh<=n)c.push('hle'+n);
+  for(const n of MQ_W)if(ew<=n)c.push('wle'+n);
+  return c;
+}
+function applyUiScale(){
+  const iw=window.innerWidth||800,ih=window.innerHeight||360;
+  let coarse=true;try{coarse=window.matchMedia('(pointer:coarse)').matches||window.matchMedia('(hover:none)').matches;}catch(e){}
+  UIS=coarse?Math.round(Math.max(1,Math.min(UI_MAX,Math.min(iw,ih)/UI_REF))*100)/100:1;   // so celular/tablet (toque): no computador a interface fica no tamanho de sempre
+  try{
+    const el=document.documentElement,keep=el.className.split(/\s+/).filter(x=>x&&!/^(land|port|hle\d+|wle\d+)$/.test(x));
+    el.className=keep.concat(uiClasses(iw,ih,UIS)).join(' ');
+    el.style.setProperty('--ui',String(UIS));
+  }catch(e){}
+}
 
 /* Qualidade: 0 = Alta, 1 = Equilibrada, 2 = Economia.
    O jogo começa sempre na qualidade escolhida (padrão: Alta, 60 FPS). Com o "ajuste automático" ligado,
@@ -70,6 +94,7 @@ function perf(){
 }
 function resize(){
   dispW=window.innerWidth||800; dispH=window.innerHeight||360;
+  applyUiScale();
   // Zoom escolhido pelo tamanho REAL da tela. Reduzir resolução divide canvas e zoom pelo mesmo
   // número inteiro (d), então o campo de visão em unidades de mundo NÃO muda.
   const zDisp=Math.max(2,Math.floor(Math.min(dispW,dispH)/150));
@@ -79,7 +104,8 @@ function resize(){
   W=Math.max(160,Math.floor(dispW/d));
   H=Math.max(120,Math.floor(dispH/d));
   Z=zDisp/d;
-  JR=Math.round(48*W/dispW); JK=Math.round(22*W/dispW);
+  HU=UIS*W/dispW;
+  JR=Math.round(48*HU); JK=Math.round(22*HU);
   if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
   // Luz full-res só se não estiver em modo simples
   // Buffer de luz: tamanho cheio no modo completo, 1/4 no modo simples (barato, suavizado ao ampliar)

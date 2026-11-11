@@ -267,7 +267,12 @@ function plotRemote(d){
   if(!p){p=mark({cx:d.cx,cy:d.cy,c:null,g:0,w:0});plots.push(p);}
   p.c=c;p.g=c&&Number.isFinite(d.g)?clamp(d.g,0,CROPS[c].grow):0;p.w=Number.isFinite(d.w)?Math.max(0,d.w):0;
 }
-function plotsApplySnapshot(a){if(Array.isArray(a))for(const r of a)if(Array.isArray(r))plotRemote({cx:r[0],cy:r[1],c:r[2]||null,g:r[3],w:r[4]});}
+function plotsApplySnapshot(a,mode){
+  if(!Array.isArray(a))return;
+  const keep=new Set();
+  for(const r of a)if(Array.isArray(r)){plotRemote({cx:r[0],cy:r[1],c:r[2]||null,g:r[3],w:r[4]});keep.add(r[0]+','+r[1]);}
+  if(mode===2)plots=plots.filter(p=>keep.has(p.cx+','+p.cy));   // canteiro que o anfitriao nao tem mais (ou nunca teve) sai
+}
 function ghPack(){return ghs.map(g=>[g.x,g.y]);}
 function ghLoad(a){
   ghs=[];
