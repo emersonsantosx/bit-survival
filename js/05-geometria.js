@@ -5,7 +5,9 @@ function lakeWobble(l,ang){
   if(l.fountain)return 1;
   if(l._seed===undefined) l._seed=(l.cx*12.9898+l.cy*78.233)%100;
   const s=l._seed;
-  return 0.82+0.12*Math.sin(ang*2.3+s)+0.08*Math.cos(ang*4.1-s*0.5)+0.05*Math.sin(ang*7+s*1.3);
+  /* frequencias INTEIRAS (2, 4, 7): o contorno fecha sem emenda. Com 2.3 e 4.1 o valor em 0 e em 2π era diferente e o lago ganhava uma "ponta"
+     (degrau) no lado direito, onde o desenho do contorno começa e termina */
+  return 0.82+0.12*Math.sin(ang*2+s)+0.08*Math.cos(ang*4-s*0.5)+0.05*Math.sin(ang*7+s*1.3);
 }
 /* ===== GELO SOLIDO (lagos congelados do mapa de Neve) =====
    Uma parte de cada lago (posicao fixa, calculada do proprio lago: nao usa o sorteio do mundo) e gelo firme: da pra andar em cima.
