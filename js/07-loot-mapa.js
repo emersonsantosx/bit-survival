@@ -24,7 +24,8 @@ let pingBadge=null;                    // {x,y,it} em pixels do canvas, atualiza
 function pingCandidate(){
   if(!MP.active||!MP.connected||!P||P.dead||P.inVehicle||state!=='play')return null;
   let b=null,bd=34;
-  for(const it of items){if(!ITEMS[it.t])continue;const d=Math.hypot(it.x-P.x,it.y-P.y);if(d<bd){bd=d;b=it;}}
+  for(const it of items){if(!ITEMS[it.t])continue;const ib=bldAt(it.x,it.y);if(ib&&P.inside!==ib)continue;   // item dentro de comodo: so marca quem esta DENTRO dele (de fora, perto da parede, nao aparece)
+    const d=Math.hypot(it.x-P.x,it.y-P.y);if(d<bd){bd=d;b=it;}}
   return b;
 }
 function drawPingBadge(){

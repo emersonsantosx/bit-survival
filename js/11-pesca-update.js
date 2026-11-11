@@ -733,7 +733,7 @@ function updateZ(z,dt){
   let det=95;
   if(targetSprint)det=140;else if(!targetMoving)det=52;
   if(dark>.5)det*=.72;
-  if(P.flashOn&&dark>.3&&targetIsLocal&&!targetDead){   // feixe de lanterna aceso: quem esta no cone e perto enxerga o jogador de bem mais longe (anula a vantagem da noite)
+  if(P.flashOn&&!P.sleeping&&dark>.3&&targetIsLocal&&!targetDead){   // feixe de lanterna aceso: quem esta no cone e perto enxerga o jogador de bem mais longe (anula a vantagem da noite)
     const dd=Math.hypot(P.x-z.x,P.y-z.y),fa=Math.abs(wrap(Math.atan2(z.y-P.y,z.x-P.x)-P.face));
     if(fa<.55&&dd<170)det*=1.45/(dark>.5?.72:1);
   }

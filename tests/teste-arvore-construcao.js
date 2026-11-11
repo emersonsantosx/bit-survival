@@ -35,7 +35,7 @@ const r=await pg.evaluate(()=>{
   stashLoad([[(bx+11)*16+8,(by+11)*16+8,[]]]);o.onStash=!at(11,11);
   // o sorteio de verdade nunca coloca arvore dentro da base: 400 tentativas
   const base=trees.length+rocks.length,baseT=trees.length,baseR=rocks.length;let bad=0;   // so conta o que nasce depois (o mundo sorteado pode ter arvore na borda da area)
-  const inBase=(a)=>a.x>=(bx-2)*16&&a.x<=(bx+7)*16&&a.y>=(by-2)*16&&a.y<=(by+7)*16;
+  const inBase=(a)=>a.x>=(bx-1)*16&&a.x<=(bx+6)*16-1&&a.y>=(by-1)*16&&a.y<=(by+6)*16-1;   // a cabana (4x4) e a faixa protegida colada nela; mais longe pode nascer arvore
   for(let k=0;k<400;k++){regrowOne(true);regrowOne(false);}
   o.grew=trees.length+rocks.length-base;o.inBase=trees.slice(baseT).concat(rocks.slice(baseR)).filter(inBase).length;
   return o;});
