@@ -9,7 +9,7 @@ const lista = fs.readdirSync(dir).filter(f => /^teste-.*\.js$/.test(f)).sort();
 const falhas = [];
 for (const f of lista) {
   const t0 = Date.now();
-  const r = spawnSync(process.execPath, [path.join(dir, f), ...extra], { encoding: 'utf8' });
+  const r = spawnSync(process.execPath, ['--require', path.join(dir, 'semente.js'), path.join(dir, f), ...extra], { encoding: 'utf8' });   // semente fixa: mundo sorteado igual em toda execucao
   const ok = r.status === 0;
   console.log((ok ? 'OK    ' : 'FALHOU ') + f + '  (' + ((Date.now() - t0) / 1000).toFixed(1) + 's)');
   if (!ok) { falhas.push(f); console.log((r.stdout || '').split('\n').filter(l => /FAIL|FALHOU|rror/.test(l)).join('\n') + (r.stderr ? '\n' + r.stderr.split('\n').slice(0, 6).join('\n') : '')); }
