@@ -44,14 +44,14 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 04-estado | 23 | 1 | 3 | . |  |  |  |  |  | 3 |  | 2 |  |  | 2 |  |  |  |  |  |  |  |  |  |  |
 | 05-geometria | 118 | 7 | 27 | 147 | . | 6 |  | 5 | 9 |  | 2 | 1 | 11 |  |  |  |  |  |  |  |  |  |  |  |  |
 | 06-interiores-portas | 42 | 11 | 7 | 36 | 1 | . |  |  |  |  |  | 1 | 30 |  |  |  |  |  |  |  |  |  |  |  |  |
-| 07-loot-mapa | 135 | 3 | 30 | 127 | 2 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |  |
+| 07-loot-mapa | 135 | 3 | 30 | 128 | 3 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |  |
 | 08-cidade-vilas-marcos | 119 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |
 | 09-milharal-geracao | 203 | 10 | 87 | 275 | 40 |  | 1 | 35 | . | 3 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |
 | 10-jogo-saves | 91 | 51 | 47 | 687 | 18 | 3 | 12 | 10 | 7 | . | 88 | 25 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |  |
-| 11-pesca-update | 241 | 39 | 50 | 869 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
-| 12-crafting-multiplayer | 55 | 36 | 29 | 616 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
+| 11-pesca-update | 241 | 39 | 50 | 870 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
+| 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 321 | 40 | 20 | 260 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 608 | 13 | 16 | 316 | 13 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
+| 14-arquitetura-luz-ambiente | 608 | 13 | 16 | 319 | 15 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
 | 15-missoes-ui-controles | 191 | 58 | 21 | 251 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |
@@ -70,7 +70,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 20 | 1931 |
+| P | let | 04-estado:14 | 20 | 1937 |
 | MP | let | 04-estado:19 | 20 | 576 |
 | selectedMap | let | 04-estado:3 | 20 | 214 |
 | beep | funcao | 02-audio:42 | 19 | 135 |
@@ -93,6 +93,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | zombies | let | 04-estado:10 | 11 | 58 |
 | campfires | let | 04-estado:10 | 11 | 40 |
 | state | let | 04-estado:2 | 10 | 92 |
+| bldAt | funcao | 05-geometria:585 | 10 | 27 |
 | tents | let | 04-estado:10 | 10 | 23 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |
 | remotePlayers | let | 04-estado:11 | 9 | 91 |
@@ -103,7 +104,6 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | ORLA | let | 05-geometria:125 | 9 | 37 |
 | rebuildSolidGrid | funcao | 05-geometria:367 | 9 | 33 |
 | lakes | let | 04-estado:10 | 9 | 31 |
-| bldAt | funcao | 05-geometria:585 | 9 | 24 |
 | addItem | funcao | 04-estado:250 | 9 | 20 |
 | H | let | 01-base:47 | 8 | 101 |
 | W | let | 01-base:47 | 8 | 96 |
