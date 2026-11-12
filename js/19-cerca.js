@@ -366,12 +366,12 @@ function builtNear(x,y,rad){
 }
 window.builtNear=builtNear;
 window.shelterAt=shelterAt;
-/* carro contra parede e porta fechada (a cerca baixa continua sem barrar carro, como antes) */
+/* carro contra cerca, parede, portao e porta FECHADOS: nada atravessa (antes a cerca baixa das casas deixava o carro passar direto). Aberto deixa passar */
 function wallsHitVehicle(cx,cy,c,s,L,W,R){
-  if(!tallN)return 0;
+  if(!fences.length)return 0;
   let n=0;const i0=Math.floor((cx-R)/CELL)-1,i1=Math.floor((cx+R)/CELL)+1,j0=Math.floor((cy-R)/CELL)-1,j1=Math.floor((cy+R)/CELL)+1;
   for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++)for(const d of ['h','v']){
-    const f=fmap.get(d+i+','+j);if(!f||f.g<2||(f.g===3&&f.o))continue;
+    const f=fmap.get(d+i+','+j);if(!f||(isOpenable(f)&&f.o))continue;
     const r=solidRect(f);if(obbHitsRect(cx,cy,c,s,L,W,r.x,r.y,r.x+r.w,r.y+r.h))n++;
   }
   return n;

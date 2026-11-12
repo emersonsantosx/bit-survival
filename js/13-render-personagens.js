@@ -401,7 +401,7 @@ const HELD={
   pistol:{ax:2,ay:3,gun:1,s:.8},smg:{ax:3,ay:3,gun:1,s:.88},shotgun:{ax:6,ay:3,gun:1,s:.92},rifle:{ax:5,ay:3,gun:1,s:.92},
   bow:{ax:3,ay:5,off:3},
   bat:{ax:1,ay:9,rot:Math.PI/4},axe:{ax:4,ay:9,rot:Math.PI/4},pickaxe:{ax:2,ay:9,rot:Math.PI/4},
-  hoe:{ax:1,ay:9,rot:Math.PI/4,s:1.1},fence:{ax:1,ay:9,rot:Math.PI/4,s:1.0},gate:{ax:1,ay:9,rot:Math.PI/4,s:1.0},wall:{ax:1,ay:9,rot:Math.PI/4,s:1.0},door:{ax:1,ay:9,rot:Math.PI/4,s:1.0},floor:{ax:1,ay:9,rot:Math.PI/4,s:1.0},roof:{ax:1,ay:9,rot:Math.PI/4,s:1.0},mattress:{ax:1,ay:9,rot:Math.PI/4,s:1.0},log:{ax:1,ay:9,rot:Math.PI/4,s:1.0},katana:{ax:1,ay:9,rot:Math.PI/4,s:1.2},spear:{ax:1,ay:9,rot:Math.PI/4,s:1.5},fishingrod:{ax:1,ay:9,rot:Math.PI/4,s:1.3}
+  hoe:{ax:1,ay:9,rot:Math.PI/4,s:1.1},fence:{ax:1,ay:9,rot:Math.PI/4,s:1.0},gate:{ax:1,ay:9,rot:Math.PI/4,s:1.0},wall:{ax:1,ay:9,rot:Math.PI/4,s:1.0},door:{ax:1,ay:9,rot:Math.PI/4,s:1.0},floor:{ax:1,ay:9,rot:Math.PI/4,s:1.0},roof:{ax:1,ay:9,rot:Math.PI/4,s:1.0},mattress:{ax:1,ay:9,rot:Math.PI/4,s:1.0},log:{ax:1,ay:9,rot:Math.PI/4,s:1.0},katana:{ic:'katana_h',ax:3,ay:4,rot:0,s:1},spear:{ax:1,ay:9,rot:Math.PI/4,s:1.5},fishingrod:{ax:1,ay:9,rot:Math.PI/4,s:1.3}
 };
 /* arma branca (machado, picareta, taco, espada, lanca): olhando para a esquerda o desenho e o balanco sao o ESPELHO do golpe para a direita (antes, para a esquerda a arma ia de baixo para cima e a cabeca ficava de ponta-cabeca) */
 function meleeLeft(wpn,face){const H=HELD[wpn];return !!H&&!H.gun&&wpn!=='bow'&&Math.cos(face)<0;}
@@ -1874,7 +1874,7 @@ function drawItem(it,near){
     case'roof':R(x-5,y-7+b,10,7,'#b44a3a');R(x-5,y-7+b,10,1,'#d9705c');for(let i=0;i<3;i++)R(x-5,y-5+b+i*2,10,1,'#7a2e24');break;
     case'fence':for(let i=0;i<4;i++){R(x-5+i*3,y-6+b,2,6,'#9a6a3a');}R(x-5,y-4+b,10,1,'#5a3c20');break;
     case'hoe':for(let i=0;i<10;i++)R(x-5+i,y-3+b-(i>>2),1,1,'#8a6a3a');R(x+3,y-7+b,4,3,'#c0c8d4');break;
-    case'katana':R(x-5,y-3+b,2,2,'#2a2a30');for(let i=0;i<10;i++)R(x-3+i,y-3+b-(i>7?1:0),1,1,i>7?'#f0f0f8':'#c8d0dc');break;
+    case'katana':R(x-7,y-3+b,4,2,'#222831');R(x-6,y-3+b,1,1,'#8a8468');R(x-3,y-5+b,1,6,'#222831');R(x-2,y-4+b,1,4,'#ffd84a');for(let i=0;i<9;i++){const u=i>5?(i>7?2:1):0;R(x-1+i,y-3+b-u,1,2,'#c0c8d4');R(x-1+i,y-2+b-u,1,1,'#f0ead8');}R(x+8,y-6+b,1,1,'#f0ead8');break;
     case'spear':for(let i=0;i<11;i++)R(x-5+i,y-3+b,1,1,'#8a6a3a');R(x+6,y-4+b,3,3,'#c0c8d4');break;
     case'fishingrod':for(let i=0;i<11;i++)R(x-5+i,y-2+b-(i>>2),1,1,'#8a6a3a');R(x-3,y-1+b,3,2,'#c0c0c8');R(x+5,y-5+b,1,3,'#e8e8e8');break;
     case'bow':R(x-4,y-7+b,2,10,'#8a5a2a');R(x-3,y-7+b,6,2,'#c0a070');R(x-3,y+1+b,6,2,'#c0a070');break;

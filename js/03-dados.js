@@ -104,7 +104,8 @@ PXG.seed=['........','..NNNN..','.NNnnNN.','.NYYYYN.','.NYGYYN.','.NYYGYN.','..N
   PXG.seed_corn=stamp([[GRAIN,0,0],[GRAIN,5,1],[GRAIN,2,4],[GRAIN,6,5]],{});   // grãos amarelos
   PXG.seed_potato=['..........','...G.G....','..kGkG....','.kNnNNk...','kNnNNnNk..','kNNNnNNk..','.kNNNNk...','..kkkk....'];   // batata-semente com brotos
 })();
-PXG.katana=pxLines(11,11,[['l',5,6,10,1,'S',1],['l',5,5,10,1,'W',0],['l',3,6,6,9,'Y',0],['l',2,8,4,7,'N',0],['r',0,9,2,1,'Y']]);
+PXG.katana=['............W.', '..........SSW.', '.........SW...', '........SW....', '.......SW.....', '......SW......', '.....SW.......', '.....SW.......', '.....YY.......', '...KsssK......', '....KKK.......', '...Kc.........', '..cK..........', '.KK...........'];   // katana 14x14: lamina curva (sori) de fio unico, kissaki pontudo, habaki dourado, tsuba redonda e cabo com tsukamaki preto
+PXG.katana_h=['.......................', '........K..............', '........KK.............', 'KKcKcKcKsYYSSSSSS......', 'KcKcKcKcsYYWWWWWWSSS...', '........KK.......WWWSS.', '........K...........WWW', '.......................'];   // katana na mao (na horizontal, ponta para a direita): so o jogo desenha, nao aparece em menu
 PXG.spear=pxLines(11,11,[['l',0,10,4,6,'N',1],['r',4,5,2,1,'R'],['r',4,3,2,1,'W'],['r',5,4,2,1,'S'],['r',6,5,2,1,'s'],['r',5,2,2,1,'W'],['r',6,3,2,1,'S'],['r',7,4,2,1,'s'],['r',6,1,2,1,'W'],['r',7,2,2,1,'S'],['r',8,3,2,1,'s'],['r',8,1,2,1,'S'],['r',9,0,2,1,'S']]);
 PXG.arrows=pxLines(11,11,[['l',1,9,9,1,'n',0],['l',8,0,10,2,'S',1],['r',9,0,2,3,'S'],['l',0,10,2,8,'W',1],['l',0,8,2,6,'W',0]]);
 PXG.rod=pxLines(11,11,[['l',0,10,8,3,'N',0],['r',3,9,2,2,'s'],['r',9,2,1,1,'W']]);
