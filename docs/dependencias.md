@@ -86,7 +86,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
 | ctx | const | 01-base:27 | 14 | 985 |
 | blds | let | 04-estado:10 | 14 | 58 |
-| R | funcao | 13-render-personagens:2 | 12 | 1246 |
+| R | funcao | 13-render-personagens:2 | 12 | 1251 |
 | weather | let | 04-estado:6 | 12 | 88 |
 | trees | let | 04-estado:10 | 12 | 55 |
 | pointInLake | funcao | 05-geometria:113 | 12 | 43 |
@@ -98,7 +98,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |
 | remotePlayers | let | 04-estado:11 | 9 | 91 |
 | rint | const | 01-base:17 | 9 | 72 |
-| ITEMS | const | 03-dados:166 | 9 | 61 |
+| ITEMS | const | 03-dados:167 | 9 | 61 |
 | dark | let | 04-estado:14 | 9 | 57 |
 | animals | let | 04-estado:10 | 9 | 37 |
 | ORLA | let | 05-geometria:125 | 9 | 37 |
@@ -129,7 +129,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | weatherTimer | let | 04-estado:7 | 6 | 13 |
 | setRain | funcao | 02-audio:601 | 6 | 11 |
 | bldNear | funcao | 05-geometria:581 | 6 | 11 |
-| mapHasLake | funcao | 03-dados:308 | 6 | 8 |
+| mapHasLake | funcao | 03-dados:309 | 6 | 8 |
 
 (92 no total, mostrando ate 60)
 
