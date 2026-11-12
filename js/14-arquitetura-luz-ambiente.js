@@ -136,13 +136,17 @@ const RF={
     q(0,h-2,w,2,shadeCol(c,-.45));q(0,0,w,1,shadeCol(c,.3));       // beiral
   },
   cross(q,w,h,L,H){
+    /* telhado em cruz: a ala atravessa o telhado principal de ponta a ponta (cumeeira propria perpendicular a principal), com sombra de rincao dos dois lados.
+       Antes a ala era um bloco colado que morria no meio da agua de baixo, com a borda reta, e parecia um retangulo sobreposto. */
     RF.gableH(q,w,h,L,H);
-    const c=L.roof,ww=Math.round(w*(.32+H(4)*.12)),wx=Math.round(H(5)<.5?w*.12:w-ww-w*.12),wh=Math.round(h*.62),rg=Math.round(ww/2),mainRg=L._rg;
-    q(wx-1,0,ww+2,wh+1,'rgba(0,0,0,.3)');
+    const c=L.roof,ww=Math.round(w*(.32+H(4)*.12)),wx=Math.round(H(5)<.5?w*.12:w-ww-w*.12),wh=h,rg=Math.round(ww/2),mainRg=L._rg;
+    q(wx-3,0,3,wh,'rgba(0,0,0,.16)');q(wx-1,0,1,wh,'rgba(0,0,0,.34)');                      // rincoes: sombra da ala sobre as aguas principais
+    q(wx+ww,0,3,wh,'rgba(0,0,0,.2)');q(wx+ww,0,1,wh,'rgba(0,0,0,.34)');
     q(wx,0,rg,wh,shadeCol(c,.14));q(wx+rg,0,ww-rg,wh,shadeCol(c,-.1));
-    rfTex(q,wx+1,0,rg-1,wh,L,'v',H(6));rfTex(q,wx+rg+1,0,ww-rg-2,wh,L,'v',H(7));
+    rfTex(q,wx+1,1,rg-1,wh-4,L,'v',H(6));rfTex(q,wx+rg+1,1,ww-rg-2,wh-4,L,'v',H(7));
     q(wx+rg-1,0,2,wh,shadeCol(c,.32));q(wx+rg+1,0,1,wh,shadeCol(c,-.3));
-    q(wx,wh-2,ww,2,shadeCol(c,-.4));q(wx,0,ww,1,shadeCol(c,.3));
+    for(let y=3;y<wh-3;y+=7)q(wx+rg-1,y,3,1,'rgba(0,0,0,.22)');
+    q(wx,0,ww,1,shadeCol(c,.3));q(wx,wh-3,ww,3,shadeCol(c,-.4));q(wx,0,1,wh,shadeCol(c,.2));q(wx+ww-1,0,1,wh,shadeCol(c,-.35));
     L._rg=mainRg;L._blk=[wx,0,ww,wh];
   },
   flat(q,w,h,L,H,cut){
