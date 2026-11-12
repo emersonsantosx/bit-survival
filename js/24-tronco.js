@@ -182,6 +182,12 @@ function logsGen(){
   }
 }
 function logReset(){logs=[];}
+/* tronco do jogador destruido (bater com arma, ver 19-cerca): quem estava sentado levanta; os gerados com o mundo nao saem (voltam pela semente) */
+function logRemove(L){
+  const i=logs.indexOf(L);if(i<0||L.g)return false;
+  if(P&&P.sitting&&P.sitting.L===L)logStand(true);
+  logs.splice(i,1);rebuildSolidGrid();return true;
+}
 
 /* ---------- save e rede ---------- */
 const okPt=q=>Array.isArray(q)&&Number.isFinite(q[0])&&Number.isFinite(q[1]);
@@ -194,17 +200,20 @@ function logLoad(a){
   rebuildSolidGrid();
 }
 function logRemote(kind,d){
-  if(kind!=='logAdd'||!d||!Number.isFinite(d.x)||!Number.isFinite(d.y))return;
+  if(!d||!Number.isFinite(d.x)||!Number.isFinite(d.y))return;
+  if(kind==='logDel'){const L=logs.find(l=>!l.g&&same(l,d));if(L)logRemove(L);return;}
+  if(kind!=='logAdd')return;
   if(logs.length<400&&!logs.some(l=>same(l,d))){logs.push(mkFrom([d.x,d.y,d.a]));rebuildSolidGrid();}
 }
-function logSnapshot(a){
+function logSnapshot(a,mode){   // mode 2: tambem tira o tronco do jogador que o anfitriao nao tem mais
   if(!Array.isArray(a))return;
-  let ch=false;
-  for(const q of a.slice(0,200))if(okPt(q)&&!logs.some(l=>same(l,{x:q[0],y:q[1]}))){logs.push(mkFrom(q));ch=true;}
+  let ch=false;const keep=new Set();
+  for(const q of a.slice(0,200))if(okPt(q)){const f=logs.find(l=>same(l,{x:q[0],y:q[1]}));if(f)keep.add(f);else{const n=mkFrom(q);logs.push(n);keep.add(n);ch=true;}}
+  if(mode===2)for(const L of logs.slice())if(!L.g&&!keep.has(L)&&logRemove(L))ch=true;
   if(ch)rebuildSolidGrid();
 }
 
-window.logDist=distToLog;window.logList=()=>logs;window.logNearby=logNearby;window.logSit=logSit;window.logStand=logStand;window.logSitTick=sitTick;window.logIntent=logIntent;window.logPlace=logPlace;window.drawLogGhost=drawLogGhost;window.logBuild=logBuild;
+window.logRectOf=rectOf;window.logRemove=logRemove;window.logDist=distToLog;window.logList=()=>logs;window.logNearby=logNearby;window.logSit=logSit;window.logStand=logStand;window.logSitTick=sitTick;window.logIntent=logIntent;window.logPlace=logPlace;window.drawLogGhost=drawLogGhost;window.logBuild=logBuild;
 window.logsGen=logsGen;window.logReset=logReset;window.drawLog=drawLog;window.logDepth=logDepth;window.logSeats=seatsOf;
 window.logPack=logPack;window.logLoad=logLoad;window.logRemote=logRemote;window.logSnapshot=logSnapshot;
 window.LOG_COST={wood:COST_WOOD};

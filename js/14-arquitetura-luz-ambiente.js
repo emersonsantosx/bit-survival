@@ -283,10 +283,16 @@ function bldRoofBuild(b,snowNow){
   const q=(x,y,ww,hh,col)=>{c.fillStyle=col;c.fillRect(Math.round(x)+M,Math.round(y)+M,Math.round(ww),Math.round(hh));};
   const cut=(x,y,ww,hh)=>c.clearRect(Math.round(x)+M,Math.round(y)+M,ww,hh);
   L._rg=0;L._blk=null;
+  /* O corpo do telhado (agua, textura, manchas, neve) é recortado no retângulo w x h: antes, manchas de musgo/ardósia, palha e sombras arredondadas
+     passavam alguns pixels para fora do contorno e apareciam como "farelos" soltos em volta da casa. So os extras (vigas, antena) podem passar do contorno. */
+  c.save();c.beginPath();c.rect(M,M,w,h);c.clip();
   (RF[L.shape]||RF.gableH)(q,w,h,L,H,cut);
   rfOverlay(q,w,h,L,H);
   if(snowNow)rfSnow(q,w,h,L,H,!L.snow);
+  c.restore();
   rfExtras(q,w,h,L,H,snowNow);
+  /* cantos chanfrados do deserto: os extras e a neve nao podem pintar de volta o canto que foi recortado */
+  if(selectedMap==='desert'&&(L.shape==='flat'||L.shape==='flatStep'||L.shape==='dome')){cut(0,0,2,2);cut(w-2,0,2,2);cut(0,h-2,2,2);cut(w-2,h-2,2,2);}
   b._rc=cv;b._rx=b.x-3-M;b._ry=b.y-6-M;b._rcS=snowNow;
 }
 function drawRoof(b){

@@ -138,6 +138,10 @@ function structTarget(w){
     if(P.inside.furn)for(const f of P.inside.furn)consider(f,f,'m');
     return best;
   }
+  if(window.logList)for(const L of logList()){   // tronco feito pelo jogador
+    if(L.g||Math.abs(L.x-P.x)>reach+50||Math.abs(L.y-P.y)>reach+50)continue;
+    const r=logRectOf(L);consider({x:r.x0,y:r.y0,w:r.x1-r.x0,h:r.y1-r.y0},L,'l');
+  }
   const cx=Math.floor(P.x/CELL),cy=Math.floor(P.y/CELL);
   for(let i=cx-3;i<=cx+4;i++)for(let j=cy-3;j<=cy+4;j++)for(const dd of ['h','v']){const f=fmap.get(dd+i+','+j);if(f)consider(gateRect(f),f,'f');}
   for(const d of decorations){
@@ -170,6 +174,7 @@ function furnHit(st,w){
 function furnRemove(b,f){const i=b.furn.indexOf(f);if(i>=0)b.furn.splice(i,1);b._fc=null;}   // _fc: desenho guardado do interior
 function structHit(st,w){
   if(st.kind==='m'){furnHit(st,w);return;}
+  if(st.kind==='l'){logHit(st,w);return;}
   const o=st.o,hp0=st.kind==='f'?HP_F[o.g|0]:BREAK[o.type].hp;
   if(o.hp===undefined)o.hp=hp0;
   o.hp-=Math.max(.5,w.chopRate||.5);
@@ -187,6 +192,19 @@ function structHit(st,w){
   if(MP.active)sendEvt('structBreak',{k:key});
   giveWood(wood,st.x,st.y);
   toast(nm+' destruído(a)'+(wood?'! +'+wood+' Madeira':''));beep(240,.14,'triangle',.08,-60);
+}
+/* tronco do jogador: 4 pancadas de machado-ish (hp 4), devolve as 4 madeiras do custo */
+function logHit(st,w){
+  const L=st.o;if(L.hp===undefined)L.hp=4;
+  L.hp-=Math.max(.5,w.chopRate||.5);P.cd=w.cd;P.swing=.18;shake=2;chopWood();
+  for(let i=0;i<5;i++)parts.push({x:st.x,y:st.y-4,vx:rnd(-30,30),vy:rnd(-40,-5),t:.35,c:'#9a6a3a'});
+  makeNoise(P.x,P.y,50);
+  if(L.hp>0)return;
+  const x=L.x,y=L.y,a=L.a==='h'?0:1,n=(window.LOG_COST&&LOG_COST.wood)||4;
+  if(!logRemove(L))return;
+  if(MP.active)sendEvt('logDel',{x:Math.round(x),y:Math.round(y),a});
+  giveWood(n,st.x,st.y);
+  toast('Tronco destruído! +'+n+' Madeira');beep(240,.14,'triangle',.08,-60);
 }
 /* tira o objeto da lista (cerca da cidade, cerca do jogador ou decoracao) */
 function removeKey(key){
