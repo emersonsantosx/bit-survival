@@ -51,17 +51,17 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 11-pesca-update | 241 | 39 | 50 | 870 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 321 | 40 | 20 | 260 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 608 | 13 | 16 | 319 | 15 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
+| 14-arquitetura-luz-ambiente | 608 | 13 | 16 | 320 | 15 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
 | 15-missoes-ui-controles | 191 | 58 | 21 | 251 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |
 | 18-plantacao | 36 | 6 | 22 | 77 | 16 |  |  | 13 | 1 | 1 | 8 | 3 | 139 |  | 1 |  |  | . |  |  |  |  |  |  |  |
-| 19-cerca | 34 | 11 | 3 | 105 | 12 |  |  | 1 |  | 4 | 4 | 5 | 70 |  |  |  |  |  | . |  |  |  |  |  |  |
+| 19-cerca | 36 | 13 | 3 | 114 | 12 |  |  | 1 |  | 5 | 5 | 6 | 70 |  |  |  |  |  | . |  |  |  |  |  |  |
 | 20-piso-telhado | 39 | 3 | 6 | 37 | 6 |  |  | 1 |  |  | 2 | 2 | 30 |  |  |  |  |  |  | . |  |  |  |  |  |
 | 21-frutiferas | 17 | 1 | 7 | 25 | 2 |  |  |  |  |  | 1 | 3 | 13 |  | 1 |  |  |  |  |  | . |  |  |  |  |
 | 22-bau | 25 | 14 | 11 | 80 | 12 |  |  | 1 |  | 3 | 9 | 6 |  |  |  |  |  |  |  |  |  | . |  |  |  |
 | 23-poco | 15 | 4 | 4 | 51 | 14 |  |  | 2 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  | . |  |  |
-| 24-tronco | 23 | 5 | 4 | 98 | 14 |  |  | 1 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  |  | . |  |
+| 24-tronco | 23 | 5 | 4 | 101 | 15 |  |  | 1 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  |  | . |  |
 | 25-icones-acoes |  |  | 13 |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |
 
 (colunas = os dois primeiros digitos do nome do arquivo)
@@ -70,18 +70,18 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 20 | 1937 |
-| MP | let | 04-estado:19 | 20 | 576 |
-| selectedMap | let | 04-estado:3 | 20 | 214 |
-| beep | funcao | 02-audio:42 | 19 | 135 |
-| rnd | const | 01-base:16 | 18 | 432 |
-| sendEvt | funcao | 12-crafting-multiplayer:112 | 17 | 60 |
-| toast | funcao | 11-pesca-update:1253 | 16 | 200 |
+| P | let | 04-estado:14 | 20 | 1946 |
+| MP | let | 04-estado:19 | 20 | 577 |
+| selectedMap | let | 04-estado:3 | 20 | 215 |
+| beep | funcao | 02-audio:42 | 19 | 136 |
+| rnd | const | 01-base:16 | 18 | 434 |
+| sendEvt | funcao | 12-crafting-multiplayer:112 | 17 | 61 |
+| toast | funcao | 11-pesca-update:1253 | 16 | 201 |
 | T | let | 04-estado:14 | 16 | 114 |
 | clamp | const | 01-base:4 | 16 | 98 |
 | WW | let | 03-dados:2 | 16 | 95 |
 | WH | let | 03-dados:2 | 16 | 84 |
-| parts | let | 04-estado:10 | 16 | 74 |
+| parts | let | 04-estado:10 | 16 | 75 |
 | items | let | 04-estado:10 | 15 | 61 |
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
 | ctx | const | 01-base:27 | 14 | 985 |
@@ -102,7 +102,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | dark | let | 04-estado:14 | 9 | 57 |
 | animals | let | 04-estado:10 | 9 | 37 |
 | ORLA | let | 05-geometria:125 | 9 | 37 |
-| rebuildSolidGrid | funcao | 05-geometria:367 | 9 | 33 |
+| rebuildSolidGrid | funcao | 05-geometria:367 | 9 | 34 |
 | lakes | let | 04-estado:10 | 9 | 31 |
 | addItem | funcao | 04-estado:250 | 9 | 20 |
 | H | let | 01-base:47 | 8 | 101 |
@@ -111,7 +111,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | track | funcao | 15-missoes-ui-controles:60 | 8 | 13 |
 | CFG | const | 01-base:125 | 7 | 83 |
 | vehicles | let | 04-estado:10 | 7 | 48 |
-| shake | let | 04-estado:14 | 7 | 35 |
+| shake | let | 04-estado:14 | 7 | 36 |
 | day | let | 04-estado:14 | 7 | 26 |
 | countInv | funcao | 04-estado:261 | 7 | 24 |
 | pick | const | 01-base:18 | 7 | 22 |

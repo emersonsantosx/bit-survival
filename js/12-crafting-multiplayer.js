@@ -107,7 +107,7 @@ function refreshCraft(){
 /* ============ EVENTOS REPLICADOS ============ */
 /* Eventos que mexem em estrutura do mundo: quem acabou de mandar um deles nao aceita a "correcao" do snapshot por um instante
    (o anfitriao ainda pode nao ter recebido, e a peca sumiria e voltaria na tela) */
-const STRUCT_EVT=new Set(['fenceSet','cellSet','plotSet','structBreak','ghAdd','stashAdd','stashSet','stashDel','wellAdd','logAdd','campfireAdded','campfireRemoved','tentAdded','doorSet','fruitSet','iceBreak','chestOpen']);
+const STRUCT_EVT=new Set(['fenceSet','cellSet','plotSet','structBreak','ghAdd','stashAdd','stashSet','stashDel','wellAdd','logAdd','logDel','campfireAdded','campfireRemoved','tentAdded','doorSet','fruitSet','iceBreak','chestOpen']);
 const LOCAL_GRACE=2200;
 function sendEvt(kind, data){
   // Vale em qualquer momento da partida (pausa, mapa, morto...): antes so em jogo/criacao e o evento se perdia para sempre
@@ -182,7 +182,7 @@ function handleEvt(kind, data){
     stashRemote(kind,data);
   } else if(kind==='wellAdd'){
     wellRemote(kind,data);
-  } else if(kind==='logAdd'){
+  } else if(kind==='logAdd'||kind==='logDel'){
     logRemote(kind,data);
   } else if(kind==='sleepSkip'){
     if(Number.isFinite(data.T)&&P&&P.sleeping)sleepSkipApply(clamp(data.T,0,1e7));
@@ -820,7 +820,7 @@ function applySnapshot(snap){
     campfires = merged;
   }
   plotsApplySnapshot(snap.plots,smode);if(Array.isArray(snap.fr))for(const a of snap.fr)if(Array.isArray(a))fruitRemote({x:a[0],y:a[1],r:a[2]});if(Array.isArray(snap.br))for(const k of snap.br)structRemote(k);fenceApplySnapshot(snap.fn,smode);cellApplySnapshot(snap.pf,smode);if(Array.isArray(snap.gh))for(const a of snap.gh)if(Array.isArray(a))ghRemote({x:a[0],y:a[1]});
-  stashSnapshot(snap.bx,smode);wellSnapshot(snap.wl);logSnapshot(snap.lg);
+  stashSnapshot(snap.bx,smode);wellSnapshot(snap.wl);logSnapshot(snap.lg,smode);
   if(smode===2){doorsSync(snap.dr);iceSync(snap.ice);}   // portas e gelo quebrado tambem ficam iguais (antes so na entrada)
   if(Array.isArray(snap.tents)){
     let ch=false;

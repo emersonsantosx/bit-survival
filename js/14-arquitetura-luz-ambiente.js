@@ -135,16 +135,6 @@ const RF={
     if(gw>0&&gh>0){q(m,m,gw,gh,shadeCol(c,.28));q(m,m,gw,1,shadeCol(c,.42));if(gw>gh)for(let x=m;x<m+gw;x+=6)q(x,m,1,gh,'rgba(0,0,0,.2)');}
     q(0,h-2,w,2,shadeCol(c,-.45));q(0,0,w,1,shadeCol(c,.3));       // beiral
   },
-  cross(q,w,h,L,H){
-    RF.gableH(q,w,h,L,H);
-    const c=L.roof,ww=Math.round(w*(.32+H(4)*.12)),wx=Math.round(H(5)<.5?w*.12:w-ww-w*.12),wh=Math.round(h*.62),rg=Math.round(ww/2),mainRg=L._rg;
-    q(wx-1,0,ww+2,wh+1,'rgba(0,0,0,.3)');
-    q(wx,0,rg,wh,shadeCol(c,.14));q(wx+rg,0,ww-rg,wh,shadeCol(c,-.1));
-    rfTex(q,wx+1,0,rg-1,wh,L,'v',H(6));rfTex(q,wx+rg+1,0,ww-rg-2,wh,L,'v',H(7));
-    q(wx+rg-1,0,2,wh,shadeCol(c,.32));q(wx+rg+1,0,1,wh,shadeCol(c,-.3));
-    q(wx,wh-2,ww,2,shadeCol(c,-.4));q(wx,0,ww,1,shadeCol(c,.3));
-    L._rg=mainRg;L._blk=[wx,0,ww,wh];
-  },
   flat(q,w,h,L,H,cut){
     const c=L.roof,r=mkRng(H(8));
     q(0,0,w,h,c);
@@ -194,6 +184,7 @@ const RF={
   }
 };
 RF.aframe=RF.gableH;
+RF.cross=RF.gableH;   // telhado em cruz: a ala vertical foi removida (na vista de cima parecia um bloco colado); fica um telhado de duas aguas
 function rfSnow(q,w,h,L,H,lite){
   const r=mkRng(H(18)),sn='#f2f8fc',sh='#c8dcec',hv=(L.heavy&&!lite)?1:0,rg=L._rg;
   if(L.shape==='flat'||L.shape==='flatStep'||L.shape==='dome'){
@@ -283,10 +274,16 @@ function bldRoofBuild(b,snowNow){
   const q=(x,y,ww,hh,col)=>{c.fillStyle=col;c.fillRect(Math.round(x)+M,Math.round(y)+M,Math.round(ww),Math.round(hh));};
   const cut=(x,y,ww,hh)=>c.clearRect(Math.round(x)+M,Math.round(y)+M,ww,hh);
   L._rg=0;L._blk=null;
+  /* O corpo do telhado (agua, textura, manchas, neve) é recortado no retângulo w x h: antes, manchas de musgo/ardósia, palha e sombras arredondadas
+     passavam alguns pixels para fora do contorno e apareciam como "farelos" soltos em volta da casa. So os extras (vigas, antena) podem passar do contorno. */
+  c.save();c.beginPath();c.rect(M,M,w,h);c.clip();
   (RF[L.shape]||RF.gableH)(q,w,h,L,H,cut);
   rfOverlay(q,w,h,L,H);
   if(snowNow)rfSnow(q,w,h,L,H,!L.snow);
+  c.restore();
   rfExtras(q,w,h,L,H,snowNow);
+  /* cantos chanfrados do deserto: os extras e a neve nao podem pintar de volta o canto que foi recortado */
+  if(selectedMap==='desert'&&(L.shape==='flat'||L.shape==='flatStep'||L.shape==='dome')){cut(0,0,2,2);cut(w-2,0,2,2);cut(0,h-2,2,2);cut(w-2,h-2,2,2);}
   b._rc=cv;b._rx=b.x-3-M;b._ry=b.y-6-M;b._rcS=snowNow;
 }
 function drawRoof(b){
