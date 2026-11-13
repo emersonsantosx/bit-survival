@@ -598,3 +598,14 @@ body.haschat #missions{right:calc(140px*var(--ui,1))}
 /* conquistas: titulo de cada grupo (gerais e objetivos de cada mapa) */
 .ach-h{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;margin:calc(8px*var(--ui,1)) 0 calc(4px*var(--ui,1));padding:calc(4px*var(--ui,1)) calc(6px*var(--ui,1));background:rgba(255,255,255,.06);border-left:calc(3px*var(--ui,1)) solid var(--c-amber,#C79A3A);font:calc(9px*var(--ui,1))/1.3 var(--f-px,"Courier New",monospace);color:var(--c-amber,#C79A3A);letter-spacing:.08em}
 .ach-h b{color:#dfe8c8}
+
+/* configuracoes em secoes: menu de botoes (um por secao); a secao escolhida substitui o menu */
+.cfg-hub{display:grid;grid-template-columns:1fr 1fr;gap:calc(8px*var(--ui,1));margin:calc(4px*var(--ui,1)) 0}
+:where(html.wle560) .cfg-hub{grid-template-columns:1fr}
+.cfg-hubbtn{display:flex;flex-direction:column;align-items:flex-start;gap:calc(4px*var(--ui,1));text-align:left;cursor:pointer;background:var(--c-bg,#16181d);color:var(--c-cream,#e8e0c8);border:calc(3px*var(--ui,1)) solid #8a8672;border-radius:0;box-shadow:0 calc(4px*var(--ui,1)) 0 var(--c-deep,#0c0d10);padding:calc(10px*var(--ui,1)) calc(12px*var(--ui,1));min-height:calc(48px*var(--ui,1))}
+.cfg-hubbtn b{font:calc(11px*var(--ui,1))/1.3 var(--f-px,"Courier New",monospace);letter-spacing:1px;color:#cfc8b2}
+.cfg-hubbtn small{font:calc(8px*var(--ui,1))/1.4 var(--f-px,"Courier New",monospace);color:var(--c-dim,#9a9684)}
+.cfg-hubbtn:active,.cfg-hubbtn:focus-visible{border-color:var(--c-amber,#C79A54);outline:none}
+.cfg-hubbtn:active b{color:var(--c-amber,#C79A54)}
+.cfg-pane.hide,.cfg-hub.hide{display:none!important}
+.cfg-hub .cfg-hubbtn:last-child:nth-child(odd){grid-column:1/-1}   /* a ultima secao sozinha na linha ocupa a largura toda */

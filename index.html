@@ -226,9 +226,16 @@
 <div id="fpsHud" class="hide" aria-hidden="true"></div>
 <div id="configscreen" class="screen hide">
   <div class="card">
-    <h2>CONFIGURAÇÕES</h2>
+    <h2 id="cfgTitle">CONFIGURAÇÕES</h2>
     <div class="ui-scroll">
-      <h3>ÁUDIO</h3>
+      <div class="cfg-hub" id="cfgHub">
+        <button type="button" class="cfg-hubbtn" data-cfgsec="audio"><b>ÁUDIO</b><small>Volumes de geral, efeitos, ambiente, clima, música e passos</small></button>
+        <button type="button" class="cfg-hubbtn" data-cfgsec="perf"><b>DESEMPENHO</b><small>Qualidade dos efeitos, limite de FPS e ajuste automático</small></button>
+        <button type="button" class="cfg-hubbtn" data-cfgsec="ui"><b>INTERFACE</b><small>Barras, textos e minimapa na tela</small></button>
+        <button type="button" class="cfg-hubbtn" data-cfgsec="ctl"><b>CONTROLES</b><small>Joystick, sensibilidade e tamanho da interface</small></button>
+        <button type="button" class="cfg-hubbtn" data-cfgsec="game"><b>JOGO</b><small>Brilho da noite, tremor de tela e contador de FPS</small></button>
+      </div>
+      <div class="cfg-pane hide" id="cfgPane_audio" data-title="ÁUDIO">
       <div class="cfg-grid">
         <div class="cfg-row"><label>Geral</label><input type="range" id="cfg_master" min="0" max="100" value="80"><span class="val" id="v_master">80%</span></div>
         <div class="cfg-row"><label>Efeitos</label><input type="range" id="cfg_sfx" min="0" max="100" value="100"><span class="val" id="v_sfx">100%</span></div>
@@ -237,30 +244,35 @@
         <div class="cfg-row"><label>Música</label><input type="range" id="cfg_music" min="0" max="100" value="50"><span class="val" id="v_music">50%</span></div>
         <div class="cfg-row"><label>Passos</label><input type="range" id="cfg_step" min="0" max="100" value="80"><span class="val" id="v_step">80%</span></div>
       </div>
-      <h3>DESEMPENHO</h3>
+      </div>
+      <div class="cfg-pane hide" id="cfgPane_perf" data-title="DESEMPENHO">
       <p style="font-size:calc(10px*var(--ui,1));margin:0 0 calc(6px*var(--ui,1));text-align:left">O jogo começa em qualidade Alta e 60 FPS. Com o ajuste automático ligado, ele só reduz os efeitos se o seu aparelho não aguentar.</p>
       <div class="cfg-grid">
         <div class="cfg-seg" id="cfg_quality"><label>Qualidade dos efeitos</label><div class="opts"><button type="button" data-v="2">ECONOMIA</button><button type="button" data-v="1">MÉDIA</button><button type="button" data-v="0">ALTA</button></div></div>
         <div class="cfg-seg" id="cfg_fps"><label>Limite de FPS</label><div class="opts"><button type="button" data-v="30">30</button><button type="button" data-v="60">60</button><button type="button" data-v="0">MÁXIMO</button></div></div>
         <div class="cfg-toggle on" id="cfg_autoperf"><label>Ajuste automático de desempenho</label><div class="sw"></div></div>
       </div>
-      <h3>INTERFACE</h3>
+      </div>
+      <div class="cfg-pane hide" id="cfgPane_ui" data-title="INTERFACE">
       <p style="font-size:calc(10px*var(--ui,1));margin:0 0 calc(6px*var(--ui,1));text-align:left">Botões, inventário, pause e craft nunca são ocultados.</p>
       <div class="cfg-grid">
         <div class="cfg-toggle on" id="cfg_hud"><label>Barras e textos (vida, fome, relógio)</label><div class="sw"></div></div>
         <div class="cfg-toggle on" id="cfg_minimap"><label>Minimapa e relógio</label><div class="sw"></div></div>
       </div>
-      <h3>CONTROLES</h3>
+      </div>
+      <div class="cfg-pane hide" id="cfgPane_ctl" data-title="CONTROLES">
       <div class="cfg-grid">
         <div class="cfg-row"><label>Joystick</label><input type="range" id="cfg_joyS" min="70" max="150" value="100"><span class="val" id="v_joyS">100%</span></div>
         <div class="cfg-row"><label>Sensibilidade</label><input type="range" id="cfg_sens" min="50" max="150" value="100"><span class="val" id="v_sens">100%</span></div>
         <div class="cfg-row"><label>Interface</label><input type="range" id="cfg_ui" min="80" max="130" value="100"><span class="val" id="v_ui">100%</span></div>
       </div>
-      <h3>JOGO</h3>
+      </div>
+      <div class="cfg-pane hide" id="cfgPane_game" data-title="JOGO">
       <div class="cfg-grid">
         <div class="cfg-seg" id="cfg_night"><label>Brilho da noite</label><div class="opts"><button type="button" data-v="0">CLARA</button><button type="button" data-v="1">NORMAL</button><button type="button" data-v="2">ESCURA</button></div></div>
         <div class="cfg-toggle on" id="cfg_shake"><label>Tremor de tela</label><div class="sw"></div></div>
         <div class="cfg-toggle" id="cfg_showFps"><label>Mostrar FPS</label><div class="sw"></div></div>
+      </div>
       </div>
     </div>
     <div style="display:flex;gap:calc(8px*var(--ui,1));justify-content:center;margin-top:calc(8px*var(--ui,1));flex-wrap:wrap">

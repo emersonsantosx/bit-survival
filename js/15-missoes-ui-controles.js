@@ -213,6 +213,7 @@ function showScreen(id){
   if(id==='menu') try{refreshContinue();}catch(e){}
   const ids=['menu','invscr','stashscr','mapscreen','slotscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
   for(const s of ids){const e=$(s);if(e)e.classList.add('hide');}
+  if(id==='configscreen')try{cfgOpen(null);}catch(e){}   // sempre abre no menu de secoes
   if(id){const e=$(id);if(e)e.classList.remove('hide');}
   try{
     const wantMusic=['menu','mapscreen','slotscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen'].includes(id)||(id==='configscreen'&&state!=='pause');
@@ -502,7 +503,20 @@ on('joinCode','keydown',e=>{if(e.key==='Enter')$('btnJoinConnect').click();});
 on('hostName','input',e=>{e.target.value=e.target.value.slice(0,12);});
 on('joinName','input',e=>{e.target.value=e.target.value.slice(0,12);});
 
-on('btnBackCfg','click',()=>{if(state==='pause')showScreen('pausescr');else showScreen('menu');});
+/* CONFIGURACOES em secoes: abre num menu com um botao por secao; ao escolher, so aquela secao aparece e VOLTAR leva de volta ao menu de secoes */
+let cfgSec=null;
+function cfgOpen(sec){
+  cfgSec=sec||null;
+  const hub=$('cfgHub'),t=$('cfgTitle');
+  if(hub)hub.classList.toggle('hide',!!cfgSec);
+  document.querySelectorAll('.cfg-pane').forEach(e=>e.classList.toggle('hide',e.id!=='cfgPane_'+cfgSec));
+  const pane=cfgSec&&$('cfgPane_'+cfgSec);
+  if(t)t.textContent=pane?pane.dataset.title:'CONFIGURAÇÕES';
+  const rs=$('btnReset');if(rs)rs.classList.toggle('hide',!!cfgSec);   // RESTAURAR (tudo) so no menu de secoes
+  const sc=document.querySelector('#configscreen .ui-scroll');if(sc)sc.scrollTop=0;
+}
+document.querySelectorAll('.cfg-hubbtn').forEach(b=>b.addEventListener('click',()=>{aud();cfgOpen(b.dataset.cfgsec);}));
+on('btnBackCfg','click',()=>{if(cfgSec){cfgOpen(null);return;}if(state==='pause')showScreen('pausescr');else showScreen('menu');});
 on('pauseCfg','click',e=>{
   if(performance.now()<pauseReadyAt){e.preventDefault();e.stopPropagation();return;}
   showScreen('configscreen');
