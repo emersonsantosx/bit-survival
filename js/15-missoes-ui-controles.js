@@ -216,10 +216,8 @@ function renderHostWorlds(){
     g.appendChild(b);
   }
   const sel=opts.find(o=>o.n===mpSlot)||{};
-  const grid=$('mpMapGrid'),note=$('hostWorldNote');
+  const grid=$('mpMapGrid');
   if(grid) grid.classList.toggle('hide',!!sel.d);   // mundo ja existe: o mapa e o dele
-  if(note) note.textContent=sel.d?'Você abre o mundo salvo: mapa '+MAP_NAMES[sel.d.map]+', dia '+sel.d.day+'. O amigo entra nele e você continua depois no solo.'
-    :(mpSlot?'Mundo novo: escolha o mapa. Ele fica salvo no slot '+mpSlot+' e aparece em CONTINUAR.':'Mundo temporário: nada é salvo.');
 }
 function lockHostWorlds(lock){
   const g=$('hostWorlds'),m=$('mpMapGrid');

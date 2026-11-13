@@ -52,7 +52,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 321 | 40 | 20 | 260 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 612 | 13 | 16 | 320 | 17 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
-| 15-missoes-ui-controles | 191 | 58 | 21 | 251 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
+| 15-missoes-ui-controles | 190 | 58 | 21 | 249 |  |  | 17 |  |  | 67 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |
 | 18-plantacao | 36 | 6 | 22 | 77 | 16 |  |  | 13 | 1 | 1 | 8 | 3 | 139 |  | 1 |  |  | . |  |  |  |  |  |  |  |
@@ -120,7 +120,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | pushOut | funcao | 05-geometria:398 | 7 | 14 |
 | sprintHeld | let | 04-estado:16 | 7 | 13 |
 | removeInv | funcao | 04-estado:266 | 7 | 11 |
-| $ | const | 01-base:2 | 6 | 154 |
+| $ | const | 01-base:2 | 6 | 153 |
 | Z | let | 01-base:47 | 6 | 108 |
 | plane | let | 04-estado:13 | 6 | 62 |
 | joy | const | 04-estado:183 | 6 | 54 |
