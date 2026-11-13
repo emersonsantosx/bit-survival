@@ -27,13 +27,13 @@ const ui=await host.evaluate(()=>{
   showScreen('mphostscreen');renderHostWorlds();
   const bs=[...document.querySelectorAll('#hostWorlds .map-opt')];
   const o={n:bs.length,sel:bs.findIndex(x=>x.classList.contains('selected'))+1,txt2:bs[1].textContent,bad4:bs[3].disabled,tmp:bs[4].textContent,mapShown:!document.getElementById('mpMapGrid').classList.contains('hide')};
-  bs[1].click();o.afterPick=mpSlot;o.mapHidden=document.getElementById('mpMapGrid').classList.contains('hide');o.note=document.getElementById('hostWorldNote').textContent;
+  bs[1].click();o.afterPick=mpSlot;o.mapHidden=document.getElementById('mpMapGrid').classList.contains('hide');o.noNote=!document.getElementById('hostWorldNote');
   localStorage.removeItem(slotKey(4));
   return o;});
 ok(ui.n===5&&ui.sel===1&&ui.mapShown,'tela do host: 4 slots + temporario, sugere o primeiro slot vazio com escolha de mapa');
 ok(/FLORESTA/.test(ui.txt2)&&/DIA 3/.test(ui.txt2),'slot ocupado mostra mapa e dia ('+ui.txt2+')');
 ok(ui.bad4,'save de outra versao fica desabilitado (nunca e sobrescrito)');
-ok(/TEMPOR/.test(ui.tmp)&&ui.afterPick===2&&ui.mapHidden&&/mundo salvo/.test(ui.note),'escolher slot ocupado abre o mundo dele (mapa escondido)');
+ok(/TEMPOR/.test(ui.tmp)&&ui.afterPick===2&&ui.mapHidden&&ui.noNote,'escolher slot ocupado abre o mundo dele (mapa escondido) e a tela nao mostra dica de mundo salvo/novo');
 
 /* 3) host abre o mundo salvo */
 const hs=await host.evaluate(()=>{
