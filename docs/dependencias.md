@@ -51,7 +51,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 11-pesca-update | 241 | 39 | 50 | 870 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 321 | 40 | 20 | 260 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 608 | 13 | 16 | 320 | 15 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
+| 14-arquitetura-luz-ambiente | 612 | 13 | 16 | 320 | 17 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
 | 15-missoes-ui-controles | 191 | 58 | 21 | 251 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |
@@ -84,7 +84,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | parts | let | 04-estado:10 | 16 | 75 |
 | items | let | 04-estado:10 | 15 | 61 |
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
-| ctx | const | 01-base:27 | 14 | 985 |
+| ctx | const | 01-base:27 | 14 | 988 |
 | blds | let | 04-estado:10 | 14 | 58 |
 | R | funcao | 13-render-personagens:2 | 12 | 1251 |
 | weather | let | 04-estado:6 | 12 | 88 |
@@ -93,7 +93,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | zombies | let | 04-estado:10 | 11 | 58 |
 | campfires | let | 04-estado:10 | 11 | 40 |
 | state | let | 04-estado:2 | 10 | 92 |
-| bldAt | funcao | 05-geometria:585 | 10 | 27 |
+| bldAt | funcao | 05-geometria:585 | 10 | 29 |
 | tents | let | 04-estado:10 | 10 | 23 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |
 | remotePlayers | let | 04-estado:11 | 9 | 91 |
@@ -121,7 +121,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | sprintHeld | let | 04-estado:16 | 7 | 13 |
 | removeInv | funcao | 04-estado:266 | 7 | 11 |
 | $ | const | 01-base:2 | 6 | 154 |
-| Z | let | 01-base:47 | 6 | 107 |
+| Z | let | 01-base:47 | 6 | 108 |
 | plane | let | 04-estado:13 | 6 | 62 |
 | joy | const | 04-estado:183 | 6 | 54 |
 | decorations | let | 04-estado:10 | 6 | 38 |

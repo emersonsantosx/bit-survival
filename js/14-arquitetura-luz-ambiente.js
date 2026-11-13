@@ -520,7 +520,6 @@ function drawGrade(){
 }
 /* sprites */
 function mkSprite(sz,stops){const c=document.createElement('canvas');c.width=c.height=sz;const g=c.getContext('2d'),gr=g.createRadialGradient(sz/2,sz/2,0,sz/2,sz/2,sz/2);for(const s of stops)gr.addColorStop(s[0],s[1]);g.fillStyle=gr;g.fillRect(0,0,sz,sz);return c;}
-const ffSprite=mkSprite(32,[[0,'rgba(220,255,140,.95)'],[.25,'rgba(170,255,110,.45)'],[1,'rgba(120,255,90,0)']]);
 const warmSprite=mkSprite(128,[[0,'rgba(255,238,190,.75)'],[.35,'rgba(255,200,120,.32)'],[1,'rgba(255,160,70,0)']]);
 const greenSprite=mkSprite(64,[[0,'rgba(150,255,110,.7)'],[1,'rgba(90,230,70,0)']]);
 const coneC=(()=>{
@@ -585,7 +584,15 @@ function drawShafts(){
   ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
 }
 /* partículas de luz: vaga-lumes (noite, floresta) e poeira dourada (dia, floresta e deserto) */
-const FF=[];for(let i=0;i<26;i++)FF.push({x:0,y:0,vx:0,vy:0,ph:Math.random()*6.28,on:false});
+/* Vaga-lumes: pontinhos pequenos de luz amarela (tons suaves, do amarelo-creme ao amarelo-esverdeado) que acendem e apagam devagar, cada um no seu ritmo,
+   e vagam em curvas suaves perto do chao. Entram e saem do ar com fade (antes surgiam do nada num clarao grande e verde). Tudo cosmetico. */
+const FF_TONES=[{c:'#fff1a8',h:[255,236,150]},{c:'#f6f7a0',h:[240,248,150]},{c:'#ffe27c',h:[255,220,120]},{c:'#e4f98c',h:[222,248,140]}];
+const FF=[];for(let i=0;i<34;i++)FF.push({x:0,y:0,a:Math.random()*6.28,tn:0,sp:5+Math.random()*6,ph:Math.random()*6.28,per:1.7+Math.random()*2.1,bob:Math.random()*6.28,k:0,on:false,out:false,t:FF_TONES[i%FF_TONES.length]});
+const FF_HALO=FF_TONES.map(t=>mkSprite(24,[[0,'rgba('+t.h+',.55)'],[.35,'rgba('+t.h+',.2)'],[1,'rgba('+t.h+',0)']]));
+function ffLevel(f){   // brilho 0..1: sobe e desce suave, fica aceso so uma parte do ciclo
+  const v=(Math.sin(f.ph*6.283/f.per)-.2)/.8;return v<=0?0:v*v*(3-2*v);
+}
+window.FF=FF;window.ffLevel=ffLevel;
 const MOTE=[];for(let i=0;i<22;i++)MOTE.push({x:Math.random(),y:Math.random(),s:.3+Math.random()*.7,ph:Math.random()*6.28});
 const LP=[];  // pulsos de luz (tiro, explosão)
 function addPulse(x,y,r,d,col){LP.push({x:x,y:y,r:r,t:d,d:d,col:col||'w'});if(LP.length>12)LP.shift();}
@@ -601,11 +608,19 @@ function updateLighting(dt){
   // vaga-lumes
   if(selectedMap==='forest'&&dark>.3&&weather!=='rain'&&perfTotal()<2){
     for(const f of FF){
-      if(!f.on||Math.hypot(f.x-P.x,f.y-P.y)>230){const a=Math.random()*6.283,d=40+Math.random()*170;f.x=P.x+Math.cos(a)*d;f.y=P.y+Math.sin(a)*d;f.vx=f.vy=0;f.on=true;}
-      f.ph+=dt;f.vx+=(Math.random()-.5)*40*dt;f.vy+=(Math.random()-.5)*40*dt;
-      f.vx=Math.max(-12,Math.min(12,f.vx));f.vy=Math.max(-12,Math.min(12,f.vy));f.x+=f.vx*dt;f.y+=f.vy*dt;
+      if(f.on&&!f.out&&Math.hypot(f.x-P.x,f.y-P.y)>230)f.out=true;     // longe demais: apaga aos poucos e reaparece perto
+      if(f.out&&f.k<=.01){f.on=false;f.out=false;}
+      if(!f.on){
+        const an=Math.random()*6.283,d=35+Math.random()*135,nx=P.x+Math.cos(an)*d,ny=P.y+Math.sin(an)*d;
+        if(typeof bldAt==='function'&&bldAt(nx,ny))continue;             // nao nasce dentro de casa
+        f.x=nx;f.y=ny;f.a=Math.random()*6.283;f.k=0;f.on=true;f.out=false;
+      }
+      f.k=f.out?Math.max(0,f.k-dt*.8):Math.min(1,f.k+dt*.6);              // fade de entrada e saida
+      f.ph+=dt;f.bob+=dt*1.3;
+      f.a+=Math.sin(f.ph*.7+f.tn)*dt*1.6+(Math.random()-.5)*dt*1.2;      // curvas suaves, sem tremedeira
+      f.x+=Math.cos(f.a)*f.sp*dt;f.y+=Math.sin(f.a)*f.sp*.55*dt;
     }
-  }else for(const f of FF)f.on=false;
+  }else for(const f of FF){if(f.on)f.out=true;f.k=Math.max(0,f.k-dt*1.2);if(f.k<=.01){f.on=false;f.out=false;}}
   // relâmpagos (só com chuva e fora de prédios)
   if(weather==='rain'&&(!MP.active||MP.isHost)){ // só o anfitrião sorteia o raio; o convidado recebe pelo evento 'bolt'
     LT.next-=dt;
@@ -1004,13 +1019,17 @@ function drawLighting(sx,sy){
       }
       ctx.globalAlpha=1;
     }
-    // vaga-lumes
+    // vaga-lumes: miolo de 1 pixel bem claro + halo pequeno e suave
     if(selectedMap==='forest'&&tier<2){
+      const px=Math.max(1,Math.round(Z*1.1));
       for(const f of FF){
         if(!f.on)continue;
-        const [fx,fy]=sp(f.x,f.y);if(fx<-20||fy<-20||fx>W+20||fy>H+20)continue;
-        const b=Math.max(0,Math.sin(f.ph*2.1));const al=b*b*b*Math.min(1,dark*1.5);if(al<.03)continue;
-        ctx.globalAlpha=al;const r=7*Z;ctx.drawImage(ffSprite,fx-r,fy-r-3*Z*Math.sin(f.ph),2*r,2*r);
+        const lv=ffLevel(f)*f.k*Math.min(1,dark*1.5);if(lv<.04)continue;
+        const [fx,fy0]=sp(f.x,f.y);if(fx<-20||fy0<-20||fx>W+20||fy0>H+20)continue;
+        const fy=fy0-(4+Math.sin(f.bob)*2.2)*Z;                          // paira um pouco acima do chao, oscilando
+        const r=(3.4+2.2*lv)*Z;
+        ctx.globalAlpha=lv*.8;ctx.drawImage(FF_HALO[FF_TONES.indexOf(f.t)],fx-r,fy-r,2*r,2*r);
+        ctx.globalAlpha=Math.min(1,lv*1.25);ctx.fillStyle=f.t.c;ctx.fillRect(Math.round(fx-px/2),Math.round(fy-px/2),px,px);
       }
       ctx.globalAlpha=1;
     }

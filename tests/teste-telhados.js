@@ -24,7 +24,7 @@ const { chromium } = require('playwright');
           for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) {
             if (!d[(y * cv.width + x) * 4 + 3]) continue;
             const X = x - M, Y = y - M;
-            if (Y < 0 || Y >= h) up++;
+            if (Y >= h || Y < -3 || (Y < 0 && !(L.ext || []).some(e => e === 'chimney' || e === 'chimneyStone'))) up++;   // so a chaminé (e a neve em cima dela) pode passar do topo
             else if (X < 0 || X >= w) { if (!(m === 'desert' && (X >= -3 && X < w + 3))) side++; }
           }
           if (m === 'desert' && (L.shape === 'flat' || L.shape === 'flatStep' || L.shape === 'dome')) {
