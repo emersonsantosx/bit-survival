@@ -64,7 +64,8 @@ function uiClasses(iw,ih,u){
 function applyUiScale(){
   const iw=window.innerWidth||800,ih=window.innerHeight||360;
   let coarse=true;try{coarse=window.matchMedia('(pointer:coarse)').matches||window.matchMedia('(hover:none)').matches;}catch(e){}
-  UIS=coarse?Math.round(Math.max(1,Math.min(UI_MAX,Math.min(iw,ih)/UI_REF))*100)/100:1;   // so celular/tablet (toque): no computador a interface fica no tamanho de sempre
+  UIS=coarse?Math.round(Math.max(1,Math.min(UI_MAX,Math.min(iw,ih)/UI_REF))*100)/100:1;
+  UIS=Math.round(UIS*CFG.ui*100)/100;   // ajuste do jogador (CONFIGURACOES > tamanho da interface)   // so celular/tablet (toque): no computador a interface fica no tamanho de sempre
   try{
     const el=document.documentElement,keep=el.className.split(/\s+/).filter(x=>x&&!/^(land|port|hle\d+|wle\d+)$/.test(x));
     el.className=keep.concat(uiClasses(iw,ih,UIS)).join(' ');
@@ -105,7 +106,7 @@ function resize(){
   H=Math.max(120,Math.floor(dispH/d));
   Z=zDisp/d;
   HU=UIS*W/dispW;
-  JR=Math.round(48*HU); JK=Math.round(22*HU);
+  JR=Math.round(48*HU*CFG.joyS); JK=Math.round(22*HU);
   if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
   // Luz full-res só se não estiver em modo simples
   // Buffer de luz: tamanho cheio no modo completo, 1/4 no modo simples (barato, suavizado ao ampliar)
@@ -123,7 +124,8 @@ window.addEventListener('resize',resize);
 
 /* ============ CONFIG ============ */
 const CFG={master:0.8,sfx:1.0,amb:0.6,rain:0.7,step:0.8,music:0.5,hud:true,minimap:true,dmgflash:true,screenflash:true,fullscreen:true,tracers:true,
-  quality:0, fps:60, autoperf:true, autolvl:0};
+  quality:0, fps:60, autoperf:true, autolvl:0,
+  joyS:1, sens:1, ui:1, shake:true, night:1, showFps:false};
 try{const raw=localStorage.getItem('minisurv_cfg');if(raw)Object.assign(CFG,JSON.parse(raw));}catch(e){}
 if(CFG.minimap===undefined) CFG.minimap=true;
 // Versão 3 das configurações: o "modo economia" antigo ligava sozinho no celular (30 FPS, poucos efeitos).
@@ -137,6 +139,10 @@ if(![0,1,2].includes(CFG.quality)) CFG.quality=0;
 if(![0,30,60].includes(CFG.fps)) CFG.fps=60;
 delete CFG.lowres;
 CFG.autolvl=Math.max(0,Math.min(2,CFG.autolvl|0));
+// Controles e jogo: valores fora do intervalo (save antigo/editado) voltam para dentro dele
+const _cl=(v,a,b,d)=>Number.isFinite(+v)?Math.max(a,Math.min(b,+v)):d;
+CFG.joyS=_cl(CFG.joyS,.7,1.5,1);CFG.sens=_cl(CFG.sens,.5,1.5,1);CFG.ui=_cl(CFG.ui,.8,1.3,1);
+CFG.shake=CFG.shake!==false;CFG.showFps=CFG.showFps===true;if(![0,1,2].includes(CFG.night))CFG.night=1;
 // Estas opções não aparecem mais nas configurações: ficam sempre ligadas, mesmo que uma versão antiga tenha salvo desligado
 CFG.fullscreen=CFG.tracers=CFG.dmgflash=CFG.screenflash=true;
 function saveCfg(){try{localStorage.setItem('minisurv_cfg',JSON.stringify(CFG));}catch(e){}}

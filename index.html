@@ -223,6 +223,7 @@
   </div>
 </div>
 
+<div id="fpsHud" class="hide" aria-hidden="true"></div>
 <div id="configscreen" class="screen hide">
   <div class="card">
     <h2>CONFIGURAÇÕES</h2>
@@ -248,6 +249,18 @@
       <div class="cfg-grid">
         <div class="cfg-toggle on" id="cfg_hud"><label>Barras e textos (vida, fome, relógio)</label><div class="sw"></div></div>
         <div class="cfg-toggle on" id="cfg_minimap"><label>Minimapa e relógio</label><div class="sw"></div></div>
+      </div>
+      <h3>CONTROLES</h3>
+      <div class="cfg-grid">
+        <div class="cfg-row"><label>Joystick</label><input type="range" id="cfg_joyS" min="70" max="150" value="100"><span class="val" id="v_joyS">100%</span></div>
+        <div class="cfg-row"><label>Sensibilidade</label><input type="range" id="cfg_sens" min="50" max="150" value="100"><span class="val" id="v_sens">100%</span></div>
+        <div class="cfg-row"><label>Interface</label><input type="range" id="cfg_ui" min="80" max="130" value="100"><span class="val" id="v_ui">100%</span></div>
+      </div>
+      <h3>JOGO</h3>
+      <div class="cfg-grid">
+        <div class="cfg-seg" id="cfg_night"><label>Brilho da noite</label><div class="opts"><button type="button" data-v="0">CLARA</button><button type="button" data-v="1">NORMAL</button><button type="button" data-v="2">ESCURA</button></div></div>
+        <div class="cfg-toggle on" id="cfg_shake"><label>Tremor de tela</label><div class="sw"></div></div>
+        <div class="cfg-toggle" id="cfg_showFps"><label>Mostrar FPS</label><div class="sw"></div></div>
       </div>
     </div>
     <div style="display:flex;gap:calc(8px*var(--ui,1));justify-content:center;margin-top:calc(8px*var(--ui,1));flex-wrap:wrap">

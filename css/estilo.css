@@ -590,3 +590,11 @@ body.haschat #missions{right:calc(140px*var(--ui,1))}
 .btn.hot .pxi{filter:drop-shadow(0 0 calc(3px*var(--ui,1)) #ffd84a)}
 #wpn .pxi{margin-right:calc(6px*var(--ui,1))}
 .craft-row .cost .pxi{margin:0 2px;vertical-align:calc(-3px*var(--ui,1))}
+
+/* contador de FPS (configuracoes) */
+#fpsHud{position:fixed;left:calc(6px*var(--ui,1));bottom:calc(6px*var(--ui,1));z-index:30;pointer-events:none;font:calc(9px*var(--ui,1))/1 var(--f-px,"Courier New",monospace);color:#b8f08a;background:rgba(0,0,0,.55);padding:calc(3px*var(--ui,1)) calc(5px*var(--ui,1));border:1px solid rgba(255,255,255,.18)}
+#fpsHud.hide{display:none}
+
+/* conquistas: titulo de cada grupo (gerais e objetivos de cada mapa) */
+.ach-h{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;margin:calc(8px*var(--ui,1)) 0 calc(4px*var(--ui,1));padding:calc(4px*var(--ui,1)) calc(6px*var(--ui,1));background:rgba(255,255,255,.06);border-left:calc(3px*var(--ui,1)) solid var(--c-amber,#C79A3A);font:calc(9px*var(--ui,1))/1.3 var(--f-px,"Courier New",monospace);color:var(--c-amber,#C79A3A);letter-spacing:.08em}
+.ach-h b{color:#dfe8c8}

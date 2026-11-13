@@ -91,8 +91,29 @@ const ACH=[
   ['mission25','Incansável','Complete 25 missões','missionDone',25],
   ['temple','Saqueador de Tumbas','Abra o baú do Templo Enterrado','temple',1],
   ['expedition','Expedicionário','Abra o baú da Expedição perdida','expedition',1],
-  ['duo','Dupla Perfeita','Complete 3 missões no multiplayer','mpMission',3]
+  ['duo','Dupla Perfeita','Complete 3 missões no multiplayer','mpMission',3],
+  ['biomes','Mochileiro','Chegue ao dia 3 nos 4 mapas','biomes',4],
+  ['mapdone1','Dominador','Conclua todos os objetivos de um mapa','mapsDone',1],
+  ['mapdone4','Mestre dos Biomas','Conclua os objetivos dos 4 mapas','mapsDone',4],
+  /* Objetivos por mapa: o 6o item e o mapa. O progresso conta so o que foi feito naquele mapa (estatistica 'nome@mapa'). */
+  ['f_day7','Sobrevivente da Floresta','Chegue ao dia 7 na Floresta','maxDay@forest',7,'forest'],
+  ['f_fish','Pescador do Lago','Pesque 10 peixes na Floresta','fish@forest',10,'forest'],
+  ['f_wood','Madeira de Lei','Colete 100 madeiras na Floresta','get_wood@forest',100,'forest'],
+  ['f_hunt','Caça na Mata','Cace 10 animais na Floresta','killAnimal@forest',10,'forest'],
+  ['s_day5','Inverno Eterno','Chegue ao dia 5 na Neve','maxDay@snow',5,'snow'],
+  ['s_fire','Calor na Neve','Acenda 3 fogueiras na Neve','campfire@snow',3,'snow'],
+  ['s_fish','Pesca no Gelo','Pesque 5 peixes na Neve','fish@snow',5,'snow'],
+  ['s_kill','Caçador do Frio','Elimine 40 zumbis na Neve','kill@snow',40,'snow'],
+  ['d_day5','Sede de Sobreviver','Chegue ao dia 5 no Deserto','maxDay@desert',5,'desert'],
+  ['d_kill','Miragem Sangrenta','Elimine 40 zumbis no Deserto','kill@desert',40,'desert'],
+  ['d_cook','Banquete do Oásis','Cozinhe 8 alimentos no Deserto','cook@desert',8,'desert'],
+  ['d_craft','Artesão das Dunas','Fabrique 15 itens no Deserto','craft@desert',15,'desert'],
+  ['c_day5','Selva de Concreto','Chegue ao dia 5 na Cidade','maxDay@city',5,'city'],
+  ['c_kill','Limpeza Urbana','Elimine 60 zumbis na Cidade','kill@city',60,'city'],
+  ['c_craft','Engenheiro Urbano','Fabrique 15 itens na Cidade','craft@city',15,'city'],
+  ['c_mission','Contratos da Cidade','Complete 5 missões na Cidade','missionDone@city',5,'city']
 ];
+const ACH_MAPS=['forest','snow','desert','city'];
 let ACHD={u:{},s:{}};
 try{const raw=localStorage.getItem('minisurv_ach');if(raw){const o=JSON.parse(raw);if(o&&typeof o==='object'){ACHD.u=o.u&&typeof o.u==='object'?o.u:{};ACHD.s=o.s&&typeof o.s==='object'?o.s:{};}}}catch(e){}
 function achSave(){try{localStorage.setItem('minisurv_ach',JSON.stringify(ACHD));}catch(e){}}
@@ -109,16 +130,34 @@ function achCheck(stat){
     if((ACHD.s[stat]||0)>=a[4]){
       ACHD.u[a[0]]=1;achSave();
       setTimeout(()=>{toast('Conquista: '+a[1]);achChime(false);},400);
+      if(a[5]&&!achCheck._m){achCheck._m=1;try{achMeta();}finally{achCheck._m=0;}}
     }
   }
 }
+/* Cada estatistica conta no total E no mapa em que o jogador esta ('nome@mapa'), para os objetivos por mapa */
 function achStat(stat,n){
+  const mk=stat+'@'+selectedMap;
   ACHD.s[stat]=(ACHD.s[stat]||0)+(n||1);
-  achSave();achCheck(stat);
+  ACHD.s[mk]=(ACHD.s[mk]||0)+(n||1);
+  achSave();achCheck(stat);achCheck(mk);
 }
 function achSet(stat,v){
-  if(!(v>(ACHD.s[stat]||0)))return;
-  ACHD.s[stat]=v;achSave();achCheck(stat);
+  const mk=stat+'@'+selectedMap;let ch=false;
+  if(v>(ACHD.s[stat]||0)){ACHD.s[stat]=v;ch=true;}
+  if(v>(ACHD.s[mk]||0)){ACHD.s[mk]=v;ch=true;}
+  if(!ch)return;
+  achSave();achCheck(stat);achCheck(mk);
+  if(stat==='maxDay')achMeta();
+}
+/* Conquistas que dependem de varios mapas: mapas com dia 3 e mapas com todos os objetivos concluidos */
+function achMeta(){
+  let b=0,d=0;
+  for(const m of ACH_MAPS){
+    if((ACHD.s['maxDay@'+m]||0)>=3)b++;
+    const l=ACH.filter(a=>a[5]===m);if(l.length&&l.every(a=>ACHD.u[a[0]]))d++;
+  }
+  if(b>(ACHD.s.biomes||0)){ACHD.s.biomes=b;achSave();achCheck('biomes');}
+  if(d>(ACHD.s.mapsDone||0)){ACHD.s.mapsDone=d;achSave();achCheck('mapsDone');}
 }
 /* ---- Estatisticas de todas as partidas (guardadas junto das conquistas) ---- */
 let _statPx=null,_statPy=null,_statSaveT=0;
@@ -148,16 +187,22 @@ function achTab(stats){
   if(a){a.classList.toggle('on',!stats);a.setAttribute('aria-selected',String(!stats));}
   if(b){b.classList.toggle('on',!!stats);b.setAttribute('aria-selected',String(!!stats));}
 }
+function achRow(a){
+  const on=!!ACHD.u[a[0]],cur=Math.min(a[4],ACHD.s[a[3]]||0),pct=Math.round(cur/a[4]*100);
+  return '<div class="ach-row'+(on?' on':'')+'"><div class="ic">'+pxIcon(on?'trophy':'lock',2)+'</div><div class="tx"><div class="nm">'+a[1]+'</div><div class="ds">'+a[2]+'</div>'+
+    (on?'<div class="cnt">CONCLUÍDA</div>':'<div class="bar"><i style="width:'+pct+'%"></i></div><div class="cnt">'+cur+'/'+a[4]+'</div>')+'</div></div>';
+}
 function renderAch(){
   try{renderStats();}catch(e){}
   achTab(false);   // abre sempre na lista de conquistas
   const list=document.getElementById('achList'),sum=document.getElementById('achSum');if(!list)return;
-  let got=0,h='';
-  for(const a of ACH){
-    const on=!!ACHD.u[a[0]];if(on)got++;
-    const cur=Math.min(a[4],ACHD.s[a[3]]||0),pct=Math.round(cur/a[4]*100);
-    h+='<div class="ach-row'+(on?' on':'')+'"><div class="ic">'+pxIcon(on?'trophy':'lock',2)+'</div><div class="tx"><div class="nm">'+a[1]+'</div><div class="ds">'+a[2]+'</div>'+
-       (on?'<div class="cnt">CONCLUÍDA</div>':'<div class="bar"><i style="width:'+pct+'%"></i></div><div class="cnt">'+cur+'/'+a[4]+'</div>')+'</div></div>';
+  // o mapa do jogo atual vem logo depois das gerais, para o jogador ver o que falta nele
+  const order=[selectedMap].concat(ACH_MAPS.filter(m=>m!==selectedMap)).filter(m=>ACH_MAPS.includes(m));
+  const groups=[['GERAIS',ACH.filter(a=>!a[5])]].concat(order.map(m=>[MAP_NAMES[m],ACH.filter(a=>a[5]===m)]));
+  let h='',got=0;
+  for(const g of groups){
+    const n=g[1].filter(a=>ACHD.u[a[0]]).length;got+=n;
+    h+='<div class="ach-h"><span>'+(g[0]==='GERAIS'?'GERAIS':'OBJETIVOS: '+g[0])+'</span><b>'+n+'/'+g[1].length+'</b></div>'+g[1].map(achRow).join('');
   }
   list.innerHTML=h;
   if(sum)sum.textContent=got+' / '+ACH.length+' DESBLOQUEADAS';
@@ -248,6 +293,20 @@ bindSlider('cfg_music','music','v_music');
 bindToggle('cfg_hud','hud');
 bindToggle('cfg_minimap','minimap');
 bindToggle('cfg_autoperf','autoperf');
+bindToggle('cfg_shake','shake');
+bindToggle('cfg_showFps','showFps');
+/* CONTROLES: tamanho do joystick, sensibilidade e tamanho da interface (refaz o layout na hora) */
+function bindSliderResize(id,key,labelId){
+  const el=$(id),lab=$(labelId);if(!el||!lab)return;
+  el.value=Math.round(CFG[key]*100);lab.textContent=el.value+'%';
+  el.addEventListener('input',()=>{CFG[key]=+el.value/100;lab.textContent=el.value+'%';saveCfg();resize();});
+}
+bindSliderResize('cfg_joyS','joyS','v_joyS');
+bindSliderResize('cfg_sens','sens','v_sens');
+bindSliderResize('cfg_ui','ui','v_ui');
+(function(){const el=$('cfg_night');if(!el)return;
+  const paint=()=>el.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',+b.dataset.v===+CFG.night));paint();
+  el.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{CFG.night=+b.dataset.v;saveCfg();paint();}));el._paint=paint;})();
 function bindSeg(id,key){
   const el=$(id);if(!el)return;
   const paint=()=>el.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',+b.dataset.v===+CFG[key]));
@@ -268,14 +327,15 @@ bindSeg('cfg_fps','fps');
 on('btnReset','click',()=>{
   CFG.master=0.8;CFG.sfx=1.0;CFG.amb=0.6;CFG.rain=0.7;CFG.step=0.8;
   CFG.hud=true;CFG.minimap=true;CFG.dmgflash=true;CFG.screenflash=true;CFG.fullscreen=true;CFG.tracers=true;
+  CFG.music=0.5;CFG.joyS=1;CFG.sens=1;CFG.ui=1;CFG.shake=true;CFG.night=1;CFG.showFps=false;
   CFG.quality=0;CFG.fps=60;CFG.autoperf=true;CFG.autolvl=0;
   saveCfg();
-  const vals={cfg_master:80,cfg_sfx:100,cfg_amb:60,cfg_rain:70,cfg_step:80};
+  const vals={cfg_master:80,cfg_sfx:100,cfg_amb:60,cfg_rain:70,cfg_step:80,cfg_music:50,cfg_joyS:100,cfg_sens:100,cfg_ui:100};
   for(const id in vals){const e=$(id);if(e)e.value=vals[id];const lab=$('v_'+id.split('_')[1]);if(lab)lab.textContent=vals[id]+'%';}
   document.querySelectorAll('.cfg-toggle').forEach(t=>{
-    t.classList.add('on');
+    t.classList.toggle('on',t.id!=='cfg_showFps');
   });
-  ['cfg_quality','cfg_fps'].forEach(id=>{const e=$(id);if(e&&e._paint)e._paint();});
+  ['cfg_quality','cfg_fps','cfg_night'].forEach(id=>{const e=$(id);if(e&&e._paint)e._paint();});
   applyHudClasses();
   resize();
   toast('Configurações restauradas');
@@ -590,7 +650,7 @@ cv.addEventListener('pointermove',e=>{
   const p=toCanvasXY(e);
   const dx=p.x-joy.ox,dy=p.y-joy.oy,d=Math.hypot(dx,dy),m=Math.min(d,JR);
   joy.px=joy.ox+(d?dx/d*m:0);joy.py=joy.oy+(d?dy/d*m:0);
-  const f=Math.min(1,d/JR);
+  const f=Math.min(1,d/JR*CFG.sens);
   joy.x=d?dx/d*f:0;joy.y=d?dy/d*f:0;
 });
 function joyEnd(e){if(e.pointerId===joy.id){joy.id=null;joy.active=false;joy.x=joy.y=0;}}
@@ -880,6 +940,14 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='p
 let last=0;
 let lastFrameTs=0, rafPrev=0;
 /* Ajuste automático: acompanha o custo de cada quadro e só baixa a qualidade se o aparelho ficar devagar de forma contínua */
+/* Contador de FPS (CONFIGURACOES > Mostrar FPS): media dos ultimos 0,5 s, so com o jogo rodando */
+const FPSH={n:0,t0:0,el:null};
+function fpsTick(ts){
+  const el=FPSH.el||(FPSH.el=document.getElementById('fpsHud'));if(!el)return;
+  if(!CFG.showFps){if(!el.classList.contains('hide'))el.classList.add('hide');FPSH.n=0;return;}
+  if(!FPSH.t0)FPSH.t0=ts;FPSH.n++;
+  if(ts-FPSH.t0>=500){el.textContent=Math.round(FPSH.n*1000/(ts-FPSH.t0))+' FPS';el.classList.remove('hide');FPSH.n=0;FPSH.t0=ts;}
+}
 const AUTO={work:0,intv:0,disp:33,warm:3,slowT:0,fastT:0};
 function perfMonitor(workMs,intervalMs){
   if(!CFG.autoperf) return;
@@ -905,7 +973,7 @@ function frame(ts){
   if(document.hidden){ last=ts; lastFrameTs=ts; return; }
   // Menu / telas de UI: zero update/render do mundo
   const inGame=state==='play'||state==='craft'||state==='pause'||state==='dead';
-  if(!inGame || !P){ last=ts; lastFrameTs=ts; return; }
+  if(!inGame || !P){ last=ts; lastFrameTs=ts; if(FPSH.el)FPSH.el.classList.add('hide'); FPSH.t0=0; return; }
   // Limite de FPS escolhido nas configurações (30, 60 ou máximo = taxa da tela)
   if(rafPrev){const d=ts-rafPrev; if(d>5&&d<60&&d<AUTO.disp) AUTO.disp=d;} // estima o intervalo da tela
   rafPrev=ts;
@@ -920,6 +988,7 @@ function frame(ts){
   if(MP.active&&MP.reconnecting){ /* pausado até reconectar */ }
   else if(state==='play' || (MP.active && !MP.gameOver && (state==='craft' || state==='dead' || state==='pause'))) update(dt);
   render();
+  fpsTick(ts);
   if(state==='play'&&(!MP.active||(MP.isHost&&MP.gameStarted))&&P&&!P.dead){ saveT+=dt; if(saveT>=SAVE_EVERY){ saveT=0; saveGame(); } }
   else if(state==='play'&&MP.active&&!MP.isHost&&MP.gameStarted&&P&&!P.dead){ saveT+=dt; if(saveT>=SAVE_EVERY){ saveT=0; guestSave(); } }   // convidado: guarda o que conquistou, por mundo
   if(state==='play') perfMonitor(performance.now()-t0,intervalMs); else AUTO.warm=Math.max(AUTO.warm,1.5);
