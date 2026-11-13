@@ -8,7 +8,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Arquivo | Globais | Usadas fora | So internas | Possivelmente mortas | Depende de (arquivos) | Usado por (arquivos) |
 |---|---:|---:|---:|---:|---:|---:|
-| 01-base | 53 | 41 | 12 | 0 | 0 | 22 |
+| 01-base | 54 | 41 | 13 | 0 | 0 | 22 |
 | 02-audio | 68 | 32 | 35 | 1 | 5 | 19 |
 | 03-dados | 47 | 35 | 12 | 0 | 2 | 20 |
 | 04-estado | 84 | 79 | 5 | 0 | 6 | 21 |
@@ -22,7 +22,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 12-crafting-multiplayer | 48 | 19 | 29 | 0 | 13 | 18 |
 | 13-render-personagens | 96 | 48 | 48 | 0 | 12 | 14 |
 | 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 12 | 0 |
-| 15-missoes-ui-controles | 80 | 18 | 62 | 0 | 9 | 11 |
+| 15-missoes-ui-controles | 90 | 18 | 72 | 0 | 9 | 11 |
 | 16-orientacao | 0 | 0 | 0 | 0 | 3 | 0 |
 | 17-arte-menu | 0 | 0 | 0 | 0 | 0 | 0 |
 | 18-plantacao | 0 | 0 | 0 | 0 | 12 | 0 |
@@ -51,8 +51,8 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 11-pesca-update | 241 | 39 | 50 | 870 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 321 | 40 | 20 | 260 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 612 | 13 | 16 | 320 | 17 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
-| 15-missoes-ui-controles | 190 | 58 | 21 | 249 |  |  | 17 |  |  | 67 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
+| 14-arquitetura-luz-ambiente | 614 | 13 | 16 | 319 | 17 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
+| 15-missoes-ui-controles | 192 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |
 | 18-plantacao | 36 | 6 | 22 | 77 | 16 |  |  | 13 | 1 | 1 | 8 | 3 | 139 |  | 1 |  |  | . |  |  |  |  |  |  |  |
@@ -72,7 +72,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 |---|---|---|---:|---:|
 | P | let | 04-estado:14 | 20 | 1946 |
 | MP | let | 04-estado:19 | 20 | 577 |
-| selectedMap | let | 04-estado:3 | 20 | 215 |
+| selectedMap | let | 04-estado:3 | 20 | 219 |
 | beep | funcao | 02-audio:42 | 19 | 136 |
 | rnd | const | 01-base:16 | 18 | 434 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 17 | 61 |
@@ -109,9 +109,9 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | W | let | 01-base:47 | 8 | 96 |
 | rocks | let | 04-estado:10 | 8 | 49 |
 | track | funcao | 15-missoes-ui-controles:60 | 8 | 13 |
-| CFG | const | 01-base:125 | 7 | 83 |
+| CFG | const | 01-base:126 | 7 | 91 |
 | vehicles | let | 04-estado:10 | 7 | 48 |
-| shake | let | 04-estado:14 | 7 | 36 |
+| shake | let | 04-estado:14 | 7 | 35 |
 | day | let | 04-estado:14 | 7 | 26 |
 | countInv | funcao | 04-estado:261 | 7 | 24 |
 | pick | const | 01-base:18 | 7 | 22 |
@@ -120,7 +120,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | pushOut | funcao | 05-geometria:398 | 7 | 14 |
 | sprintHeld | let | 04-estado:16 | 7 | 13 |
 | removeInv | funcao | 04-estado:266 | 7 | 11 |
-| $ | const | 01-base:2 | 6 | 153 |
+| $ | const | 01-base:2 | 6 | 160 |
 | Z | let | 01-base:47 | 6 | 108 |
 | plane | let | 04-estado:13 | 6 | 62 |
 | joy | const | 04-estado:183 | 6 | 54 |
@@ -135,7 +135,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 ## Candidatas a esconder (so usadas dentro do proprio arquivo)
 
-- **01-base** (12): makeLightSprite, mmC, IS_MOBILE, dispH, UI_REF, UI_MAX, MQ_H, MQ_W, UIS, uiClasses, applyUiScale, PERF_TIERS
+- **01-base** (13): makeLightSprite, mmC, IS_MOBILE, dispH, UI_REF, UI_MAX, MQ_H, MQ_W, UIS, uiClasses, applyUiScale, PERF_TIERS, _cl
 - **02-audio** (35): muted, gAtk, ambientSrc, ambientGain, rainNoise, ACT, sndBusy, _sndT, sndThrottle, stepNoise, VOICE_BOOST, voice, ZVB, creatureGain, AVB, musicWanted, musicOn, musicGain, musicTimer, musicNext, musicStepN, musicVerb, MUSIC_BASE, MUSIC_STEP, MUSIC_CACHE, ...
 - **03-dados** (12): PXPAL, pxLines, pxRot, PXURL, pxData, PXCV, hydratePx, FISH_TPL, fishGrid, FISH_POOL, SEED_POOL, ZUNLOCK
 - **04-estado** (5): chatLog, chatUnread, chatTime, chatAddHistory, chatShowEmpty
@@ -148,7 +148,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **11-pesca-update** (23): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, BURN_R, BURN_T, BURN_DPS, burnTick, updateP, updateZ, CHAINSAW_LEN, CHAINSAW_R, chainsawHit
 - **12-crafting-multiplayer** (29): canCraft, craft, STRUCT_EVT, LOCAL_GRACE, handleEvt, loadPeerJS, makeRoomCode, hostRetryTimer, hostOpenPeer, hostSignalRetry, RECONN_MAX_MS, showReconnectUI, updateReconnectUI, hideReconnectUI, mpReconnectFail, mpGuestReconnectAttempt, hostResumeGuest, guestResumed, hostBuildWorld, setupConn, handleNetData, vehSetTarget, applySnapshot, goneList, restoreBase, ...
 - **13-render-personagens** (48): skinLook, snowOutfit, _shc, Sh, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, TSP, treeSprite, treeShadow, drawOpenVeh, vehDriverLook, drawRider, obsStopDrone, obsStartDrone, obsStatic, obsSpotOk, ...
-- **15-missoes-ui-controles** (62): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACHD, achSave, achChime, achCheck, achSet, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, renderAch, renderHostWorlds, lockHostWorlds, bindSlider, bindToggle, bindSeg, slotMode, ...
+- **15-missoes-ui-controles** (72): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACH_MAPS, ACHD, achSave, achChime, achCheck, achSet, achMeta, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, achRow, renderAch, renderHostWorlds, lockHostWorlds, bindSlider, ...
 
 ## Possivelmente mortas (revisar antes de apagar: podem ser chamadas por onclick no HTML ou pelos testes)
 

@@ -903,7 +903,7 @@ function drawLighting(sx,sy){
     lctx.setTransform(1,0,0,1,0,0);lctx.imageSmoothingEnabled=true;
     lctx.globalCompositeOperation='source-over';
     lctx.clearRect(0,0,lightC.width,lightC.height);
-    lctx.fillStyle='rgba('+(NIGHTC[selectedMap]||NIGHTC.forest)+','+(.86*dark).toFixed(3)+')';
+    lctx.fillStyle='rgba('+(NIGHTC[selectedMap]||NIGHTC.forest)+','+Math.min(.95,.86*dark*[.78,1,1.1][CFG.night]).toFixed(3)+')';
     lctx.fillRect(0,0,lightC.width,lightC.height);
     lctx.globalCompositeOperation='destination-out';
     const punch=(cx,cy,r,al)=>{if(al!==undefined)lctx.globalAlpha=al;lctx.drawImage(lightSprite,(cx-r)/LS,(cy-r)/LS,2*r/LS,2*r/LS);if(al!==undefined)lctx.globalAlpha=1;};
@@ -1090,7 +1090,7 @@ function lakeGlints(l){
 }
 function render(){
   if(!P)return;
-  const sx=shake>0?Math.round(rnd(-shake,shake)):0,sy=shake>0?Math.round(rnd(-shake,shake)):0;
+  const sk=shake>0&&CFG.shake,sx=sk?Math.round(rnd(-shake,shake)):0,sy=sk?Math.round(rnd(-shake,shake)):0;   // CONFIGURACOES: tremor de tela
   ctx.setTransform(1,0,0,1,0,0);
   ctx.fillStyle='#070a07';ctx.fillRect(0,0,W,H);
   if(P.inside){
