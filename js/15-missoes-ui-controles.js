@@ -325,21 +325,32 @@ bindSeg('cfg_fps','fps');
   el.addEventListener('click',()=>{ CFG.autolvl=0;AUTO.warm=3;AUTO.slowT=0;AUTO.fastT=0;saveCfg();resize(); });
 });
 
+/* RESTAURAR: volta ao padrao so as opcoes da secao aberta. Todo controle tem id 'cfg_<chave>', entao a tela e repintada a partir do CFG. */
+const CFG_DEF={
+  audio:{master:.8,sfx:1,amb:.6,rain:.7,step:.8,music:.5},
+  perf:{quality:0,fps:60,autoperf:true,autolvl:0},
+  ui:{hud:true,minimap:true},
+  ctl:{joyS:1,sens:1,ui:1},
+  game:{night:1,shake:true,showFps:false}
+};
+function cfgRestore(sec){
+  const d=CFG_DEF[sec];if(!d)return;
+  Object.assign(CFG,d);saveCfg();
+  for(const k in d){
+    const el=$('cfg_'+k);if(!el)continue;
+    if(el.type==='range'){el.value=Math.round(d[k]*100);const lab=$('v_'+k);if(lab)lab.textContent=el.value+'%';}
+    else if(el.classList.contains('cfg-toggle'))el.classList.toggle('on',!!d[k]);
+    else if(el._paint)el._paint();
+  }
+  if(sec==='perf'){AUTO.warm=3;AUTO.slowT=0;AUTO.fastT=0;}
+  try{musicUpdateVol();}catch(e){}
+  applyHudClasses();resize();
+}
 on('btnReset','click',()=>{
-  CFG.master=0.8;CFG.sfx=1.0;CFG.amb=0.6;CFG.rain=0.7;CFG.step=0.8;
-  CFG.hud=true;CFG.minimap=true;CFG.dmgflash=true;CFG.screenflash=true;CFG.fullscreen=true;CFG.tracers=true;
-  CFG.music=0.5;CFG.joyS=1;CFG.sens=1;CFG.ui=1;CFG.shake=true;CFG.night=1;CFG.showFps=false;
-  CFG.quality=0;CFG.fps=60;CFG.autoperf=true;CFG.autolvl=0;
-  saveCfg();
-  const vals={cfg_master:80,cfg_sfx:100,cfg_amb:60,cfg_rain:70,cfg_step:80,cfg_music:50,cfg_joyS:100,cfg_sens:100,cfg_ui:100};
-  for(const id in vals){const e=$(id);if(e)e.value=vals[id];const lab=$('v_'+id.split('_')[1]);if(lab)lab.textContent=vals[id]+'%';}
-  document.querySelectorAll('.cfg-toggle').forEach(t=>{
-    t.classList.toggle('on',t.id!=='cfg_showFps');
-  });
-  ['cfg_quality','cfg_fps','cfg_night'].forEach(id=>{const e=$(id);if(e&&e._paint)e._paint();});
-  applyHudClasses();
-  resize();
-  toast('Configurações restauradas');
+  if(!cfgSec)return;
+  cfgRestore(cfgSec);
+  const pane=$('cfgPane_'+cfgSec);
+  toast('Restaurado: '+(pane?pane.dataset.title:'seção'));
 });
 
 /* ===== Tela de slots (4 saves): JOGAR escolhe onde criar o novo jogo, CONTINUAR escolhe qual save abrir ===== */
@@ -512,7 +523,7 @@ function cfgOpen(sec){
   document.querySelectorAll('.cfg-pane').forEach(e=>e.classList.toggle('hide',e.id!=='cfgPane_'+cfgSec));
   const pane=cfgSec&&$('cfgPane_'+cfgSec);
   if(t)t.textContent=pane?pane.dataset.title:'CONFIGURAÇÕES';
-  const rs=$('btnReset');if(rs)rs.classList.toggle('hide',!!cfgSec);   // RESTAURAR (tudo) so no menu de secoes
+  const rs=$('btnReset');if(rs)rs.classList.toggle('hide',!cfgSec);   // RESTAURAR so dentro de uma secao (restaura aquela secao)
   const sc=document.querySelector('#configscreen .ui-scroll');if(sc)sc.scrollTop=0;
 }
 document.querySelectorAll('.cfg-hubbtn').forEach(b=>b.addEventListener('click',()=>{aud();cfgOpen(b.dataset.cfgsec);}));
