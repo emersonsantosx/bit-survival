@@ -553,6 +553,39 @@ function flashReach(x,y,face){   // o feixe para na primeira parede
   for(let d=26;d<=170;d+=12){if(!losClear(x,y-5,x+cf*d,y-5+sf*d))break;L=d;}
   return Math.min(170,L+16);
 }
+/* SOMBRAS da lanterna e dos farois: lanca raios em leque a partir da luz e para cada raio acha o primeiro obstaculo (arvore, pedra, objeto solido ou
+   parede). O poligono resultante recorta o cone: atras do obstaculo fica na sombra, so a frente dele e o que esta em volta recebe luz.
+   Devolve null quando nada atrapalha (nao precisa recortar). Tudo em coordenadas do mundo. */
+function beamVis(ox,oy,a,len,ha,n){
+  const far=len*1.3+8,cand=[],near=querySolidNear(ox,oy,far+8);
+  for(let i=0;i<near.length;i++){
+    const q=near[i],R=q.kind==='tree'?6:q.kind==='rock'?8:5,dx=q.x-ox,dy=q.y-oy,d2=dx*dx+dy*dy;
+    if(d2>(far+R)*(far+R)||d2<(R+1)*(R+1))continue;   // longe demais, ou colado em quem segura a luz
+    cand.push([dx,dy,R]);
+  }
+  const pts=[];let blocked=false;
+  for(let i=0;i<=n;i++){
+    const ang=a-ha+2*ha*i/n,cx=Math.cos(ang),sy=Math.sin(ang);let d=far;
+    for(let k=0;k<cand.length;k++){
+      const c=cand[k],t=c[0]*cx+c[1]*sy;if(t<=0)continue;
+      const px=c[0]-cx*t,py=c[1]-sy*t,h2=c[2]*c[2]-(px*px+py*py);if(h2<0)continue;
+      const e=t-Math.sqrt(h2);if(e>0&&e<d)d=e;
+    }
+    if(wallBlocks(ox,oy,ox+cx*d,oy+sy*d)){
+      let lo=0,hi=d;for(let k=0;k<7;k++){const m=(lo+hi)/2;if(wallBlocks(ox,oy,ox+cx*m,oy+sy*m))hi=m;else lo=m;}
+      d=lo;
+    }
+    if(d<far-.5){blocked=true;if(d<6)d=6;}
+    pts.push(ox+cx*d,oy+sy*d);
+  }
+  return blocked?{pts,ox,oy}:null;
+}
+function visPath(g,vis,sc,sp){   // monta o caminho do poligono de visao na tela (sc: escala do canvas de destino)
+  g.beginPath();const o=sp(vis.ox,vis.oy);g.moveTo(o[0]/sc,o[1]/sc);
+  for(let i=0;i<vis.pts.length;i+=2){const q=sp(vis.pts[i],vis.pts[i+1]);g.lineTo(q[0]/sc,q[1]/sc);}
+  g.closePath();
+}
+window.beamVis=beamVis;
 const vigC=document.createElement('canvas');
 function ensureVig(){
   if(vigC.width===W&&vigC.height===H)return;
@@ -933,7 +966,10 @@ function drawLighting(sx,sy){
         if(burning){punch(hx0,hy0,64*Z);continue;}
         headlit.push(v);
         const cf=Math.cos(v.face||0),sf=Math.sin(v.face||0);
+        v._vis=tier<2?beamVis(v.x+cf*14,v.y+sf*14,v.face||0,190,.5,24):null;   // sombras: arvores, pedras e paredes cortam o farol
+        if(v._vis){lctx.save();visPath(lctx,v._vis,LS,sp);lctx.clip();}
         for(let k=0;k<5;k++){const dd=22+k*24;punch(hx0+cf*dd*Z,hy0+sf*dd*Z,(30+k*8)*Z);}
+        if(v._vis)lctx.restore();
       }
     }
     const beams=[];   // lanternas acesas (a minha e as dos aliados)
@@ -946,7 +982,9 @@ function drawLighting(sx,sy){
       const [bx,by]=sp(bm.x+Math.cos(bm.a)*5,bm.y-7);
       if(bx<-200*Z||by<-200*Z||bx>W+200*Z||by>H+200*Z)continue;
       const fl=1+Math.sin(T*31)*.012;
-      lctx.save();lctx.translate(bx/LS,by/LS);lctx.rotate(bm.a);const k=bm.len*fl*Z/LS/FL_LEN;lctx.scale(k,k);lctx.globalAlpha=.96;lctx.drawImage(flashMask,-10,-FL_H/2);lctx.restore();
+      bm.vis=tier<2?beamVis(bm.x+Math.cos(bm.a)*5,bm.y-7,bm.a,bm.len,.5,26):null;   // sombras atras de arvores, pedras e paredes
+      lctx.save();if(bm.vis){visPath(lctx,bm.vis,LS,sp);lctx.clip();}
+      lctx.translate(bx/LS,by/LS);lctx.rotate(bm.a);const k=bm.len*fl*Z/LS/FL_LEN;lctx.scale(k,k);lctx.globalAlpha=.96;lctx.drawImage(flashMask,-10,-FL_H/2);lctx.restore();
       punch(bx,by+3*Z,24*Z,.7);   // um pouco de luz em volta de quem segura
     }
     drawLighting._beams=beams;
@@ -985,14 +1023,16 @@ function drawLighting(sx,sy){
     // lanterna: brilho do feixe
     for(const bm of (drawLighting._beams||[])){
       const [bx,by]=sp(bm.x+Math.cos(bm.a)*5,bm.y-7);
-      ctx.save();ctx.translate(bx,by);ctx.rotate(bm.a);const k=bm.len*Z/FL_LEN;ctx.scale(k,k);
+      ctx.save();if(bm.vis){visPath(ctx,bm.vis,1,sp);ctx.clip();}
+      ctx.translate(bx,by);ctx.rotate(bm.a);const k=bm.len*Z/FL_LEN;ctx.scale(k,k);
       ctx.globalAlpha=Math.min(1,dark*1.3)*(selectedMap==='snow'?.6:1);ctx.drawImage(flashGlow,-10,-FL_H/2);ctx.restore();
     }
     ctx.globalAlpha=1;
     // faróis: cone de luz e halo
     if(tier<2)for(const v of headlit){
       const [hx0,hy0]=sp(v.x,v.y),cf=Math.cos(v.face||0),sf=Math.sin(v.face||0);
-      ctx.save();ctx.translate(hx0+cf*14*Z,hy0+sf*14*Z);ctx.rotate(v.face||0);
+      ctx.save();if(v._vis){visPath(ctx,v._vis,1,sp);ctx.clip();}
+      ctx.translate(hx0+cf*14*Z,hy0+sf*14*Z);ctx.rotate(v.face||0);
       ctx.globalAlpha=Math.min(1,dark*1.3);ctx.drawImage(coneC,0,-64*Z*.8,256*Z*.8,128*Z*.8);
       ctx.restore();
     }
