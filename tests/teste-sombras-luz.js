@@ -30,9 +30,9 @@ const { chromium } = require('playwright');
     // 1) lanterna: ponto atras do obstaculo (a 85 do jogador, na mesma linha), ponto ao lado do obstaculo, ponto na frente dele
     const pts = { atras: [688, 603], lado: [655, 585], frente: [632, 600] };
     cena(null); o.livre = { atras: lum(...pts.atras), lado: lum(...pts.lado), frente: lum(...pts.frente) };
-    cena('tree'); o.arvore = { atras: lum(...pts.atras), lado: lum(...pts.lado), frente: lum(...pts.frente), vis: !!lightBeams()[0].vis };
-    cena('rock'); o.pedra = { atras: lum(...pts.atras), vis: !!lightBeams()[0].vis };
-    cena(null); o.semVis = !lightBeams()[0].vis;
+    cena('tree'); o.arvore = { atras: lum(...pts.atras), lado: lum(...pts.lado), frente: lum(...pts.frente), vis: !!lightBeams()[0].occ };
+    cena('rock'); o.pedra = { atras: lum(...pts.atras), vis: !!lightBeams()[0].occ };
+    cena(null); o.semVis = !lightBeams()[0].vis && !lightBeams()[0].occ;
     // 3) farol do carro com uma arvore na frente
     const cenaCarro = (arv) => {
       cena(null); if (arv) { trees.push({ x: 650, y: 600, hp: 5, t: 0, type: 0, seed: 1, h: 1 }); rebuildSolidGrid(); }
@@ -40,8 +40,8 @@ const { chromium } = require('playwright');
       vehicles.push(v); P.inVehicle = v; P.torch = false; P.flashOn = false;
       for (let i = 0; i < 5; i++) update(.05); for (let k = 0; k < 3; k++) render();
     };
-    cenaCarro(false); o.carroLivre = lum(700, 602); o.carroVisLivre = !vehicles[0]._vis;
-    cenaCarro(true); o.carroArvore = lum(700, 602); o.carroFrente = lum(628, 600); o.carroVis = !!vehicles[0]._vis;
+    cenaCarro(false); o.carroLivre = lum(700, 602); o.carroVisLivre = !vehicles[0]._vis && !vehicles[0]._occ;
+    cenaCarro(true); o.carroArvore = lum(700, 602); o.carroFrente = lum(628, 600); o.carroVis = !!vehicles[0]._occ;
     return o;
   });
   console.log(JSON.stringify(r));
