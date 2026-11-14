@@ -51,7 +51,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 11-pesca-update | 241 | 39 | 50 | 870 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 321 | 40 | 20 | 260 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 614 | 13 | 16 | 319 | 17 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
+| 14-arquitetura-luz-ambiente | 624 | 13 | 16 | 319 | 20 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |
 | 15-missoes-ui-controles | 192 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |
@@ -84,7 +84,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | parts | let | 04-estado:10 | 16 | 75 |
 | items | let | 04-estado:10 | 15 | 61 |
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
-| ctx | const | 01-base:27 | 14 | 988 |
+| ctx | const | 01-base:27 | 14 | 992 |
 | blds | let | 04-estado:10 | 14 | 58 |
 | R | funcao | 13-render-personagens:2 | 12 | 1251 |
 | weather | let | 04-estado:6 | 12 | 88 |
@@ -131,7 +131,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | bldNear | funcao | 05-geometria:581 | 6 | 11 |
 | mapHasLake | funcao | 03-dados:309 | 6 | 8 |
 
-(92 no total, mostrando ate 60)
+(93 no total, mostrando ate 60)
 
 ## Candidatas a esconder (so usadas dentro do proprio arquivo)
 
