@@ -51,7 +51,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 11-pesca-update | 241 | 39 | 50 | 870 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 321 | 40 | 20 | 260 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 660 | 13 | 16 | 322 | 21 |  | 8 | 8 | 23 | 7 | 3 | 1 | 177 | . |  |  |  |  |  |  |  |  |  |  |  |
+| 14-arquitetura-luz-ambiente | 660 | 13 | 16 | 323 | 21 |  | 8 | 8 | 23 | 7 | 3 | 1 | 177 | . |  |  |  |  |  |  |  |  |  |  |  |
 | 15-missoes-ui-controles | 192 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |
@@ -110,7 +110,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | rocks | let | 04-estado:10 | 8 | 49 |
 | track | funcao | 15-missoes-ui-controles:60 | 8 | 13 |
 | CFG | const | 01-base:126 | 7 | 91 |
-| vehicles | let | 04-estado:10 | 7 | 48 |
+| vehicles | let | 04-estado:10 | 7 | 49 |
 | shake | let | 04-estado:14 | 7 | 35 |
 | day | let | 04-estado:14 | 7 | 26 |
 | countInv | funcao | 04-estado:261 | 7 | 24 |
