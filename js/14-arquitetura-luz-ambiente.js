@@ -670,7 +670,7 @@ function sunBitmap(sp){
   const img=sp.img,ax=sp.ax,ay=sp.ay,dx=SUN.qx,dy=SUN.qy,len=SUN.ql;
   let c,o;
   if(sp.lay){
-    const K=len*.42,Lm=Math.min(150,ay*K+4),th=Math.atan2(dy,dx)-Math.PI/2,co=Math.cos(th),si=Math.sin(th);
+    const K=len*(sp.k||.42),Lm=Math.min(150,ay*K+4),th=Math.atan2(dy,dx)-Math.PI/2,co=Math.cos(th),si=Math.sin(th);
     let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
     for(const u of[-ax-2,img.width-ax+2])for(const v of[-2,Lm+2]){const X=u*co-v*si,Y=u*si+v*co;x0=Math.min(x0,X);x1=Math.max(x1,X);y0=Math.min(y0,Y);y1=Math.max(y1,Y);}
     c=document.createElement('canvas');c.width=Math.ceil(x1-x0)+1;c.height=Math.ceil(y1-y0)+1;o={x:-x0,y:-y0};
@@ -698,8 +698,8 @@ function sunSpecOf(kind,ref){   // {key,img,ax,ay,lay} ou null (nao tem silhueta
   const f=silFor({kind:kind,ref:ref});if(!f||!f.sil)return null;
   return{key:f.sil.key+(f.tall?'L':'E'),img:f.sil.img,ax:f.sil.ax,ay:f.sil.ay,lay:!!f.tall};
 }
-function sunShadow(x,y,kind,ref){   // true se desenhou a sombra com a silhueta do objeto
-  const sp=sunSpecOf(kind,ref);if(!sp)return false;
+function sunShadow(x,y,kind,ref,extra){   // true se desenhou a sombra com a silhueta do objeto
+  const sp=kind==='human'?humanSpec(ref,extra):sunSpecOf(kind,ref);if(!sp)return false;
   if(SUN.a<.01)return true;
   let b=SUNC.get(sp.key);
   if(!b){if(SUNC.size>500)SUNC.clear();b=sunBitmap(sp);SUNC.set(sp.key,b);}
@@ -711,6 +711,33 @@ function vehShadow(v,L,W,H){   // caixa do veiculo girada pelo angulo dele, esti
   for(const a of[-1,1])for(const b of[-1,1]){const lx=a*L/2,ly=b*W/2,X=v.x+lx*c-ly*s,Y=v.y+3+lx*s+ly*c;pts.push([X,Y],[X+tx,Y+ty]);}
   const hp=hullPts(pts);ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.moveTo(hp[0][0],hp[0][1]);for(let i=1;i<hp.length;i++)ctx.lineTo(hp[i][0],hp[i][1]);ctx.closePath();ctx.fill();
 }
+
+/* SILHUETA DE PERSONAGEM: o corpo e desenhado por humanBody(R,...), que recebe a funcao de pintar; passamos uma que so marca a silhueta num canvas
+   pequeno e guardamos por pose (direcao, passo, tipo de zumbi, sentado). Serve para a sombra do sol e para o corpo cortar a luz da lanterna e dos farois. */
+const HSIL={};
+function humanSil(o,face,key){
+  if(HSIL[key])return HSIL[key];
+  const c=document.createElement('canvas');c.width=44;c.height=48;const g=c.getContext('2d');g.fillStyle='#000';
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  const Rc=(x,y,w,h)=>{const X=Math.round(x)+22,Y=Math.round(y)+36;g.fillRect(X,Y,w,h);x0=Math.min(x0,X);y0=Math.min(y0,Y);x1=Math.max(x1,X+w);y1=Math.max(y1,Y+h);};
+  try{window.humanBody(Rc,o,face);}catch(e){}
+  if(x1<=x0){Rc(-4,-14,8,17);}
+  const w=x1-x0,h=y1-y0,c2=document.createElement('canvas');c2.width=w;c2.height=h;c2.getContext('2d').drawImage(c,x0,y0,w,h,0,0,w,h);
+  return HSIL[key]={img:c2,ax:22-x0,ay:39-y0,key:key};   // a base (pe) fica em y=3
+}
+function humanSpec(o,face){
+  const fx=Math.cos(face),fy=Math.sin(face);
+  if(o.crawler)return{key:'Hcrawl',img:silRects('crawl',[[-9,-5,18,8]]).img,ax:silRects('crawl',[[-9,-5,18,8]]).ax,ay:silRects('crawl',[[-9,-5,18,8]]).ay,lay:false};
+  const back=fy<-.5,front=fy>.2,ex=fx>.45?1:(fx<-.45?-1:0),step=o.moving&&!o.sit?Math.sin(o.anim):0,l1=step>.3?-1:0,l2=step<-.3?-1:0;
+  const key='H'+[o.zombie?1:0,o.kind|0,o.zv|0,o.sit?1:0,o.bag?1:0,o.os||'',o.hs||'',o.shorts?1:0,o.acc||'',back?1:0,front?1:0,ex,l1,l2].join('.');
+  const sl=humanSil(o,face,key);
+  return{key:sl.key,img:sl.img,ax:sl.ax,ay:sl.ay,lay:true,k:.8};
+}
+const HGEN={skin:'#d9a37a',shirt:'#556',hair:'#222',moving:false,anim:0};
+const ANIMSZ={deer:[14,6,8],camel:[14,6,9],rabbit:[8,4,4],rat:[8,4,3],boar:[12,6,6],wolf:[13,5,6],dog:[13,5,6],scorpion:[9,3,3],vulture:[12,5,4],crow:[12,5,4]};
+function animShadow(a){const z=ANIMSZ[a.k]||[6,4,3];vehShadow(a,z[0],z[1],z[2]);}
+window.animShadow=animShadow;
+window.sunBM=(kind,ref,extra)=>{const sp=kind==='human'?humanSpec(ref,extra):sunSpecOf(kind,ref);if(!sp)return null;let b=SUNC.get(sp.key);if(!b){b=sunBitmap(sp);SUNC.set(sp.key,b);}return b;};   // testes
 window.sunOff=d=>{SH_OFF+=d;};window.sunShadow=sunShadow;window.vehShadow=vehShadow;
 function shadowCasters(ox,oy,a,len,ha,skip){
   const far=len*1.3,near=querySolidNear(ox,oy,far+20),out=[],seen=new Set();
@@ -727,6 +754,11 @@ function shadowCasters(ox,oy,a,len,ha,skip){
     else add(q.x,q.y,q.kind,q.ref,26);
   }
   for(const v of vehicles){if(v===skip||v.destroyed)continue;add(v.x,v.y,'veh',v,Math.max(v.w||36,v.h||20));}
+  const hum=(e,x,y)=>{if(e===skip||!e||!Number.isFinite(x)||!Number.isFinite(y))return;add(x,y,'human',e,8);};
+  if(P&&!P.dead&&!P.inVehicle&&!P.inside)hum(P,P.x,P.y);
+  for(const id in remotePlayers){const r=remotePlayers[id];if(r&&r.alive!==false&&!r.inVehicle&&!r.sl)hum(r,r.x,r.y);}
+  for(const z of zombies){if(z.dead||z.hp<=0)continue;hum(z,z.x,z.y);}
+  for(const a of animals){if(a.dead)continue;add(a.x,a.y,'animal',a,8);}
   if(!out.length)return null;
   out.sort((m,n)=>m.d-n.d);
   if(out.length>SH_MAX)out.length=SH_MAX;
@@ -755,6 +787,12 @@ function castShadows(g,occ,len,sp,LS){
     if(q.kind==='tree'){
       const sp2=treeSprite(t.k|0,Math.floor((t.seed||0)*4)&3,weather==='snow'&&selectedMap!=='snow');
       ext(silRects('tronco',SIL_RECTS.tronco),0,34);lay(sp2.cv,sp2.ox,sp2.oy);
+    }else if(q.kind==='human'){
+      const hs=humanSil(HGEN,Math.PI/2,'Hgen');ext(hs,0,Math.min(46,rem));   // o corpo (cabeca, tronco, pernas) esticado para tras
+    }else if(q.kind==='animal'){
+      const z=ANIMSZ[t.k]||[6,4,3],L=z[0],Wd=z[1],key='v'+L+'x'+Wd;
+      if(!SILC[key]){const c=document.createElement('canvas');c.width=L+2;c.height=Wd+2;const gg=c.getContext('2d');gg.fillStyle='#000';gg.fillRect(1,1,L,Wd);SILC[key]={img:c,ax:(L+2)/2,ay:(Wd+2)/2};}
+      ext(SILC[key],t.face||0,Math.min(40,L*2));
     }else if(q.kind==='veh'){
       const L=t.w||36,Wd=t.h||20,key='v'+L+'x'+Wd;
       if(!SILC[key]){const c=document.createElement('canvas');c.width=L+2;c.height=Wd+2;const gg=c.getContext('2d');gg.fillStyle='#000';gg.fillRect(1,1,L,Wd);SILC[key]={img:c,ax:(L+2)/2,ay:(Wd+2)/2};}
@@ -1172,16 +1210,16 @@ function drawLighting(sx,sy){
     const beams=[];   // lanternas acesas (a minha e as dos aliados)
     if(P&&P.torch&&P.flashOn&&!P.dead&&!P.inVehicle&&!P.sleeping){   // dormindo a lanterna nao ilumina
       const tl=flashReach(P.x,P.y,P.face);P._fLen=P._fLen?P._fLen+(tl-P._fLen)*.3:tl;
-      beams.push({x:P.x,y:P.y,a:P.face,len:P._fLen});
+      beams.push({x:P.x,y:P.y,a:P.face,len:P._fLen,src:P});
     }
-    for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.lt&&!rp.sl&&rp.alive!==false&&!rp.inVehicle&&Number.isFinite(rp.x)&&Number.isFinite(rp.face)&&(!bldAt(rp.x,rp.y)||bldAt(rp.x,rp.y)===(P&&P.inside)))beams.push({x:rp.x,y:rp.y,a:rp.face,len:130});}
+    for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.lt&&!rp.sl&&rp.alive!==false&&!rp.inVehicle&&Number.isFinite(rp.x)&&Number.isFinite(rp.face)&&(!bldAt(rp.x,rp.y)||bldAt(rp.x,rp.y)===(P&&P.inside)))beams.push({x:rp.x,y:rp.y,a:rp.face,len:130,src:rp});}
     for(const bm of beams){
       const [bx,by]=sp(bm.x+Math.cos(bm.a)*5,bm.y-7);
       if(bx<-200*Z||by<-200*Z||bx>W+200*Z||by>H+200*Z)continue;
       const fl=1+Math.sin(T*31)*.012;
       const box=bm.x+Math.cos(bm.a)*5,boy=bm.y-7;
       bm.vis=tier<2?beamVis(box,boy,bm.a,bm.len,.5,26,false):null;   // paredes
-      bm.occ=tier<2?shadowCasters(box,boy,bm.a,bm.len,.5):null;       // arvores, pedras e objetos
+      bm.occ=tier<2?shadowCasters(box,boy,bm.a,bm.len,.5,bm.src):null;       // arvores, pedras e objetos
       const kk=bm.len*fl*Z/LS/FL_LEN;
       lctx.save();if(bm.vis){visPath(lctx,bm.vis,LS,sp);lctx.clip();}
       if(bm.occ){

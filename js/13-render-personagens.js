@@ -451,7 +451,7 @@ function humanDraw(x,y,face,o){
   if(o.sit)ctx.translate(0,3);   // sentado: o quadril desce para o tronco
   if(depth){ctx.beginPath();ctx.rect(-40,-80,80,80+(3-depth*12)-0);ctx.clip();}   // corta tudo abaixo da linha d'água (pescoço quando fundo)
   if(o.crawler){
-    shadow(0,2,8,3);
+    if(!sunShadow(0,3,'human',o,face))shadow(0,2,8,3);
     const bx=fx>=0?-1:1,ca=Math.sin(o.anim*0.5);
     R(bx*9,-2,3,3,'#5a1212');R(bx*11,-1,4,1,'#8a2a2a');R(bx*13,0,3,1,'#6a1a1a');           // tronco cortado e rastro
     R(-7,-3,14,5,o.shirt);R(-7,-3,14,1,Sh(o.shirt,-.25));R(-3,-2,2,2,'#5a1212');R(2,0,1,2,o.skin);R(-1,-3,1,4,'#d8d0b8');
@@ -459,7 +459,7 @@ function humanDraw(x,y,face,o){
     R(-9+ca*2,-2,3,3,o.skin);R(6-ca*2,-2,3,3,o.skin);R(-10+ca*2,-1,1,1,'#d8d0b8');R(9-ca*2,-1,1,1,'#d8d0b8');
     ctx.restore();return;
   }
-  shadow(0,2,6,3);
+  if(!sunShadow(0,3,'human',o,face))shadow(0,2,6,3);
   humanBody(R,o,face);
   let hx=Math.round(fx*6),hy=Math.round(fy*4)-5;
   if(o.zombie){
@@ -2036,3 +2036,5 @@ function itemIndoor(it){
   Object.defineProperty(it,'_in',{value:r,writable:true,enumerable:false,configurable:true});
   return r;
 }
+
+window.humanBody=humanBody;

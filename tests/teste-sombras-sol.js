@@ -21,13 +21,18 @@ const { chromium } = require('playwright');
       rebuildSolidGrid(); for (let i = 0; i < 25; i++) update(.02); for (let k = 0; k < 3; k++) render();
     };
     const o = {};
-    const pts = { esq: [438, 341], dir: [462, 341], baixo: [450, 341] };
-    const med = (hr, obst) => { cena(hr, null); const a = {}; for (const k in pts) a[k] = lum(...pts[k]);
-      cena(hr, obst); const c = {}; for (const k in pts) c[k] = a[k] - lum(...pts[k]); return c; };   // escurecimento causado pelo objeto
-    o.manha = med(7, 'arvore'); o.meio = med(12, 'arvore'); o.tarde = med(17, 'arvore');
-    const lin = (hr, obst) => { cena(hr, null); const sx = SUN.sx, sy = SUN.sy, p = [450 + sx * 14, 330 + sy * 14], q = [450 - sx * 14, 330 - sy * 14];
-      const a = lum(...p), a2 = lum(...q); cena(hr, obst); return { sombra: a - lum(...p), oposto: a2 - lum(...q) }; };   // ao longo da direcao da sombra e do lado contrario
-    o.posteManha = lin(7, 'poste'); o.posteTarde = lin(17, 'poste');
+    const cen = (hr, kind, ref, extra) => {   // centro e tamanho do desenho pronto da sombra, relativo ao pe do objeto
+      cena(hr, null); const bm = sunBM(kind, ref, extra); const g = bm.cv.getContext('2d').getImageData(0, 0, bm.cv.width, bm.cv.height).data;
+      let n = 0, sx = 0, sy = 0, mx = -1e9, mn = 1e9; for (let y = 0; y < bm.cv.height; y++) for (let x = 0; x < bm.cv.width; x++) if (g[(y * bm.cv.width + x) * 4 + 3] > 40) { n++; sx += x - bm.ox; sy += y - bm.oy; mx = Math.max(mx, x - bm.ox); mn = Math.min(mn, x - bm.ox); }
+      return { n, cx: sx / n, cy: sy / n, w: mx - mn };
+    };
+    const arv = { x: 450, y: 330, k: 0, seed: .1 }, pin = { k: 0, seed: .1 }, poste = { type: 'lamp', solid: true }, pedra = { k: 2 };
+    const hum = { skin: '#d9a37a', shirt: '#556', hair: '#222', moving: false, anim: 0 };
+    o.arv = [7, 12, 17].map(h => cen(h, 'tree', arv)); o.poste = [7, 12, 17].map(h => cen(h, 'decor', poste)); o.pedra = [7, 17].map(h => cen(h, 'rock', pedra));
+    o.jog = [7, 12, 17].map(h => cen(h, 'human', hum, 1.57));
+    o.jogLado = cen(17, 'human', Object.assign({}, hum, { moving: true, anim: 1 }), 0);
+    const pontos = (hr, obst) => { cena(hr, obst); return true; };
+    o.fim = pontos(7, null);
     cena(7, 'arvore'); o.bid7 = SUN.bid; cena(17, 'arvore'); o.bid17 = SUN.bid;
     o.sx7 = (cena(7, null), SUN.sx); o.sx17 = (cena(17, null), SUN.sx); o.sx12 = (cena(12, null), SUN.sx);
     o.len12 = (cena(12, null), SUN.len); o.len17 = (cena(17, null), SUN.len);
@@ -36,10 +41,13 @@ const { chromium } = require('playwright');
   console.log(JSON.stringify(r));
   ok(r.sx7 < -.5 && r.sx17 > .5 && Math.abs(r.sx12) < .2, 'a direcao da sombra gira: manha para a esquerda (' + r.sx7.toFixed(2) + '), meio-dia ~0 (' + r.sx12.toFixed(2) + '), tarde para a direita (' + r.sx17.toFixed(2) + ')');
   ok(r.len17 > r.len12 * 1.5, 'a sombra e mais longa no fim da tarde que ao meio-dia (' + r.len17.toFixed(2) + ' vs ' + r.len12.toFixed(2) + ')');
-  ok(r.manha.esq > 12 && r.manha.esq > r.manha.dir * 2, 'arvore de manha: sombra cai para a esquerda (' + Math.round(r.manha.esq) + ' vs ' + Math.round(r.manha.dir) + ')');
-  ok(r.tarde.dir > 12 && r.tarde.dir > r.tarde.esq * 2, 'arvore a tarde: sombra cai para a direita (' + Math.round(r.tarde.dir) + ' vs ' + Math.round(r.tarde.esq) + ')');
-  ok(r.meio.baixo + r.meio.esq > 3 && r.meio.dir < 3, 'arvore ao meio-dia: sombra curta, quase embaixo da copa (' + Math.round(r.meio.baixo) + ' / ' + Math.round(r.meio.esq) + ')');
-  ok(r.posteManha.sombra > 1.5 && r.posteTarde.sombra > 1.5 && r.posteManha.oposto < 1 && r.posteTarde.oposto < 1, 'poste projeta um traco so no lado oposto ao sol (' + Math.round(r.posteManha.sombra) + ' / ' + Math.round(r.posteTarde.sombra) + ')');
+  ok(r.arv[0].cx < -8 && r.arv[2].cx > 8, 'arvore: a sombra cai para a esquerda de manha (' + r.arv[0].cx.toFixed(1) + ') e para a direita a tarde (' + r.arv[2].cx.toFixed(1) + ')');
+  ok(Math.abs(r.arv[1].cx) < r.arv[2].cx * .6 && r.arv[1].n < r.arv[2].n * .5, 'arvore: ao meio-dia a sombra e curta e quase embaixo (' + r.arv[1].n + ' px vs ' + r.arv[2].n + ' a tarde)');
+  ok(r.arv[2].w > 14, 'arvore: a sombra tem a largura da copa, nao so do tronco (' + r.arv[2].w + ' px)');
+  ok(r.poste[0].cx < -3 && r.poste[2].cx > 3 && r.poste[2].w < r.arv[2].w, 'poste: traco fino que gira com o sol (' + r.poste[0].cx.toFixed(1) + ' / ' + r.poste[2].cx.toFixed(1) + ')');
+  ok(r.pedra[0].cx < -2 && r.pedra[1].cx > 2, 'pedra: sombra esticada para o lado oposto ao sol (' + r.pedra[0].cx.toFixed(1) + ' / ' + r.pedra[1].cx.toFixed(1) + ')');
+  ok(r.jog[0].cx < -2 && r.jog[2].cx > 2 && r.jog[1].n > 5, 'jogador: sombra com o formato do corpo acompanha o sol (' + r.jog[0].cx.toFixed(1) + ' / ' + r.jog[2].cx.toFixed(1) + ')');
+  ok(r.jogLado.n !== r.jog[2].n, 'jogador: o desenho da sombra muda com a pose (parado ' + r.jog[2].n + ' px, andando de lado ' + r.jogLado.n + ' px)');
   ok(r.bid7 !== r.bid17, 'o desenho pronto das sombras e refeito quando o angulo muda');
   ok(errs.length === 0, 'sem erros de JS (' + errs.join(' | ') + ')');
   await b.close(); console.log(bad ? '\n' + bad + ' falha(s)' : '\nTodos os testes passaram'); process.exit(bad ? 1 : 0);

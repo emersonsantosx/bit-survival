@@ -51,7 +51,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 11-pesca-update | 241 | 39 | 50 | 870 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 309 | 40 | 20 | 260 | 13 | 22 | 2 | 3 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 670 | 13 | 16 | 326 | 21 |  | 8 | 8 | 23 | 7 | 3 | 1 | 178 | . |  |  |  |  |  |  |  |  |  |  |  |
+| 14-arquitetura-luz-ambiente | 670 | 13 | 16 | 338 | 21 |  | 8 | 8 | 23 | 7 | 3 | 1 | 178 | . |  |  |  |  |  |  |  |  |  |  |  |
 | 15-missoes-ui-controles | 192 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |
@@ -70,7 +70,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 20 | 1946 |
+| P | let | 04-estado:14 | 20 | 1954 |
 | MP | let | 04-estado:19 | 20 | 577 |
 | selectedMap | let | 04-estado:3 | 20 | 222 |
 | beep | funcao | 02-audio:42 | 19 | 136 |
@@ -90,17 +90,17 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | weather | let | 04-estado:6 | 12 | 90 |
 | trees | let | 04-estado:10 | 12 | 55 |
 | pointInLake | funcao | 05-geometria:113 | 12 | 43 |
-| zombies | let | 04-estado:10 | 11 | 58 |
+| zombies | let | 04-estado:10 | 11 | 59 |
 | campfires | let | 04-estado:10 | 11 | 40 |
 | state | let | 04-estado:2 | 10 | 92 |
 | bldAt | funcao | 05-geometria:585 | 10 | 29 |
 | tents | let | 04-estado:10 | 10 | 23 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |
-| remotePlayers | let | 04-estado:11 | 9 | 91 |
+| remotePlayers | let | 04-estado:11 | 9 | 93 |
 | rint | const | 01-base:17 | 9 | 72 |
 | ITEMS | const | 03-dados:167 | 9 | 61 |
 | dark | let | 04-estado:14 | 9 | 58 |
-| animals | let | 04-estado:10 | 9 | 37 |
+| animals | let | 04-estado:10 | 9 | 38 |
 | ORLA | let | 05-geometria:125 | 9 | 37 |
 | rebuildSolidGrid | funcao | 05-geometria:367 | 9 | 34 |
 | lakes | let | 04-estado:10 | 9 | 31 |

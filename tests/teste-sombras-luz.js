@@ -28,14 +28,17 @@ const { chromium } = require('playwright');
       if (obst === 'poste') decorations.push({ x: 650, y: 600, type: 'lamp', solid: true, seed: .2 });
       if (obst === 'barraca') tents.push({ x: 650, y: 600 });
       if (obst === 'rock') rocks.push({ x: 650, y: 600, hp: 5, t: 0, type: 0, seed: 1, s: 1 });
-      rebuildSolidGrid(); for (let i = 0; i < 25; i++) update(.1); for (let k = 0; k < 3; k++) render();
+      rebuildSolidGrid(); for (let i = 0; i < 25; i++) update(.1);
+      if (obst === 'zumbi') { const z = spawnZ(650, 600, 0); z.x = 650; z.y = 600; z.hp = z.hp || 10; zombies.push(z); }
+      if (obst === 'lobo') animals.push({ x: 650, y: 600, k: 'wolf', face: 0, hp: 10, max: 10 });
+      for (let k = 0; k < 3; k++) render();
     };
     // 1) lanterna: ponto atras do obstaculo (a 85 do jogador, na mesma linha), ponto ao lado do obstaculo, ponto na frente dele
     const pts = { atras: [676, 601], lado: [655, 585], frente: [632, 600] };
     cena(null); o.livre = { atras: lum(...pts.atras), lado: lum(...pts.lado), frente: lum(...pts.frente) };
     cena('tree'); o.arvore = { atras: lum(...pts.atras), lado: lum(...pts.lado), frente: lum(...pts.frente), vis: !!lightBeams()[0].occ };
     cena('rock'); o.pedra = { atras: lum(...pts.atras), vis: !!lightBeams()[0].occ };
-    cena('carro'); o.carro = lum(...pts.atras); cena('poste'); o.poste = lum(...pts.atras); o.posteLado = lum(655, 585); cena('barraca'); o.barraca = lum(...pts.atras);
+    cena('carro'); o.carro = lum(...pts.atras); cena('poste'); o.poste = lum(...pts.atras); o.posteLado = lum(655, 585); cena('barraca'); o.barraca = lum(...pts.atras); cena('zumbi'); o.zumbi = lum(...pts.atras); o.zumbiLado = lum(655, 574); cena(null); o.loboLivre = lum(666, 601); cena('lobo'); o.lobo = lum(666, 601);
     cena(null); o.semVis = !lightBeams()[0].vis && !lightBeams()[0].occ;
     // 3) farol do carro com uma arvore na frente
     const cenaCarro = (arv) => {
@@ -57,6 +60,8 @@ const { chromium } = require('playwright');
   ok(r.carro < r.livre.atras * .55, 'lanterna: carro faz sombra (' + Math.round(r.carro) + ')');
   ok(r.poste < r.livre.atras * .9 && r.posteLado > r.livre.lado * .8, 'lanterna: poste faz sombra fina, o lado segue claro (' + Math.round(r.poste) + ')');
   ok(r.barraca < r.livre.atras * .55, 'lanterna: barraca faz sombra (' + Math.round(r.barraca) + ')');
+  ok(r.zumbi < r.livre.atras * .7 && r.zumbiLado > 0, 'lanterna: o corpo de um zumbi faz sombra (' + Math.round(r.zumbi) + ' vs ' + Math.round(r.livre.atras) + ')');
+  ok(r.lobo < r.loboLivre * .7, 'lanterna: animal tambem faz sombra (' + Math.round(r.lobo) + ')');
   ok(r.parede && r.paredeMin < 60, 'parede corta o feixe: a luz nao atravessa o predio (alcance ' + Math.round(r.paredeMin) + ' de 170)');
   ok(r.carroVisLivre && r.carroVis, 'farol: sombra so quando ha obstaculo');
   ok(r.carroArvore < r.carroLivre * .6, 'farol: atras da arvore fica escuro (' + Math.round(r.carroArvore) + ' vs ' + Math.round(r.carroLivre) + ' sem arvore)');

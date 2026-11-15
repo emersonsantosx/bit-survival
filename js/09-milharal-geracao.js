@@ -891,7 +891,7 @@ function drawAnimal(a){
   if(a.dead) return;
   const x=a.x,y=a.y,dep=lakeDepth(x,y);
   if(dep>=.04){ctx.save();ctx.beginPath();ctx.rect(x-24,y-40,48,40+3-dep*6);ctx.clip();}   // na água só a parte de cima do bicho aparece
-  shadow(x,y+2,6,3);
+  animShadow(a);
   ctx.save();ctx.translate(x,y);ctx.rotate(a.face||0);
   const col=
     a.k==='deer'?'#8a6a40':a.k==='rabbit'?'#c8c0b0':a.k==='boar'?'#4a3a2a':
