@@ -208,7 +208,7 @@ function genWorld(seed) {
   setWorldSize();
   setRng(seed);
   worldFlavor();
-  solidGrid=null;SPG=null;FIELD=null;LM=null;chestList=[];   // grades de colisão do mundo anterior não podem vazar para a geração (senão o mesmo seed gera mundos diferentes)
+  solidGrid=null;SPG=null;FIELD=null;LM=null;chestList=[];if(window.groundReset)groundReset();   // grades de colisão do mundo anterior não podem vazar para a geração (senão o mesmo seed gera mundos diferentes)
   try {
   cityGardens=[];cityYards=[];cityPaths=[];cityDecor=[];fenceCityClear();ghLoad([]);
   trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];tents=[];spits=[];decorations=[];animals=[];if(window.stashReset)stashReset();if(window.wellReset)wellReset();if(window.logReset)logReset();

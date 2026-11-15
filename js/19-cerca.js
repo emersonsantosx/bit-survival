@@ -234,35 +234,43 @@ function structLoad(a){   // depois de gerar o mundo e antes de carregar as cerc
 function fencesInView(vx0,vx1,vy0,vy1){return fences.filter(f=>{const x=f.x*CELL,y=f.y*CELL;return x+CELL>vx0&&x-CELL<vx1&&y+CELL>vy0-12&&y-CELL<vy1+12;});}
 function fenceDepth(f){return f.d==='h'?f.y*CELL:f.y*CELL+CELL-1;}
 const PAL_W=['#f2efe6','#cfc9b8','#a8a290'],PAL_B=['#9a6a3a','#7a5230','#5a3c20'];   // branca (casas da cidade) e marrom (construida pelo jogador)
-function drawFence(f){
-  if(f.g>=2){drawWall(f);return;}
-  const x=f.x*CELL,y=f.y*CELL,WH1=(f.s?PAL_W:PAL_B)[0],WH2=(f.s?PAL_W:PAL_B)[1],WH3=(f.s?PAL_W:PAL_B)[2];
+function Rf(g,x,y,w,h,c){g.fillStyle=c;g.fillRect(x,y,w,h);}
+function fencePaint(g,f,x,y){
+  const WH1=(f.s?PAL_W:PAL_B)[0],WH2=(f.s?PAL_W:PAL_B)[1],WH3=(f.s?PAL_W:PAL_B)[2];
   if(f.d==='h'){
     if(!f.g){
-      for(let k=0;k<4;k++){const px=x+k*4+1;R(px,y-6,2,7,WH1);R(px,y-7,2,1,WH2);R(px+1,y-6,1,7,WH2);}
-      R(x,y-5,CELL,1,WH3);R(x,y-2,CELL,1,WH3);
+      for(let k=0;k<4;k++){const px=x+k*4+1;Rf(g,px,y-6,2,7,WH1);Rf(g,px,y-7,2,1,WH2);Rf(g,px+1,y-6,1,7,WH2);}
+      Rf(g,x,y-5,CELL,1,WH3);Rf(g,x,y-2,CELL,1,WH3);
     }else if(f.o){   // portinha aberta: so os dois postes e a folha virada para o lado
-      R(x+1,y-7,2,8,WH1);R(x+CELL-3,y-7,2,8,WH1);R(x+1,y-8,2,1,WH2);R(x+CELL-3,y-8,2,1,WH2);
-      R(x+1,y-13,3,6,WH2);R(x+1,y-13,1,6,WH1);R(x+3,y-12,1,5,WH3);
+      Rf(g,x+1,y-7,2,8,WH1);Rf(g,x+CELL-3,y-7,2,8,WH1);Rf(g,x+1,y-8,2,1,WH2);Rf(g,x+CELL-3,y-8,2,1,WH2);
+      Rf(g,x+1,y-13,3,6,WH2);Rf(g,x+1,y-13,1,6,WH1);Rf(g,x+3,y-12,1,5,WH3);
     }else{   // portinha: moldura com tabuas e travessa em diagonal
-      R(x+1,y-7,2,8,WH1);R(x+CELL-3,y-7,2,8,WH1);R(x+1,y-8,2,1,WH2);R(x+CELL-3,y-8,2,1,WH2);
-      R(x+3,y-5,CELL-6,5,WH2);R(x+3,y-5,CELL-6,1,WH1);R(x+3,y-1,CELL-6,1,WH1);
-      for(let k=0;k<CELL-7;k++)R(x+3+k,y-1-((k*3/(CELL-7))|0),1,1,WH3);
-      R(x+CELL-6,y-3,1,1,'#7a5a2a');
+      Rf(g,x+1,y-7,2,8,WH1);Rf(g,x+CELL-3,y-7,2,8,WH1);Rf(g,x+1,y-8,2,1,WH2);Rf(g,x+CELL-3,y-8,2,1,WH2);
+      Rf(g,x+3,y-5,CELL-6,5,WH2);Rf(g,x+3,y-5,CELL-6,1,WH1);Rf(g,x+3,y-1,CELL-6,1,WH1);
+      for(let k=0;k<CELL-7;k++)Rf(g,x+3+k,y-1-((k*3/(CELL-7))|0),1,1,WH3);
+      Rf(g,x+CELL-6,y-3,1,1,'#7a5a2a');
     }
   }else{
     const top=y;
     if(!f.g){
-      for(let k=0;k<4;k++){const py=top+k*4+3;R(x-1,py-6,3,7,WH1);R(x-1,py-7,3,1,WH2);R(x+1,py-6,1,7,WH2);}
-      R(x,top-4,1,CELL,WH3);R(x,top-1,1,CELL,WH3);
+      for(let k=0;k<4;k++){const py=top+k*4+3;Rf(g,x-1,py-6,3,7,WH1);Rf(g,x-1,py-7,3,1,WH2);Rf(g,x+1,py-6,1,7,WH2);}
+      Rf(g,x,top-4,1,CELL,WH3);Rf(g,x,top-1,1,CELL,WH3);
     }else if(f.o){
-      R(x-1,top-5,3,3,WH1);R(x-1,top+CELL-4,3,3,WH1);
-      R(x-1,top-4,7,2,WH2);R(x-1,top-4,7,1,WH1);
+      Rf(g,x-1,top-5,3,3,WH1);Rf(g,x-1,top+CELL-4,3,3,WH1);
+      Rf(g,x-1,top-4,7,2,WH2);Rf(g,x-1,top-4,7,1,WH1);
     }else{
-      R(x-1,top-5,3,3,WH1);R(x-1,top+CELL-4,3,3,WH1);
-      R(x,top-2,1,CELL-3,WH3);R(x-1,top+2,3,8,WH2);R(x-1,top+2,1,8,WH1);R(x+1,top+8,1,2,'#7a5a2a');
+      Rf(g,x-1,top-5,3,3,WH1);Rf(g,x-1,top+CELL-4,3,3,WH1);
+      Rf(g,x,top-2,1,CELL-3,WH3);Rf(g,x-1,top+2,3,8,WH2);Rf(g,x-1,top+2,1,8,WH1);Rf(g,x+1,top+8,1,2,'#7a5a2a');
     }
   }
+}
+/* a cerca nao muda (so o tipo, aberta e a paleta): cada variante e pintada uma vez num canvas pequeno e depois so copiada */
+const FNC={};
+function drawFence(f){
+  if(f.g>=2){drawWall(f);return;}
+  const key=f.d+(f.g?1:0)+(f.o?1:0)+(f.s?1:0);let c=FNC[key];
+  if(!c){const cv=document.createElement('canvas');cv.width=CELL+16;cv.height=CELL+24;fencePaint(cv.getContext('2d'),f,8,16);c=FNC[key]={cv,ox:8,oy:16};}
+  ctx.drawImage(c.cv,f.x*CELL-c.ox,f.y*CELL-c.oy);
 }
 /* parede e porta de madeira: peca alta (14 px). Horizontal: tabuas de frente com tampo claro; vertical: coluna com tampo so na ponta de cima. */
 const WH_=14,WP={top:'#c79a62',hi:'#b2814c',a:'#9a6a3a',b:'#8a5e38',seam:'#5e3e22',sh:'rgba(0,0,0,.32)',post:'#4a3018',door:'#7a5230',doorHi:'#946238'};

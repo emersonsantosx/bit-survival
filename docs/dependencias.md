@@ -51,12 +51,12 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 11-pesca-update | 241 | 39 | 50 | 870 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 309 | 40 | 20 | 260 | 13 | 22 | 2 | 3 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 670 | 13 | 16 | 338 | 21 |  | 8 | 8 | 23 | 7 | 3 | 1 | 178 | . |  |  |  |  |  |  |  |  |  |  |  |
+| 14-arquitetura-luz-ambiente | 670 | 13 | 16 | 339 | 21 |  | 8 | 10 | 23 | 7 | 3 | 1 | 129 | . |  |  |  |  |  |  |  |  |  |  |  |
 | 15-missoes-ui-controles | 192 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |
 | 18-plantacao | 36 | 6 | 22 | 77 | 16 |  |  | 13 | 1 | 1 | 8 | 3 | 139 |  | 1 |  |  | . |  |  |  |  |  |  |  |
-| 19-cerca | 36 | 13 | 3 | 114 | 12 |  |  | 1 |  | 5 | 5 | 6 | 70 |  |  |  |  |  | . |  |  |  |  |  |  |
+| 19-cerca | 37 | 13 | 3 | 114 | 12 |  |  | 1 |  | 5 | 5 | 6 | 34 |  |  |  |  |  | . |  |  |  |  |  |  |
 | 20-piso-telhado | 39 | 3 | 6 | 37 | 6 |  |  | 1 |  |  | 2 | 2 | 30 |  |  |  |  |  |  | . |  |  |  |  |  |
 | 21-frutiferas | 17 | 1 | 7 | 25 | 2 |  |  |  |  |  | 1 | 3 | 13 |  | 1 |  |  |  |  |  | . |  |  |  |  |
 | 22-bau | 25 | 14 | 11 | 80 | 12 |  |  | 1 |  | 3 | 9 | 6 |  |  |  |  |  |  |  |  |  | . |  |  |  |
@@ -72,7 +72,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 |---|---|---|---:|---:|
 | P | let | 04-estado:14 | 20 | 1954 |
 | MP | let | 04-estado:19 | 20 | 577 |
-| selectedMap | let | 04-estado:3 | 20 | 222 |
+| selectedMap | let | 04-estado:3 | 20 | 223 |
 | beep | funcao | 02-audio:42 | 19 | 136 |
 | rnd | const | 01-base:16 | 18 | 434 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 17 | 61 |
@@ -84,10 +84,10 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | parts | let | 04-estado:10 | 16 | 75 |
 | items | let | 04-estado:10 | 15 | 61 |
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
-| ctx | const | 01-base:27 | 14 | 994 |
+| ctx | const | 01-base:27 | 14 | 995 |
 | blds | let | 04-estado:10 | 14 | 58 |
-| R | funcao | 13-render-personagens:2 | 12 | 1251 |
-| weather | let | 04-estado:6 | 12 | 90 |
+| R | funcao | 13-render-personagens:2 | 12 | 1167 |
+| weather | let | 04-estado:6 | 12 | 89 |
 | trees | let | 04-estado:10 | 12 | 55 |
 | pointInLake | funcao | 05-geometria:113 | 12 | 43 |
 | zombies | let | 04-estado:10 | 11 | 59 |
@@ -99,7 +99,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | remotePlayers | let | 04-estado:11 | 9 | 93 |
 | rint | const | 01-base:17 | 9 | 72 |
 | ITEMS | const | 03-dados:167 | 9 | 61 |
-| dark | let | 04-estado:14 | 9 | 58 |
+| dark | let | 04-estado:14 | 9 | 59 |
 | animals | let | 04-estado:10 | 9 | 38 |
 | ORLA | let | 05-geometria:125 | 9 | 37 |
 | rebuildSolidGrid | funcao | 05-geometria:367 | 9 | 34 |
