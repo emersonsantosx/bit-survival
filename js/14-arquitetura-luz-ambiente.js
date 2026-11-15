@@ -592,7 +592,7 @@ window.beamVis=beamVis;
      mais um tronco fino que corta o feixe ate o fim;
    - pedra e objetos: o contorno deles esticado para tras, alargando um pouco (a luz e pontual, entao a sombra abre).
    So os que estao dentro do cone entram, no maximo SH_MAX por luz. */
-const SH_MAX=14,SH_LAY=1.05;
+const SH_MAX=14,SH_LAY=.5;   // SH_LAY: comprimento da sombra de um objeto alto em relacao a altura dele
 const SILC={};
 function silBlob(key,w,h,round){
   if(SILC[key])return SILC[key];
@@ -614,7 +614,7 @@ const SIL_RECTS={
 };
 const SIL_TALL={   // [retangulos, largura da base]
   pillar:[[[-4,-24,8,24]],8],statue:[[[-5,-22,10,22]],10],
-  lamp:[[[-1,-26,3,26],[-4,-30,9,5]],3],sign:[[[-1,-20,3,20],[-7,-26,14,9]],3],flag:[[[-1,-28,2,28],[1,-28,10,7]],2],
+  lamp:[[[-1,-26,3,26],[-4,-30,9,5]],5],sign:[[[-1,-20,3,20],[-7,-26,14,9]],5],flag:[[[-1,-28,2,28],[1,-28,10,7]],4],
   billboard:[[[-1,-30,3,30],[-22,-44,44,18]],4],
   cactus_bg:[[[-3,-22,6,22],[-9,-16,6,3],[-9,-20,3,7],[3,-14,7,3],[7,-18,3,6]],6],
   cactus_tall:[[[-3,-32,6,32],[-9,-22,6,3],[-9,-27,3,8],[3,-18,7,3],[7,-24,3,7]],6],
@@ -676,31 +676,31 @@ function castShadows(g,occ,len,sp,LS){
   g.globalCompositeOperation='destination-out';
   for(const o of occ){
     const q=o.q,t=q.ref,[px,py]=sp(q.x,q.y),rem=far-o.d;if(rem<=0)continue;
-    const ext=(sil,rot)=>{   // contorno esticado para tras (rot: carros giram com o angulo deles)
-      const step=Math.max(2.5,rem/48),co=Math.cos(rot||0),si=Math.sin(rot||0);g.globalAlpha=1;
-      for(let u=0;u<=rem;u+=step){
-        const s=1+u/Math.max(o.d,14)*.3,[ex,ey]=sp(q.x+o.dx*u,q.y+o.dy*u);
+    const ext=(sil,rot,maxL)=>{   // contorno esticado para tras, curto e afinando na ponta (rot: carros giram com o angulo deles)
+      const Ln=Math.min(rem,maxL||Math.min(60,Math.max(20,sil.ay*2.2))),step=Math.max(1.5,Ln/30),co=Math.cos(rot||0),si=Math.sin(rot||0);g.globalAlpha=1;
+      for(let u=0;u<=Ln;u+=step){
+        const s=1-.4*u/Ln,[ex,ey]=sp(q.x+o.dx*u,q.y+o.dy*u);
         g.setTransform(K*s*co,K*s*si,-K*s*si,K*s*co,ex/LS,ey/LS);g.drawImage(sil.img,-sil.ax,-sil.ay);
       }
     };
     const lay=(img,ax,ay)=>{   // sprite deitado no chao: cada altura vira uma distancia (base perto, topo longe)
       const th=Math.atan2(o.dy,o.dx)-Math.PI/2,co=Math.cos(th),si=Math.sin(th);g.globalAlpha=.96;
       for(let r=ay;r>=0;r-=2){
-        const h=ay-r,along=h*SH_LAY,div=1+along/Math.max(o.d,14)*.3;
+        const h=ay-r,along=h*SH_LAY,div=1+along/Math.max(o.d,14)*.15;
         g.setTransform(K*co,K*si,-K*si,K*co,px/LS,py/LS);
         g.drawImage(img,0,r,img.width,2,-ax*div,along,img.width*div,2*SH_LAY+.6);
       }
     };
     if(q.kind==='tree'){
       const sp2=treeSprite(t.k|0,Math.floor((t.seed||0)*4)&3,weather==='snow'&&selectedMap!=='snow');
-      ext(silRects('tronco',SIL_RECTS.tronco));lay(sp2.cv,sp2.ox,sp2.oy);
+      ext(silRects('tronco',SIL_RECTS.tronco),0,34);lay(sp2.cv,sp2.ox,sp2.oy);
     }else if(q.kind==='veh'){
       const L=t.w||36,Wd=t.h||20,key='v'+L+'x'+Wd;
       if(!SILC[key]){const c=document.createElement('canvas');c.width=L+2;c.height=Wd+2;const gg=c.getContext('2d');gg.fillStyle='#000';gg.fillRect(1,1,L,Wd);SILC[key]={img:c,ax:(L+2)/2,ay:(Wd+2)/2};}
-      ext(SILC[key],t.face||0);   // o retangulo do carro, girado pelo angulo dele
+      ext(SILC[key],t.face||0,Math.min(48,Math.max(L,Wd)*1.1));   // o retangulo do carro, girado pelo angulo dele
     }else{
       const f=silFor(q);
-      if(f.tall){ext(silBlob('base'+f.fw,f.fw,4,false));lay(f.sil.img,f.sil.ax,f.sil.ay);}
+      if(f.tall){ext(silBlob('base'+f.fw,f.fw,4,false),0,Math.min(40,f.sil.ay*.9));lay(f.sil.img,f.sil.ax,f.sil.ay);}
       else ext(f.sil);
     }
   }
