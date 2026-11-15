@@ -1,5 +1,6 @@
 /* ============ RENDER ============ */
-function R(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h);}
+let REC=null;   // quando nao e nulo, R so grava os retangulos (usado para montar os sprites em cache)
+function R(x,y,w,h,c){if(REC){REC.push([0,Math.round(x),Math.round(y),w,h,c]);return;}ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h);}
 /* ===== Skins: 4 masculinas (1ª é a padrão) e 4 femininas. alt = cor da roupa quando duas pessoas usam a mesma skin =====
    os = roupa, hs = cabelo/chapéu, hat/band = cor de boné, faixa ou presilha, acc = acessório, beard = barba */
 const SKINS=[
@@ -425,6 +426,7 @@ function drawHeld(wpn,hx,hy,a,left){
 function armLine(sx,sy,ex,ey,sleeve,skin,fr){
   const dx=ex-sx,dy=ey-sy,len=Math.hypot(dx,dy);
   if(len<.5)return;
+  if(REC){REC.push([1,sx,sy,ex,ey,sleeve,skin,fr]);return;}
   ctx.save();ctx.translate(sx,sy);ctx.rotate(Math.atan2(dy,dx));
   const h=Math.max(1,Math.round(len*(fr||.5)));
   ctx.fillStyle=sleeve;ctx.fillRect(0,-1,h,2);
@@ -438,28 +440,37 @@ function human(x,y,face,o){
   let d=lakeDepth(x,y);
   if(d>=.04){if(o.crawler)d*=.4;const k=o.s||1;waterSurface(x,y+(3-3*d)*k,d,k);}
 }
-function humanDraw(x,y,face,o){
-  const fx=Math.cos(face),fy=Math.sin(face);
-  ctx.save();
-  ctx.translate(Math.round(x),Math.round(y));
-  let depth=lakeDepth(x,y);if(depth<.04)depth=0;
-  if(depth&&o.crawler)depth*=.4;                              // quem rasteja fica mais por cima
-  let scaleM=o.s||1,offsetY=0;
-  if(depth){offsetY=depth*9+Math.sin(T*5+x*.07)*.6*depth;}   // afunda até só a cabeça ficar para fora e balança na água
-  if(scaleM!==1)ctx.scale(scaleM,scaleM);
-  ctx.translate(0,offsetY);
-  if(o.sit)ctx.translate(0,3);   // sentado: o quadril desce para o tronco
-  if(depth){ctx.beginPath();ctx.rect(-40,-80,80,80+(3-depth*12)-0);ctx.clip();}   // corta tudo abaixo da linha d'água (pescoço quando fundo)
-  if(o.crawler){
-    if(!sunShadow(0,3,'human',o,face))shadow(0,2,8,3);
-    const bx=fx>=0?-1:1,ca=Math.sin(o.anim*0.5);
-    R(bx*9,-2,3,3,'#5a1212');R(bx*11,-1,4,1,'#8a2a2a');R(bx*13,0,3,1,'#6a1a1a');           // tronco cortado e rastro
-    R(-7,-3,14,5,o.shirt);R(-7,-3,14,1,Sh(o.shirt,-.25));R(-3,-2,2,2,'#5a1212');R(2,0,1,2,o.skin);R(-1,-3,1,4,'#d8d0b8');
-    R(-2,-5,5,4,o.skin);R(-2,-5,5,1,o.hair);R(-2,-4,1,1,'#1a1410');R(1,-4,1,1,'#1a1410');R(-1,-2,2,1,'#7a1010');
-    R(-9+ca*2,-2,3,3,o.skin);R(6-ca*2,-2,3,3,o.skin);R(-10+ca*2,-1,1,1,'#d8d0b8');R(9-ca*2,-1,1,1,'#d8d0b8');
-    ctx.restore();return;
+/* ZUMBI EM CACHE: os zumbis comuns (sem arma, cuspe, grito, motosserra...) tem poucos visuais (tipo, cor, direcao, passo, bote). Cada pose e gravada uma vez como lista
+   de retangulos, pintada num canvas pequeno e depois so copiada: de uns 50 desenhos por zumbi para 1. A direcao fica em 32 passos e o passo da perna em 3 estados. */
+const ZSP={};
+function zCacheable(o){return !(o.brute||o.wind||o.spitter||o.screamer||o.yeti||o.boss||o.crawler||o.sit||o.bloater);}
+function zombieSprite(o,face){
+  const N=32,fi=((Math.round(face/(Math.PI*2)*N)%N)+N)%N,fq=fi*Math.PI*2/N;
+  const sn=o.moving?Math.sin(o.anim):0,st=sn>.3?1:(sn<-.3?2:0);
+  const key=[o.kind|0,o.zv|0,o.skin,o.shirt,o.hair||'',o.lunge?1:0,fi,st].join('|');
+  let sp=ZSP[key];if(sp)return sp;
+  const o2=Object.assign({},o,{anim:st===1?Math.PI/2:(st===2?-Math.PI/2:0),moving:st>0});
+  REC=[];try{humanFigure(o2,fq,Math.cos(fq),Math.sin(fq));}finally{var rec=REC;REC=null;}
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const r of rec){
+    if(r[0]===0){x0=Math.min(x0,r[1]);y0=Math.min(y0,r[2]);x1=Math.max(x1,r[1]+r[3]);y1=Math.max(y1,r[2]+r[4]);}
+    else{x0=Math.min(x0,r[1],r[3])-2;y0=Math.min(y0,r[2],r[4])-2;x1=Math.max(x1,r[1],r[3])+2;y1=Math.max(y1,r[2],r[4])+2;}
   }
-  if(!sunShadow(0,3,'human',o,face))shadow(0,2,6,3);
+  if(x1<=x0){x0=0;y0=0;x1=1;y1=1;}
+  x0=Math.floor(x0);y0=Math.floor(y0);
+  const pad=1,cv=document.createElement('canvas');cv.width=Math.ceil(x1-x0)+2*pad;cv.height=Math.ceil(y1-y0)+2*pad;const g=cv.getContext('2d');
+  g.translate(pad-x0,pad-y0);
+  for(const r of rec){
+    if(r[0]===0){g.fillStyle=r[5];g.fillRect(r[1],r[2],r[3],r[4]);}
+    else{const dx=r[3]-r[1],dy=r[4]-r[2],len=Math.hypot(dx,dy),h=Math.max(1,Math.round(len*(r[7]||.5)));
+      g.save();g.translate(r[1],r[2]);g.rotate(Math.atan2(dy,dx));g.fillStyle=r[5];g.fillRect(0,-1,h,2);g.fillStyle=r[6];g.fillRect(h,-1,len-h+1,2);g.restore();}
+  }
+  if(Object.keys(ZSP).length>400)for(const k in ZSP)delete ZSP[k];
+  return ZSP[key]={cv,ox:x0-pad,oy:y0-pad};
+}
+window.zombieSpriteCount=()=>Object.keys(ZSP).length;
+/* corpo do personagem (tudo menos sombra e transformacoes), separado para poder ser gravado uma vez e reaproveitado */
+function humanFigure(o,face,fx,fy){
   humanBody(R,o,face);
   let hx=Math.round(fx*6),hy=Math.round(fy*4)-5;
   if(o.zombie){
@@ -538,6 +549,31 @@ function humanDraw(x,y,face,o){
     if(_fl&&o.flash>0)R(hx+wx*_fl-2,hy+wy*_fl-2,5,4,'#ffe27a');
     if(o.wpn==='bow'&&o.swing>0){ const bx=hx+wx*4, by=hy+wy*4; R(bx+wx*6,by+wy*6-1,8,1,'#c0c0c8'); R(bx+wx*14,by+wy*14-1,2,2,'#a0a0a8'); }
   }
+}
+function humanDraw(x,y,face,o){
+  const fx=Math.cos(face),fy=Math.sin(face);
+  ctx.save();
+  ctx.translate(Math.round(x),Math.round(y));
+  let depth=lakeDepth(x,y);if(depth<.04)depth=0;
+  if(depth&&o.crawler)depth*=.4;                              // quem rasteja fica mais por cima
+  let scaleM=o.s||1,offsetY=0;
+  if(depth){offsetY=depth*9+Math.sin(T*5+x*.07)*.6*depth;}   // afunda até só a cabeça ficar para fora e balança na água
+  if(scaleM!==1)ctx.scale(scaleM,scaleM);
+  ctx.translate(0,offsetY);
+  if(o.sit)ctx.translate(0,3);   // sentado: o quadril desce para o tronco
+  if(depth){ctx.beginPath();ctx.rect(-40,-80,80,80+(3-depth*12)-0);ctx.clip();}   // corta tudo abaixo da linha d'água (pescoço quando fundo)
+  if(o.crawler){
+    if(!sunShadow(0,3,'human',o,face))shadow(0,2,8,3);
+    const bx=fx>=0?-1:1,ca=Math.sin(o.anim*0.5);
+    R(bx*9,-2,3,3,'#5a1212');R(bx*11,-1,4,1,'#8a2a2a');R(bx*13,0,3,1,'#6a1a1a');           // tronco cortado e rastro
+    R(-7,-3,14,5,o.shirt);R(-7,-3,14,1,Sh(o.shirt,-.25));R(-3,-2,2,2,'#5a1212');R(2,0,1,2,o.skin);R(-1,-3,1,4,'#d8d0b8');
+    R(-2,-5,5,4,o.skin);R(-2,-5,5,1,o.hair);R(-2,-4,1,1,'#1a1410');R(1,-4,1,1,'#1a1410');R(-1,-2,2,1,'#7a1010');
+    R(-9+ca*2,-2,3,3,o.skin);R(6-ca*2,-2,3,3,o.skin);R(-10+ca*2,-1,1,1,'#d8d0b8');R(9-ca*2,-1,1,1,'#d8d0b8');
+    ctx.restore();return;
+  }
+  if(!sunShadow(0,3,'human',o,face))shadow(0,2,6,3);
+  if(o.zombie&&!window.zCacheOff&&zCacheable(o)){const sp=zombieSprite(o,face);ctx.imageSmoothingEnabled=false;ctx.drawImage(sp.cv,sp.ox,sp.oy);}
+  else humanFigure(o,face,fx,fy);
   ctx.restore();
 }
 function drawRock(r){
