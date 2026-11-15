@@ -76,7 +76,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | beep | funcao | 02-audio:42 | 19 | 136 |
 | rnd | const | 01-base:16 | 18 | 434 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 17 | 61 |
-| toast | funcao | 11-pesca-update:1253 | 16 | 201 |
+| toast | funcao | 11-pesca-update:1260 | 16 | 201 |
 | T | let | 04-estado:14 | 16 | 114 |
 | clamp | const | 01-base:4 | 16 | 98 |
 | WW | let | 03-dados:2 | 16 | 95 |
