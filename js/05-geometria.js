@@ -369,7 +369,7 @@ function rebuildSolidGrid(){
   solidGrid=new Map();
   const put=(x,y,kind,ref)=>{
     const cx=Math.floor(x/SOLID_GRID), cy=Math.floor(y/SOLID_GRID);
-    const k=cx+','+cy;
+    const k=(cx+64)*4096+cy+64;   // chave numerica: sem criar texto a cada consulta (a colisao consulta isso milhares de vezes por quadro)
     let arr=solidGrid.get(k);
     if(!arr){ arr=[]; solidGrid.set(k,arr); }
     arr.push({x,y,kind,ref});
@@ -389,7 +389,7 @@ function querySolidNear(x,y,pad){
   const out=[];
   for(let cx=cx0;cx<=cx1;cx++){
     for(let cy=cy0;cy<=cy1;cy++){
-      const arr=solidGrid.get(cx+','+cy);
+      const arr=solidGrid.get((cx+64)*4096+cy+64);
       if(arr) for(let i=0;i<arr.length;i++) out.push(arr[i]);
     }
   }
