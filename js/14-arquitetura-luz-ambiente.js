@@ -448,19 +448,31 @@ function drawFacade(b){
 /* ============ ILUMINAÇÃO v2 ============
    Cor do dia por horário, sombras que seguem o sol, luzes coloridas, raios de sol, vaga-lumes, relâmpagos e vinheta.
    Tudo usa sprites pré-desenhados (sem gradientes novos por quadro). */
-const SUN={dx:0,dy:.4,len:.5,a:.3,e:1,h:12,fs:'rgba(8,10,28,.3)'};
+const SUN={dx:0,dy:.4,len:.5,a:.3,e:1,h:12,fs:'rgba(8,10,28,.3)',sx:0,sy:1,bid:'',qx:0,qy:1,ql:.4};
+/* direcao da sombra no chao (vetor unitario sx,sy): o sol nasce no leste, a sombra aponta para o oeste (esquerda) e quase horizontal; ao meio-dia aponta
+   para baixo e curta; no fim da tarde aponta para o leste (direita) e comprida. Quantizada em passos de 4,5 graus e 0,2 de comprimento para reaproveitar
+   o desenho pronto da sombra de cada objeto (SUNC); quando o passo muda, o cache e refeito. */
+function setSunDir(dx,dy){
+  const n=Math.hypot(dx,dy)||1;SUN.sx=dx/n;SUN.sy=dy/n;
+  const ai=Math.round(Math.atan2(SUN.sy,SUN.sx)/(Math.PI/40)),li=Math.round(SUN.len/.2);
+  const id=ai+'|'+li;
+  if(id!==SUN.bid){SUN.bid=id;SUNC.clear();SUN.qx=Math.cos(ai*Math.PI/40);SUN.qy=Math.sin(ai*Math.PI/40);SUN.ql=Math.max(.2,li*.2);}
+}
+const SUNC=new Map();
+let SH_OFF=0;
 function updateSun(){
   const h=(START_HOUR+T/DAY_SECONDS*24)%24;SUN.h=h;
-  if(P&&P.inside){SUN.e=.6;SUN.dx=0;SUN.dy=.3;SUN.len=.35;SUN.a=.28;SUN.fs='rgba(8,10,28,.28)';return;}
+  if(P&&P.inside){SUN.e=.6;SUN.dx=0;SUN.dy=.3;SUN.len=.35;SUN.a=.28;SUN.fs='rgba(8,10,28,.28)';setSunDir(0,1);return;}
   const st=(h-5.5)/14;let e,dx,a0;
   if(st>0&&st<1){e=Math.sin(Math.PI*st);dx=-Math.cos(Math.PI*st);a0=.32;}
   else{const mt=Math.min(1,Math.max(0,((h-19.5+24)%24)/10));e=Math.sin(Math.PI*mt);dx=-Math.cos(Math.PI*mt);a0=.16;}
   const wf=weather==='rain'?.5:weather==='snow'?.65:weather==='sand'?.6:1; // céu fechado: sombra suave
-  SUN.e=e;SUN.dx=dx;SUN.dy=.4;SUN.len=Math.min(2.5,.32+(1-e)*2.1);
+  SUN.e=e;SUN.dx=dx;SUN.dy=.22+.5*e;SUN.len=Math.min(2.2,.32+(1-e)*1.9);setSunDir(dx,SUN.dy);
   SUN.a=a0*Math.min(1,.4+e*1.4)*wf;
   SUN.fs='rgba(8,10,28,'+SUN.a.toFixed(3)+')';
 }
 function shadow(x,y,rx,ry){
+  if(SH_OFF)return;
   const k=SUN.len;
   ctx.fillStyle=SUN.fs;ctx.beginPath();
   ctx.ellipse(Math.round(x+SUN.dx*k*rx*.75),Math.round(y+SUN.dy*k*ry*.9),rx*(1+.35*k*Math.abs(SUN.dx)),ry*(1+.12*k),0,0,6.283);ctx.fill();
@@ -475,7 +487,7 @@ function hullPts(pts){
 }
 function bldShadow(b){
   const H=b.type==='apartment'?44:b.type==='office'?50:b.type==='warehouse'||b.type==='barn'?30:b.type==='shop'||b.type==='gas'?26:22;
-  const tx=SUN.dx*H*SUN.len*.55,ty=SUN.dy*H*SUN.len*.45;
+  const tx=SUN.sx*H*SUN.len*.6,ty=SUN.sy*H*SUN.len*.6;
   const x=b.x,y=b.y,w=b.w,h=b.h;
   const hp=hullPts([[x,y],[x+w,y],[x+w,y+h],[x,y+h],[x+tx,y+ty],[x+w+tx,y+ty],[x+w+tx,y+h+ty],[x+tx,y+h+ty]]);
   ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.moveTo(hp[0][0],hp[0][1]);for(let i=1;i<hp.length;i++)ctx.lineTo(hp[i][0],hp[i][1]);ctx.closePath();ctx.fill();
@@ -598,7 +610,7 @@ function silBlob(key,w,h,round){
   if(SILC[key])return SILC[key];
   const c=document.createElement('canvas');c.width=w+2;c.height=h+2;const g=c.getContext('2d');g.fillStyle='#000';
   if(round){g.beginPath();g.ellipse((w+2)/2,(h+2)/2+1,w/2,h/2,0,0,7);g.fill();}else g.fillRect(1,1,w,h);
-  return SILC[key]={img:c,ax:(w+2)/2,ay:h+1};
+  return SILC[key]={img:c,ax:(w+2)/2,ay:h+1,key:key};
 }
 /* contornos por tipo, em retangulos [x,y,w,h] relativos ao ponto da base do objeto (como o desenho dele). tall: objeto alto, a sombra e a silhueta
    deitada no chao; fw: largura da base, que corta o feixe ate o fim. Sem tall: o contorno inteiro e esticado para tras. */
@@ -607,7 +619,7 @@ const SIL_RECTS={
   tronco:[[-2,-9,5,9]],
   logh:[[-21,-8,42,11]],logv:[[-5,-20,10,40]],
   poco:[[-10,-8,20,11]],bauA:[[-10,-11,20,13]],bauB:[[-7,-11,14,13]],
-  chest:[[-6,-10,12,10]],crate:[[-6,-10,12,10]],ruinwall:[[-10,-14,20,14]],wreck:[[-16,-10,32,12]],
+  chest:[[-6,-10,12,10]],crate:[[-6,-10,12,10]],ruinwall:[[-10,-14,20,14]],wreck:[[-14,-9,28,15]],
   bench:[[-11,-8,22,8]],hydrant:[[-3,-10,6,10]],trash:[[-5,-10,10,10]],dumpster:[[-12,-14,24,14]],barrier:[[-10,-8,20,8]],
   stump:[[-5,-6,10,6]],log:[[-9,-6,18,6]],pt:[[-3,-8,6,8]],yucca:[[-6,-12,12,12]],cactus_sm:[[-2,-10,4,10]],mailbox:[[-1,-10,2,10],[-4,-14,8,5]],
   obj:[[-5,-9,10,9]]
@@ -628,7 +640,7 @@ function silRects(key,rects,tri){
   for(const r of rects){x0=Math.min(x0,r[0]);y0=Math.min(y0,r[1]);x1=Math.max(x1,r[0]+r[2]);y1=Math.max(y1,r[1]+r[3]);}
   const c=document.createElement('canvas');c.width=x1-x0+2;c.height=y1-y0+2;const g=c.getContext('2d');g.fillStyle='#000';
   for(const r of rects)g.fillRect(r[0]-x0+1,r[1]-y0+1,r[2],r[3]);
-  return SILC[key]={img:c,ax:1-x0,ay:1-y0};
+  return SILC[key]={img:c,ax:1-x0,ay:1-y0,key:key};
 }
 function silTri(key,rows,half0,slope){   // barraca: triangulo
   if(SILC[key])return SILC[key];
@@ -651,6 +663,55 @@ function silFor(q){   // devolve {sil, tall, fw}
   if(t.g!==undefined)return{sil:silRects('poco',SIL_RECTS.poco)};
   return{sil:silTri('barraca',22,3,.95),tall:true,fw:24};   // barraca do jogador
 }
+/* SOMBRA DO SOL COM O FORMATO DO OBJETO. Objeto alto (arvore, poste, barraca): o proprio desenho e deitado no chao na direcao da sombra, a base fica
+   perto e a copa longe, entao um pinheiro projeta um pinheiro e um poste projeta um traco. Objeto baixo (pedra, caixa, bau): o contorno e esticado
+   para o lado da sombra. O resultado e guardado pronto (SUNC) e so e desenhado por quadro com a transparencia do sol. */
+function sunBitmap(sp){
+  const img=sp.img,ax=sp.ax,ay=sp.ay,dx=SUN.qx,dy=SUN.qy,len=SUN.ql;
+  let c,o;
+  if(sp.lay){
+    const K=len*.42,Lm=Math.min(150,ay*K+4),th=Math.atan2(dy,dx)-Math.PI/2,co=Math.cos(th),si=Math.sin(th);
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    for(const u of[-ax-2,img.width-ax+2])for(const v of[-2,Lm+2]){const X=u*co-v*si,Y=u*si+v*co;x0=Math.min(x0,X);x1=Math.max(x1,X);y0=Math.min(y0,Y);y1=Math.max(y1,Y);}
+    c=document.createElement('canvas');c.width=Math.ceil(x1-x0)+1;c.height=Math.ceil(y1-y0)+1;o={x:-x0,y:-y0};
+    const g=c.getContext('2d');g.imageSmoothingEnabled=false;
+    g.setTransform(co,si,-si,co,o.x,o.y);
+    for(let r=ay;r>=0;r-=1){const along=(ay-r)*K;g.drawImage(img,0,r,img.width,1,-ax,along,img.width,Math.max(1,K)+.6);}
+    g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.fillStyle='rgb(8,10,28)';g.fillRect(0,0,c.width,c.height);
+  }else{
+    const L=Math.min(120,Math.max(3,ay*len)),x0=Math.min(0,dx*L)-ax-1,y0=Math.min(0,dy*L)-ay-1,x1=Math.max(0,dx*L)+img.width-ax+1,y1=Math.max(0,dy*L)+img.height-ay+1;
+    c=document.createElement('canvas');c.width=Math.ceil(x1-x0);c.height=Math.ceil(y1-y0);o={x:-x0,y:-y0};
+    const g=c.getContext('2d');g.imageSmoothingEnabled=false;
+    const st=Math.max(1,L/50);
+    for(let t=0;t<=L+.01;t+=st)g.drawImage(img,Math.round(o.x-ax+dx*t),Math.round(o.y-ay+dy*t));
+    g.globalCompositeOperation='source-in';g.fillStyle='rgb(8,10,28)';g.fillRect(0,0,c.width,c.height);
+  }
+  if(!(c.width>0&&c.height>0)){c.width=1;c.height=1;}
+  return{cv:c,ox:o.x,oy:o.y};
+}
+function sunSpecOf(kind,ref){   // {key,img,ax,ay,lay} ou null (nao tem silhueta propria: usa a elipse generica)
+  if(kind==='tree'){
+    const k=ref.k|0,v=Math.floor((ref.seed||0)*4)&3,sn=weather==='snow'&&selectedMap!=='snow',sp=treeSprite(k,v,sn);
+    return{key:'T'+selectedMap+k+v+(sn?1:0),img:sp.cv,ax:sp.ox,ay:sp.oy,lay:true};
+  }
+  if(kind==='decor'&&ref&&ref.type&&!SIL_TALL[ref.type]&&!SIL_RECTS[ref.type])return null;   // flores, arbustos: elipse generica
+  const f=silFor({kind:kind,ref:ref});if(!f||!f.sil)return null;
+  return{key:f.sil.key+(f.tall?'L':'E'),img:f.sil.img,ax:f.sil.ax,ay:f.sil.ay,lay:!!f.tall};
+}
+function sunShadow(x,y,kind,ref){   // true se desenhou a sombra com a silhueta do objeto
+  const sp=sunSpecOf(kind,ref);if(!sp)return false;
+  if(SUN.a<.01)return true;
+  let b=SUNC.get(sp.key);
+  if(!b){if(SUNC.size>500)SUNC.clear();b=sunBitmap(sp);SUNC.set(sp.key,b);}
+  const ga=ctx.globalAlpha;ctx.globalAlpha=SUN.a;ctx.drawImage(b.cv,Math.round(x-b.ox),Math.round(y-b.oy));ctx.globalAlpha=ga;
+  return true;
+}
+function vehShadow(v,L,W,H){   // caixa do veiculo girada pelo angulo dele, esticada na direcao da sombra
+  const f=v.face||0,c=Math.cos(f),s=Math.sin(f),pts=[],tx=SUN.sx*H*SUN.len*.7,ty=SUN.sy*H*SUN.len*.7;
+  for(const a of[-1,1])for(const b of[-1,1]){const lx=a*L/2,ly=b*W/2,X=v.x+lx*c-ly*s,Y=v.y+3+lx*s+ly*c;pts.push([X,Y],[X+tx,Y+ty]);}
+  const hp=hullPts(pts);ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.moveTo(hp[0][0],hp[0][1]);for(let i=1;i<hp.length;i++)ctx.lineTo(hp[i][0],hp[i][1]);ctx.closePath();ctx.fill();
+}
+window.sunOff=d=>{SH_OFF+=d;};window.sunShadow=sunShadow;window.vehShadow=vehShadow;
 function shadowCasters(ox,oy,a,len,ha,skip){
   const far=len*1.3,near=querySolidNear(ox,oy,far+20),out=[],seen=new Set();
   const add=(x,y,kind,ref,half)=>{

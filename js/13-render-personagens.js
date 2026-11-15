@@ -541,7 +541,7 @@ function humanDraw(x,y,face,o){
   ctx.restore();
 }
 function drawRock(r){
-  const x=r.x,y=r.y;shadow(x,y+2,8,4);
+  const x=r.x,y=r.y;if(!sunShadow(x,y,'rock',r))shadow(x,y+2,8,4);
   const base=selectedMap==='snow'?'#a8b8c8':selectedMap==='desert'?'#c8a878':selectedMap==='city'?'#707880':'#8a8a90';
   const top=selectedMap==='snow'?'#d0dce8':selectedMap==='desert'?'#e0c090':selectedMap==='city'?'#909aa0':'#a8a8b0';
   const k=r.k|0;
@@ -677,19 +677,15 @@ function treeSprite(k,v,snow){
   }
   return TSP[key]={cv:cv,ox:ox,oy:oy,top:top,half:Math.max(8,half)};
 }
-function treeShadow(x,y,s){
+function treeShadow(x,y,s,t){
+  if(t&&sunShadow(x,y,'tree',t))return;
   const L=Math.min(s.top,56)*SUN.len*.55,rw=s.half*.62;
-  const tx=x+SUN.dx*L,ty=y+2+SUN.dy*L*.6;
-  ctx.fillStyle=SUN.fs;ctx.beginPath();
-  ctx.moveTo(x-2,y+2);ctx.lineTo(x+2,y+2);ctx.lineTo(tx+1.5,ty);ctx.lineTo(tx-1.5,ty);ctx.closePath();
-  ctx.moveTo(tx+rw,ty);ctx.ellipse(tx,ty,rw*(1+.15*SUN.len),rw*.5,0,0,6.283);
-  ctx.moveTo(x+5,y+2);ctx.ellipse(x,y+2,5,2,0,0,6.283);
-  ctx.fill();
+  ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.ellipse(x+SUN.sx*L,y+2+SUN.sy*L*.6,rw,rw*.5,0,0,6.283);ctx.fill();
 }
 function drawTree(t){
   const x=t.x,y=t.y,k=t.k|0,v=Math.floor((t.seed||0)*4)&3;
   const s=treeSprite(k,v,weather==='snow'&&selectedMap!=='snow');
-  treeShadow(x,y,s);
+  treeShadow(x,y,s,t);
   const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
   const behind=P&&!P.inside&&P.y<y-3&&P.y>y-s.top&&Math.abs(P.x-x)<s.half;   // jogador atrás da copa
   if(behind)ctx.globalAlpha=.5;
@@ -697,6 +693,11 @@ function drawTree(t){
   ctx.globalAlpha=1;ctx.imageSmoothingEnabled=sm;
 }
 function drawDecoration(d){
+  const own=sunShadow(d.x,d.y,'decor',d);
+  if(own)sunOff(1);
+  try{drawDecoration0(d);}finally{if(own)sunOff(-1);}
+}
+function drawDecoration0(d){
   const x=d.x,y=d.y;
   if(d.type==='wreck'||d.type==='billboard'){drawAmbProp(d);return;}
   switch(d.type){
@@ -1140,7 +1141,7 @@ function drawRider(K,lk,L,W){
 function drawVehicle(v){
   // Local axes after rotate(face): +X = frente (direção do movimento), +Y = lado
   const L=v.w||36, W=v.h||20; // L=comprimento, W=largura
-  {const k=SUN.len;ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.ellipse(Math.round(v.x+SUN.dx*k*L*.3),Math.round(v.y+3+SUN.dy*k*W*.35),Math.max(L,W)*.46*(1+.15*k),Math.min(L,W)*.38,v.face||0,0,6.283);ctx.fill();}
+  vehShadow(v,L,W,vehKind(v)==='car'?12:7);
   ctx.save();
   ctx.translate(v.x,v.y);
   ctx.rotate(v.face||0);
@@ -1548,7 +1549,7 @@ function drawSleeper(x,y,sl,look){
 }
 function drawTent(t){
   const x=Math.round(t.x),y=Math.round(t.y);
-  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x,y+3,26,6,0,0,6.283);ctx.fill();
+  if(!sunShadow(x,y,'decor',t)){ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x,y+3,26,6,0,0,6.283);ctx.fill();}
   for(let r=0;r<22;r++){
     const half=3+Math.round(r*.95),edge=r%7===6;
     R(x-half,y-24+r,half,1,edge?'#4a6a3c':'#6d8f56');R(x,y-24+r,half,1,edge?'#33502c':'#4d7040');
