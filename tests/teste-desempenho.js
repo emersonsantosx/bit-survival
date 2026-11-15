@@ -32,6 +32,13 @@ const { chromium } = require('playwright');
     for (let i = 0; i < 60; i++) { const z = spawnZ(P.x - 180 + (i % 10) * 36, P.y - 70 + Math.floor(i / 10) * 40, i % 2); if (z) { z.x = P.x - 180 + (i % 10) * 36; z.y = P.y - 70 + Math.floor(i / 10) * 40; zombies.push(z); } }
     for (let i = 0; i < 8; i++) render(); o.horda = ops(); o.hordaSprites = zombieSpriteCount();
     window.zCacheOff = true; o.hordaSemCache = ops(); window.zCacheOff = false;
+    cena('city', 12); o.predioFalhas = 0; o.predios = blds.length;
+    for (const b of blds) for (let k = 0; k < 12; k++) {   // pontos dentro e na folga de 10 px do predio: a busca por celula tem que devolver o predio
+      const x = b.x - 10 + (b.w + 20) * (k % 4) / 3, y = b.y - 10 + (b.h + 20) * Math.floor(k / 4) / 2;
+      if (window.bldsNear(x, y).indexOf(b) < 0) o.predioFalhas++;
+    }
+    const ic = fenceIndexCheck(); o.cercas = ic.n; o.cercasNum = ic.ok;
+    const fl = fenceList(); if (fl.length) { const f = fl[0]; fenceDrop(f); const a = fenceIndexCheck().ok; fenceAdd(f); o.cercasNum = o.cercasNum && a && fenceIndexCheck().ok; }
     localStorage.clear(); selectedMap = 'city'; newGame(); o.blocosAposMundoNovo = groundChunkCount();
     return o;
   });
@@ -46,6 +53,8 @@ const { chromium } = require('playwright');
   ok(r.horda < 1500, 'horda de 60 zumbis: ' + r.horda + ' operacoes (limite 1500)');
   ok(r.hordaSemCache > r.horda * 2, 'o cache dos zumbis corta as operacoes (' + r.hordaSemCache + ' sem cache contra ' + r.horda + ')');
   ok(r.hordaSprites > 0 && r.hordaSprites < 80, 'poucos sprites de zumbi em memoria (' + r.hordaSprites + ')');
+  ok(r.predios > 0 && r.predioFalhas === 0, 'a colisao acha todo predio pela celula (' + r.predios + ' predios, ' + r.predioFalhas + ' falhas)');
+  ok(r.cercasNum, 'o mapa numerico das cercas acompanha o de texto (' + r.cercas + ' pecas, tirar e por de volta)');
   ok(errs.length === 0, 'sem erros de JS (' + errs.join(' | ') + ')');
   await b.close(); console.log(bad ? '\n' + bad + ' falha(s)' : '\nTodos os testes passaram'); process.exit(bad ? 1 : 0);
 })();

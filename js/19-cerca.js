@@ -13,11 +13,12 @@ const isFT=t=>t in GT,isOpenable=f=>f.g===1||f.g===3,isTall=f=>f.g>=2,gv=v=>(v==
 let tallN=0,tallSet=null;   // tallSet: celulas de 64 px (e vizinhas) com peca alta; descarta rapido quase todo ponto do segmento sem consultar o mapa
 let fences=[];
 const fkey=(x,y,d)=>d+x+','+y;
-let fmap=new Map();
-function reindex(){tallSet=null;fmap=new Map();tallN=0;for(const f of fences){fmap.set(fkey(f.x,f.y,f.d),f);if(isTall(f))tallN++;}}
-function addPiece(f){tallSet=null;fences.push(f);fmap.set(fkey(f.x,f.y,f.d),f);if(isTall(f))tallN++;}
+let fmap=new Map(),fnum=new Map();   // fnum: mesma coisa com chave numerica (a colisao consulta isso varias vezes por passo, sem criar texto)
+const nkey=(i,j,d)=>((i+2048)*8192+j+2048)*2+(d==='v'?1:0);
+function reindex(){tallSet=null;fmap=new Map();fnum=new Map();tallN=0;for(const f of fences){fmap.set(fkey(f.x,f.y,f.d),f);fnum.set(nkey(f.x,f.y,f.d),f);if(isTall(f))tallN++;}}
+function addPiece(f){tallSet=null;fences.push(f);fmap.set(fkey(f.x,f.y,f.d),f);fnum.set(nkey(f.x,f.y,f.d),f);if(isTall(f))tallN++;}
 let remoteOp=false;   // true enquanto aplica algo vindo de outro jogador (o telhado que cair nao solta madeira de novo)
-function dropPiece(f){tallSet=null;fences=fences.filter(q=>q!==f);fmap.delete(fkey(f.x,f.y,f.d));if(isTall(f)){tallN--;if(window.roofRecalc)roofRecalc(remoteOp);}}
+function dropPiece(f){tallSet=null;fences=fences.filter(q=>q!==f);fmap.delete(fkey(f.x,f.y,f.d));fnum.delete(nkey(f.x,f.y,f.d));if(isTall(f)){tallN--;if(window.roofRecalc)roofRecalc(remoteOp);}}
 const fenceAt=(x,y,d)=>fmap.get(fkey(x,y,d));
 
 /* borda da grade mais perto do ponto a frente do jogador */
@@ -90,8 +91,8 @@ function fenceToggle(f){
 function fenceHit(e,r){
   if(!fences.length)return;
   const cx=Math.floor(e.x/CELL),cy=Math.floor(e.y/CELL);
-  for(let i=cx-1;i<=cx+1;i++)for(let j=cy;j<=cy+1;j++){const f=fmap.get('h'+i+','+j);if(f&&!(isOpenable(f)&&f.o))pushRect(e,r,solidRect(f));}
-  for(let i=cx;i<=cx+1;i++)for(let j=cy-1;j<=cy+1;j++){const f=fmap.get('v'+i+','+j);if(f&&!(isOpenable(f)&&f.o))pushRect(e,r,solidRect(f));}
+  for(let i=cx-1;i<=cx+1;i++)for(let j=cy;j<=cy+1;j++){const f=fnum.get(nkey(i,j,'h'));if(f&&!(isOpenable(f)&&f.o))pushRect(e,r,solidRect(f));}
+  for(let i=cx;i<=cx+1;i++)for(let j=cy-1;j<=cy+1;j++){const f=fnum.get(nkey(i,j,'v'));if(f&&!(isOpenable(f)&&f.o))pushRect(e,r,solidRect(f));}
 }
 
 /* ---- quebrar: bater com qualquer arma desmonta cerca, portao e alguns objetos; recupera madeira ---- */
@@ -455,5 +456,5 @@ function fenceApplySnapshot(a,mode){   // mode 2: tambem tira as pecas que o anf
 }
 
 window.cellWalled=cellWalled;window.cellWallDirs=cellWallDirs;window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
-window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;
+window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;window.fenceIndexCheck=()=>{const n=fences.length,ok=fnum.size===fmap.size&&fences.every(f=>fnum.get(nkey(f.x,f.y,f.d))===f);return{n,ok};};window.fenceAdd=addPiece;window.fenceDrop=dropPiece;
 })();
