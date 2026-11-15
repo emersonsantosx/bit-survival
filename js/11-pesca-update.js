@@ -1021,13 +1021,20 @@ function update(dt){
   spits=spits.filter(s=>s.t>0);
   if(!MP.active||MP.isHost){
     const near=zombies.filter(z=>!z.dead&&Math.abs(z.x-P.x)<300&&Math.abs(z.y-P.y)<300);
+    let maxR=0;for(let i=0;i<near.length;i++)if(near[i].r>maxR)maxR=near[i].r;
+    const reach=2*maxR+2;   // alcance maximo de dois zumbis se empurrando (com folga)
+    near.sort((p,q)=>p.x-q.x);   // ordenado por x: cada zumbi so olha os vizinhos proximos em vez de todos
     for(let i=0;i<near.length;i++){
       const a=near[i];
       const pdx=a.x-P.x,pdy=a.y-P.y,pd=Math.hypot(pdx,pdy),pm=a.r+P.r-1;
       if(pd<pm&&pd>.01){a.x=P.x+pdx/pd*pm;a.y=P.y+pdy/pd*pm;}
       for(let j=i+1;j<near.length;j++){
-        const b=near[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),m=a.r+b.r-1;
-        if(d<m&&d>.01){const f=(m-d)/2;a.x-=dx/d*f;a.y-=dy/d*f;b.x+=dx/d*f;b.y+=dy/d*f;}
+        const b=near[j],dx=b.x-a.x,dy=b.y-a.y,m=a.r+b.r-1;
+        if(dx>reach)break;
+        if(dx>=m||dx<=-m||dy>=m||dy<=-m)continue;   // longe demais: descarta sem raiz quadrada (sao centenas de pares por quadro)
+        const d2=dx*dx+dy*dy;if(d2>=m*m)continue;
+        const d=Math.sqrt(d2);
+        if(d>.01){const f=(m-d)/2;a.x-=dx/d*f;a.y-=dy/d*f;b.x+=dx/d*f;b.y+=dy/d*f;}
       }
     }
     if(MP.active&&MP.isHost){

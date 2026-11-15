@@ -651,8 +651,8 @@ function updateBirds(dt){
     }
     if(b.st==='ground'){
       for(const s of sc){
-        const d=Math.hypot(b.x-s.x,b.y-s.y);
-        if(d<s.r){birdTakeoff(b,s.x,s.y);break;}
+        const dx=b.x-s.x,dy=b.y-s.y;
+        if(dx*dx+dy*dy<s.r*s.r){birdTakeoff(b,s.x,s.y);break;}   // sem raiz quadrada: cada ave confere todas as fontes de susto
       }
       if(b.st!=='ground')continue;
       b.idle-=dt;
