@@ -570,6 +570,19 @@ function nearestItem(){
   for(const it of items){const d=Math.hypot(it.x-P.x,it.y-P.y);if(d<bd&&itemReach(it)){bd=d;b=it;}}
   return b;
 }
+/* todos os itens ao alcance (os mesmos criterios do nearestItem), do mais perto para o mais longe */
+function itemsNear(){
+  const l=[];
+  for(const it of items){const d=Math.hypot(it.x-P.x,it.y-P.y);if(d<24&&itemReach(it))l.push([d,it]);}
+  l.sort((a,b)=>a[0]-b[0]);return l.map(q=>q[1]);
+}
+/* toque num icone extra: pega aquele item, nao o mais perto */
+function pickItemBtn(it){
+  if(state!=='play'||!P||P.dead||P.inVehicle||P.sleeping||P.sitting||P.fish)return;
+  if(items.indexOf(it)<0||Math.hypot(it.x-P.x,it.y-P.y)>=24||!itemReach(it))return;
+  takeItem(it);
+}
+window.itemsNear=itemsNear;window.pickItemBtn=pickItemBtn;
 /* movel de dentro de casa mais perto do jogador (distancia ate a borda do movel) */
 function nearestFurn(kinds,reach){
   const b=P&&P.inside;if(!b||!b.furn||P.inVehicle)return null;
@@ -879,6 +892,10 @@ function pickup(){
     if(cf&&!P.hold&&(firstFishItem()||countInv('meat')>0||countInv('corn')>0||countInv('potato')>0)){toast('Segure o alimento cru na mão para assar');return;}
     if(window.plotNeedsSeed&&plotNeedsSeed()){toast('Segure a semente na mão para plantar');return;}
     toast('Nada por perto');return;}
+  takeItem(it);
+}
+/* pega exatamente este item do chao (o botao de pegar chama com o alvo mais perto; os icones extras, com o que o jogador tocou) */
+function takeItem(it){
   const t=it.t;
   if(t==='ammo'){const n=rint(5,10);P.ammo+=n;toast('+'+n+' munição');}
   else if(t==='arrows'){
