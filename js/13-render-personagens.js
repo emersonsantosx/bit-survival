@@ -714,9 +714,15 @@ function treeSprite(k,v,snow){
   return TSP[key]={cv:cv,ox:ox,oy:oy,top:top,half:Math.max(8,half)};
 }
 function treeShadow(x,y,s,t){
+  if(shadowMode()===0)return;
   if(t&&sunShadow(x,y,'tree',t))return;
-  const L=Math.min(s.top,56)*SUN.len*.55,rw=s.half*.62;
-  ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.ellipse(x+SUN.sx*L,y+2+SUN.sy*L*.6,rw,rw*.5,0,0,6.283);ctx.fill();
+  const L=Math.min(s.top,56)*SUN.len*.55,rw=s.half*.62;   // modo simples: tronco esticado + copa em elipse (como antigamente)
+  const tx=x+SUN.dx*L,ty=y+2+SUN.dy*L*.6;
+  ctx.fillStyle=SUN.fs;ctx.beginPath();
+  ctx.moveTo(x-2,y+2);ctx.lineTo(x+2,y+2);ctx.lineTo(tx+1.5,ty);ctx.lineTo(tx-1.5,ty);ctx.closePath();
+  ctx.moveTo(tx+rw,ty);ctx.ellipse(tx,ty,rw*(1+.15*SUN.len),rw*.5,0,0,6.283);
+  ctx.moveTo(x+5,y+2);ctx.ellipse(x,y+2,5,2,0,0,6.283);
+  ctx.fill();
 }
 function drawTree(t){
   const x=t.x,y=t.y,k=t.k|0,v=Math.floor((t.seed||0)*4)&3;

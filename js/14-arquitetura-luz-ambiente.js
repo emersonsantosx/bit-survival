@@ -472,7 +472,7 @@ function updateSun(){
   SUN.fs='rgba(8,10,28,'+SUN.a.toFixed(3)+')';
 }
 function shadow(x,y,rx,ry){
-  if(SH_OFF)return;
+  if(SH_OFF||shadowMode()===0)return;
   const k=SUN.len;
   ctx.fillStyle=SUN.fs;ctx.beginPath();
   ctx.ellipse(Math.round(x+SUN.dx*k*rx*.75),Math.round(y+SUN.dy*k*ry*.9),rx*(1+.35*k*Math.abs(SUN.dx)),ry*(1+.12*k),0,0,6.283);ctx.fill();
@@ -486,6 +486,7 @@ function hullPts(pts){
   lo.pop();up.pop();return lo.concat(up);
 }
 function bldShadow(b){
+  if(shadowMode()===0)return;
   const H=b.type==='apartment'?44:b.type==='office'?50:b.type==='warehouse'||b.type==='barn'?30:b.type==='shop'||b.type==='gas'?26:22;
   const tx=SUN.sx*H*SUN.len*.6,ty=SUN.sy*H*SUN.len*.6;
   const x=b.x,y=b.y,w=b.w,h=b.h;
@@ -697,7 +698,8 @@ function sunSpecOf(kind,ref){   // {key,img,ax,ay,lay} ou null (nao tem silhueta
   const f=silFor({kind:kind,ref:ref});if(!f||!f.sil)return null;
   return{key:f.sil.key+(f.tall?'L':'E'),img:f.sil.img,ax:f.sil.ax,ay:f.sil.ay,lay:!!f.tall};
 }
-function sunShadow(x,y,kind,ref,extra){   // true se desenhou a sombra com a silhueta do objeto
+function sunShadow(x,y,kind,ref,extra){   // true se o objeto ja foi resolvido aqui (desenhou a silhueta, ou as sombras estao desligadas); false = quem chamou desenha a elipse simples
+  const sm=shadowMode();if(sm===0)return true;if(sm===1)return false;
   const sp=kind==='human'?humanSpec(ref,extra):sunSpecOf(kind,ref);if(!sp)return false;
   if(SUN.a*(1-.9*dark)<.045)return true;   // sol baixo ou noite: a sombra some sob o escuro, nem desenha
   let b=SUNC.get(sp.key);
@@ -706,6 +708,9 @@ function sunShadow(x,y,kind,ref,extra){   // true se desenhou a sombra com a sil
   return true;
 }
 function vehShadow(v,L,W,H){   // caixa do veiculo girada pelo angulo dele, esticada na direcao da sombra
+  const sm=shadowMode();if(sm===0)return;
+  if(sm===1){const k=SUN.len,lo=Math.max(L,W),sh=Math.min(L,W);ctx.fillStyle=SUN.fs;ctx.beginPath();   // modo simples: elipse que gira com o veiculo (como antigamente)
+    ctx.ellipse(Math.round(v.x+SUN.dx*k*lo*.3),Math.round(v.y+3+SUN.dy*k*sh*.7),lo*.5*(1+.15*k),sh*.5*.9,v.face||0,0,6.283);ctx.fill();return;}
   const f=v.face||0,c=Math.cos(f),s=Math.sin(f),pts=[],tx=SUN.sx*H*SUN.len*.7,ty=SUN.sy*H*SUN.len*.7;
   for(const a of[-1,1])for(const b of[-1,1]){const lx=a*L/2,ly=b*W/2,X=v.x+lx*c-ly*s,Y=v.y+3+lx*s+ly*c;pts.push([X,Y],[X+tx,Y+ty]);}
   const hp=hullPts(pts);ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.moveTo(hp[0][0],hp[0][1]);for(let i=1;i<hp.length;i++)ctx.lineTo(hp[i][0],hp[i][1]);ctx.closePath();ctx.fill();
@@ -1204,7 +1209,7 @@ function drawLighting(sx,sy){
         const cf=Math.cos(v.face||0),sf=Math.sin(v.face||0);
         const vox=v.x+cf*14,voy=v.y+sf*14;
         v._vis=tier<2?beamVis(vox,voy,v.face||0,190,.5,24,false):null;   // paredes cortam o farol
-        v._occ=tier<2?shadowCasters(vox,voy,v.face||0,190,.5,v):null;       // arvores, pedras e objetos: sombra com o formato deles
+        v._occ=tier<2&&shadowMode()===2?shadowCasters(vox,voy,v.face||0,190,.5,v):null;       // arvores, pedras e objetos: sombra com o formato deles
         if(v._vis||v._occ){
           const g=v._occ?shReady(lightC.width,lightC.height):lctx;
           if(g!==lctx)g.setTransform(1,0,0,1,0,0);
@@ -1229,7 +1234,7 @@ function drawLighting(sx,sy){
       const fl=1+Math.sin(T*31)*.012;
       const box=bm.x+Math.cos(bm.a)*5,boy=bm.y-7;
       bm.vis=tier<2?beamVis(box,boy,bm.a,bm.len,.5,26,false):null;   // paredes
-      bm.occ=tier<2?shadowCasters(box,boy,bm.a,bm.len,.5,bm.src):null;       // arvores, pedras e objetos
+      bm.occ=tier<2&&shadowMode()===2?shadowCasters(box,boy,bm.a,bm.len,.5,bm.src):null;       // arvores, pedras e objetos
       const kk=bm.len*fl*Z/LS/FL_LEN;
       lctx.save();if(bm.vis){visPath(lctx,bm.vis,LS,sp);lctx.clip();}
       if(bm.occ){

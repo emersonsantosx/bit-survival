@@ -319,6 +319,7 @@ function bindSeg(id,key){
 }
 bindSeg('cfg_quality','quality');
 bindSeg('cfg_fps','fps');
+bindSeg('cfg_shadows','shadows');
 // Reaplica canvas ao mudar perf
 ['cfg_autoperf'].forEach(id=>{
   const el=$(id); if(!el) return;
@@ -328,7 +329,7 @@ bindSeg('cfg_fps','fps');
 /* RESTAURAR: volta ao padrao so as opcoes da secao aberta. Todo controle tem id 'cfg_<chave>', entao a tela e repintada a partir do CFG. */
 const CFG_DEF={
   audio:{master:.8,sfx:1,amb:.6,rain:.7,step:.8,music:.5},
-  perf:{quality:0,fps:60,autoperf:false,autolvl:0},
+  perf:{quality:0,fps:60,autoperf:false,autolvl:0,shadows:2},
   ui:{hud:true,minimap:true},
   ctl:{joyS:1,sens:1,ui:1},
   game:{night:1,shake:true,showFps:false}

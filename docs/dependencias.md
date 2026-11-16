@@ -8,7 +8,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Arquivo | Globais | Usadas fora | So internas | Possivelmente mortas | Depende de (arquivos) | Usado por (arquivos) |
 |---|---:|---:|---:|---:|---:|---:|
-| 01-base | 54 | 41 | 13 | 0 | 0 | 22 |
+| 01-base | 55 | 42 | 13 | 0 | 0 | 22 |
 | 02-audio | 68 | 32 | 35 | 1 | 5 | 19 |
 | 03-dados | 47 | 35 | 12 | 0 | 2 | 20 |
 | 04-estado | 84 | 79 | 5 | 0 | 6 | 21 |
@@ -50,8 +50,8 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 10-jogo-saves | 91 | 51 | 47 | 687 | 18 | 3 | 12 | 10 | 7 | . | 88 | 25 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |  |
 | 11-pesca-update | 241 | 39 | 50 | 870 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |
-| 13-render-personagens | 311 | 40 | 20 | 260 | 13 | 22 | 2 | 3 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 681 | 13 | 18 | 343 | 21 |  | 8 | 13 | 23 | 7 | 3 | 1 | 112 | . |  |  |  |  |  |  |  |  |  |  |  |
+| 13-render-personagens | 320 | 40 | 20 | 260 | 13 | 22 | 2 | 3 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |
+| 14-arquitetura-luz-ambiente | 691 | 13 | 18 | 343 | 21 |  | 8 | 13 | 23 | 7 | 3 | 1 | 112 | . |  |  |  |  |  |  |  |  |  |  |  |
 | 15-missoes-ui-controles | 192 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |
@@ -84,7 +84,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | parts | let | 04-estado:10 | 16 | 75 |
 | items | let | 04-estado:10 | 15 | 61 |
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
-| ctx | const | 01-base:27 | 14 | 995 |
+| ctx | const | 01-base:27 | 14 | 1007 |
 | blds | let | 04-estado:10 | 14 | 61 |
 | R | funcao | 13-render-personagens:3 | 12 | 1140 |
 | weather | let | 04-estado:6 | 12 | 89 |
@@ -109,7 +109,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | W | let | 01-base:47 | 8 | 100 |
 | rocks | let | 04-estado:10 | 8 | 49 |
 | track | funcao | 15-missoes-ui-controles:60 | 8 | 13 |
-| CFG | const | 01-base:126 | 7 | 96 |
+| CFG | const | 01-base:128 | 7 | 97 |
 | vehicles | let | 04-estado:10 | 7 | 49 |
 | shake | let | 04-estado:14 | 7 | 35 |
 | day | let | 04-estado:14 | 7 | 26 |

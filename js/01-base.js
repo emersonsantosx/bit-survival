@@ -81,6 +81,8 @@ const PERF_TIERS=[
   {weatherCap:120,weatherSpawn:.45,partsCap:140,fireRate:14,smokeRate:5, lightScale:2,hudInterval:.1, mmEvery:1},
   {weatherCap:85, weatherSpawn:.33,partsCap:100,fireRate:10,smokeRate:3.5,lightScale:4,hudInterval:.15,mmEvery:2}
 ];
+/* Sombras: 0 = desligadas, 1 = simples (elipses no chao, como antigamente), 2 = avancadas (silhueta real, muda com a hora e a luz). Padrao: 2. */
+function shadowMode(){ const m=+CFG.shadows; return m===0||m===1?m:2; }
 function perfTotal(){ return Math.min(2,(CFG.quality|0)+(CFG.autoperf?(CFG.autolvl|0):0)); }
 function perf(){
   const total=perfTotal(), t=PERF_TIERS[Math.min(2,total)];
@@ -124,7 +126,7 @@ window.addEventListener('resize',resize);
 
 /* ============ CONFIG ============ */
 const CFG={master:0.8,sfx:1.0,amb:0.6,rain:0.7,step:0.8,music:0.5,hud:true,minimap:true,dmgflash:true,screenflash:true,fullscreen:true,tracers:true,
-  quality:0, fps:60, autoperf:false, autolvl:0,
+  quality:0, fps:60, autoperf:false, autolvl:0, shadows:2,
   joyS:1, sens:1, ui:1, shake:true, night:1, showFps:false};
 try{const raw=localStorage.getItem('minisurv_cfg');if(raw)Object.assign(CFG,JSON.parse(raw));}catch(e){}
 if(CFG.minimap===undefined) CFG.minimap=true;
