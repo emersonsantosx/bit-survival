@@ -9,7 +9,7 @@
 const WX={wet:0,snow:0,k:-1};window.WX=WX;
 window.wxUpdate=function(dt){
   const seed=window.WX_SEED|0;
-  if(WX.k!==seed){WX.k=seed;WX.wet=weather==='rain'?1:0;WX.snow=weather==='snow'?1:0;PCELL.clear();SCELL.clear();}   // mundo novo ou carregado: o clima de agora ja vale cheio
+  if(WX.k!==seed){WX.k=seed;WX.wet=weather==='rain'?1:0;WX.snow=weather==='snow'?1:0;PCELL.clear();}   // mundo novo ou carregado: o clima de agora ja vale cheio
   WX.wet=weather==='rain'?Math.min(1,WX.wet+dt/50):Math.max(0,WX.wet-dt/110);
   WX.snow=weather==='snow'?Math.min(1,WX.snow+dt/70):Math.max(0,WX.snow-dt/150);
 };
@@ -61,33 +61,4 @@ window.drawPuddles=function(vx0,vy0,vx1,vy1){
   }
 };
 
-/* ---------- manchas de neve no chão (mapas sem neve; no mapa da neve o chão já é branco) ---------- */
-const SCELL=new Map();
-function patchOf(ix,iy){
-  const key=(ix+512)*2048+iy+512;let p=SCELL.get(key);if(p!==undefined)return p;
-  p=null;
-  if(hash(ix,iy,11)<.55){
-    const x=ix*CELL+6+hash(ix,iy,12)*(CELL-12),y=iy*CELL+6+hash(ix,iy,13)*(CELL-12),rx=10+hash(ix,iy,14)*16,ry=rx*(.45+.2*hash(ix,iy,15));
-    let ok=x>24&&y>24&&x<WW-24&&y<WH-24&&!pointInLake(x,y)&&!pointInLake(x-rx,y)&&!pointInLake(x+rx,y);
-    if(ok)for(const q of[[0,0],[-rx,0],[rx,0],[0,-ry-4],[0,ry+2]])if(bldAt(x+q[0],y+q[1])){ok=false;break;}
-    if(ok)p={x:x,y:y,rx:rx,ry:ry,t:hash(ix,iy,16)};   // t: umas manchas cobrem antes das outras
-  }
-  if(SCELL.size>4000)SCELL.clear();
-  SCELL.set(key,p);return p;
-}
-let VS=[];
-window.wxSnowPatches=()=>VS;
-window.drawSnowPatches=function(vx0,vy0,vx1,vy1){
-  VS=[];
-  const k=WX.snow;if(k<.08||selectedMap==='snow'||(P&&P.inside))return;
-  const x0=Math.floor((vx0-30)/CELL),x1=Math.floor((vx1+30)/CELL),y0=Math.floor((vy0-30)/CELL),y1=Math.floor((vy1+30)/CELL);
-  for(let ix=x0;ix<=x1;ix++)for(let iy=y0;iy<=y1;iy++){
-    const p=patchOf(ix,iy);if(!p)continue;
-    const g=Math.min(1,(k-p.t*.5)*2);if(g<=.05)continue;   // cresce de dentro para fora conforme a neve acumula
-    const rx=p.rx*(.4+.6*g),ry=p.ry*(.4+.6*g);VS.push(p);
-    ctx.fillStyle='rgba(196,212,224,'+(.55*g).toFixed(3)+')';ctx.beginPath();ctx.ellipse(p.x,p.y+1,rx+1,ry+1,0,0,6.283);ctx.fill();   // borda azulada
-    ctx.fillStyle='rgba(240,248,252,'+(.9*g).toFixed(3)+')';ctx.beginPath();ctx.ellipse(p.x,p.y,rx,ry,0,0,6.283);ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,'+(.8*g).toFixed(3)+')';ctx.beginPath();ctx.ellipse(p.x-rx*.2,p.y-ry*.25,rx*.55,ry*.4,0,0,6.283);ctx.fill();
-  }
-};
 })();
