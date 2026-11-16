@@ -52,7 +52,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 11-pesca-update | 241 | 39 | 50 | 870 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 326 | 40 | 20 | 254 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 657 | 13 | 16 | 318 | 17 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |  |
+| 14-arquitetura-luz-ambiente | 655 | 13 | 16 | 318 | 17 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |  |
 | 15-missoes-ui-controles | 192 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |
@@ -84,7 +84,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | toast | funcao | 11-pesca-update:1254 | 16 | 201 |
 | clamp | const | 01-base:4 | 16 | 98 |
 | parts | let | 04-estado:10 | 16 | 75 |
-| ctx | const | 01-base:27 | 15 | 1047 |
+| ctx | const | 01-base:27 | 15 | 1045 |
 | items | let | 04-estado:10 | 15 | 61 |
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
 | blds | let | 04-estado:10 | 14 | 58 |
