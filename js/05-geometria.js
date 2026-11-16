@@ -369,7 +369,7 @@ function rebuildSolidGrid(){
   solidGrid=new Map();
   const put=(x,y,kind,ref)=>{
     const cx=Math.floor(x/SOLID_GRID), cy=Math.floor(y/SOLID_GRID);
-    const k=(cx+64)*4096+cy+64;   // chave numerica: sem criar texto a cada consulta (a colisao consulta isso milhares de vezes por quadro)
+    const k=cx+','+cy;
     let arr=solidGrid.get(k);
     if(!arr){ arr=[]; solidGrid.set(k,arr); }
     arr.push({x,y,kind,ref});
@@ -389,39 +389,24 @@ function querySolidNear(x,y,pad){
   const out=[];
   for(let cx=cx0;cx<=cx1;cx++){
     for(let cy=cy0;cy<=cy1;cy++){
-      const arr=solidGrid.get((cx+64)*4096+cy+64);
+      const arr=solidGrid.get(cx+','+cy);
       if(arr) for(let i=0;i<arr.length;i++) out.push(arr[i]);
     }
   }
   return out;
 }
-/* predios por celula de 64 px (com folga de 10): a colisao nao precisa percorrer todos os predios do mapa a cada passo de cada personagem.
-   Refeito sozinho quando a lista de predios muda (mundo novo, predio novo). */
-let _bg=null,_bgA=null,_bgN=-1;const _NB=[];
-function bldsNear(x,y){
-  if(_bgA!==blds||_bgN!==blds.length){
-    _bgA=blds;_bgN=blds.length;_bg=new Map();
-    for(const b of blds){const c0=Math.floor((b.x-10)/64),c1=Math.floor((b.x+b.w+10)/64),r0=Math.floor((b.y-10)/64),r1=Math.floor((b.y+b.h+10)/64);
-      for(let i=c0;i<=c1;i++)for(let j=r0;j<=r1;j++){const k=(i+256)*4096+j+256;let a=_bg.get(k);if(!a){a=[];_bg.set(k,a);}a.push(b);}}
-  }
-  return _bg.get((Math.floor(x/64)+256)*4096+Math.floor(y/64)+256)||_NB;
-}
 function pushOut(e,r){
-  // Árvores / rochas / decorações sólidas via grade (sem criar lista nova a cada chamada: roda milhares de vezes por quadro)
-  if(solidGrid){
-    const ex=e.x,ey=e.y,gx0=Math.floor((ex-24)/SOLID_GRID),gx1=Math.floor((ex+24)/SOLID_GRID),gy0=Math.floor((ey-24)/SOLID_GRID),gy1=Math.floor((ey+24)/SOLID_GRID);
-    for(let gx=gx0;gx<=gx1;gx++)for(let gy=gy0;gy<=gy1;gy++){
-      const arr=solidGrid.get((gx+64)*4096+gy+64);if(!arr)continue;
-      for(let i=0;i<arr.length;i++){
-        const n=arr[i],dx=e.x-n.x,dy=e.y-n.y;
-        if(dx>22||dx<-22||dy>22||dy<-22) continue;
-        const rad=n.kind==='tree'?r+4:r+6,d2=dx*dx+dy*dy;
-        if(d2<rad*rad){
-          const d=Math.sqrt(d2);
-          if(d>.001){ e.x=n.x+dx/d*rad; e.y=n.y+dy/d*rad; }
-          else e.x+=rad;
-        }
-      }
+  // Árvores / rochas / decorações sólidas via grade (bem mais barato)
+  const near=querySolidNear(e.x,e.y,24);
+  for(let i=0;i<near.length;i++){
+    const n=near[i];
+    const dx=e.x-n.x, dy=e.y-n.y;
+    if(dx>22||dx<-22||dy>22||dy<-22) continue;
+    const rad=n.kind==='tree'?r+4:r+6;
+    const d=Math.hypot(dx,dy);
+    if(d<rad){
+      if(d>.001){ e.x=n.x+dx/d*rad; e.y=n.y+dy/d*rad; }
+      else e.x+=rad;
     }
   }
   for(const v of vehicles){
@@ -443,9 +428,8 @@ function pushOut(e,r){
   if(FIELD&&FIELD.fence)for(const w of FIELD.fence)pushRect(e,r,w);
   fenceHit(e,r);
   if(ORLA)orlaHit(e,r);
-  const bl=bldsNear(e.x,e.y);
-  for(let i=0;i<bl.length;i++){      // portas fechadas e móveis (só do prédio onde a pessoa está)
-    const b=bl[i];
+  for(let i=0;i<blds.length;i++){      // portas fechadas e móveis (só do prédio onde a pessoa está)
+    const b=blds[i];
     if(e.x<b.x-10||e.x>b.x+b.w+10||e.y<b.y-10||e.y>b.y+b.h+10)continue;
     if(b.doors&&!e.inVehicle)for(let k=0;k<b.doors.length;k++){
       const d=b.doors[k];if(d.open)continue;
