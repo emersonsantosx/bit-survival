@@ -125,7 +125,7 @@ function sitTick(dt){
 function drawLog(L){
   const x=Math.round(L.x),y=Math.round(L.y),snow=selectedMap==='snow',h=L.a==='h';
   const bark='#6b4a2e',barkHi='#8a6238',barkLo='#4a3220',cut='#d9b27a',cutIn='#b98a52';
-  if(!sunShadow(x,y,'decor',L)){ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x,y+(h?3:2),h?23:8,h?4:20,0,0,6.283);ctx.fill();}
+  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x,y+(h?3:2),h?23:8,h?4:20,0,0,6.283);ctx.fill();
   const sd=((L.x*7+L.y*13)|0)&15;   // dispersao fixa dos nos e das juntas da casca
   ctx.save();ctx.translate(x,y);
   if(h){

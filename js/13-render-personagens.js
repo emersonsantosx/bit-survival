@@ -1,6 +1,5 @@
 /* ============ RENDER ============ */
-let REC=null;   // quando nao e nulo, R so grava os retangulos (usado para montar os sprites em cache)
-function R(x,y,w,h,c){if(REC){REC.push([0,Math.round(x),Math.round(y),w,h,c]);return;}ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h);}
+function R(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h);}
 /* ===== Skins: 4 masculinas (1ª é a padrão) e 4 femininas. alt = cor da roupa quando duas pessoas usam a mesma skin =====
    os = roupa, hs = cabelo/chapéu, hat/band = cor de boné, faixa ou presilha, acc = acessório, beard = barba */
 const SKINS=[
@@ -426,7 +425,6 @@ function drawHeld(wpn,hx,hy,a,left){
 function armLine(sx,sy,ex,ey,sleeve,skin,fr){
   const dx=ex-sx,dy=ey-sy,len=Math.hypot(dx,dy);
   if(len<.5)return;
-  if(REC){REC.push([1,sx,sy,ex,ey,sleeve,skin,fr]);return;}
   ctx.save();ctx.translate(sx,sy);ctx.rotate(Math.atan2(dy,dx));
   const h=Math.max(1,Math.round(len*(fr||.5)));
   ctx.fillStyle=sleeve;ctx.fillRect(0,-1,h,2);
@@ -440,37 +438,28 @@ function human(x,y,face,o){
   let d=lakeDepth(x,y);
   if(d>=.04){if(o.crawler)d*=.4;const k=o.s||1;waterSurface(x,y+(3-3*d)*k,d,k);}
 }
-/* ZUMBI EM CACHE: os zumbis comuns (sem arma, cuspe, grito, motosserra...) tem poucos visuais (tipo, cor, direcao, passo, bote). Cada pose e gravada uma vez como lista
-   de retangulos, pintada num canvas pequeno e depois so copiada: de uns 50 desenhos por zumbi para 1. A direcao fica em 32 passos e o passo da perna em 3 estados. */
-const ZSP={};
-function zCacheable(o){return !(o.brute||o.wind||o.spitter||o.screamer||o.yeti||o.boss||o.crawler||o.sit||o.bloater);}
-function zombieSprite(o,face){
-  const N=32,fi=((Math.round(face/(Math.PI*2)*N)%N)+N)%N,fq=fi*Math.PI*2/N;
-  const sn=o.moving?Math.sin(o.anim):0,st=sn>.3?1:(sn<-.3?2:0);
-  const key=[o.kind|0,o.zv|0,o.skin,o.shirt,o.hair||'',o.lunge?1:0,fi,st].join('|');
-  let sp=ZSP[key];if(sp)return sp;
-  const o2=Object.assign({},o,{anim:st===1?Math.PI/2:(st===2?-Math.PI/2:0),moving:st>0});
-  REC=[];try{humanFigure(o2,fq,Math.cos(fq),Math.sin(fq));}finally{var rec=REC;REC=null;}
-  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
-  for(const r of rec){
-    if(r[0]===0){x0=Math.min(x0,r[1]);y0=Math.min(y0,r[2]);x1=Math.max(x1,r[1]+r[3]);y1=Math.max(y1,r[2]+r[4]);}
-    else{x0=Math.min(x0,r[1],r[3])-2;y0=Math.min(y0,r[2],r[4])-2;x1=Math.max(x1,r[1],r[3])+2;y1=Math.max(y1,r[2],r[4])+2;}
+function humanDraw(x,y,face,o){
+  const fx=Math.cos(face),fy=Math.sin(face);
+  ctx.save();
+  ctx.translate(Math.round(x),Math.round(y));
+  let depth=lakeDepth(x,y);if(depth<.04)depth=0;
+  if(depth&&o.crawler)depth*=.4;                              // quem rasteja fica mais por cima
+  let scaleM=o.s||1,offsetY=0;
+  if(depth){offsetY=depth*9+Math.sin(T*5+x*.07)*.6*depth;}   // afunda até só a cabeça ficar para fora e balança na água
+  if(scaleM!==1)ctx.scale(scaleM,scaleM);
+  ctx.translate(0,offsetY);
+  if(o.sit)ctx.translate(0,3);   // sentado: o quadril desce para o tronco
+  if(depth){ctx.beginPath();ctx.rect(-40,-80,80,80+(3-depth*12)-0);ctx.clip();}   // corta tudo abaixo da linha d'água (pescoço quando fundo)
+  if(o.crawler){
+    shadow(0,2,8,3);
+    const bx=fx>=0?-1:1,ca=Math.sin(o.anim*0.5);
+    R(bx*9,-2,3,3,'#5a1212');R(bx*11,-1,4,1,'#8a2a2a');R(bx*13,0,3,1,'#6a1a1a');           // tronco cortado e rastro
+    R(-7,-3,14,5,o.shirt);R(-7,-3,14,1,Sh(o.shirt,-.25));R(-3,-2,2,2,'#5a1212');R(2,0,1,2,o.skin);R(-1,-3,1,4,'#d8d0b8');
+    R(-2,-5,5,4,o.skin);R(-2,-5,5,1,o.hair);R(-2,-4,1,1,'#1a1410');R(1,-4,1,1,'#1a1410');R(-1,-2,2,1,'#7a1010');
+    R(-9+ca*2,-2,3,3,o.skin);R(6-ca*2,-2,3,3,o.skin);R(-10+ca*2,-1,1,1,'#d8d0b8');R(9-ca*2,-1,1,1,'#d8d0b8');
+    ctx.restore();return;
   }
-  if(x1<=x0){x0=0;y0=0;x1=1;y1=1;}
-  x0=Math.floor(x0);y0=Math.floor(y0);
-  const pad=1,cv=document.createElement('canvas');cv.width=Math.ceil(x1-x0)+2*pad;cv.height=Math.ceil(y1-y0)+2*pad;const g=cv.getContext('2d');
-  g.translate(pad-x0,pad-y0);
-  for(const r of rec){
-    if(r[0]===0){g.fillStyle=r[5];g.fillRect(r[1],r[2],r[3],r[4]);}
-    else{const dx=r[3]-r[1],dy=r[4]-r[2],len=Math.hypot(dx,dy),h=Math.max(1,Math.round(len*(r[7]||.5)));
-      g.save();g.translate(r[1],r[2]);g.rotate(Math.atan2(dy,dx));g.fillStyle=r[5];g.fillRect(0,-1,h,2);g.fillStyle=r[6];g.fillRect(h,-1,len-h+1,2);g.restore();}
-  }
-  if(Object.keys(ZSP).length>400)for(const k in ZSP)delete ZSP[k];
-  return ZSP[key]={cv,ox:x0-pad,oy:y0-pad};
-}
-window.zombieSpriteCount=()=>Object.keys(ZSP).length;
-/* corpo do personagem (tudo menos sombra e transformacoes), separado para poder ser gravado uma vez e reaproveitado */
-function humanFigure(o,face,fx,fy){
+  shadow(0,2,6,3);
   humanBody(R,o,face);
   let hx=Math.round(fx*6),hy=Math.round(fy*4)-5;
   if(o.zombie){
@@ -549,35 +538,10 @@ function humanFigure(o,face,fx,fy){
     if(_fl&&o.flash>0)R(hx+wx*_fl-2,hy+wy*_fl-2,5,4,'#ffe27a');
     if(o.wpn==='bow'&&o.swing>0){ const bx=hx+wx*4, by=hy+wy*4; R(bx+wx*6,by+wy*6-1,8,1,'#c0c0c8'); R(bx+wx*14,by+wy*14-1,2,2,'#a0a0a8'); }
   }
-}
-function humanDraw(x,y,face,o){
-  const fx=Math.cos(face),fy=Math.sin(face);
-  ctx.save();
-  ctx.translate(Math.round(x),Math.round(y));
-  let depth=lakeDepth(x,y);if(depth<.04)depth=0;
-  if(depth&&o.crawler)depth*=.4;                              // quem rasteja fica mais por cima
-  let scaleM=o.s||1,offsetY=0;
-  if(depth){offsetY=depth*9+Math.sin(T*5+x*.07)*.6*depth;}   // afunda até só a cabeça ficar para fora e balança na água
-  if(scaleM!==1)ctx.scale(scaleM,scaleM);
-  ctx.translate(0,offsetY);
-  if(o.sit)ctx.translate(0,3);   // sentado: o quadril desce para o tronco
-  if(depth){ctx.beginPath();ctx.rect(-40,-80,80,80+(3-depth*12)-0);ctx.clip();}   // corta tudo abaixo da linha d'água (pescoço quando fundo)
-  if(o.crawler){
-    if(!sunShadow(0,3,'human',o,face))shadow(0,2,8,3);
-    const bx=fx>=0?-1:1,ca=Math.sin(o.anim*0.5);
-    R(bx*9,-2,3,3,'#5a1212');R(bx*11,-1,4,1,'#8a2a2a');R(bx*13,0,3,1,'#6a1a1a');           // tronco cortado e rastro
-    R(-7,-3,14,5,o.shirt);R(-7,-3,14,1,Sh(o.shirt,-.25));R(-3,-2,2,2,'#5a1212');R(2,0,1,2,o.skin);R(-1,-3,1,4,'#d8d0b8');
-    R(-2,-5,5,4,o.skin);R(-2,-5,5,1,o.hair);R(-2,-4,1,1,'#1a1410');R(1,-4,1,1,'#1a1410');R(-1,-2,2,1,'#7a1010');
-    R(-9+ca*2,-2,3,3,o.skin);R(6-ca*2,-2,3,3,o.skin);R(-10+ca*2,-1,1,1,'#d8d0b8');R(9-ca*2,-1,1,1,'#d8d0b8');
-    ctx.restore();return;
-  }
-  if(!sunShadow(0,3,'human',o,face))shadow(0,2,6,3);
-  if(o.zombie&&!window.zCacheOff&&zCacheable(o)){const sp=zombieSprite(o,face);ctx.imageSmoothingEnabled=false;ctx.drawImage(sp.cv,sp.ox,sp.oy);}
-  else humanFigure(o,face,fx,fy);
   ctx.restore();
 }
 function drawRock(r){
-  const x=r.x,y=r.y;if(!sunShadow(x,y,'rock',r))shadow(x,y+2,8,4);
+  const x=r.x,y=r.y;shadow(x,y+2,8,4);
   const base=selectedMap==='snow'?'#a8b8c8':selectedMap==='desert'?'#c8a878':selectedMap==='city'?'#707880':'#8a8a90';
   const top=selectedMap==='snow'?'#d0dce8':selectedMap==='desert'?'#e0c090':selectedMap==='city'?'#909aa0':'#a8a8b0';
   const k=r.k|0;
@@ -713,10 +677,8 @@ function treeSprite(k,v,snow){
   }
   return TSP[key]={cv:cv,ox:ox,oy:oy,top:top,half:Math.max(8,half)};
 }
-function treeShadow(x,y,s,t){
-  if(shadowMode()===0)return;
-  if(t&&sunShadow(x,y,'tree',t))return;
-  const L=Math.min(s.top,56)*SUN.len*.55,rw=s.half*.62;   // modo simples: tronco esticado + copa em elipse (como antigamente)
+function treeShadow(x,y,s){
+  const L=Math.min(s.top,56)*SUN.len*.55,rw=s.half*.62;
   const tx=x+SUN.dx*L,ty=y+2+SUN.dy*L*.6;
   ctx.fillStyle=SUN.fs;ctx.beginPath();
   ctx.moveTo(x-2,y+2);ctx.lineTo(x+2,y+2);ctx.lineTo(tx+1.5,ty);ctx.lineTo(tx-1.5,ty);ctx.closePath();
@@ -727,7 +689,7 @@ function treeShadow(x,y,s,t){
 function drawTree(t){
   const x=t.x,y=t.y,k=t.k|0,v=Math.floor((t.seed||0)*4)&3;
   const s=treeSprite(k,v,weather==='snow'&&selectedMap!=='snow');
-  treeShadow(x,y,s,t);
+  treeShadow(x,y,s);
   const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
   const behind=P&&!P.inside&&P.y<y-3&&P.y>y-s.top&&Math.abs(P.x-x)<s.half;   // jogador atrás da copa
   if(behind)ctx.globalAlpha=.5;
@@ -735,11 +697,6 @@ function drawTree(t){
   ctx.globalAlpha=1;ctx.imageSmoothingEnabled=sm;
 }
 function drawDecoration(d){
-  const own=sunShadow(d.x,d.y,'decor',d);
-  if(own)sunOff(1);
-  try{drawDecoration0(d);}finally{if(own)sunOff(-1);}
-}
-function drawDecoration0(d){
   const x=d.x,y=d.y;
   if(d.type==='wreck'||d.type==='billboard'){drawAmbProp(d);return;}
   switch(d.type){
@@ -1106,30 +1063,28 @@ function drawCampfire(c){
   if(dark>.1){ctx.fillStyle='rgba(255,120,30,'+(0.12*dark).toFixed(3)+')';ctx.beginPath();ctx.arc(x,y-4,52,0,6.283);ctx.fill();}
   if(weather==='rain'){ R(x-3,y-18,6,5,'rgba(90,90,90,.4)'); }
 }
-function drawCityRoads(vx0,vy0,vx1,vy1,gg){
-  // gg: canvas de um bloco do chao (as ruas nunca mudam, entao sao pintadas uma vez dentro do bloco); sem gg pinta direto na tela
-  const RR=gg?(x,y,w,h,c)=>{gg.fillStyle=c;gg.fillRect(Math.round(x),Math.round(y),w,h);}:R;
+function drawCityRoads(vx0,vy0,vx1,vy1){
   const vr=[];
   for(const r of roads) if(!(r.x-8>vx1||r.x+r.w+8<vx0||r.y-8>vy1||r.y+r.h+8<vy0)) vr.push(r);
   const vi=cityInter.filter(q=>!(q.x-14>vx1||q.x+q.w+14<vx0||q.y-14>vy1||q.y+q.h+14<vy0));
   for(const r of vr){ // calçadas
-    if(r.vert){RR(r.x-8,r.y,8,r.h,'#7c7f84');RR(r.x+r.w,r.y,8,r.h,'#7c7f84');}
-    else{RR(r.x,r.y-8,r.w,8,'#7c7f84');RR(r.x,r.y+r.h,r.w,8,'#7c7f84');}
+    if(r.vert){R(r.x-8,r.y,8,r.h,'#7c7f84');R(r.x+r.w,r.y,8,r.h,'#7c7f84');}
+    else{R(r.x,r.y-8,r.w,8,'#7c7f84');R(r.x,r.y+r.h,r.w,8,'#7c7f84');}
   }
-  for(const r of vr) RR(r.x,r.y,r.w,r.h,'#3a3a40'); // asfalto (cruzamentos ficam limpos)
+  for(const r of vr) R(r.x,r.y,r.w,r.h,'#3a3a40'); // asfalto (cruzamentos ficam limpos)
   const inI=(px,py,w,h)=>{for(const q of vi)if(px+w>q.x-2&&px<q.x+q.w+2&&py+h>q.y-2&&py<q.y+q.h+2)return true;return false;};
   for(const r of vr){ // faixa central tracejada, sem atravessar cruzamentos
     if(!r.vert){
       const cy=r.y+Math.floor(r.h/2)-1, a=Math.max(r.x+6,Math.floor(vx0)), b=Math.min(r.x+r.w-6,vx1);
-      for(let x=r.x+Math.floor((a-r.x)/20)*20;x<b;x+=20){ if(x<r.x+6||inI(x,cy,11,2))continue; RR(x,cy,11,2,r.main?'#e0c040':'#c0c050'); }
+      for(let x=r.x+Math.floor((a-r.x)/20)*20;x<b;x+=20){ if(x<r.x+6||inI(x,cy,11,2))continue; R(x,cy,11,2,r.main?'#e0c040':'#c0c050'); }
     } else {
       const cx=r.x+Math.floor(r.w/2)-1, a=Math.max(r.y+6,Math.floor(vy0)), b=Math.min(r.y+r.h-6,vy1);
-      for(let y=r.y+Math.floor((a-r.y)/20)*20;y<b;y+=20){ if(y<r.y+6||inI(cx,y,2,11))continue; RR(cx,y,2,11,r.main?'#e0c040':'#c0c050'); }
+      for(let y=r.y+Math.floor((a-r.y)/20)*20;y<b;y+=20){ if(y<r.y+6||inI(cx,y,2,11))continue; R(cx,y,2,11,r.main?'#e0c040':'#c0c050'); }
     }
   }
   for(const q of vi){ // faixas de pedestres nos 4 lados de cada cruzamento
-    for(let k=3;k<q.w-3;k+=6){ RR(q.x+k,q.y-11,3,8,'#cfcfcf'); RR(q.x+k,q.y+q.h+3,3,8,'#cfcfcf'); }
-    for(let k=3;k<q.h-3;k+=6){ RR(q.x-11,q.y+k,8,3,'#cfcfcf'); RR(q.x+q.w+3,q.y+k,8,3,'#cfcfcf'); }
+    for(let k=3;k<q.w-3;k+=6){ R(q.x+k,q.y-11,3,8,'#cfcfcf'); R(q.x+k,q.y+q.h+3,3,8,'#cfcfcf'); }
+    for(let k=3;k<q.h-3;k+=6){ R(q.x-11,q.y+k,8,3,'#cfcfcf'); R(q.x+q.w+3,q.y+k,8,3,'#cfcfcf'); }
   }
 }
 function drawOpenVeh(K,v,L,W){
@@ -1185,7 +1140,7 @@ function drawRider(K,lk,L,W){
 function drawVehicle(v){
   // Local axes after rotate(face): +X = frente (direção do movimento), +Y = lado
   const L=v.w||36, W=v.h||20; // L=comprimento, W=largura
-  vehShadow(v,L,W,vehKind(v)==='car'?12:7);
+  {const k=SUN.len;ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.ellipse(Math.round(v.x+SUN.dx*k*L*.3),Math.round(v.y+3+SUN.dy*k*W*.35),Math.max(L,W)*.46*(1+.15*k),Math.min(L,W)*.38,v.face||0,0,6.283);ctx.fill();}
   ctx.save();
   ctx.translate(v.x,v.y);
   ctx.rotate(v.face||0);
@@ -1593,7 +1548,7 @@ function drawSleeper(x,y,sl,look){
 }
 function drawTent(t){
   const x=Math.round(t.x),y=Math.round(t.y);
-  if(!sunShadow(x,y,'decor',t)){ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x,y+3,26,6,0,0,6.283);ctx.fill();}
+  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x,y+3,26,6,0,0,6.283);ctx.fill();
   for(let r=0;r<22;r++){
     const half=3+Math.round(r*.95),edge=r%7===6;
     R(x-half,y-24+r,half,1,edge?'#4a6a3c':'#6d8f56');R(x,y-24+r,half,1,edge?'#33502c':'#4d7040');
@@ -2080,5 +2035,3 @@ function itemIndoor(it){
   Object.defineProperty(it,'_in',{value:r,writable:true,enumerable:false,configurable:true});
   return r;
 }
-
-window.drawCityRoads=drawCityRoads;window.humanBody=humanBody;

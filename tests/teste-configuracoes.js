@@ -82,16 +82,9 @@ const { chromium } = require('playwright');
   ok(c3.showFps === false && c3.shake === true && c3.night === 1 && !a3.fps && a3.sh && a3.seg === '1' && c3.minimap === false, 'RESTAURAR do JOGO volta noite, tremor e FPS (interface segue intacta)');
   await pg.click('#btnBackCfg'); await pg.click('[data-cfgsec="ui"]'); await pg.click('#btnReset');
   ok((await cfgNow()).minimap === true && await pg.evaluate(() => !document.body.classList.contains('nomap')), 'RESTAURAR da INTERFACE religa o minimapa na tela');
-  await pg.evaluate(() => { CFG.quality = 2; CFG.fps = 30; CFG.autoperf = true; saveCfg(); });
+  await pg.evaluate(() => { CFG.quality = 2; CFG.fps = 30; CFG.autoperf = false; saveCfg(); });
   await pg.click('#btnBackCfg'); await pg.click('[data-cfgsec="perf"]'); await pg.click('#btnReset');
-  const c5 = await cfgNow(); ok(c5.quality === 0 && c5.fps === 60 && c5.autoperf === false, 'RESTAURAR do DESEMPENHO volta qualidade, FPS e ajuste automatico desligado');
-  // quem ja tinha o jogo com o ajuste automatico ligado e nivel baixado: abre desligado e no nivel zero
-  await pg.evaluate(() => { localStorage.setItem('minisurv_cfg', JSON.stringify({ cfgv: 3, quality: 0, fps: 60, autoperf: true, autolvl: 2 })); });
-  await pg.reload(); await pg.waitForTimeout(300);
-  const mig = await pg.evaluate(() => ({ a: CFG.autoperf, l: CFG.autolvl, t: perfTotal(), on: document.getElementById('cfg_autoperf').classList.contains('on') }));
-  ok(mig.a === false && mig.l === 0 && mig.t === 0 && !mig.on, 'ajuste automatico de desempenho vem desligado (tambem para quem ja tinha o jogo) e o visual volta ao maximo');
-  await pg.evaluate(() => { localStorage.clear(); }); await pg.reload(); await pg.waitForTimeout(300);
-  ok(await pg.evaluate(() => CFG.autoperf === false && CFG.cfgv === 4), 'instalacao nova: ajuste automatico desligado');
+  const c5 = await cfgNow(); ok(c5.quality === 0 && c5.fps === 60 && c5.autoperf === true, 'RESTAURAR do DESEMPENHO volta qualidade, FPS e ajuste automatico');
   ok(errs.length === 0, 'sem erros de JS (' + errs.join(' | ') + ')');
   await b.close(); console.log(bad ? '\n' + bad + ' falha(s)' : '\nTodos os testes passaram'); process.exit(bad ? 1 : 0);
 })();

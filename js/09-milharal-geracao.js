@@ -208,7 +208,7 @@ function genWorld(seed) {
   setWorldSize();
   setRng(seed);
   worldFlavor();
-  solidGrid=null;SPG=null;FIELD=null;LM=null;chestList=[];if(window.groundReset)groundReset();   // grades de colisão do mundo anterior não podem vazar para a geração (senão o mesmo seed gera mundos diferentes)
+  solidGrid=null;SPG=null;FIELD=null;LM=null;chestList=[];   // grades de colisão do mundo anterior não podem vazar para a geração (senão o mesmo seed gera mundos diferentes)
   try {
   cityGardens=[];cityYards=[];cityPaths=[];cityDecor=[];fenceCityClear();ghLoad([]);
   trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];tents=[];spits=[];decorations=[];animals=[];if(window.stashReset)stashReset();if(window.wellReset)wellReset();if(window.logReset)logReset();
@@ -651,8 +651,8 @@ function updateBirds(dt){
     }
     if(b.st==='ground'){
       for(const s of sc){
-        const dx=b.x-s.x,dy=b.y-s.y;
-        if(dx*dx+dy*dy<s.r*s.r){birdTakeoff(b,s.x,s.y);break;}   // sem raiz quadrada: cada ave confere todas as fontes de susto
+        const d=Math.hypot(b.x-s.x,b.y-s.y);
+        if(d<s.r){birdTakeoff(b,s.x,s.y);break;}
       }
       if(b.st!=='ground')continue;
       b.idle-=dt;
@@ -891,7 +891,7 @@ function drawAnimal(a){
   if(a.dead) return;
   const x=a.x,y=a.y,dep=lakeDepth(x,y);
   if(dep>=.04){ctx.save();ctx.beginPath();ctx.rect(x-24,y-40,48,40+3-dep*6);ctx.clip();}   // na água só a parte de cima do bicho aparece
-  animShadow(a);
+  shadow(x,y+2,6,3);
   ctx.save();ctx.translate(x,y);ctx.rotate(a.face||0);
   const col=
     a.k==='deer'?'#8a6a40':a.k==='rabbit'?'#c8c0b0':a.k==='boar'?'#4a3a2a':

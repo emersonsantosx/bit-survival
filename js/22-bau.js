@@ -212,7 +212,7 @@ function stashIsOpen(){return !!open;}
 /* ---------- desenho: bau de madeira com cintas de ferro, tampa e fecho (virado para um dos 4 lados) ---------- */
 function drawStash(s){
   const x=Math.round(s.x),y=Math.round(s.y),o=cleanO(s.o);
-  if(!sunShadow(x,y,'decor',s)){ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+3,o>=2?9:10,3.5,0,0,6.283);ctx.fill();}
+  ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+3,o>=2?9:10,3.5,0,0,6.283);ctx.fill();
   if(o>=2){   // de lado: mais estreito, com o fecho no lado que olha para o jogador
     R2(x-7,y-11,14,13,'#4a2e1a');                       // contorno
     R2(x-6,y-10,12,5,'#b07a3e');R2(x-6,y-10,12,1,'#d6a468');          // tampa
