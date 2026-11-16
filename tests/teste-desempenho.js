@@ -23,7 +23,16 @@ const LIM_AREA = 1.7;   // telas copiadas de canvas pequenos (1 da camada de esc
       T = ((hr - START_HOUR + 24) % 24) / 24 * DAY_SECONDS; for (let i = 0; i < 30; i++) update(.03);
       if (hr > 20) { P.torch = true; P.flashOn = true; } for (let i = 0; i < 8; i++) { P.x += 2.4; render(); }
     };
-    cena('forest', 12); o.florestaDia = ops(); o.blocos = groundChunkCount();
+    const telas = () => {   // area pintada por quadro em retangulos e copias grandes (maiores que 4% da tela), em telas inteiras: o que pesa na GPU do celular
+      const P2 = Object.getPrototypeOf(cv.getContext('2d')), sv = {}; let tot = 0;
+      for (const m of ['fillRect', 'drawImage']) {
+        const f = P2[m]; sv[m] = f;
+        P2[m] = function (...a) { let w, h; if (m === 'fillRect') { w = a[2]; h = a[3]; } else if (a.length === 9) { w = a[7]; h = a[8]; } else if (a.length === 5) { w = a[3]; h = a[4]; } else { w = a[0].width; h = a[0].height; } const ar = Math.abs(w * h); if (ar > W * H * .04) tot += ar; return f.apply(this, a); };
+      }
+      try { render(); } finally { for (const m in sv) P2[m] = sv[m]; }
+      return Math.round(tot / (W * H) * 100) / 100;
+    };
+    cena('forest', 12); o.florestaDia = ops(); o.blocos = groundChunkCount(); o.telasFlorestaDia = telas();
     cena('forest', 23); o.florestaNoite = ops();
     {   // lanterna apontada para uma arvore: o feixe tem obstaculo e usa o canvas temporario
       let best = null; for (const t of trees) { const d = Math.hypot(t.x - P.x, t.y - P.y); if (!best || d < best.d) best = { t, d }; }
@@ -36,7 +45,7 @@ const LIM_AREA = 1.7;   // telas copiadas de canvas pequenos (1 da camada de esc
       try { render(); } finally { P2.drawImage = f; }
       o.areaNoite = Math.round(feixe / (W * H) * 100) / 100;
     }
-    cena('city', 12); o.cidadeDia = ops();
+    cena('city', 12); o.cidadeDia = ops(); o.telasCidadeDia = telas();
     cena('city', 23); o.cidadeNoite = ops();
     cena('snow', 23); o.neveNoite = ops();
     cena('desert', 23); o.desertoNoite = ops();
@@ -74,6 +83,8 @@ const LIM_AREA = 1.7;   // telas copiadas de canvas pequenos (1 da camada de esc
   ok(!r.zNaN && r.zMin > 3, 'zumbis empilhados se separam (distancia minima ' + r.zMin.toFixed(1) + ' px)');
   ok(r.feixeComObstaculo, 'o teste de area usa um feixe com obstaculo');
   ok(r.areaNoite < LIM_AREA, 'noite com lanterna: ' + r.areaNoite + ' telas copiadas do canvas do feixe por quadro (limite ' + LIM_AREA + ')');
+  ok(r.telasFlorestaDia < 4.2, 'floresta de dia: ' + r.telasFlorestaDia + ' telas inteiras pintadas por quadro (limite 4,2; eram 5,2 antes de juntar as camadas de cor)');
+  ok(r.telasCidadeDia < 6.5, 'cidade de dia: ' + r.telasCidadeDia + ' telas inteiras pintadas por quadro (limite 6,5; eram 12 antes de as ruas irem para o chao)');
   ok(errs.length === 0, 'sem erros de JS (' + errs.join(' | ') + ')');
   await b.close(); console.log(bad ? '\n' + bad + ' falha(s)' : '\nTodos os testes passaram'); process.exit(bad ? 1 : 0);
 })();
