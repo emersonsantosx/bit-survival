@@ -64,7 +64,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 23-poco | 15 | 4 | 4 | 51 | 14 |  |  | 2 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  | . |  |  |  |
 | 24-tronco | 23 | 5 | 4 | 100 | 15 |  |  | 1 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  |  | . |  |  |
 | 25-icones-acoes |  |  | 13 |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |
-| 26-clima-acabamento | 19 |  | 2 | 14 | 4 |  |  |  |  |  |  |  | 4 |  |  |  |  |  |  |  |  |  |  |  |  | . |
+| 26-clima-acabamento | 31 |  | 4 | 17 | 8 |  |  |  |  |  |  |  | 4 |  |  |  |  |  |  |  |  |  |  |  |  | . |
 
 (colunas = os dois primeiros digitos do nome do arquivo)
 
@@ -72,29 +72,29 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 21 | 1948 |
-| selectedMap | let | 04-estado:3 | 21 | 219 |
+| P | let | 04-estado:14 | 21 | 1950 |
+| selectedMap | let | 04-estado:3 | 21 | 220 |
 | MP | let | 04-estado:19 | 20 | 577 |
 | beep | funcao | 02-audio:42 | 19 | 136 |
 | rnd | const | 01-base:16 | 18 | 434 |
 | T | let | 04-estado:14 | 17 | 115 |
-| WW | let | 03-dados:2 | 17 | 96 |
-| WH | let | 03-dados:2 | 17 | 85 |
+| WW | let | 03-dados:2 | 17 | 97 |
+| WH | let | 03-dados:2 | 17 | 86 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 17 | 61 |
 | toast | funcao | 11-pesca-update:1254 | 16 | 201 |
 | clamp | const | 01-base:4 | 16 | 98 |
 | parts | let | 04-estado:10 | 16 | 75 |
-| ctx | const | 01-base:27 | 15 | 1010 |
+| ctx | const | 01-base:27 | 15 | 1022 |
 | items | let | 04-estado:10 | 15 | 61 |
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
 | blds | let | 04-estado:10 | 14 | 58 |
 | R | funcao | 13-render-personagens:2 | 13 | 1251 |
 | weather | let | 04-estado:6 | 13 | 86 |
-| pointInLake | funcao | 05-geometria:113 | 13 | 46 |
+| pointInLake | funcao | 05-geometria:113 | 13 | 49 |
 | trees | let | 04-estado:10 | 12 | 55 |
 | zombies | let | 04-estado:10 | 11 | 58 |
 | campfires | let | 04-estado:10 | 11 | 41 |
-| bldAt | funcao | 05-geometria:585 | 11 | 30 |
+| bldAt | funcao | 05-geometria:585 | 11 | 31 |
 | state | let | 04-estado:2 | 10 | 92 |
 | dark | let | 04-estado:14 | 10 | 60 |
 | tents | let | 04-estado:10 | 10 | 23 |

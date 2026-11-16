@@ -1273,7 +1273,7 @@ function render(){
       R(r.x,r.y,r.w,2,'#e8f0f8'); // snow piled on roadside
     }
   }
-  drawPuddles(vx0,vy0,vx1,vy1);   // poças de chuva (arquivo 26), embaixo de tudo que fica em pe
+  drawPuddles(vx0,vy0,vx1,vy1);drawSnowPatches(vx0,vy0,vx1,vy1);   // poças de chuva (arquivo 26), embaixo de tudo que fica em pe
   // Sangue no chao (manchas e respingos) fica ABAIXO dos veiculos; so itens e entidades aparecem por cima
   for(const d of decals){
     if(d.x<vx0||d.x>vx1||d.y<vy0||d.y>vy1)continue;
