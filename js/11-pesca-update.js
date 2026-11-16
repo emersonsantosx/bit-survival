@@ -886,6 +886,7 @@ function update(dt){
   dark=darkness(hr%24);
   day=Math.floor(hr/24)+1;
   syncRainAudio(dt);
+  wxUpdate(dt);   // poças e neve acumulada (arquivo 26)
   ambLife(dt);ambFx(dt);
   weatherTimer-=dt;
   if(weatherTimer<=0&&MP.active&&!MP.isHost)weatherTimer=30; // convidado: só o host sorteia (snapshot manda)

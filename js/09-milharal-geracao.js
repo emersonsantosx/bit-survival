@@ -205,6 +205,7 @@ function worldFlavor(){
   FL={tree:rnd(.75,1.3),rock:rnd(.7,1.35),decor:rnd(.8,1.25),fauna:rnd(.8,1.3),towns:rnd(.8,1.2),lakes:rint(0,1),clr:rnd(.7,1.4),clp:rnd(.62,.9)};
 }
 function genWorld(seed) {
+  window.WX_SEED=seed|0;   // semente do mundo: as pocas de chuva (arquivo 26) nascem dela
   setWorldSize();
   setRng(seed);
   worldFlavor();
