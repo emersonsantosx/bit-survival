@@ -448,31 +448,19 @@ function drawFacade(b){
 /* ============ ILUMINAÇÃO v2 ============
    Cor do dia por horário, sombras que seguem o sol, luzes coloridas, raios de sol, vaga-lumes, relâmpagos e vinheta.
    Tudo usa sprites pré-desenhados (sem gradientes novos por quadro). */
-const SUN={dx:0,dy:.4,len:.5,a:.3,e:1,h:12,fs:'rgba(8,10,28,.3)',sx:0,sy:1,bid:'',qx:0,qy:1,ql:.4};
-/* direcao da sombra no chao (vetor unitario sx,sy): o sol nasce no leste, a sombra aponta para o oeste (esquerda) e quase horizontal; ao meio-dia aponta
-   para baixo e curta; no fim da tarde aponta para o leste (direita) e comprida. Quantizada em passos de 4,5 graus e 0,2 de comprimento para reaproveitar
-   o desenho pronto da sombra de cada objeto (SUNC); quando o passo muda, o cache e refeito. */
-function setSunDir(dx,dy){
-  const n=Math.hypot(dx,dy)||1;SUN.sx=dx/n;SUN.sy=dy/n;
-  const ai=Math.round(Math.atan2(SUN.sy,SUN.sx)/(Math.PI/40)),li=Math.round(SUN.len/.2);
-  const id=ai+'|'+li;
-  if(id!==SUN.bid){SUN.bid=id;SUNC.clear();SUN.qx=Math.cos(ai*Math.PI/40);SUN.qy=Math.sin(ai*Math.PI/40);SUN.ql=Math.max(.2,li*.2);}
-}
-const SUNC=new Map();
-let SH_OFF=0;
+const SUN={dx:0,dy:.4,len:.5,a:.3,e:1,h:12,fs:'rgba(8,10,28,.3)'};
 function updateSun(){
   const h=(START_HOUR+T/DAY_SECONDS*24)%24;SUN.h=h;
-  if(P&&P.inside){SUN.e=.6;SUN.dx=0;SUN.dy=.3;SUN.len=.35;SUN.a=.28;SUN.fs='rgba(8,10,28,.28)';setSunDir(0,1);return;}
+  if(P&&P.inside){SUN.e=.6;SUN.dx=0;SUN.dy=.3;SUN.len=.35;SUN.a=.28;SUN.fs='rgba(8,10,28,.28)';return;}
   const st=(h-5.5)/14;let e,dx,a0;
   if(st>0&&st<1){e=Math.sin(Math.PI*st);dx=-Math.cos(Math.PI*st);a0=.32;}
   else{const mt=Math.min(1,Math.max(0,((h-19.5+24)%24)/10));e=Math.sin(Math.PI*mt);dx=-Math.cos(Math.PI*mt);a0=.16;}
   const wf=weather==='rain'?.5:weather==='snow'?.65:weather==='sand'?.6:1; // céu fechado: sombra suave
-  SUN.e=e;SUN.dx=dx;SUN.dy=.22+.5*e;SUN.len=Math.min(2.2,.32+(1-e)*1.9);setSunDir(dx,SUN.dy);
+  SUN.e=e;SUN.dx=dx;SUN.dy=.4;SUN.len=Math.min(2.5,.32+(1-e)*2.1);
   SUN.a=a0*Math.min(1,.4+e*1.4)*wf;
   SUN.fs='rgba(8,10,28,'+SUN.a.toFixed(3)+')';
 }
 function shadow(x,y,rx,ry){
-  if(SH_OFF)return;
   const k=SUN.len;
   ctx.fillStyle=SUN.fs;ctx.beginPath();
   ctx.ellipse(Math.round(x+SUN.dx*k*rx*.75),Math.round(y+SUN.dy*k*ry*.9),rx*(1+.35*k*Math.abs(SUN.dx)),ry*(1+.12*k),0,0,6.283);ctx.fill();
@@ -487,7 +475,7 @@ function hullPts(pts){
 }
 function bldShadow(b){
   const H=b.type==='apartment'?44:b.type==='office'?50:b.type==='warehouse'||b.type==='barn'?30:b.type==='shop'||b.type==='gas'?26:22;
-  const tx=SUN.sx*H*SUN.len*.6,ty=SUN.sy*H*SUN.len*.6;
+  const tx=SUN.dx*H*SUN.len*.55,ty=SUN.dy*H*SUN.len*.45;
   const x=b.x,y=b.y,w=b.w,h=b.h;
   const hp=hullPts([[x,y],[x+w,y],[x+w,y+h],[x,y+h],[x+tx,y+ty],[x+w+tx,y+ty],[x+w+tx,y+h+ty],[x+tx,y+h+ty]]);
   ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.moveTo(hp[0][0],hp[0][1]);for(let i=1;i<hp.length;i++)ctx.lineTo(hp[i][0],hp[i][1]);ctx.closePath();ctx.fill();
@@ -565,253 +553,6 @@ function flashReach(x,y,face){   // o feixe para na primeira parede
   for(let d=26;d<=170;d+=12){if(!losClear(x,y-5,x+cf*d,y-5+sf*d))break;L=d;}
   return Math.min(170,L+16);
 }
-/* SOMBRAS da lanterna e dos farois: lanca raios em leque a partir da luz e para cada raio acha o primeiro obstaculo (arvore, pedra, objeto solido ou
-   parede). O poligono resultante recorta o cone: atras do obstaculo fica na sombra, so a frente dele e o que esta em volta recebe luz.
-   Devolve null quando nada atrapalha (nao precisa recortar). Tudo em coordenadas do mundo. */
-function beamVis(ox,oy,a,len,ha,n,objs){   // objs===false: so paredes (arvores, pedras e moveis viram sombra com o formato deles, mais abaixo)
-  const far=len*1.3+8,cand=[],near=objs===false?[]:querySolidNear(ox,oy,far+8);
-  for(let i=0;i<near.length;i++){
-    const q=near[i],R=q.kind==='tree'?6:q.kind==='rock'?8:5,dx=q.x-ox,dy=q.y-oy,d2=dx*dx+dy*dy;
-    if(d2>(far+R)*(far+R)||d2<(R+1)*(R+1))continue;   // longe demais, ou colado em quem segura a luz
-    cand.push([dx,dy,R]);
-  }
-  const pts=[];let blocked=false;
-  for(let i=0;i<=n;i++){
-    const ang=a-ha+2*ha*i/n,cx=Math.cos(ang),sy=Math.sin(ang);let d=far;
-    for(let k=0;k<cand.length;k++){
-      const c=cand[k],t=c[0]*cx+c[1]*sy;if(t<=0)continue;
-      const px=c[0]-cx*t,py=c[1]-sy*t,h2=c[2]*c[2]-(px*px+py*py);if(h2<0)continue;
-      const e=t-Math.sqrt(h2);if(e>0&&e<d)d=e;
-    }
-    if(wallBlocks(ox,oy,ox+cx*d,oy+sy*d)){
-      let lo=0,hi=d;for(let k=0;k<7;k++){const m=(lo+hi)/2;if(wallBlocks(ox,oy,ox+cx*m,oy+sy*m))hi=m;else lo=m;}
-      d=lo;
-    }
-    if(d<far-.5){blocked=true;if(d<6)d=6;}
-    pts.push(ox+cx*d,oy+sy*d);
-  }
-  return blocked?{pts,ox,oy}:null;
-}
-function visPath(g,vis,sc,sp){   // monta o caminho do poligono de visao na tela (sc: escala do canvas de destino)
-  g.beginPath();const o=sp(vis.ox,vis.oy);g.moveTo(o[0]/sc,o[1]/sc);
-  for(let i=0;i<vis.pts.length;i+=2){const q=sp(vis.pts[i],vis.pts[i+1]);g.lineTo(q[0]/sc,q[1]/sc);}
-  g.closePath();
-}
-window.beamVis=beamVis;
-
-/* SOMBRA COM O FORMATO DO OBJETO. Cada obstaculo vira uma silhueta preta que e "jogada" para tras, longe da luz, e fura o feixe:
-   - arvore: o proprio sprite deitado no chao (o tronco fica perto, a copa mais longe, com o contorno real do pinheiro ou do carvalho)
-     mais um tronco fino que corta o feixe ate o fim;
-   - pedra e objetos: o contorno deles esticado para tras, alargando um pouco (a luz e pontual, entao a sombra abre).
-   So os que estao dentro do cone entram, no maximo SH_MAX por luz. */
-const SH_MAX=14,SH_LAY=.5;   // SH_LAY: comprimento da sombra de um objeto alto em relacao a altura dele
-const SILC={};
-function silBlob(key,w,h,round){
-  if(SILC[key])return SILC[key];
-  const c=document.createElement('canvas');c.width=w+2;c.height=h+2;const g=c.getContext('2d');g.fillStyle='#000';
-  if(round){g.beginPath();g.ellipse((w+2)/2,(h+2)/2+1,w/2,h/2,0,0,7);g.fill();}else g.fillRect(1,1,w,h);
-  return SILC[key]={img:c,ax:(w+2)/2,ay:h+1,key:key};
-}
-/* contornos por tipo, em retangulos [x,y,w,h] relativos ao ponto da base do objeto (como o desenho dele). tall: objeto alto, a sombra e a silhueta
-   deitada no chao; fw: largura da base, que corta o feixe ate o fim. Sem tall: o contorno inteiro e esticado para tras. */
-const SIL_RECTS={
-  pedra0:[[-7,-13,14,15]],pedra1:[[-6,-14,12,16]],pedra2:[[-8,-11,16,13]],pedra3:[[-5,-11,10,13]],pedra4:[[-9,-9,18,11]],
-  tronco:[[-2,-9,5,9]],
-  logh:[[-21,-8,42,11]],logv:[[-5,-20,10,40]],
-  poco:[[-10,-8,20,11]],bauA:[[-10,-11,20,13]],bauB:[[-7,-11,14,13]],
-  chest:[[-6,-10,12,10]],crate:[[-6,-10,12,10]],ruinwall:[[-10,-14,20,14]],wreck:[[-14,-9,28,15]],
-  bench:[[-11,-8,22,8]],hydrant:[[-3,-10,6,10]],trash:[[-5,-10,10,10]],dumpster:[[-12,-14,24,14]],barrier:[[-10,-8,20,8]],
-  stump:[[-5,-6,10,6]],log:[[-9,-6,18,6]],pt:[[-3,-8,6,8]],yucca:[[-6,-12,12,12]],cactus_sm:[[-2,-10,4,10]],mailbox:[[-1,-10,2,10],[-4,-14,8,5]],
-  obj:[[-5,-9,10,9]]
-};
-const SIL_TALL={   // [retangulos, largura da base]
-  pillar:[[[-4,-24,8,24]],8],statue:[[[-5,-22,10,22]],10],
-  lamp:[[[-1,-26,3,26],[-4,-30,9,5]],5],sign:[[[-1,-20,3,20],[-7,-26,14,9]],5],flag:[[[-1,-28,2,28],[1,-28,10,7]],4],
-  billboard:[[[-1,-30,3,30],[-22,-44,44,18]],4],
-  cactus_bg:[[[-3,-22,6,22],[-9,-16,6,3],[-9,-20,3,7],[3,-14,7,3],[7,-18,3,6]],6],
-  cactus_tall:[[[-3,-32,6,32],[-9,-22,6,3],[-9,-27,3,8],[3,-18,7,3],[7,-24,3,7]],6],
-  snowman:[[[-5,-9,10,9],[-4,-16,8,7],[-3,-21,6,5]],10],
-  pine_sm:[[[-1,-6,2,6],[-6,-14,12,8],[-4,-20,8,6],[-2,-24,4,4]],3],
-  oldtent:[null,10]
-};
-function silRects(key,rects,tri){
-  if(SILC[key])return SILC[key];
-  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
-  for(const r of rects){x0=Math.min(x0,r[0]);y0=Math.min(y0,r[1]);x1=Math.max(x1,r[0]+r[2]);y1=Math.max(y1,r[1]+r[3]);}
-  const c=document.createElement('canvas');c.width=x1-x0+2;c.height=y1-y0+2;const g=c.getContext('2d');g.fillStyle='#000';
-  for(const r of rects)g.fillRect(r[0]-x0+1,r[1]-y0+1,r[2],r[3]);
-  return SILC[key]={img:c,ax:1-x0,ay:1-y0,key:key};
-}
-function silTri(key,rows,half0,slope){   // barraca: triangulo
-  if(SILC[key])return SILC[key];
-  const rs=[];for(let r=0;r<rows;r++){const h=half0+Math.round(r*slope);rs.push([-h,-rows-2+r,2*h,1]);}
-  return silRects(key,rs);
-}
-function silFor(q){   // devolve {sil, tall, fw}
-  const t=q.ref;
-  if(q.kind==='rock')return{sil:silRects('pedra'+((t.k|0)%5),SIL_RECTS['pedra'+((t.k|0)%5)])};
-  if(q.kind==='tree')return{sil:null,tree:true};
-  if(!t)return{sil:silRects('obj',SIL_RECTS.obj)};
-  if(t.type){
-    const T=SIL_TALL[t.type];
-    if(T){const sil=T[0]?silRects('t_'+t.type,T[0]):silTri('t_oldtent',16,3,.8);return{sil,tall:true,fw:T[1]};}
-    const R0=SIL_RECTS[t.type]||SIL_RECTS.obj;return{sil:silRects('d_'+t.type,R0)};
-  }
-  if(t.a==='h')return{sil:silRects('logh',SIL_RECTS.logh)};
-  if(t.a==='v')return{sil:silRects('logv',SIL_RECTS.logv)};
-  if(t.o!==undefined)return{sil:silRects((t.o|0)>=2?'bauB':'bauA',(t.o|0)>=2?SIL_RECTS.bauB:SIL_RECTS.bauA)};
-  if(t.g!==undefined)return{sil:silRects('poco',SIL_RECTS.poco)};
-  return{sil:silTri('barraca',22,3,.95),tall:true,fw:24};   // barraca do jogador
-}
-/* SOMBRA DO SOL COM O FORMATO DO OBJETO. Objeto alto (arvore, poste, barraca): o proprio desenho e deitado no chao na direcao da sombra, a base fica
-   perto e a copa longe, entao um pinheiro projeta um pinheiro e um poste projeta um traco. Objeto baixo (pedra, caixa, bau): o contorno e esticado
-   para o lado da sombra. O resultado e guardado pronto (SUNC) e so e desenhado por quadro com a transparencia do sol. */
-function sunBitmap(sp){
-  const img=sp.img,ax=sp.ax,ay=sp.ay,dx=SUN.qx,dy=SUN.qy,len=SUN.ql;
-  let c,o;
-  if(sp.lay){
-    const K=len*(sp.k||.42),Lm=Math.min(150,ay*K+4),th=Math.atan2(dy,dx)-Math.PI/2,co=Math.cos(th),si=Math.sin(th);
-    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
-    for(const u of[-ax-2,img.width-ax+2])for(const v of[-2,Lm+2]){const X=u*co-v*si,Y=u*si+v*co;x0=Math.min(x0,X);x1=Math.max(x1,X);y0=Math.min(y0,Y);y1=Math.max(y1,Y);}
-    c=document.createElement('canvas');c.width=Math.ceil(x1-x0)+1;c.height=Math.ceil(y1-y0)+1;o={x:-x0,y:-y0};
-    const g=c.getContext('2d');g.imageSmoothingEnabled=false;
-    g.setTransform(co,si,-si,co,o.x,o.y);
-    for(let r=ay;r>=0;r-=1){const along=(ay-r)*K;g.drawImage(img,0,r,img.width,1,-ax,along,img.width,Math.max(1,K)+.6);}
-    g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.fillStyle='rgb(8,10,28)';g.fillRect(0,0,c.width,c.height);
-  }else{
-    const L=Math.min(120,Math.max(3,ay*len)),x0=Math.min(0,dx*L)-ax-1,y0=Math.min(0,dy*L)-ay-1,x1=Math.max(0,dx*L)+img.width-ax+1,y1=Math.max(0,dy*L)+img.height-ay+1;
-    c=document.createElement('canvas');c.width=Math.ceil(x1-x0);c.height=Math.ceil(y1-y0);o={x:-x0,y:-y0};
-    const g=c.getContext('2d');g.imageSmoothingEnabled=false;
-    const st=Math.max(1,L/50);
-    for(let t=0;t<=L+.01;t+=st)g.drawImage(img,Math.round(o.x-ax+dx*t),Math.round(o.y-ay+dy*t));
-    g.globalCompositeOperation='source-in';g.fillStyle='rgb(8,10,28)';g.fillRect(0,0,c.width,c.height);
-  }
-  if(!(c.width>0&&c.height>0)){c.width=1;c.height=1;}
-  return{cv:c,ox:o.x,oy:o.y};
-}
-function sunSpecOf(kind,ref){   // {key,img,ax,ay,lay} ou null (nao tem silhueta propria: usa a elipse generica)
-  if(kind==='tree'){
-    const k=ref.k|0,v=Math.floor((ref.seed||0)*4)&3,sn=weather==='snow'&&selectedMap!=='snow',sp=treeSprite(k,v,sn);
-    return{key:'T'+selectedMap+k+v+(sn?1:0),img:sp.cv,ax:sp.ox,ay:sp.oy,lay:true};
-  }
-  if(kind==='decor'&&ref&&ref.type&&!SIL_TALL[ref.type]&&!SIL_RECTS[ref.type])return null;   // flores, arbustos: elipse generica
-  const f=silFor({kind:kind,ref:ref});if(!f||!f.sil)return null;
-  return{key:f.sil.key+(f.tall?'L':'E'),img:f.sil.img,ax:f.sil.ax,ay:f.sil.ay,lay:!!f.tall};
-}
-function sunShadow(x,y,kind,ref,extra){   // true se desenhou a sombra com a silhueta do objeto
-  const sp=kind==='human'?humanSpec(ref,extra):sunSpecOf(kind,ref);if(!sp)return false;
-  if(SUN.a<.01)return true;
-  let b=SUNC.get(sp.key);
-  if(!b){if(SUNC.size>500)SUNC.clear();b=sunBitmap(sp);SUNC.set(sp.key,b);}
-  const ga=ctx.globalAlpha;ctx.globalAlpha=SUN.a;ctx.drawImage(b.cv,Math.round(x-b.ox),Math.round(y-b.oy));ctx.globalAlpha=ga;
-  return true;
-}
-function vehShadow(v,L,W,H){   // caixa do veiculo girada pelo angulo dele, esticada na direcao da sombra
-  const f=v.face||0,c=Math.cos(f),s=Math.sin(f),pts=[],tx=SUN.sx*H*SUN.len*.7,ty=SUN.sy*H*SUN.len*.7;
-  for(const a of[-1,1])for(const b of[-1,1]){const lx=a*L/2,ly=b*W/2,X=v.x+lx*c-ly*s,Y=v.y+3+lx*s+ly*c;pts.push([X,Y],[X+tx,Y+ty]);}
-  const hp=hullPts(pts);ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.moveTo(hp[0][0],hp[0][1]);for(let i=1;i<hp.length;i++)ctx.lineTo(hp[i][0],hp[i][1]);ctx.closePath();ctx.fill();
-}
-
-/* SILHUETA DE PERSONAGEM: o corpo e desenhado por humanBody(R,...), que recebe a funcao de pintar; passamos uma que so marca a silhueta num canvas
-   pequeno e guardamos por pose (direcao, passo, tipo de zumbi, sentado). Serve para a sombra do sol e para o corpo cortar a luz da lanterna e dos farois. */
-const HSIL={};
-function humanSil(o,face,key){
-  if(HSIL[key])return HSIL[key];
-  const c=document.createElement('canvas');c.width=44;c.height=48;const g=c.getContext('2d');g.fillStyle='#000';
-  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
-  const Rc=(x,y,w,h)=>{const X=Math.round(x)+22,Y=Math.round(y)+36;g.fillRect(X,Y,w,h);x0=Math.min(x0,X);y0=Math.min(y0,Y);x1=Math.max(x1,X+w);y1=Math.max(y1,Y+h);};
-  try{window.humanBody(Rc,o,face);}catch(e){}
-  if(x1<=x0){Rc(-4,-14,8,17);}
-  const w=x1-x0,h=y1-y0,c2=document.createElement('canvas');c2.width=w;c2.height=h;c2.getContext('2d').drawImage(c,x0,y0,w,h,0,0,w,h);
-  return HSIL[key]={img:c2,ax:22-x0,ay:39-y0,key:key};   // a base (pe) fica em y=3
-}
-function humanSpec(o,face){
-  const fx=Math.cos(face),fy=Math.sin(face);
-  if(o.crawler)return{key:'Hcrawl',img:silRects('crawl',[[-9,-5,18,8]]).img,ax:silRects('crawl',[[-9,-5,18,8]]).ax,ay:silRects('crawl',[[-9,-5,18,8]]).ay,lay:false};
-  const back=fy<-.5,front=fy>.2,ex=fx>.45?1:(fx<-.45?-1:0),step=o.moving&&!o.sit?Math.sin(o.anim):0,l1=step>.3?-1:0,l2=step<-.3?-1:0;
-  const key='H'+[o.zombie?1:0,o.kind|0,o.zv|0,o.sit?1:0,o.bag?1:0,o.os||'',o.hs||'',o.shorts?1:0,o.acc||'',back?1:0,front?1:0,ex,l1,l2].join('.');
-  const sl=humanSil(o,face,key);
-  return{key:sl.key,img:sl.img,ax:sl.ax,ay:sl.ay,lay:true,k:.8};
-}
-const HGEN={skin:'#d9a37a',shirt:'#556',hair:'#222',moving:false,anim:0};
-const ANIMSZ={deer:[14,6,8],camel:[14,6,9],rabbit:[8,4,4],rat:[8,4,3],boar:[12,6,6],wolf:[13,5,6],dog:[13,5,6],scorpion:[9,3,3],vulture:[12,5,4],crow:[12,5,4]};
-function animShadow(a){const z=ANIMSZ[a.k]||[6,4,3];vehShadow(a,z[0],z[1],z[2]);}
-window.animShadow=animShadow;
-window.sunBM=(kind,ref,extra)=>{const sp=kind==='human'?humanSpec(ref,extra):sunSpecOf(kind,ref);if(!sp)return null;let b=SUNC.get(sp.key);if(!b){b=sunBitmap(sp);SUNC.set(sp.key,b);}return b;};   // testes
-window.sunOff=d=>{SH_OFF+=d;};window.sunShadow=sunShadow;window.vehShadow=vehShadow;
-function shadowCasters(ox,oy,a,len,ha,skip){
-  const far=len*1.3,near=querySolidNear(ox,oy,far+20),out=[],seen=new Set();
-  const add=(x,y,kind,ref,half)=>{
-    const dx=x-ox,dy=y-oy,d=Math.sqrt(dx*dx+dy*dy);
-    if(d>far+10||d<8)return;
-    let da=Math.atan2(dy,dx)-a;da=Math.atan2(Math.sin(da),Math.cos(da));
-    if(Math.abs(da)>ha+Math.atan2(half,d))return;   // fora do cone (half = meia largura do objeto)
-    out.push({q:{x,y,kind,ref},d,dx:dx/d,dy:dy/d});
-  };
-  for(let i=0;i<near.length;i++){
-    const q=near[i];
-    if(q.kind!=='tree'&&q.ref){if(seen.has(q.ref))continue;seen.add(q.ref);add(q.ref.x,q.ref.y,q.kind,q.ref,26);}
-    else add(q.x,q.y,q.kind,q.ref,26);
-  }
-  for(const v of vehicles){if(v===skip||v.destroyed)continue;add(v.x,v.y,'veh',v,Math.max(v.w||36,v.h||20));}
-  const hum=(e,x,y)=>{if(e===skip||!e||!Number.isFinite(x)||!Number.isFinite(y))return;add(x,y,'human',e,8);};
-  if(P&&!P.dead&&!P.inVehicle&&!P.inside)hum(P,P.x,P.y);
-  for(const id in remotePlayers){const r=remotePlayers[id];if(r&&r.alive!==false&&!r.inVehicle&&!r.sl)hum(r,r.x,r.y);}
-  for(const z of zombies){if(z.dead||z.hp<=0)continue;hum(z,z.x,z.y);}
-  for(const a of animals){if(a.dead)continue;add(a.x,a.y,'animal',a,8);}
-  if(!out.length)return null;
-  out.sort((m,n)=>m.d-n.d);
-  if(out.length>SH_MAX)out.length=SH_MAX;
-  return out;
-}
-function castShadows(g,occ,len,sp,LS){
-  const far=len*1.3,K=Z/LS;
-  g.globalCompositeOperation='destination-out';
-  for(const o of occ){
-    const q=o.q,t=q.ref,[px,py]=sp(q.x,q.y),rem=far-o.d;if(rem<=0)continue;
-    const ext=(sil,rot,maxL)=>{   // contorno esticado para tras, curto e afinando na ponta (rot: carros giram com o angulo deles)
-      const Ln=Math.min(rem,maxL||Math.min(60,Math.max(20,sil.ay*2.2))),step=Math.max(1.5,Ln/30),co=Math.cos(rot||0),si=Math.sin(rot||0);g.globalAlpha=1;
-      for(let u=0;u<=Ln;u+=step){
-        const s=1-.4*u/Ln,[ex,ey]=sp(q.x+o.dx*u,q.y+o.dy*u);
-        g.setTransform(K*s*co,K*s*si,-K*s*si,K*s*co,ex/LS,ey/LS);g.drawImage(sil.img,-sil.ax,-sil.ay);
-      }
-    };
-    const lay=(img,ax,ay)=>{   // sprite deitado no chao: cada altura vira uma distancia (base perto, topo longe)
-      const th=Math.atan2(o.dy,o.dx)-Math.PI/2,co=Math.cos(th),si=Math.sin(th);g.globalAlpha=.96;
-      for(let r=ay;r>=0;r-=2){
-        const h=ay-r,along=h*SH_LAY,div=1+along/Math.max(o.d,14)*.15;
-        g.setTransform(K*co,K*si,-K*si,K*co,px/LS,py/LS);
-        g.drawImage(img,0,r,img.width,2,-ax*div,along,img.width*div,2*SH_LAY+.6);
-      }
-    };
-    if(q.kind==='tree'){
-      const sp2=treeSprite(t.k|0,Math.floor((t.seed||0)*4)&3,weather==='snow'&&selectedMap!=='snow');
-      ext(silRects('tronco',SIL_RECTS.tronco),0,34);lay(sp2.cv,sp2.ox,sp2.oy);
-    }else if(q.kind==='human'){
-      const hs=humanSil(HGEN,Math.PI/2,'Hgen');ext(hs,0,Math.min(46,rem));   // o corpo (cabeca, tronco, pernas) esticado para tras
-    }else if(q.kind==='animal'){
-      const z=ANIMSZ[t.k]||[6,4,3],L=z[0],Wd=z[1],key='v'+L+'x'+Wd;
-      if(!SILC[key]){const c=document.createElement('canvas');c.width=L+2;c.height=Wd+2;const gg=c.getContext('2d');gg.fillStyle='#000';gg.fillRect(1,1,L,Wd);SILC[key]={img:c,ax:(L+2)/2,ay:(Wd+2)/2};}
-      ext(SILC[key],t.face||0,Math.min(40,L*2));
-    }else if(q.kind==='veh'){
-      const L=t.w||36,Wd=t.h||20,key='v'+L+'x'+Wd;
-      if(!SILC[key]){const c=document.createElement('canvas');c.width=L+2;c.height=Wd+2;const gg=c.getContext('2d');gg.fillStyle='#000';gg.fillRect(1,1,L,Wd);SILC[key]={img:c,ax:(L+2)/2,ay:(Wd+2)/2};}
-      ext(SILC[key],t.face||0,Math.min(48,Math.max(L,Wd)*1.1));   // o retangulo do carro, girado pelo angulo dele
-    }else{
-      const f=silFor(q);
-      if(f.tall){ext(silBlob('base'+f.fw,f.fw,4,false),0,Math.min(40,f.sil.ay*.9));lay(f.sil.img,f.sil.ax,f.sil.ay);}
-      else ext(f.sil);
-    }
-  }
-  g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;
-}
-const shT=document.createElement('canvas'),shg=shT.getContext('2d');
-function shReady(w,h){
-  if(shT.width!==w||shT.height!==h){shT.width=w;shT.height=h;}
-  shg.setTransform(1,0,0,1,0,0);shg.globalCompositeOperation='source-over';shg.globalAlpha=1;shg.imageSmoothingEnabled=true;shg.clearRect(0,0,w,h);
-  return shg;
-}
-window.shadowCasters=shadowCasters;
 const vigC=document.createElement('canvas');
 function ensureVig(){
   if(vigC.width===W&&vigC.height===H)return;
@@ -1192,42 +933,20 @@ function drawLighting(sx,sy){
         if(burning){punch(hx0,hy0,64*Z);continue;}
         headlit.push(v);
         const cf=Math.cos(v.face||0),sf=Math.sin(v.face||0);
-        const vox=v.x+cf*14,voy=v.y+sf*14;
-        v._vis=tier<2?beamVis(vox,voy,v.face||0,190,.5,24,false):null;   // paredes cortam o farol
-        v._occ=tier<2?shadowCasters(vox,voy,v.face||0,190,.5,v):null;       // arvores, pedras e objetos: sombra com o formato deles
-        if(v._vis||v._occ){
-          const g=v._occ?shReady(lightC.width,lightC.height):lctx;
-          if(g!==lctx)g.setTransform(1,0,0,1,0,0);
-          lctx.save();if(v._vis){visPath(lctx,v._vis,LS,sp);lctx.clip();}
-          if(g!==lctx)g.globalCompositeOperation='source-over';
-          const pk=(cx,cy,r)=>g.drawImage(lightSprite,(cx-r)/LS,(cy-r)/LS,2*r/LS,2*r/LS);
-          for(let k=0;k<5;k++){const dd=22+k*24;pk(hx0+cf*dd*Z,hy0+sf*dd*Z,(30+k*8)*Z);}
-          if(v._occ){castShadows(g,v._occ,190,sp,LS);lctx.drawImage(shT,0,0);}
-          lctx.restore();
-        }else for(let k=0;k<5;k++){const dd=22+k*24;punch(hx0+cf*dd*Z,hy0+sf*dd*Z,(30+k*8)*Z);}
+        for(let k=0;k<5;k++){const dd=22+k*24;punch(hx0+cf*dd*Z,hy0+sf*dd*Z,(30+k*8)*Z);}
       }
     }
     const beams=[];   // lanternas acesas (a minha e as dos aliados)
     if(P&&P.torch&&P.flashOn&&!P.dead&&!P.inVehicle&&!P.sleeping){   // dormindo a lanterna nao ilumina
       const tl=flashReach(P.x,P.y,P.face);P._fLen=P._fLen?P._fLen+(tl-P._fLen)*.3:tl;
-      beams.push({x:P.x,y:P.y,a:P.face,len:P._fLen,src:P});
+      beams.push({x:P.x,y:P.y,a:P.face,len:P._fLen});
     }
-    for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.lt&&!rp.sl&&rp.alive!==false&&!rp.inVehicle&&Number.isFinite(rp.x)&&Number.isFinite(rp.face)&&(!bldAt(rp.x,rp.y)||bldAt(rp.x,rp.y)===(P&&P.inside)))beams.push({x:rp.x,y:rp.y,a:rp.face,len:130,src:rp});}
+    for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.lt&&!rp.sl&&rp.alive!==false&&!rp.inVehicle&&Number.isFinite(rp.x)&&Number.isFinite(rp.face)&&(!bldAt(rp.x,rp.y)||bldAt(rp.x,rp.y)===(P&&P.inside)))beams.push({x:rp.x,y:rp.y,a:rp.face,len:130});}
     for(const bm of beams){
       const [bx,by]=sp(bm.x+Math.cos(bm.a)*5,bm.y-7);
       if(bx<-200*Z||by<-200*Z||bx>W+200*Z||by>H+200*Z)continue;
       const fl=1+Math.sin(T*31)*.012;
-      const box=bm.x+Math.cos(bm.a)*5,boy=bm.y-7;
-      bm.vis=tier<2?beamVis(box,boy,bm.a,bm.len,.5,26,false):null;   // paredes
-      bm.occ=tier<2?shadowCasters(box,boy,bm.a,bm.len,.5,bm.src):null;       // arvores, pedras e objetos
-      const kk=bm.len*fl*Z/LS/FL_LEN;
-      lctx.save();if(bm.vis){visPath(lctx,bm.vis,LS,sp);lctx.clip();}
-      if(bm.occ){
-        const g=shReady(lightC.width,lightC.height);
-        g.translate(bx/LS,by/LS);g.rotate(bm.a);g.scale(kk,kk);g.globalAlpha=.96;g.drawImage(flashMask,-10,-FL_H/2);
-        castShadows(g,bm.occ,bm.len,sp,LS);lctx.drawImage(shT,0,0);
-      }else{lctx.translate(bx/LS,by/LS);lctx.rotate(bm.a);lctx.scale(kk,kk);lctx.globalAlpha=.96;lctx.drawImage(flashMask,-10,-FL_H/2);}
-      lctx.restore();
+      lctx.save();lctx.translate(bx/LS,by/LS);lctx.rotate(bm.a);const k=bm.len*fl*Z/LS/FL_LEN;lctx.scale(k,k);lctx.globalAlpha=.96;lctx.drawImage(flashMask,-10,-FL_H/2);lctx.restore();
       punch(bx,by+3*Z,24*Z,.7);   // um pouco de luz em volta de quem segura
     }
     drawLighting._beams=beams;
@@ -1266,30 +985,15 @@ function drawLighting(sx,sy){
     // lanterna: brilho do feixe
     for(const bm of (drawLighting._beams||[])){
       const [bx,by]=sp(bm.x+Math.cos(bm.a)*5,bm.y-7);
-      ctx.save();if(bm.vis){visPath(ctx,bm.vis,1,sp);ctx.clip();}
-      const gk=bm.len*Z/FL_LEN,ga=Math.min(1,dark*1.3)*(selectedMap==='snow'?.6:1);
-      if(bm.occ){   // o brilho tambem some atras do obstaculo: desenha no canvas pequeno, fura com a sombra e sobe
-        const LSg=lightC.width>0?W/lightC.width:1,g=shReady(lightC.width,lightC.height);
-        g.translate(bx/LSg,by/LSg);g.rotate(bm.a);g.scale(gk/LSg,gk/LSg);g.drawImage(flashGlow,-10,-FL_H/2);
-        castShadows(g,bm.occ,bm.len,sp,LSg);
-        ctx.globalAlpha=ga;ctx.drawImage(shT,0,0,shT.width,shT.height,0,0,W,H);
-      }else{ctx.translate(bx,by);ctx.rotate(bm.a);ctx.scale(gk,gk);ctx.globalAlpha=ga;ctx.drawImage(flashGlow,-10,-FL_H/2);}
-      ctx.restore();
+      ctx.save();ctx.translate(bx,by);ctx.rotate(bm.a);const k=bm.len*Z/FL_LEN;ctx.scale(k,k);
+      ctx.globalAlpha=Math.min(1,dark*1.3)*(selectedMap==='snow'?.6:1);ctx.drawImage(flashGlow,-10,-FL_H/2);ctx.restore();
     }
     ctx.globalAlpha=1;
     // faróis: cone de luz e halo
     if(tier<2)for(const v of headlit){
       const [hx0,hy0]=sp(v.x,v.y),cf=Math.cos(v.face||0),sf=Math.sin(v.face||0);
-      ctx.save();if(v._vis){visPath(ctx,v._vis,1,sp);ctx.clip();}
-      if(v._occ){
-        const LSg=lightC.width>0?W/lightC.width:1,g=shReady(lightC.width,lightC.height);
-        g.translate((hx0+cf*14*Z)/LSg,(hy0+sf*14*Z)/LSg);g.rotate(v.face||0);g.scale(Z*.8/LSg,Z*.8/LSg);g.drawImage(coneC,0,-64,256,128);
-        castShadows(g,v._occ,190,sp,LSg);
-        ctx.globalAlpha=Math.min(1,dark*1.3);ctx.drawImage(shT,0,0,shT.width,shT.height,0,0,W,H);
-      }else{
-        ctx.translate(hx0+cf*14*Z,hy0+sf*14*Z);ctx.rotate(v.face||0);
-        ctx.globalAlpha=Math.min(1,dark*1.3);ctx.drawImage(coneC,0,-64*Z*.8,256*Z*.8,128*Z*.8);
-      }
+      ctx.save();ctx.translate(hx0+cf*14*Z,hy0+sf*14*Z);ctx.rotate(v.face||0);
+      ctx.globalAlpha=Math.min(1,dark*1.3);ctx.drawImage(coneC,0,-64*Z*.8,256*Z*.8,128*Z*.8);
       ctx.restore();
     }
     ctx.globalAlpha=1;
