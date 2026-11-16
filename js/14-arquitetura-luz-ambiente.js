@@ -815,6 +815,14 @@ function shReady(w,h){
   shg.setTransform(1,0,0,1,0,0);shg.globalCompositeOperation='source-over';shg.globalAlpha=1;shg.imageSmoothingEnabled=true;shg.clearRect(0,0,w,h);
   return shg;
 }
+/* copia para a tela so o retangulo em volta do feixe (e nao a tela inteira): o canvas temporario so tem algo dentro do alcance da luz.
+   Alinhado a grade do canvas pequeno, para o resultado ficar igual ao de copiar tudo. */
+function subShT(ox,oy,ang,back,fwd,hw,LS){
+  const c=Math.cos(ang),sn=Math.sin(ang);let mx=1e9,my=1e9,Mx=-1e9,My=-1e9;
+  for(const u of [-back,fwd])for(const v of [-hw,hw]){const px=ox+c*u-sn*v,py=oy+sn*u+c*v;if(px<mx)mx=px;if(px>Mx)Mx=px;if(py<my)my=py;if(py>My)My=py;}
+  const x0=Math.max(0,Math.floor(mx/LS)*LS),y0=Math.max(0,Math.floor(my/LS)*LS),x1=Math.min(W,Math.ceil(Mx/LS)*LS),y1=Math.min(H,Math.ceil(My/LS)*LS);
+  if(x1>x0&&y1>y0)ctx.drawImage(shT,x0/LS,y0/LS,(x1-x0)/LS,(y1-y0)/LS,x0,y0,x1-x0,y1-y0);
+}
 window.shadowCasters=shadowCasters;
 const vigC=document.createElement('canvas');
 function ensureVig(){
@@ -1276,7 +1284,7 @@ function drawLighting(sx,sy){
         const LSg=lightC.width>0?W/lightC.width:1,g=shReady(lightC.width,lightC.height);
         g.translate(bx/LSg,by/LSg);g.rotate(bm.a);g.scale(gk/LSg,gk/LSg);g.drawImage(flashGlow,-10,-FL_H/2);
         castShadows(g,bm.occ,bm.len,sp,LSg);
-        ctx.globalAlpha=ga;ctx.drawImage(shT,0,0,shT.width,shT.height,0,0,W,H);
+        ctx.globalAlpha=ga;subShT(bx,by,bm.a,14*gk,bm.len*Z*1.1+14*gk,FL_H/2*gk*1.1+4*Z,LSg);
       }else{ctx.translate(bx,by);ctx.rotate(bm.a);ctx.scale(gk,gk);ctx.globalAlpha=ga;ctx.drawImage(flashGlow,-10,-FL_H/2);}
       ctx.restore();
     }
@@ -1289,7 +1297,7 @@ function drawLighting(sx,sy){
         const LSg=lightC.width>0?W/lightC.width:1,g=shReady(lightC.width,lightC.height);
         g.translate((hx0+cf*14*Z)/LSg,(hy0+sf*14*Z)/LSg);g.rotate(v.face||0);g.scale(Z*.8/LSg,Z*.8/LSg);g.drawImage(coneC,0,-64,256,128);
         castShadows(g,v._occ,190,sp,LSg);
-        ctx.globalAlpha=Math.min(1,dark*1.3);ctx.drawImage(shT,0,0,shT.width,shT.height,0,0,W,H);
+        ctx.globalAlpha=Math.min(1,dark*1.3);subShT(hx0+cf*14*Z,hy0+sf*14*Z,v.face||0,6*Z,215*Z,62*Z,LSg);
       }else{
         ctx.translate(hx0+cf*14*Z,hy0+sf*14*Z);ctx.rotate(v.face||0);
         ctx.globalAlpha=Math.min(1,dark*1.3);ctx.drawImage(coneC,0,-64*Z*.8,256*Z*.8,128*Z*.8);
