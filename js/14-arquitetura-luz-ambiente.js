@@ -472,7 +472,7 @@ function updateSun(){
   SUN.fs='rgba(8,10,28,'+SUN.a.toFixed(3)+')';
 }
 function shadow(x,y,rx,ry){
-  if(SH_OFF)return;
+  if(SH_OFF||shadowMode()===0)return;
   const k=SUN.len;
   ctx.fillStyle=SUN.fs;ctx.beginPath();
   ctx.ellipse(Math.round(x+SUN.dx*k*rx*.75),Math.round(y+SUN.dy*k*ry*.9),rx*(1+.35*k*Math.abs(SUN.dx)),ry*(1+.12*k),0,0,6.283);ctx.fill();
@@ -486,6 +486,7 @@ function hullPts(pts){
   lo.pop();up.pop();return lo.concat(up);
 }
 function bldShadow(b){
+  if(shadowMode()===0)return;
   const H=b.type==='apartment'?44:b.type==='office'?50:b.type==='warehouse'||b.type==='barn'?30:b.type==='shop'||b.type==='gas'?26:22;
   const tx=SUN.sx*H*SUN.len*.6,ty=SUN.sy*H*SUN.len*.6;
   const x=b.x,y=b.y,w=b.w,h=b.h;
@@ -511,20 +512,18 @@ const MAPTINT={forest:[226,246,216],snow:[220,234,255],desert:[255,234,196],city
 const MAPWARM={forest:'255,160,70',snow:'255,170,160',desert:'255,115,45',city:'255,150,95'};
 function drawGrade(){
   const c=gradeRGB(SUN.h);
-  if(c[0]<251||c[1]<251||c[2]<251){
+  // cor do sol e cor propria de cada mapa (floresta esverdeada, neve azulada, deserto alaranjado, cidade acinzentada; some a noite e dentro de casa).
+  // As duas sao 'multiply', entao viram uma so pintura de tela cheia (multiplicar uma cor e depois a outra = multiplicar pelo produto delas).
+  const mt=MAPTINT[selectedMap],ds=1-dark,useMt=!!mt&&ds>.05&&!(P&&P.inside);
+  const sunOn=c[0]<251||c[1]<251||c[2]<251;
+  if(sunOn||useMt){
+    let r=sunOn?c[0]|0:255,g=sunOn?c[1]|0:255,b=sunOn?c[2]|0:255;
+    if(useMt){const k=.85*ds;r=r*Math.round(255-(255-mt[0])*k)/255;g=g*Math.round(255-(255-mt[1])*k)/255;b=b*Math.round(255-(255-mt[2])*k)/255;}
     ctx.globalCompositeOperation='multiply';
-    ctx.fillStyle='rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgb('+Math.round(r)+','+Math.round(g)+','+Math.round(b)+')';ctx.fillRect(0,0,W,H);
     ctx.globalCompositeOperation='source-over';
   }
-  // cor própria de cada mapa (floresta esverdeada, neve azulada, deserto alaranjado, cidade acinzentada); some à noite e dentro de casa
-  const mt=MAPTINT[selectedMap],ds=1-dark;
-  if(mt&&ds>.05&&!(P&&P.inside)){
-    const k=.85*ds;
-    ctx.globalCompositeOperation='multiply';
-    ctx.fillStyle='rgb('+Math.round(255-(255-mt[0])*k)+','+Math.round(255-(255-mt[1])*k)+','+Math.round(255-(255-mt[2])*k)+')';ctx.fillRect(0,0,W,H);
-    ctx.globalCompositeOperation='source-over';
-    if(selectedMap==='city'&&perfTotal()<2){try{ctx.globalCompositeOperation='saturation';ctx.globalAlpha=.3*ds;ctx.fillStyle='#808080';ctx.fillRect(0,0,W,H);}catch(e){}ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
-  }
+  if(useMt&&selectedMap==='city'&&perfTotal()<2){try{ctx.globalCompositeOperation='saturation';ctx.globalAlpha=.3*ds;ctx.fillStyle='#808080';ctx.fillRect(0,0,W,H);}catch(e){}ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
   // brilho quente do sol baixo (nascer e pôr do sol), mais forte e na cor do mapa
   const h=SUN.h,wg=Math.max(0,1-Math.abs(h-18.3)/2.1)+Math.max(0,1-Math.abs(h-6.2)/1.6);
   const wa=.17*wg*(weather==='none'?1:.4);
@@ -699,7 +698,8 @@ function sunSpecOf(kind,ref){   // {key,img,ax,ay,lay} ou null (nao tem silhueta
   const f=silFor({kind:kind,ref:ref});if(!f||!f.sil)return null;
   return{key:f.sil.key+(f.tall?'L':'E'),img:f.sil.img,ax:f.sil.ax,ay:f.sil.ay,lay:!!f.tall};
 }
-function sunShadow(x,y,kind,ref,extra){   // true se desenhou a sombra com a silhueta do objeto
+function sunShadow(x,y,kind,ref,extra){   // true se o objeto ja foi resolvido aqui (desenhou a silhueta, ou as sombras estao desligadas); false = quem chamou desenha a elipse simples
+  const sm=shadowMode();if(sm===0)return true;if(sm===1)return false;
   const sp=kind==='human'?humanSpec(ref,extra):sunSpecOf(kind,ref);if(!sp)return false;
   if(SUN.a*(1-.9*dark)<.045)return true;   // sol baixo ou noite: a sombra some sob o escuro, nem desenha
   let b=SUNC.get(sp.key);
@@ -708,6 +708,9 @@ function sunShadow(x,y,kind,ref,extra){   // true se desenhou a sombra com a sil
   return true;
 }
 function vehShadow(v,L,W,H){   // caixa do veiculo girada pelo angulo dele, esticada na direcao da sombra
+  const sm=shadowMode();if(sm===0)return;
+  if(sm===1){const k=SUN.len,lo=Math.max(L,W),sh=Math.min(L,W);ctx.fillStyle=SUN.fs;ctx.beginPath();   // modo simples: elipse que gira com o veiculo (como antigamente)
+    ctx.ellipse(Math.round(v.x+SUN.dx*k*lo*.3),Math.round(v.y+3+SUN.dy*k*sh*.7),lo*.5*(1+.15*k),sh*.5*.9,v.face||0,0,6.283);ctx.fill();return;}
   const f=v.face||0,c=Math.cos(f),s=Math.sin(f),pts=[],tx=SUN.sx*H*SUN.len*.7,ty=SUN.sy*H*SUN.len*.7;
   for(const a of[-1,1])for(const b of[-1,1]){const lx=a*L/2,ly=b*W/2,X=v.x+lx*c-ly*s,Y=v.y+3+lx*s+ly*c;pts.push([X,Y],[X+tx,Y+ty]);}
   const hp=hullPts(pts);ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.moveTo(hp[0][0],hp[0][1]);for(let i=1;i<hp.length;i++)ctx.lineTo(hp[i][0],hp[i][1]);ctx.closePath();ctx.fill();
@@ -1206,7 +1209,7 @@ function drawLighting(sx,sy){
         const cf=Math.cos(v.face||0),sf=Math.sin(v.face||0);
         const vox=v.x+cf*14,voy=v.y+sf*14;
         v._vis=tier<2?beamVis(vox,voy,v.face||0,190,.5,24,false):null;   // paredes cortam o farol
-        v._occ=tier<2?shadowCasters(vox,voy,v.face||0,190,.5,v):null;       // arvores, pedras e objetos: sombra com o formato deles
+        v._occ=tier<2&&shadowMode()===2?shadowCasters(vox,voy,v.face||0,190,.5,v):null;       // arvores, pedras e objetos: sombra com o formato deles
         if(v._vis||v._occ){
           const g=v._occ?shReady(lightC.width,lightC.height):lctx;
           if(g!==lctx)g.setTransform(1,0,0,1,0,0);
@@ -1231,7 +1234,7 @@ function drawLighting(sx,sy){
       const fl=1+Math.sin(T*31)*.012;
       const box=bm.x+Math.cos(bm.a)*5,boy=bm.y-7;
       bm.vis=tier<2?beamVis(box,boy,bm.a,bm.len,.5,26,false):null;   // paredes
-      bm.occ=tier<2?shadowCasters(box,boy,bm.a,bm.len,.5,bm.src):null;       // arvores, pedras e objetos
+      bm.occ=tier<2&&shadowMode()===2?shadowCasters(box,boy,bm.a,bm.len,.5,bm.src):null;       // arvores, pedras e objetos
       const kk=bm.len*fl*Z/LS/FL_LEN;
       lctx.save();if(bm.vis){visPath(lctx,bm.vis,LS,sp);lctx.clip();}
       if(bm.occ){
@@ -1449,6 +1452,32 @@ function groundChunk(cx,cy,col,frame){
         g.restore();
       }
     }
+    if(selectedMap==='city'&&typeof cityPaths!=='undefined'){   // caminhos de pedra do portao ate a porta (antes das ruas, como era no desenho direto)
+      for(const q of cityPaths){
+        if(q.x>cx*GCH+GCH+1||q.x+q.w<cx*GCH||q.y>cy*GCH+GCH+1||q.y+q.h<cy*GCH)continue;
+        g_R(g,q.x,q.y,q.w,q.h,'#b4afa2');
+        for(let yy=q.y+4;yy<q.y+q.h;yy+=5)g_R(g,q.x,yy,q.w,1,'#9a958a');
+        g_R(g,q.x,q.y,1,q.h,'#c8c4b8');g_R(g,q.x+q.w-1,q.y,1,q.h,'#8c887e');
+      }
+    }
+    if(selectedMap==='city'&&typeof cityDecor!=='undefined'&&cityDecor.length){   // arbustos, flores e caixas de correio (parados), antes das ruas como no desenho direto
+      const Rd=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),w,h);};
+    for(const d of cityDecor){
+      if(d.x>cx*GCH+GCH+11||d.x<cx*GCH-11||d.y>cy*GCH+GCH+11||d.y<cy*GCH-13)continue;
+      if(d.t==='bush'){
+        const c=[['#2d6428','#3f8a38','#58a84a'],['#2a5c30','#3a7a42','#52964f'],['#35682a','#4a8f3a','#76b24c']][d.c%3];
+        Rd(d.x-5,d.y-1,10,5,'rgba(0,0,0,.22)');Rd(d.x-5,d.y-4,10,6,c[0]);Rd(d.x-4,d.y-6,8,5,c[1]);Rd(d.x-3,d.y-6,3,2,c[2]);Rd(d.x+1,d.y-3,2,2,c[2]);
+      }else if(d.t==='flower'){
+        const c=['#e8607a','#f0d048','#f4f0f4','#b078d8'][d.c%4];
+        Rd(d.x,d.y,1,3,'#3a7a30');Rd(d.x-1,d.y-2,3,2,c);Rd(d.x,d.y-3,1,1,'#f4d870');
+      }else{   // caixa de correio
+        Rd(d.x,d.y-2,2,8,'#6a4a2a');Rd(d.x-3,d.y-7,8,5,['#3a5a9a','#a83a30','#3a3a40'][d.c%3]);Rd(d.x-3,d.y-7,8,1,'rgba(255,255,255,.3)');Rd(d.x+4,d.y-9,1,4,'#d03a30');Rd(d.x-2,d.y-4,1,1,'#f0f0e0');
+      }
+    }
+    }
+    if(selectedMap==='city'&&window.drawCityRoads){   // ruas, calcadas, faixas e travessias: tambem nunca mudam, entram no bloco (eram ~4 telas de retangulos por quadro)
+      const x0=cx*GCH;const y0=cy*GCH;drawCityRoads(x0-24,y0-24,x0+GCH+25,y0+GCH+25,g);
+    }
     c={cv,f:frame};GCV.set(key,c);
   }
   c.f=frame;return c.cv;
@@ -1525,7 +1554,7 @@ function render(){
   if(!P)return;
   const sk=shake>0&&CFG.shake,sx=sk?Math.round(rnd(-shake,shake)):0,sy=sk?Math.round(rnd(-shake,shake)):0;   // CONFIGURACOES: tremor de tela
   ctx.setTransform(1,0,0,1,0,0);
-  ctx.fillStyle='#070a07';ctx.fillRect(0,0,W,H);
+  if(P.inside){ctx.fillStyle='#070a07';ctx.fillRect(0,0,W,H);}   // fora de casa o fundo so e pintado se a tela passar da borda do mundo (o chao ja cobre tudo)
   if(P.inside){
     const b=P.inside;
     const ox=Math.round(-(P.x-W/(2*Z))*Z),oy=Math.round(-(P.y-H/(2*Z))*Z);
@@ -1593,6 +1622,7 @@ function render(){
   }
   const ox=Math.round(-(P.x-W/(2*Z))*Z),oy=Math.round(-(P.y-H/(2*Z))*Z);
   camX=-ox/Z;camY=-oy/Z;
+  if(sk||camX<0||camY<0||camX+W/Z>WW||camY+H/Z>WH){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#070a07';ctx.fillRect(0,0,W,H);}
   ctx.setTransform(Z,0,0,Z,ox+sx,oy+sy);
   const vx0=camX-24,vy0=camY-24,vx1=camX+W/Z+24,vy1=camY+H/Z+24;
   const groundCol=selectedMap==='snow'?'#d0d8e0':selectedMap==='desert'?'#c2a65d':selectedMap==='city'?'#555a60':'#386a2c';
@@ -1605,30 +1635,12 @@ function render(){
   }
   ctx.restore();
   if(selectedMap==='city'&&cityGardens.length){   // gramados: quarteiroes de praca/parque/lote e quintais
-    for(const q of cityPaths){   // caminhos de pedra do portao ate a porta
-      if(q.x>vx1||q.x+q.w<vx0||q.y>vy1||q.y+q.h<vy0)continue;
-      R(q.x,q.y,q.w,q.h,'#b4afa2');
-      for(let yy=q.y+4;yy<q.y+q.h;yy+=5)R(q.x,yy,q.w,1,'#9a958a');
-      R(q.x,q.y,1,q.h,'#c8c4b8');R(q.x+q.w-1,q.y,1,q.h,'#8c887e');
-    }
-    for(const d of cityDecor){
-      if(d.x>vx1+10||d.x<vx0-10||d.y>vy1+10||d.y<vy0-12)continue;
-      if(d.t==='bush'){
-        const c=[['#2d6428','#3f8a38','#58a84a'],['#2a5c30','#3a7a42','#52964f'],['#35682a','#4a8f3a','#76b24c']][d.c%3];
-        R(d.x-5,d.y-1,10,5,'rgba(0,0,0,.22)');R(d.x-5,d.y-4,10,6,c[0]);R(d.x-4,d.y-6,8,5,c[1]);R(d.x-3,d.y-6,3,2,c[2]);R(d.x+1,d.y-3,2,2,c[2]);
-      }else if(d.t==='flower'){
-        const c=['#e8607a','#f0d048','#f4f0f4','#b078d8'][d.c%4];
-        R(d.x,d.y,1,3,'#3a7a30');R(d.x-1,d.y-2,3,2,c);R(d.x,d.y-3,1,1,'#f4d870');
-      }else{   // caixa de correio
-        R(d.x,d.y-2,2,8,'#6a4a2a');R(d.x-3,d.y-7,8,5,['#3a5a9a','#a83a30','#3a3a40'][d.c%3]);R(d.x-3,d.y-7,8,1,'rgba(255,255,255,.3)');R(d.x+4,d.y-9,1,4,'#d03a30');R(d.x-2,d.y-4,1,1,'#f0f0e0');
-      }
-    }
   }
   for(const l of lakes){
     const lr=l.r*1.25;
     if(l.cx+lr>vx0&&l.cx-lr<vx1&&l.cy+lr>vy0&&l.cy-lr<vy1) drawLake(l);
   }
-  if(selectedMap==='city'){ drawCityRoads(vx0,vy0,vx1,vy1); drawOrla(vx0,vy0,vx1,vy1); }
+  if(selectedMap==='city'){ drawOrla(vx0,vy0,vx1,vy1); }   // as ruas ja estao no chao (bloco pronto)
   else for(const r of roads){
     if(r.x>vx1||r.x+r.w<vx0||r.y>vy1||r.y+r.h<vy0)continue;
     const roadCol=selectedMap==='snow'?'#98a4b0':selectedMap==='desert'?'#8c7c5c':selectedMap==='city'?'#3a3a40':'#7a6a4a';
