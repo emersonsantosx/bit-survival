@@ -473,14 +473,18 @@ function shadowBody(x,y,h,w){   // pessoa ou bicho de pe: pes em (x,y); h = altu
   const f=SUN.f,ga=ctx.globalAlpha;
   if(f<.99){ctx.globalAlpha=ga*(1-f);shadow(x,y+2,w*1.8,w*.8);ctx.globalAlpha=ga;}
   if(f<.02)return;
-  const gy=Math.round(y)+2,vx=SUN.ax*h,vy=SUN.by*h;
-  // a sombra e uma faixa no chao na direcao do sol; a largura do corpo fica de lado (chao: y na tela vale metade)
+  const gy=Math.round(y)+2,vx=SUN.ax*h,vy=SUN.by*h,vl=Math.hypot(vx,vy);
+  // a sombra e uma faixa no chao na direcao do sol; a largura do corpo fica de lado (chao: y na tela vale menos)
   let gx=SUN.ax,gz=SUN.by*2;const gl=Math.hypot(gx,gz)||1;gx/=gl;gz/=gl;
-  const nx=-gz*w*.8,ny=gx*w*.8*.65,sx=x+vx*.65,sy=gy+vy*.65,hx=x+vx*.92,hy=gy+vy*.92;
+  const nx=-gz,ny=gx*.65;                                   // lado do corpo na tela
+  const q=(t,wd)=>[x+vx*t+nx*wd,gy+vy*t+ny*wd];             // ponto a t da altura, wd de lado
   ctx.globalAlpha=ga*f;ctx.fillStyle=SUN.fs;ctx.beginPath();
-  ctx.moveTo(x-nx,gy-ny);ctx.lineTo(x+nx,gy+ny);ctx.lineTo(sx+nx,sy+ny);ctx.lineTo(sx-nx,sy-ny);ctx.closePath();   // corpo
-  ctx.moveTo(hx+w*.6,hy);ctx.ellipse(hx,hy,w*.6,w*.4,0,0,6.283);                                                   // cabeca
-  ctx.moveTo(x+w,gy);ctx.ellipse(x,gy,w,w*.4,0,0,6.283);                                                            // pe no chao
+  // contorno unico e continuo: pernas (estreito) > tronco/ombros (largo) > pescoco > cabeca (elipse que sobrepoe o pescoco)
+  const o=[q(0,-w*.7),q(.38,-w*.55),q(.52,-w*.95),q(.8,-w*.95),q(.88,-w*.4),q(.88,w*.4),q(.8,w*.95),q(.52,w*.95),q(.38,w*.55),q(0,w*.7)];
+  ctx.moveTo(o[0][0],o[0][1]);for(let i=1;i<o.length;i++)ctx.lineTo(o[i][0],o[i][1]);ctx.closePath();
+  const hx=x+vx*.93,hy=gy+vy*.93,ang=Math.atan2(vy,vx);
+  ctx.moveTo(hx+w*.65,hy);ctx.ellipse(hx,hy,Math.max(w*.62,vl*.07+w*.45),w*.5,ang,0,6.283);                       // cabeca, alongada para o lado do sol
+  ctx.moveTo(x+w,gy);ctx.ellipse(x,gy,w*.85,w*.35,0,0,6.283);                                                       // pes
   ctx.fill();ctx.globalAlpha=ga;
 }
 function shadowCar(v,L,W){   // veiculo: base retangular girada + teto deslocado
