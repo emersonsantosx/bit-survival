@@ -552,7 +552,7 @@ function drawRock(r){
   else{R(x-9,y-4,18,6,base);R(x-7,y-7,14,4,top);R(x-5,y-9,10,3,top);R(x+3,y-6,5,5,base);}
   R(x-3,y-4,2,2,'rgba(0,0,0,.25)');R(x+2,y-3,2,2,'rgba(255,255,255,.2)');
   if(selectedMap==='forest' && (k===0||k===1)) R(x-2,y-8,3,2,'#3a6a3a'); // moss
-  if(weather==='snow'||selectedMap==='snow')R(x-7,y-7,14,2,'#e8f4f8');
+  snowCap(x-7,y-5,14,3);
 }
 /* ============ ÁRVORES ============
    Cada árvore é um sprite pré-desenhado (um por mapa, tipo e variação), bem maior que o personagem (que tem uns 20 px):
@@ -688,7 +688,7 @@ function treeShadow(x,y,s){
 }
 function drawTree(t){
   const x=t.x,y=t.y,k=t.k|0,v=Math.floor((t.seed||0)*4)&3;
-  const s=treeSprite(k,v,weather==='snow'&&selectedMap!=='snow');
+  const s=treeSprite(k,v,selectedMap!=='snow'&&WX.snow>=.5);
   treeShadow(x,y,s);
   const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
   const behind=P&&!P.inside&&P.y<y-3&&P.y>y-s.top&&Math.abs(P.x-x)<s.half;   // jogador atrás da copa
@@ -696,7 +696,13 @@ function drawTree(t){
   ctx.drawImage(s.cv,x-s.ox,y-s.oy);
   ctx.globalAlpha=1;ctx.imageSmoothingEnabled=sm;
 }
+/* topos onde a neve se acumula (fora os que ja desenham a propria neve): [x do canto, y da base da capa, largura, altura cheia] relativos ao objeto */
+const SNOWTOP={crate:[-6,-8,12,3],log:[-8,-3,16,3],stump:[-5,-3,10,3],bench:[-9,-4,18,3],dumpster:[-9,-13,18,3],trash:[-4,-10,8,2]};
 function drawDecoration(d){
+  drawDecoration0(d);
+  const st=SNOWTOP[d.type];if(st&&snowAcc()>.06)snowCap(d.x+st[0],d.y+st[1],st[2],st[3]);
+}
+function drawDecoration0(d){
   const x=d.x,y=d.y;
   if(d.type==='wreck'||d.type==='billboard'){drawAmbProp(d);return;}
   switch(d.type){
@@ -750,7 +756,7 @@ function drawDecoration(d){
     case'bush':
       shadow(x,y+2,6,3);
       R(x-6,y-6,12,7,'#2a6a2a');R(x-5,y-9,10,4,'#3a8a3a');
-      if(weather==='snow')R(x-5,y-7,10,2,'#e8f4f8');
+      snowCap(x-5,y-5,10,3);
       break;
     case'flower_r':
       R(x-1,y-1,2,3,'#3a8a3a');
@@ -937,7 +943,7 @@ function drawDecoration(d){
     case'bush2':
       shadow(x,y+2,7,3);
       R(x-7,y-5,14,6,'#1a5a2a');R(x-5,y-8,10,4,'#2a7a3a');R(x-3,y-10,6,3,'#3a8a4a');
-      if(weather==='snow')R(x-6,y-7,12,2,'#e8f4f8');
+      snowCap(x-6,y-5,12,3);
       break;
     case'flower_y':
       R(x-1,y-1,2,3,'#3a8a3a');
@@ -1283,7 +1289,7 @@ function drawPlane(p){
     R(x+5+Math.sin(T*2+k)*3+ph*6,y-12-ph*26,5+ph*5|0,5+ph*5|0,'#3a3a3c');
   }
   ctx.globalAlpha=sa;
-  if(weather==='snow')R(x-26,y-10,34,3,'#e8f4f8');
+  snowCap(x-26,y-7,34,4);
 }
 /* ============ O OBSERVADOR (só na Floresta) ============
    Uma figura alta e sem rosto, parada em algum ponto da floresta à noite. O jogador a encontra ao andar (ela nunca surge do nada na frente dele).

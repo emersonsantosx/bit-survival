@@ -229,6 +229,7 @@ function drawStash(s){
     else{R2(x-3,y-6,2,2,'#3a3a44');R2(x+1,y-6,2,2,'#3a3a44');}                 // dobradicas (costas)
     R2(x-8,y,3,2,'#4a2e1a');R2(x+5,y,3,2,'#4a2e1a');                            // pes
   }
+  if(snowAcc()>.06)snowCap(o>=2?x-7:x-8,y-9,o>=2?14:16,3);   // neve acumulada na tampa
   if(s.s&&s.s.length){R2(x-6,y-11,2,1,'#d33');}                      // marca discreta: tem coisa dentro
 }
 function stashDepth(s){return s.y;}

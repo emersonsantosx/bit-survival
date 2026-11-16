@@ -287,7 +287,7 @@ function bldRoofBuild(b,snowNow){
   b._rc=cv;b._rx=b.x-3-M;b._ry=b.y-6-M;b._rcS=snowNow;
 }
 function drawRoof(b){
-  const sn=(weather==='snow'||selectedMap==='snow')?1:0;
+  const sn=snowOn()?1:0;
   if(!b._rc||b._rcS!==sn)bldRoofBuild(b,sn);
   const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
   ctx.globalAlpha=b.roofA;ctx.drawImage(b._rc,b._rx,b._ry);ctx.globalAlpha=1;
@@ -340,7 +340,7 @@ function bldGroundBuild(b,snowNow){
   b._gc=cv;b._gcS=snowNow;
 }
 function drawBldGround(b){
-  const sn=(weather==='snow'||selectedMap==='snow')?1:0;
+  const sn=snowOn()?1:0;
   if(!b._gc||b._gcS!==sn)bldGroundBuild(b,sn);
   const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
   ctx.drawImage(b._gc,b.x-12,b.y);
@@ -891,6 +891,29 @@ function drawAmbProp(d){
   }
 }
 
+/* Reflexo das luzes nas poças (chuva): so as poças visíveis dentro do feixe da lanterna, do cone dos faróis ou perto de fogueiras e postes. Aditivo e pequeno. */
+function puddleGlow(sp,beams,headlit){
+  const VPl=window.wxPuddles?window.wxPuddles():null;if(!VPl||!VPl.length||WX.wet<.15)return;
+  const g=Math.min(1,dark*1.3)*Math.min(1,WX.wet*1.3);if(g<.05)return;
+  const cones=[];
+  for(const bm of beams)cones.push({x:bm.x+Math.cos(bm.a)*5,y:bm.y,a:bm.a,len:bm.len,spr:warmSprite});
+  for(const v of headlit){const f=v.face||0;cones.push({x:v.x+Math.cos(f)*14,y:v.y,a:f,len:205,spr:warmSprite});}
+  for(const p of VPl){
+    const [px,py]=sp(p.x,p.y);
+    if(px<-60||py<-60||px>W+60||py>H+60)continue;
+    const rw=p.rx*p.s*Z*1.5+4*Z,rh=p.ry*p.s*Z*1.7+2*Z;
+    const put=(spr,f,boost)=>{ctx.globalAlpha=Math.min(1,f)*g*boost;ctx.drawImage(spr,px-rw,py-rh,2*rw,2*rh);};
+    for(const c of cones){
+      const dx=p.x-c.x,dy=p.y-c.y,co=Math.cos(c.a),si=Math.sin(c.a),d=dx*co+dy*si;
+      if(d<6||d>c.len)continue;
+      const hw=.22*d+12,f=(1-d/c.len)*(1-Math.abs(-dx*si+dy*co)/hw);
+      if(f>0)put(c.spr,f*1.25,.85);
+    }
+    for(const cf of campfires){const ax=p.x-cf.x,ay=p.y-cf.y;if(ax>92||ax<-92||ay>92||ay<-92)continue;const dd=Math.hypot(ax,ay);if(dd<92)put(fireSprite,(1-dd/92)*1.2,.7);}
+    for(const l of lampList){const ax=p.x-l.x,ay=p.y-l.y;if(ax>72||ax<-72||ay>72||ay<-72)continue;const dd=Math.hypot(ax,ay);if(dd<72)put(lampSprite,(1-dd/72)*1.1,.65);}   // na cidade sao centenas de postes: descarta os longe antes da raiz
+  }
+  ctx.globalAlpha=1;
+}
 function drawLighting(sx,sy){
   const tier=perfTotal();
   ctx.setTransform(1,0,0,1,0,0);
@@ -989,6 +1012,7 @@ function drawLighting(sx,sy){
       ctx.globalAlpha=Math.min(1,dark*1.3)*(selectedMap==='snow'?.6:1);ctx.drawImage(flashGlow,-10,-FL_H/2);ctx.restore();
     }
     ctx.globalAlpha=1;
+    puddleGlow(sp,beams,headlit);   // reflexo das luzes nas poças de chuva
     // faróis: cone de luz e halo
     if(tier<2)for(const v of headlit){
       const [hx0,hy0]=sp(v.x,v.y),cf=Math.cos(v.face||0),sf=Math.sin(v.face||0);
@@ -1249,6 +1273,7 @@ function render(){
       R(r.x,r.y,r.w,2,'#e8f0f8'); // snow piled on roadside
     }
   }
+  drawPuddles(vx0,vy0,vx1,vy1);   // poças de chuva (arquivo 26), embaixo de tudo que fica em pe
   // Sangue no chao (manchas e respingos) fica ABAIXO dos veiculos; so itens e entidades aparecem por cima
   for(const d of decals){
     if(d.x<vx0||d.x>vx1||d.y<vy0||d.y>vy1)continue;

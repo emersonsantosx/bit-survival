@@ -146,6 +146,7 @@ function drawWell(w){
   const sw=Math.round(Math.sin(T*2+x)*1);
   R2(x,y-20,1,8,'#c8b080');                                                                              // corda
   R2(x-2+sw,y-12,5,4,'#8a5a2a');R2(x-2+sw,y-12,5,1,'#c8924e');R2(x-2+sw,y-10,5,1,'#5a3a24');            // balde
+  if(snowAcc()>.06)snowCap(x-12,y-24,24,3);   // neve acumulada no telhadinho
   if(ice){R2(x-9,y-7,1,1,'#fff');R2(x+8,y-7,1,1,'#fff');R2(x-11,y-27,1,1,'#fff');R2(x+10,y-27,2,1,'#e8f6ff');}   // geada
 }
 function wellDepth(w){return w.y+2;}
