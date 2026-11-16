@@ -4,6 +4,7 @@
 const path = require('path');
 const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'index.html'));
 const { chromium } = require('playwright');
+const LIM_AREA = 1.7;   // telas copiadas de canvas pequenos (1 da camada de escuridao + o feixe): com o recorte 1,38; sem ele 2,02
 (async () => {
   const b = await chromium.launch(); let bad = 0;
   const ok = (c, m) => { console.log(c ? 'OK  ' : 'FAIL', m); if (!c) bad++; };
@@ -24,6 +25,17 @@ const { chromium } = require('playwright');
     };
     cena('forest', 12); o.florestaDia = ops(); o.blocos = groundChunkCount();
     cena('forest', 23); o.florestaNoite = ops();
+    {   // lanterna apontada para uma arvore: o feixe tem obstaculo e usa o canvas temporario
+      let best = null; for (const t of trees) { const d = Math.hypot(t.x - P.x, t.y - P.y); if (!best || d < best.d) best = { t, d }; }
+      if (best) { P.x = best.t.x - 45; P.y = best.t.y; P.face = 0; P.torch = true; P.flashOn = true; for (let i = 0; i < 4; i++) render(); }
+      o.feixeComObstaculo = !!(lightBeams().some(b => b.occ && b.occ.length));
+    }
+    {   // area desenhada por quadro em telas inteiras (o que pesa na GPU do celular): o feixe da lanterna so copia o retangulo em volta dele
+      const P2 = Object.getPrototypeOf(cv.getContext('2d')), f = P2.drawImage; let area = 0, feixe = 0;
+      P2.drawImage = function (...a) { let w, h; if (a.length === 9) { w = a[7]; h = a[8]; if (a[0].width < W) feixe += Math.abs(w * h); } else if (a.length === 5) { w = a[3]; h = a[4]; } else { w = a[0].width; h = a[0].height; } area += Math.abs(w * h); return f.apply(this, a); };
+      try { render(); } finally { P2.drawImage = f; }
+      o.areaNoite = Math.round(feixe / (W * H) * 100) / 100;
+    }
     cena('city', 12); o.cidadeDia = ops();
     cena('city', 23); o.cidadeNoite = ops();
     cena('snow', 23); o.neveNoite = ops();
@@ -60,6 +72,8 @@ const { chromium } = require('playwright');
   ok(r.predios > 0 && r.predioFalhas === 0, 'a colisao acha todo predio pela celula (' + r.predios + ' predios, ' + r.predioFalhas + ' falhas)');
   ok(r.cercasNum, 'o mapa numerico das cercas acompanha o de texto (' + r.cercas + ' pecas, tirar e por de volta)');
   ok(!r.zNaN && r.zMin > 3, 'zumbis empilhados se separam (distancia minima ' + r.zMin.toFixed(1) + ' px)');
+  ok(r.feixeComObstaculo, 'o teste de area usa um feixe com obstaculo');
+  ok(r.areaNoite < LIM_AREA, 'noite com lanterna: ' + r.areaNoite + ' telas copiadas do canvas do feixe por quadro (limite ' + LIM_AREA + ')');
   ok(errs.length === 0, 'sem erros de JS (' + errs.join(' | ') + ')');
   await b.close(); console.log(bad ? '\n' + bad + ' falha(s)' : '\nTodos os testes passaram'); process.exit(bad ? 1 : 0);
 })();
