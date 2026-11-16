@@ -448,10 +448,10 @@ function drawFacade(b){
 /* ============ ILUMINAÇÃO v2 ============
    Cor do dia por horário, sombras que seguem o sol, luzes coloridas, raios de sol, vaga-lumes, relâmpagos e vinheta.
    Tudo usa sprites pré-desenhados (sem gradientes novos por quadro). */
-const SUN={dx:0,dy:.4,len:.5,a:.3,e:1,h:12,fs:'rgba(8,10,28,.3)'};
+const SUN={dx:0,dy:.4,len:.5,a:.3,e:1,h:12,fs:'rgba(8,10,28,.3)',f:0,ax:0,by:.05};   // f: 0 a 1 = quanto a sombra de dia segue a forma do objeto (so com o sol no ceu); ax/by: quanto cada px de altura desloca a sombra
 function updateSun(){
   const h=(START_HOUR+T/DAY_SECONDS*24)%24;SUN.h=h;
-  if(P&&P.inside){SUN.e=.6;SUN.dx=0;SUN.dy=.3;SUN.len=.35;SUN.a=.28;SUN.fs='rgba(8,10,28,.28)';return;}
+  if(P&&P.inside){SUN.e=.6;SUN.dx=0;SUN.dy=.3;SUN.len=.35;SUN.a=.28;SUN.fs='rgba(8,10,28,.28)';SUN.f=0;return;}
   const st=(h-5.5)/14;let e,dx,a0;
   if(st>0&&st<1){e=Math.sin(Math.PI*st);dx=-Math.cos(Math.PI*st);a0=.32;}
   else{const mt=Math.min(1,Math.max(0,((h-19.5+24)%24)/10));e=Math.sin(Math.PI*mt);dx=-Math.cos(Math.PI*mt);a0=.16;}
@@ -459,12 +459,43 @@ function updateSun(){
   SUN.e=e;SUN.dx=dx;SUN.dy=.4;SUN.len=Math.min(2.5,.32+(1-e)*2.1);
   SUN.a=a0*Math.min(1,.4+e*1.4)*wf;
   SUN.fs='rgba(8,10,28,'+SUN.a.toFixed(3)+')';
+  SUN.f=(st>0&&st<1)?Math.min(1,Math.max(0,(e-.05)/.2)):0;   // nascer e por do sol: volta devagar as sombras simples; a noite fica como era
+  SUN.ax=dx*SUN.len*.55;SUN.by=SUN.dy*SUN.len*.33;
 }
 function shadow(x,y,rx,ry){
   const k=SUN.len;
   ctx.fillStyle=SUN.fs;ctx.beginPath();
   ctx.ellipse(Math.round(x+SUN.dx*k*rx*.75),Math.round(y+SUN.dy*k*ry*.9),rx*(1+.35*k*Math.abs(SUN.dx)),ry*(1+.12*k),0,0,6.283);ctx.fill();
 }
+/* ---- sombras de dia que seguem a forma ----
+   Cada ponto a h px de altura cai no chao deslocado em (ax*h, by*h) na direcao do sol. Tudo num unico caminho por objeto (sem escurecer em dobro). */
+function shadowBody(x,y,h,w){   // pessoa ou bicho de pe: pes em (x,y); h = altura, w = meia largura
+  const f=SUN.f,ga=ctx.globalAlpha;
+  if(f<.99){ctx.globalAlpha=ga*(1-f);shadow(x,y+2,w*1.8,w*.8);ctx.globalAlpha=ga;}
+  if(f<.02)return;
+  const gy=Math.round(y)+2,vx=SUN.ax*h,vy=SUN.by*h;
+  // a sombra e uma faixa no chao na direcao do sol; a largura do corpo fica de lado (chao: y na tela vale metade)
+  let gx=SUN.ax,gz=SUN.by*2;const gl=Math.hypot(gx,gz)||1;gx/=gl;gz/=gl;
+  const nx=-gz*w*.8,ny=gx*w*.8*.65,sx=x+vx*.65,sy=gy+vy*.65,hx=x+vx*.92,hy=gy+vy*.92;
+  ctx.globalAlpha=ga*f;ctx.fillStyle=SUN.fs;ctx.beginPath();
+  ctx.moveTo(x-nx,gy-ny);ctx.lineTo(x+nx,gy+ny);ctx.lineTo(sx+nx,sy+ny);ctx.lineTo(sx-nx,sy-ny);ctx.closePath();   // corpo
+  ctx.moveTo(hx+w*.6,hy);ctx.ellipse(hx,hy,w*.6,w*.4,0,0,6.283);                                                   // cabeca
+  ctx.moveTo(x+w,gy);ctx.ellipse(x,gy,w,w*.4,0,0,6.283);                                                            // pe no chao
+  ctx.fill();ctx.globalAlpha=ga;
+}
+function shadowCar(v,L,W){   // veiculo: base retangular girada + teto deslocado
+  const f=SUN.f,ga=ctx.globalAlpha;
+  if(f<.99){const k=SUN.len;ctx.globalAlpha=ga*(1-f);ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.ellipse(Math.round(v.x+SUN.dx*k*L*.3),Math.round(v.y+3+SUN.dy*k*W*.35),Math.max(L,W)*.46*(1+.15*k),Math.min(L,W)*.38,v.face||0,0,6.283);ctx.fill();ctx.globalAlpha=ga;}
+  if(f<.02)return;
+  const c=Math.cos(v.face||0),sn=Math.sin(v.face||0),hh=13,ox=SUN.ax*hh,oy=SUN.by*hh,pts=[];
+  for(const a of[-1,1])for(const b of[-1,1]){
+    const lx=a*L*.48,ly=b*W*.46,px=v.x+lx*c-ly*sn,py=v.y+3+lx*sn+ly*c;
+    pts.push([px,py],[px+ox,py+oy]);
+  }
+  const hp=hullPts(pts);
+  ctx.globalAlpha=ga*f;ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.moveTo(hp[0][0],hp[0][1]);for(let i=1;i<hp.length;i++)ctx.lineTo(hp[i][0],hp[i][1]);ctx.closePath();ctx.fill();ctx.globalAlpha=ga;
+}
+window.shadowBody=shadowBody;window.shadowCar=shadowCar;
 function hullPts(pts){
   pts.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
   const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);

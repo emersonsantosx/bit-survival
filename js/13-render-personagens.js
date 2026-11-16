@@ -459,7 +459,7 @@ function humanDraw(x,y,face,o){
     R(-9+ca*2,-2,3,3,o.skin);R(6-ca*2,-2,3,3,o.skin);R(-10+ca*2,-1,1,1,'#d8d0b8');R(9-ca*2,-1,1,1,'#d8d0b8');
     ctx.restore();return;
   }
-  shadow(0,2,6,3);
+  shadowBody(0,0,17,4.2);
   humanBody(R,o,face);
   let hx=Math.round(fx*6),hy=Math.round(fy*4)-5;
   if(o.zombie){
@@ -678,6 +678,17 @@ function treeSprite(k,v,snow){
   return TSP[key]={cv:cv,ox:ox,oy:oy,top:top,half:Math.max(8,half)};
 }
 function treeShadow(x,y,s){
+  const f=SUN.f;
+  if(f>.02){   // de dia: a propria silhueta da copa e do tronco, esticada para longe do sol
+    if(!s.sh){const c=document.createElement('canvas');c.width=s.cv.width;c.height=s.cv.height;const q=c.getContext('2d');q.drawImage(s.cv,0,0);q.globalCompositeOperation='source-in';q.fillStyle='#080a1c';q.fillRect(0,0,c.width,c.height);s.sh=c;}
+    const cap=Math.min(1,56/Math.max(8,s.top)),ga=ctx.globalAlpha;
+    ctx.save();ctx.globalAlpha=ga*f*SUN.a;ctx.translate(x,y+2);ctx.transform(1,0,-SUN.ax*cap,-(SUN.by*cap+.15),0,0);ctx.drawImage(s.sh,-s.ox,-s.oy);ctx.restore();
+    if(f>.98)return;
+    ctx.globalAlpha=ga*(1-f);treeShadow0(x,y,s);ctx.globalAlpha=ga;return;
+  }
+  treeShadow0(x,y,s);
+}
+function treeShadow0(x,y,s){
   const L=Math.min(s.top,56)*SUN.len*.55,rw=s.half*.62;
   const tx=x+SUN.dx*L,ty=y+2+SUN.dy*L*.6;
   ctx.fillStyle=SUN.fs;ctx.beginPath();
@@ -1146,7 +1157,7 @@ function drawRider(K,lk,L,W){
 function drawVehicle(v){
   // Local axes after rotate(face): +X = frente (direção do movimento), +Y = lado
   const L=v.w||36, W=v.h||20; // L=comprimento, W=largura
-  {const k=SUN.len;ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.ellipse(Math.round(v.x+SUN.dx*k*L*.3),Math.round(v.y+3+SUN.dy*k*W*.35),Math.max(L,W)*.46*(1+.15*k),Math.min(L,W)*.38,v.face||0,0,6.283);ctx.fill();}
+  shadowCar(v,L,W);
   ctx.save();
   ctx.translate(v.x,v.y);
   ctx.rotate(v.face||0);
