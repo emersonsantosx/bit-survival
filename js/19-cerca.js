@@ -234,7 +234,8 @@ function structLoad(a){   // depois de gerar o mundo e antes de carregar as cerc
 function fencesInView(vx0,vx1,vy0,vy1){return fences.filter(f=>{const x=f.x*CELL,y=f.y*CELL;return x+CELL>vx0&&x-CELL<vx1&&y+CELL>vy0-12&&y-CELL<vy1+12;});}
 function fenceDepth(f){return f.d==='h'?f.y*CELL:f.y*CELL+CELL-1;}
 const PAL_W=['#f2efe6','#cfc9b8','#a8a290'],PAL_B=['#9a6a3a','#7a5230','#5a3c20'];   // branca (casas da cidade) e marrom (construida pelo jogador)
-function drawFence(f){
+function drawFence(f){drawFence0(f);fenceSnow(f);}
+function drawFence0(f){
   if(f.g>=2){drawWall(f);return;}
   const x=f.x*CELL,y=f.y*CELL,WH1=(f.s?PAL_W:PAL_B)[0],WH2=(f.s?PAL_W:PAL_B)[1],WH3=(f.s?PAL_W:PAL_B)[2];
   if(f.d==='h'){
@@ -262,6 +263,24 @@ function drawFence(f){
       R(x-1,top-5,3,3,WH1);R(x-1,top+CELL-4,3,3,WH1);
       R(x,top-2,1,CELL-3,WH3);R(x-1,top+2,3,8,WH2);R(x-1,top+2,1,8,WH1);R(x+1,top+8,1,2,'#7a5a2a');
     }
+  }
+}
+/* neve no topo das cercas, portinhas e paredes (cresce com a neve acumulada) */
+function fenceSnow(f){
+  if(snowAcc()<.06)return;
+  const x=f.x*CELL,y=f.y*CELL;
+  if(f.g>=2){
+    if(f.d==='h')snowCap(x-2,y-WH_+1,CELL+4,3);
+    else if(!(isWallAt(f.x,f.y-1,'v')||isWallAt(f.x-1,f.y,'h')||isWallAt(f.x,f.y,'h')))snowCap(x-3,y-WH_+1,6,3);
+    return;
+  }
+  if(f.d==='h'){
+    if(!f.g){for(let k=0;k<4;k++)snowCap(x+k*4+1,y-7,2,2);}
+    else if(f.o){snowCap(x+1,y-8,2,2);snowCap(x+CELL-3,y-8,2,2);}
+    else{snowCap(x+3,y-5,CELL-6,2);snowCap(x+1,y-8,2,2);snowCap(x+CELL-3,y-8,2,2);}
+  }else{
+    if(!f.g){for(let k=0;k<4;k++)snowCap(x-1,y+k*4+3-7,3,2);}
+    else snowCap(x-1,y-5,3,2);
   }
 }
 /* parede e porta de madeira: peca alta (14 px). Horizontal: tabuas de frente com tampo claro; vertical: coluna com tampo so na ponta de cima. */

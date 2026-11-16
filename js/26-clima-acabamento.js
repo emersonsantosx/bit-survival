@@ -60,4 +60,5 @@ window.drawPuddles=function(vx0,vy0,vx1,vy1){
     }
   }
 };
+
 })();
