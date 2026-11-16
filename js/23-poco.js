@@ -134,7 +134,7 @@ function wellReset(){wells=[];cands=[];}
 /* ---------- desenho: aro de pedra, dois postes, telhadinho, corda e balde ---------- */
 function drawWell(w){
   const x=Math.round(w.x),y=Math.round(w.y),ice=frozen(w);
-  if(!sunShadow(x,y,'decor',w)){ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+3,12,4,0,0,6.283);ctx.fill();}
+  ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+3,12,4,0,0,6.283);ctx.fill();
   R2(x-10,y-8,20,11,'#3a3d44');                                        // contorno
   R2(x-9,y-7,18,9,'#9aa0a8');R2(x-9,y-7,18,2,'#c4cad2');                // pedra clara
   R2(x-9,y-1,18,3,'#6a7280');

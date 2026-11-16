@@ -451,7 +451,7 @@ function humanDraw(x,y,face,o){
   if(o.sit)ctx.translate(0,3);   // sentado: o quadril desce para o tronco
   if(depth){ctx.beginPath();ctx.rect(-40,-80,80,80+(3-depth*12)-0);ctx.clip();}   // corta tudo abaixo da linha d'água (pescoço quando fundo)
   if(o.crawler){
-    if(!sunShadow(0,3,'human',o,face))shadow(0,2,8,3);
+    shadow(0,2,8,3);
     const bx=fx>=0?-1:1,ca=Math.sin(o.anim*0.5);
     R(bx*9,-2,3,3,'#5a1212');R(bx*11,-1,4,1,'#8a2a2a');R(bx*13,0,3,1,'#6a1a1a');           // tronco cortado e rastro
     R(-7,-3,14,5,o.shirt);R(-7,-3,14,1,Sh(o.shirt,-.25));R(-3,-2,2,2,'#5a1212');R(2,0,1,2,o.skin);R(-1,-3,1,4,'#d8d0b8');
@@ -459,7 +459,7 @@ function humanDraw(x,y,face,o){
     R(-9+ca*2,-2,3,3,o.skin);R(6-ca*2,-2,3,3,o.skin);R(-10+ca*2,-1,1,1,'#d8d0b8');R(9-ca*2,-1,1,1,'#d8d0b8');
     ctx.restore();return;
   }
-  if(!sunShadow(0,3,'human',o,face))shadow(0,2,6,3);
+  shadow(0,2,6,3);
   humanBody(R,o,face);
   let hx=Math.round(fx*6),hy=Math.round(fy*4)-5;
   if(o.zombie){
@@ -541,7 +541,7 @@ function humanDraw(x,y,face,o){
   ctx.restore();
 }
 function drawRock(r){
-  const x=r.x,y=r.y;if(!sunShadow(x,y,'rock',r))shadow(x,y+2,8,4);
+  const x=r.x,y=r.y;shadow(x,y+2,8,4);
   const base=selectedMap==='snow'?'#a8b8c8':selectedMap==='desert'?'#c8a878':selectedMap==='city'?'#707880':'#8a8a90';
   const top=selectedMap==='snow'?'#d0dce8':selectedMap==='desert'?'#e0c090':selectedMap==='city'?'#909aa0':'#a8a8b0';
   const k=r.k|0;
@@ -677,15 +677,19 @@ function treeSprite(k,v,snow){
   }
   return TSP[key]={cv:cv,ox:ox,oy:oy,top:top,half:Math.max(8,half)};
 }
-function treeShadow(x,y,s,t){
-  if(t&&sunShadow(x,y,'tree',t))return;
+function treeShadow(x,y,s){
   const L=Math.min(s.top,56)*SUN.len*.55,rw=s.half*.62;
-  ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.ellipse(x+SUN.sx*L,y+2+SUN.sy*L*.6,rw,rw*.5,0,0,6.283);ctx.fill();
+  const tx=x+SUN.dx*L,ty=y+2+SUN.dy*L*.6;
+  ctx.fillStyle=SUN.fs;ctx.beginPath();
+  ctx.moveTo(x-2,y+2);ctx.lineTo(x+2,y+2);ctx.lineTo(tx+1.5,ty);ctx.lineTo(tx-1.5,ty);ctx.closePath();
+  ctx.moveTo(tx+rw,ty);ctx.ellipse(tx,ty,rw*(1+.15*SUN.len),rw*.5,0,0,6.283);
+  ctx.moveTo(x+5,y+2);ctx.ellipse(x,y+2,5,2,0,0,6.283);
+  ctx.fill();
 }
 function drawTree(t){
   const x=t.x,y=t.y,k=t.k|0,v=Math.floor((t.seed||0)*4)&3;
   const s=treeSprite(k,v,weather==='snow'&&selectedMap!=='snow');
-  treeShadow(x,y,s,t);
+  treeShadow(x,y,s);
   const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
   const behind=P&&!P.inside&&P.y<y-3&&P.y>y-s.top&&Math.abs(P.x-x)<s.half;   // jogador atrás da copa
   if(behind)ctx.globalAlpha=.5;
@@ -693,11 +697,6 @@ function drawTree(t){
   ctx.globalAlpha=1;ctx.imageSmoothingEnabled=sm;
 }
 function drawDecoration(d){
-  const own=sunShadow(d.x,d.y,'decor',d);
-  if(own)sunOff(1);
-  try{drawDecoration0(d);}finally{if(own)sunOff(-1);}
-}
-function drawDecoration0(d){
   const x=d.x,y=d.y;
   if(d.type==='wreck'||d.type==='billboard'){drawAmbProp(d);return;}
   switch(d.type){
@@ -1141,7 +1140,7 @@ function drawRider(K,lk,L,W){
 function drawVehicle(v){
   // Local axes after rotate(face): +X = frente (direção do movimento), +Y = lado
   const L=v.w||36, W=v.h||20; // L=comprimento, W=largura
-  vehShadow(v,L,W,vehKind(v)==='car'?12:7);
+  {const k=SUN.len;ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.ellipse(Math.round(v.x+SUN.dx*k*L*.3),Math.round(v.y+3+SUN.dy*k*W*.35),Math.max(L,W)*.46*(1+.15*k),Math.min(L,W)*.38,v.face||0,0,6.283);ctx.fill();}
   ctx.save();
   ctx.translate(v.x,v.y);
   ctx.rotate(v.face||0);
@@ -1549,7 +1548,7 @@ function drawSleeper(x,y,sl,look){
 }
 function drawTent(t){
   const x=Math.round(t.x),y=Math.round(t.y);
-  if(!sunShadow(x,y,'decor',t)){ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x,y+3,26,6,0,0,6.283);ctx.fill();}
+  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x,y+3,26,6,0,0,6.283);ctx.fill();
   for(let r=0;r<22;r++){
     const half=3+Math.round(r*.95),edge=r%7===6;
     R(x-half,y-24+r,half,1,edge?'#4a6a3c':'#6d8f56');R(x,y-24+r,half,1,edge?'#33502c':'#4d7040');
@@ -2036,5 +2035,3 @@ function itemIndoor(it){
   Object.defineProperty(it,'_in',{value:r,writable:true,enumerable:false,configurable:true});
   return r;
 }
-
-window.humanBody=humanBody;
