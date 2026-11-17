@@ -559,8 +559,9 @@ function drawRock(r){
    pinheiros e carvalhos chegam a 50 ou 70 px. A variação (0 a 3) vem da semente que a árvore já tinha, então o mundo não muda.
    Quando o jogador passa atrás de uma copa, ela fica meio transparente. */
 const TSP={};
-function treeSprite(k,v,snow){
-  const key=selectedMap+'|'+k+'|'+v+'|'+(snow?1:0);
+function treeSprite(k,v,snow,a){
+  a=a|0;
+  const key=selectedMap+'|'+k+'|'+v+'|'+(snow?1:0)+'|'+a;
   if(TSP[key])return TSP[key];
   const map=selectedMap,W=112,HH=112,ox=56,oy=106;
   const cv=document.createElement('canvas');cv.width=W;cv.height=HH;
@@ -612,7 +613,66 @@ function treeSprite(k,v,snow){
   };
   const FB=['#3e2918','#5e402a','#7e5a3a'];
   const sn0=!!snow;
-  if(map==='snow'){
+  /* variedade: outras especies por mapa (a>0), sorteadas pela posicao da arvore em drawTree */
+  const altTree=()=>{
+    const OAKP=[0,-54-v*2,11,9],OAKS=[[0,-54-v*2,11,9],[-13,-42,12,10],[13,-43,12,10],[0,-40,17,12],[-7,-50,9,8],[8,-51,9,8]];
+    const oak=(pal,sn)=>{trunk(7,38,FB);for(const q of OAKS)fol(q[0],q[1],q[2],q[3],pal,sn);};
+    const column=(n,rx,ry,gap,y0,pal)=>{for(let i=0;i<n;i++)fol((i%2?1:-1)*(1+(i>>1)%2),y0-i*gap,Math.max(4,rx-(i>n-3?(i-(n-3))*2:0)),ry,pal);};
+    const SB=['#2a2a30','#4a4038','#6a5a4a'],SP=['#10303b','#1b4a5a','#2d6676'];
+    const DB=['#3a2c1c','#5a4630','#7a6444'],CP=['#1f5f2c','#2f8a3c','#52b34e','#a4e47e'];
+    const key=map+k+':'+a;
+    switch(key){
+      // ---- floresta ----
+      case'forest0:1':pine(76+v*3,13,6,['#0f3a2c','#175440','#237058'],4,FB,false);return true;                          // abeto esguio
+      case'forest0:2':pine(38+v*3,11,3,['#1f6a30','#2f8a40','#4ca858'],3,FB,false);return true;                           // pinheiro jovem
+      case'forest1:1':oak(['#8a2a14','#c0481e','#e8782a','#f8b050'],false);return true;                                  // bordo de outono
+      case'forest1:2':oak(['#8a6a14','#b8901e','#dcb43a','#f4dc78'],false);return true;                                  // carvalho dourado
+      case'forest1:3':trunk(5,34,FB);column(5,9,9,9,-44,['#1d5a2c','#2f7e3c','#52a850','#98d878']);return true;           // choupo alto
+      case'forest9:1':{trunk(5,41,['#a8a090','#e8e2d4','#fffaf0'],0);for(let i=0;i<8;i++)px(-2+(i%2),-8-i*5,3,1,'#2a2a2a');
+        for(const q of [[0,-52,9,9],[-8,-44,9,8],[8,-45,9,8],[0,-42,11,8]])fol(q[0],q[1],q[2],q[3],['#8a7414','#c4a424','#e6c840','#f8ea8a']);return true;}   // betula de outono
+      case'forest10:1':{const b=['#2a1c10','#42301c','#5c4428'];trunk(10,56,b);                                           // arvore seca
+        br(0,-44,-16,-62,4,b[1]);br(0,-48,15,-66,4,b[1]);br(-8,-56,-14,-76,3,b[1]);br(7,-58,11,-78,3,b[1]);br(0,-52,-1,-82,3,b[1]);
+        px(-18,-63,4,2,b[2]);px(14,-67,4,2,b[2]);return true;}
+      case'forest10:2':{trunk(8,34,FB);const p=['#2a5a2a','#3f8038','#62a852','#a4d880'];fol(0,-50,22,9,p);fol(-12,-46,12,7,p);fol(12,-46,12,7,p);   // salgueiro
+        for(let x=-24;x<=24;x+=3){const L=12+Math.floor(r()*20);px(x,-46+Math.round(Math.abs(x)*.1),1,L,r()<.5?p[1]:p[0]);if(r()<.4)px(x+1,-44,1,L-5,p[2]);}return true;}
+      // ---- neve ----
+      case'snow2:1':pine(86+v*3,12+v,7,SP,4,SB,true);return true;                                                         // abeto alto
+      case'snow2:2':pine(40+v*3,11,3,SP,3,SB,true);return true;                                                           // abeto novo
+      case'snow4:1':{trunk(4,38,['#b8b4a8','#e8e4da','#fffaf0'],0);for(let i=0;i<7;i++)px(-2+(i%2),-6-i*5,3,1,'#3a3a3a');   // betula nua com neve
+        br(0,-26,-11,-40,2,SB[1]);br(0,-30,11,-44,2,SB[1]);br(0,-36,-6,-52,2,SB[1]);br(0,-38,7,-54,2,SB[1]);br(0,-40,0,-58,2,SB[1]);
+        for(const q of [[-11,-41],[11,-45],[-6,-53],[7,-55],[0,-59]])px(q[0]-2,q[1]-1,5,2,WH);return true;}
+      case'snow4:2':{const p=['#2a4a42','#3a6458','#5a8a7a','#9cc0b8'];fol(-7,-8,10,7,p,true);fol(7,-8,10,7,p,true);fol(0,-14,9,7,p,true);return true;}   // arbusto nevado
+      case'snow5:1':{trunk(6,26,SB);const p=['#223d38','#33564d','#4f7568','#9cc0b8'];for(const q of [[0,-38,9,7],[-9,-30,9,8],[9,-31,9,8],[0,-28,12,9]])fol(q[0],q[1],q[2],q[3],p,true);return true;}   // carvalho baixo
+      // ---- deserto ----
+      case'desert3:1':{trunk(14,32,DB);const p=['#4f6a28','#6f8a3a','#8fae4c','#c4dc88'];fol(-9,-44,11,6,p);fol(9,-45,11,6,p);fol(0,-51,12,6,p);   // baoba
+        for(let i=0;i<26;i++){const wi=Math.round(11+4*Math.sin(i/26*3.1)),x0=-(wi>>1);px(x0,-1-i,wi,1,DB[1]);px(x0,-1-i,2,1,DB[2]);px(x0+wi-2,-1-i,2,1,DB[0]);if((i*7)%11<2)px(x0+3+(i%3)*2,-1-i,1,3,DB[0]);}
+        br(0,-30,-8,-40,3,DB[1]);br(0,-30,8,-41,3,DB[1]);return true;}
+      case'desert3:2':{trunk(5,24,DB);const p=['#4e5a26','#6a7a36','#8a9a4a','#b8c878'];                                    // arvore de josue
+        br(0,-18,-12,-34,3,DB[1]);br(0,-22,12,-38,3,DB[1]);br(-5,-28,-6,-46,2,DB[1]);br(5,-30,7,-48,2,DB[1]);
+        for(const q of [[-12,-36,5,4],[12,-40,5,4],[-6,-48,5,4],[7,-50,5,4],[0,-30,4,4]])fol(q[0],q[1],q[2],q[3],p);return true;}
+      case'desert6:1':{const sw=v-1.5,pcx=i=>Math.round(Math.sin(i/33*1.6)*sw*1.6);                                         // palmeira baixa
+        for(let i=0;i<34;i++){const wi=Math.round(6-2*i/34)+(i<3?2:0),x=pcx(i)-(wi>>1);px(x,-1-i,wi,1,i%4===0?'#5a4a28':'#8a7440');px(x,-1-i,1,1,'#b09a58');}
+        const tx=pcx(33),ty=-35,fr=['#2f7a34','#3f9a44','#5ab85a'];
+        for(let i=0;i<8;i++){const an=-3.14+i*.9+(v*.1),dx=Math.cos(an),dy=Math.sin(an)*.5,L=15+(i%2)*3;
+          for(let q=1;q<=L;q++){const t=q/L,x=tx+dx*q,y=ty+dy*q+t*t*9;px(x,y,3,2,fr[(q>>2)%3]);}}
+        ell(tx,ty+1,3,3,'#2a6a2e');return true;}
+      case'desert7:1':{const g=['#3a5a2a','#5a7a3a','#8aa850'];                                                              // agave
+        for(let i=0;i<9;i++){const an=-3.14+i*.39,L=13+(i%3)*3,ex=Math.cos(an)*L,ey=-4-Math.abs(Math.sin(an))*L*.9;line(0,-3,ex,ey,3,g[i%3]);px(ex-1,ey-1,2,2,'#e8e0a0');}
+        ell(0,-4,4,3,g[0]);return true;}
+      case'desert7:2':{const p=['#4e5a26','#6a7a36','#8a9a4a','#b8c878'];fol(-6,-8,9,7,p);fol(6,-8,9,7,p);fol(0,-13,8,7,p);       // arbusto florido
+        for(const q of [[-8,-10],[5,-14],[9,-8],[-2,-16],[0,-8]])px(q[0],q[1],2,2,'#e87aa8');return true;}
+      // ---- cidade ----
+      case'city8:1':{px(-5,-3,11,3,'#3a3a40');px(-4,-2,9,1,'#5a5a62');trunk(4,26,FB);const p=['#8a2a58','#c04a82','#e878aa','#f8c0d8'];   // arvore florida
+        fol(0,-34,14+(v>>1),12,p);fol(-8,-26,8,7,p);fol(9,-27,8,7,p);return true;}
+      case'city8:2':{px(-5,-3,11,3,'#3a3a40');px(-4,-2,9,1,'#5a5a62');trunk(3,24,FB);fol(0,-36,12,12,CP);fol(-3,-30,7,7,CP);return true;}   // copa podada
+      case'city0:1':trunk(4,12,FB);column(8,8,8,6,-16,['#0f3a24','#17502f','#236a3d','#3c8a54']);return true;                // cipreste
+      case'city1:1':oak(['#7a1c14','#b03a1c','#dc6428','#f4a448'],false);return true;                                       // bordo vermelho
+      case'city1:2':{trunk(6,34,FB);const p=['#2a6a34','#43903f','#6cb85a','#b4e88a'];for(const q of [[0,-48,10,8],[-10,-38,10,9],[10,-39,10,9],[0,-36,13,10]])fol(q[0],q[1],q[2],q[3],p);return true;}   // tilia
+    }
+    return false;
+  };
+  if(a&&altTree()){}
+  else if(map==='snow'){
     if(k===2){pine(66+v*3,16+v,5,['#10303b','#1b4a5a','#2d6676'],4,['#2a2a30','#4a4038','#6a5a4a'],true);}
     else if(k===4){ // árvore seca com neve
       const b=['#2a2a30','#4a4038','#6a5a4a'];trunk(5,34+v*3,b);
@@ -697,9 +757,17 @@ function treeShadow0(x,y,s){
   ctx.moveTo(x+5,y+2);ctx.ellipse(x,y+2,5,2,0,0,6.283);
   ctx.fill();
 }
+/* quantas especies alternativas cada tipo tem; ~45% das arvores trocam de especie, sorteadas pela posicao (nao mexe no gerador do mundo, igual nos dois jogadores) */
+const TREE_ALTS={forest0:2,forest1:3,forest9:1,forest10:2,snow2:2,snow4:2,snow5:1,desert3:2,desert6:1,desert7:2,city8:2,city0:1,city1:2};
+function treeAlt(t,k){
+  if(t._a!==undefined)return t._a;
+  const n=TREE_ALTS[selectedMap+k]|0;let a=0;
+  if(n&&!(window.fruitOf&&fruitOf(t))){const h=posHash(t.x,t.y,21);if(h>=.55)a=1+Math.min(n-1,Math.floor((h-.55)/.45*n));}   // quem da fruto (macieira, tamareira) fica como e, para o fruto cair na copa
+  return t._a=a;
+}
 function drawTree(t){
   const x=t.x,y=t.y,k=t.k|0,v=Math.floor((t.seed||0)*4)&3;
-  const s=treeSprite(k,v,selectedMap!=='snow'&&WX.snow>=.5);
+  const s=treeSprite(k,v,selectedMap!=='snow'&&WX.snow>=.5,treeAlt(t,k));
   treeShadow(x,y,s);
   const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
   const behind=P&&!P.inside&&P.y<y-3&&P.y>y-s.top&&Math.abs(P.x-x)<s.half;   // jogador atrás da copa
