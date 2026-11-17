@@ -360,6 +360,55 @@ function genInterior(b){
       else if(b.type==='mil'&&r.k==='storage'){if(lr()<.75)addF(r,'medcab');}
     }
   }
+  organizeFurn(b,rooms,zones,keys,baseUn);
+}
+/* Terceira passada dos moveis (gerador proprio, NAO consome o _rng: o resto do mundo nao muda). Corrige o que atrapalha a passagem e a estetica:
+   1) camas, beliches e macas por comodo limitados pelo tamanho do comodo (3 beliches num quartinho fechavam a passagem);
+   2) dois moveis num vao de 6 a 12 px: estreito demais para passar e feio. Cola (ate 6 px) ou abre (12 px ou mais): o movel mais novo muda de lugar,
+      e se nao couber em lugar nenhum sai (so ficam os essenciais: cama, fogao, pia, vaso, geladeira). */
+const SLEEPERS={bed:1,bed2:1,bunk:1,medbed:1},KEEPF={stove:1,ksink:1,toilet:1,sink:1,fridge:1,bed:1,bed2:1};
+function rectGap(a,c){return Math.hypot(Math.max(0,a.x-(c.x+c.w),c.x-(a.x+a.w)),Math.max(0,a.y-(c.y+c.h),c.y-(a.y+a.h)));}
+function organizeFurn(b,rooms,zones,keys,baseUn){
+  const lr=mkRng(((Math.round(b.x)*173+Math.round(b.y)*97+(b.h|0)*11)%99991)/99991);
+  const tight=(f,o)=>{const g=rectGap(f,o);return g>6&&g<12;};
+  const okSpot=f=>{
+    for(const z of zones)if(rectsHit(f,z,0))return false;
+    for(const o of b.furn){if(o===f)continue;if(rectsHit(f,o,2))return false;if(o.room===f.room&&tight(f,o))return false;}
+    return true;
+  };
+  const drop=f=>{const i=b.furn.indexOf(f);if(i>=0)b.furn.splice(i,1);};
+  const relocate=f=>{   // tenta outro lugar junto das paredes do mesmo comodo
+    const d=FURN[f.k],r=f.room,old={x:f.x,y:f.y,w:f.w,h:f.h,s:f.s},i=b.furn.indexOf(f);
+    if(!d||d[2]==='free'||i<0)return false;
+    b.furn.splice(i,1);
+    for(let t=0;t<30;t++){
+      const s=['t','b','l','r'][Math.floor(lr()*4)],horiz=(s==='t'||s==='b');
+      let w,h;if(d[2]==='along'){w=horiz?d[0]:d[1];h=horiz?d[1]:d[0];}else{w=horiz?d[1]:d[0];h=horiz?d[0]:d[1];}
+      if(w>r.w-2||h>r.h-2)continue;
+      let x,y;
+      if(horiz){x=Math.round(r.x+1+lr()*(r.w-2-w));y=s==='t'?r.y:r.y+r.h-h;}
+      else{y=Math.round(r.y+1+lr()*(r.h-2-h));x=s==='l'?r.x:r.x+r.w-w;}
+      f.x=x;f.y=y;f.w=w;f.h=h;f.s=s;
+      if(!okSpot(f))continue;
+      b.furn.push(f);
+      if(!intConnected(b,keys)||intUnreached(b,keys[0])>baseUn){b.furn.pop();continue;}
+      return true;
+    }
+    f.x=old.x;f.y=old.y;f.w=old.w;f.h=old.h;f.s=old.s;b.furn.splice(i,0,f);return false;
+  };
+  for(const r of rooms){
+    const area=r.w*r.h,maxS=area<3600?1:area<7000?2:3;
+    const sl=b.furn.filter(f=>f.room===r&&SLEEPERS[f.k]);
+    while(sl.length>maxS)drop(sl.pop());
+    const mine=b.furn.filter(f=>f.room===r);
+    for(let i=mine.length-1;i>=0;i--){   // do mais novo para o mais antigo
+      const f=mine[i];
+      if(b.furn.indexOf(f)<0||FURN[f.k][2]==='free')continue;
+      if(!b.furn.some(o=>o!==f&&o.room===r&&tight(f,o)))continue;
+      if(relocate(f))continue;
+      if(!KEEPF[f.k])drop(f);
+    }
+  }
 }
 function intBlocked(b,x1,y1,x2,y2){const a=b.iw;for(let i=0;i<a.length;i++)if(segRectHit(x1,y1,x2,y2,a[i]))return true;return false;}
 /* próximo ponto por onde o zumbi deve andar para ir de (fx,fy) a (tx,ty) dentro do prédio; null = pode ir reto */
