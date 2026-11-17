@@ -11,7 +11,7 @@ function invCap(){return P&&P.pack?PACK_SLOTS:MAX_SLOTS;}
 
 /* ============ ÍCONES PIXEL ART (substituem os emojis do sistema) ============ */
 const PXPAL={R:'#d33',r:'#8a2020',O:'#d9892b',Y:'#ffd84a',B:'#3a9be0',b:'#8fd0ff',G:'#6fcf6f',g:'#3e7a2e',
-  W:'#f0ead8',S:'#c0c8d4',s:'#6a7280',N:'#8a5a2a',n:'#c8924e',P:'#e8a0a0',K:'#222831',M:'#8DA568',A:'#C79A54',f:'#e8b890',F:'#b98860',C:'#b8b090',c:'#8a8468',k:'#5a3a24',d:'#6a7f4a',V:'#8a3aa8',v:'#5a2478',T:'#e8442a',t:'#a82818',L:'#f09a2a',l:'#c8661a',E:'#d9a066',e:'#a8703a'};
+  W:'#f0ead8',S:'#c0c8d4',s:'#6a7280',N:'#8a5a2a',n:'#c8924e',P:'#e8a0a0',K:'#222831',M:'#8DA568',A:'#C79A54',f:'#e8b890',F:'#b98860',C:'#b8b090',c:'#8a8468',k:'#5a3a24',d:'#6a7f4a',V:'#8a3aa8',v:'#5a2478',T:'#e8442a',t:'#a82818',L:'#f09a2a',l:'#c8661a',E:'#d9a066',e:'#a8703a',H:'#2a2e36',h:'#5a626c',j:'#7e8690',J:'#a4acb6',q:'#d2d8df'};
 const PXG={
   heart:['.RR...RR.','RWRR.RRRR','RRRRRRRRR','RRRRRRRRR','.RRRRRRR.','..RRRRR..','...RRR...','....R....'],
   drumstick:['..OOO....','.OWOOO...','OOOOOOO..','OOOOOOO..','.OOOOO...','..OOOW...','....WWW..','.....WWW.'],
@@ -30,7 +30,7 @@ const PXG={
   meat:['..rrrrr...', '.rRRRRRWr.', 'rRRPPRRRWr', 'rRRPRRPRRr', 'rRRRRPPRRr', '.rRRRRRRr.', '..rrrrrr..'],
   cookedmeat:['..kkkkk...', '.kNNNNNnk.', 'kNNnnNNNnk', 'kNNnNNnNNk', 'kNNNNnnNNk', '.kNNkNNNk.', '..kkkkkk..'],
   wood:['..NNNNN..','.NnnnnnN.','NnNNNNNnN','NnNnnnNnN','NnNNNNNnN','.NnnnnnN.','..NNNNN..'],
-  stone:['..sSSSs..','.sSSSSSs.','sSSSWSSSs','sSSSSSSSs','.sSSSSSs.','..sssss..'],
+  stone:['...HHH......','..HqqJHH..H.','.HqJJJJjHHjH','HqJJJJjjjjjH','HJJJjHjjjjhH','HJJjjHHjjhhH','.HjjjjjHhhhH','.HjjhhhhhhhH','HjjhhhhhhhHH','.HHhhhhhHH..','...HHHHH....'],
   bandage:['.nnnnnnn.','nnnWWWnnn','nnnWWWnnn','.nnnnnnn.'],
   cloth:['..kkkkkkkkkk..','.kEEEEEEEEEEkk','kEEEEEEEEEEnek','kEEEnEEEEEnnek','kEEnnnEEEnnnek','kNnNnNnNnNnNek','kEnnnnnnnnnnek','kneeennnneeeek','kkkkkkkkkkkkkk','.k.k.k.k.k.k..','.k...k...k.k..'],
   medkit:['...sss...','WWWWWWWWW','WWWWRWWWW','WWWRRRWWW','WWWWRWWWW','WWWWWWWWW','sssssssss'],
