@@ -44,7 +44,7 @@ const mms=mmStatic.getContext('2d');
 const IS_MOBILE=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'')
   || ((navigator.maxTouchPoints||0)>1 && Math.min(screen.width||0,screen.height||0)<900);
 
-let W=0,H=0,dispW=0,dispH=0,Z=2,camX=0,camY=0;
+let W=0,H=0,dispW=0,dispH=0,Z=2,Z0=2,camZoom=0,camX=0,camY=0;   // Z0: zoom da tela; Z: zoom do quadro (Z0 menos o afastamento da camera em alta velocidade)
 let JR=48,JK=22; // raio do joystick e do botão em px de canvas (resize() ajusta à escala)
 let mmDrawT=0;
 /* ===== Escala da interface (UI) igual em qualquer celular =====
@@ -104,7 +104,7 @@ function resize(){
   while(big/d>maxSide && d<zDisp){ d++; while(zDisp%d!==0 && d<zDisp) d++; }
   W=Math.max(160,Math.floor(dispW/d));
   H=Math.max(120,Math.floor(dispH/d));
-  Z=zDisp/d;
+  Z0=zDisp/d;Z=Z0*(1-camZoom);
   HU=UIS*W/dispW;
   JR=Math.round(48*HU*CFG.joyS); JK=Math.round(22*HU);
   if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
