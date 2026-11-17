@@ -328,6 +328,8 @@ function rollSeed(h){   // h em [0,1): escolha deterministica (nao mexe no _rng 
   const t=SEED_POOL[selectedMap]||SEED_POOL.forest;let s=0;for(const k in t)s+=t[k];
   let r=((h%1)+1)%1*s;for(const k in t){r-=t[k];if(r<0)return k;}return Object.keys(t)[0];
 }
+const WEAPON_AMMO=20;   // municao que vem junto ao pegar uma arma de fogo (nova ou repetida)
+const AMMO_PACK=20;   // munição que cada caixa de munição dá ao ser pega
 const posHash=(x,y,k)=>{let a=(Math.round(x)*73856093^Math.round(y)*19349663^(k|0)*83492791)>>>0;a=Math.imul(a^(a>>>13),1274126177)>>>0;return ((a^(a>>>16))>>>0)/4294967296;};
 
 const ZTYPES=[

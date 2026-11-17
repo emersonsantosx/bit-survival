@@ -878,8 +878,21 @@ function chainsawHit(z,tx,ty,tr){
   const t=l2>0?clamp((px*vx+py*vy)/l2,0,1):0;
   return Math.hypot(px-vx*t,py-vy*t)<tr+CHAINSAW_R;
 }
+/* camera se afasta (ate 30%) conforme o carro acelera e volta ao normal ao desacelerar ou sair do carro */
+const CAM_FAR=.3;
+function camSpeedZoom(dt){
+  let target=0;
+  if(P.inVehicle&&!P.dead&&!P.inside){
+    const v=P.inVehicle,top=Math.max(1,(vehSpec(v)&&vehSpec(v).top)||CAR_TOP);
+    target=Math.min(1,Math.max(0,(Math.abs(v.spd||0)/top-.1)/.9))*CAM_FAR;   // so comeca depois de 10% da velocidade maxima
+  }
+  camZoom+=(target-camZoom)*(1-Math.exp(-Math.min(dt,.1)*(target>camZoom?1.6:2.2)));   // abre devagar, fecha um pouco mais rapido
+  if(target===0&&camZoom<.0005)camZoom=0;
+  Z=Z0*(1-camZoom);
+}
 function update(dt){
   if(!P||!isFinite(dt))return;
+  camSpeedZoom(dt);
   T+=dt;DOORF++;DOOR_DT=dt;
   statTick(dt);
   const hr=START_HOUR+T/DAY_SECONDS*24;

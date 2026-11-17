@@ -853,11 +853,11 @@ function pickup(){
       // E2: only mark looted AFTER successful loot (don't lose item on full bag)
       const found=wpick(LOOT.car);
       if(found==='ammo'){
-        const n=rint(5,12);P.ammo+=n;toast('+'+n+' munição');
+        const n=AMMO_PACK;P.ammo+=n;toast('+'+n+' munição');
         nv.looted=true; if(MP.active) sendEvt('vehicleLooted', { id: nv.id });
       } else if(found==='pistol'){
-        if(P.firearms.pistol){P.ammo+=6;toast('+6 munição');}
-        else{P.firearms.pistol=true;P.ammo+=6;P.weapon='pistol';updateWeaponHud();toast('Pegou: Pistola (+6 munição)');}
+        if(P.firearms.pistol){P.ammo+=WEAPON_AMMO;toast('+'+WEAPON_AMMO+' munição');}
+        else{P.firearms.pistol=true;P.ammo+=WEAPON_AMMO;P.weapon='pistol';updateWeaponHud();toast('Pegou: Pistola (+'+WEAPON_AMMO+' munição)');}
         nv.looted=true; if(MP.active) sendEvt('vehicleLooted', { id: nv.id });
       } else {
         if(!addItem(found)){toast('Inventário cheio');beep(140,.08,'square',.05);return;}
@@ -897,7 +897,7 @@ function pickup(){
 /* pega exatamente este item do chao (o botao de pegar chama com o alvo mais perto; os icones extras, com o que o jogador tocou) */
 function takeItem(it){
   const t=it.t;
-  if(t==='ammo'){const n=rint(5,10);P.ammo+=n;toast('+'+n+' munição');}
+  if(t==='ammo'){const n=AMMO_PACK;P.ammo+=n;toast('+'+n+' munição');}
   else if(t==='arrows'){
     const n=rint(4,8);P.arrows=(P.arrows||0)+n;toast('+'+n+' flechas');
   }
@@ -908,11 +908,11 @@ function takeItem(it){
       if(MP.active&&!allyHasFirearm(t)){ toast('Você já tem '+ITEMS[t].n+': deixe pro parceiro'); return; }
       // a arma repetida vira munição e some do chão, sem trocar a arma da mão
       if(t==='bow'){ P.arrows=(P.arrows||0)+6; toast('Você já tem Arco: +6 flechas'); }
-      else { P.ammo+=8; toast('Você já tem '+ITEMS[t].n+': +8 munição'); }
+      else { P.ammo+=WEAPON_AMMO; toast('Você já tem '+ITEMS[t].n+': +'+WEAPON_AMMO+' munição'); }
     }else{
       P.firearms[t]=true;
       if(t==='bow'){ P.arrows=(P.arrows||0)+6; P.weapon='bow'; toast('Pegou: Arco (+6 flechas)'); }
-      else { P.ammo+=8; P.weapon=t; toast('Pegou: '+ITEMS[t].n+' (+8 munição)'); }
+      else { P.ammo+=WEAPON_AMMO; P.weapon=t; toast('Pegou: '+ITEMS[t].n+' (+'+WEAPON_AMMO+' munição)'); }
     }
     updateWeaponHud();
   }
