@@ -49,6 +49,7 @@ function actionIcon(btnText,TG,P_){
   if(P_.sitting)return 'a_log_up';
   if(TG){
     switch(TG.k){
+      case'item':{const e=TG.it&&ITEMS[TG.it.t]&&ITEMS[TG.it.t].e;if(e&&pxData(e))return e;break;}   // o proprio icone do item
       case'veh':return 'a_'+vk+'_in';
       case'log':return 'a_log_sit';
       case'bed':return 'a_bed_z';

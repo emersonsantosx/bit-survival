@@ -1330,7 +1330,24 @@ function updateHud(force){
     if(tb.dataset.ic!==want){tb.dataset.ic=want;tb.setAttribute('aria-label',P.tool?'Guardar ferramenta de construção':'Ferramentas de construção');tb.innerHTML=pxIcon(want,P.tool?3:3);}}}
   {const ve=$('v-exit');if(ve&&P.inVehicle){const ic='a_'+vehKind()+'_out';if(ve.dataset.ic!==ic){ve.dataset.ic=ic;ve.innerHTML=pxIcon(ic,2);}}}   // sair: o veiculo do mapa com a seta para cima
   const pick_=$('pick');
-  if(pick_){const ic=actionIcon(btnText,TG,P);if(pick_.dataset.st!==btnText||pick_.dataset.ic!==ic){pick_.dataset.st=btnText;pick_.dataset.ic=ic;pick_.setAttribute('aria-label',(window.plotAria&&plotAria[btnText])||ACTION_ARIA[btnText]||'Pegar');pick_.innerHTML=pxIcon(ic,3);}   // o icone mostra o alvo e o resultado (modulo 25)
+  if(pick_){const ic=actionIcon(btnText,TG,P);if(pick_.dataset.st!==btnText||pick_.dataset.ic!==ic){pick_.dataset.st=btnText;pick_.dataset.ic=ic;pick_.setAttribute('aria-label',(window.plotAria&&plotAria[btnText])||ACTION_ARIA[btnText]||'Pegar');pick_.innerHTML=(TG&&TG.k==='item'?pxFit(ic,38,38):pxIcon(ic,3));}   // o icone mostra o alvo e o resultado (modulo 25)
     pick_.classList.toggle('hot',canInteract);}
+  {const px=$('pickx');   // um icone por item extra ao alcance: toque pega exatamente aquele
+   if(px){
+     const off=P.dead||P.inVehicle||P.sleeping||P.sitting||P.fish;
+     const l=off?[]:itemsNear().filter(it=>!(TG&&TG.k==='item'&&TG.it===it)).slice(0,3);
+     const key=l.map(it=>it.t+'@'+it.x+','+it.y).join('|');
+     const hb=$('hoe'),right=(hb&&!hb.classList.contains('hide'))?262:190;   // desvia do botao de construir
+     if(px._r!==right){px._r=right;px.style.right='calc('+right+'px*var(--ui,1))';}
+     if(px._k!==key){
+       px._k=key;px.innerHTML='';
+       for(const it of l){
+         const b=document.createElement('button');b.className='btn'+(itemTakeable(it)?'':' no');
+         b.setAttribute('aria-label','Pegar '+ITEMS[it.t].n);b.title=ITEMS[it.t].n;b.innerHTML=pxFit(ITEMS[it.t].e,34,34);
+         b.addEventListener("pointerdown",e=>{e.preventDefault();aud();pickItemBtn(it);updateHud(true);});
+         px.appendChild(b);
+       }
+     }
+   }}
 }
 

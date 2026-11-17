@@ -10,14 +10,14 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 |---|---:|---:|---:|---:|---:|---:|
 | 01-base | 54 | 41 | 13 | 0 | 0 | 23 |
 | 02-audio | 68 | 32 | 35 | 1 | 5 | 19 |
-| 03-dados | 47 | 35 | 12 | 0 | 2 | 21 |
+| 03-dados | 47 | 36 | 11 | 0 | 2 | 21 |
 | 04-estado | 84 | 79 | 5 | 0 | 6 | 22 |
 | 05-geometria | 57 | 42 | 15 | 0 | 10 | 18 |
 | 06-interiores-portas | 36 | 18 | 18 | 0 | 7 | 6 |
 | 07-loot-mapa | 62 | 30 | 32 | 0 | 13 | 8 |
 | 08-cidade-vilas-marcos | 44 | 23 | 20 | 1 | 11 | 16 |
 | 09-milharal-geracao | 63 | 36 | 27 | 0 | 12 | 9 |
-| 10-jogo-saves | 114 | 78 | 36 | 0 | 13 | 13 |
+| 10-jogo-saves | 117 | 81 | 36 | 0 | 13 | 13 |
 | 11-pesca-update | 34 | 11 | 23 | 0 | 13 | 16 |
 | 12-crafting-multiplayer | 48 | 19 | 29 | 0 | 13 | 18 |
 | 13-render-personagens | 99 | 48 | 51 | 0 | 12 | 15 |
@@ -48,8 +48,8 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 07-loot-mapa | 135 | 3 | 30 | 128 | 3 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |  |  |
 | 08-cidade-vilas-marcos | 119 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |
 | 09-milharal-geracao | 203 | 10 | 87 | 275 | 40 |  | 1 | 35 | . | 3 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |
-| 10-jogo-saves | 91 | 51 | 47 | 687 | 18 | 3 | 12 | 10 | 7 | . | 88 | 25 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |  |  |
-| 11-pesca-update | 241 | 39 | 50 | 870 | 60 | 2 | 3 | 5 | 20 | 61 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |  |
+| 10-jogo-saves | 91 | 51 | 47 | 700 | 18 | 3 | 12 | 10 | 7 | . | 88 | 25 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |  |  |
+| 11-pesca-update | 243 | 40 | 55 | 875 | 60 | 2 | 3 | 5 | 20 | 64 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 326 | 40 | 20 | 254 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 655 | 13 | 16 | 318 | 17 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |  |
@@ -63,7 +63,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 22-bau | 25 | 14 | 11 | 80 | 12 |  |  | 1 |  | 3 | 9 | 6 |  |  |  |  |  |  |  |  |  | . |  |  |  |  |
 | 23-poco | 15 | 4 | 4 | 51 | 14 |  |  | 2 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  | . |  |  |  |
 | 24-tronco | 23 | 5 | 4 | 100 | 15 |  |  | 1 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  |  | . |  |  |
-| 25-icones-acoes |  |  | 13 |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |
+| 25-icones-acoes |  |  | 16 |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |
 | 26-clima-acabamento | 19 |  | 2 | 14 | 4 |  |  |  |  |  |  |  | 4 |  |  |  |  |  |  |  |  |  |  |  |  | . |
 
 (colunas = os dois primeiros digitos do nome do arquivo)
@@ -72,7 +72,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 21 | 1948 |
+| P | let | 04-estado:14 | 21 | 1963 |
 | selectedMap | let | 04-estado:3 | 21 | 219 |
 | MP | let | 04-estado:19 | 20 | 577 |
 | beep | funcao | 02-audio:42 | 19 | 136 |
@@ -85,23 +85,23 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | clamp | const | 01-base:4 | 16 | 98 |
 | parts | let | 04-estado:10 | 16 | 75 |
 | ctx | const | 01-base:27 | 15 | 1045 |
-| items | let | 04-estado:10 | 15 | 61 |
+| items | let | 04-estado:10 | 15 | 63 |
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
 | blds | let | 04-estado:10 | 14 | 58 |
 | R | funcao | 13-render-personagens:2 | 13 | 1251 |
 | weather | let | 04-estado:6 | 13 | 86 |
 | pointInLake | funcao | 05-geometria:113 | 13 | 46 |
 | trees | let | 04-estado:10 | 12 | 55 |
+| ITEMS | const | 03-dados:167 | 11 | 66 |
 | zombies | let | 04-estado:10 | 11 | 58 |
 | campfires | let | 04-estado:10 | 11 | 41 |
 | bldAt | funcao | 05-geometria:585 | 11 | 30 |
-| state | let | 04-estado:2 | 10 | 92 |
+| state | let | 04-estado:2 | 10 | 93 |
 | dark | let | 04-estado:14 | 10 | 60 |
 | tents | let | 04-estado:10 | 10 | 23 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |
 | remotePlayers | let | 04-estado:11 | 9 | 91 |
 | rint | const | 01-base:17 | 9 | 72 |
-| ITEMS | const | 03-dados:167 | 9 | 61 |
 | animals | let | 04-estado:10 | 9 | 37 |
 | ORLA | let | 05-geometria:125 | 9 | 37 |
 | rebuildSolidGrid | funcao | 05-geometria:367 | 9 | 34 |
@@ -122,7 +122,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | pushOut | funcao | 05-geometria:398 | 7 | 14 |
 | sprintHeld | let | 04-estado:16 | 7 | 13 |
 | removeInv | funcao | 04-estado:266 | 7 | 11 |
-| $ | const | 01-base:2 | 6 | 160 |
+| $ | const | 01-base:2 | 6 | 162 |
 | Z | let | 01-base:47 | 6 | 112 |
 | plane | let | 04-estado:13 | 6 | 62 |
 | joy | const | 04-estado:183 | 6 | 54 |
@@ -139,7 +139,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 - **01-base** (13): makeLightSprite, mmC, IS_MOBILE, dispH, UI_REF, UI_MAX, MQ_H, MQ_W, UIS, uiClasses, applyUiScale, PERF_TIERS, _cl
 - **02-audio** (35): muted, gAtk, ambientSrc, ambientGain, rainNoise, ACT, sndBusy, _sndT, sndThrottle, stepNoise, VOICE_BOOST, voice, ZVB, creatureGain, AVB, musicWanted, musicOn, musicGain, musicTimer, musicNext, musicStepN, musicVerb, MUSIC_BASE, MUSIC_STEP, MUSIC_CACHE, ...
-- **03-dados** (12): PXPAL, pxLines, pxRot, PXURL, pxData, PXCV, hydratePx, FISH_TPL, fishGrid, FISH_POOL, SEED_POOL, ZUNLOCK
+- **03-dados** (11): PXPAL, pxLines, pxRot, PXURL, PXCV, hydratePx, FISH_TPL, fishGrid, FISH_POOL, SEED_POOL, ZUNLOCK
 - **04-estado** (5): chatLog, chatUnread, chatTime, chatAddHistory, chatShowEmpty
 - **05-geometria** (15): iceOf, orlaHit, _PAVE, _SANDP, orlaPatterns, TERR, CAR_TOP, SPG_C, spgSync, WG_C, WG, wallGrid, SOLID_GRID, wallBlockerAt, obbHitsCircle
 - **06-interiores-portas** (18): FURN, ROOMFURN, BLD_ROOMS, ROOM_FLOOR, rectsHit, intConnected, intUnreached, DOOR_BREAK, doorHearable, doorSound, intBlocked, bldSpawnPoint, roomSpawnPoint, FLOOT, furnLootTable, SEED_BONUS, bonusSpot, FLASH_BONUS
