@@ -1,4 +1,4 @@
-/* Tronco construido pode ser destruido a golpes (devolve as 4 madeiras); o gerado com o mundo nao; quem esta sentado levanta; vai para o outro jogador
+/* Tronco construido pode ser destruido a golpes (devolve as 4 madeiras); o gerado com o mundo tambem (a chave o: fica no save); quem esta sentado levanta; vai para o outro jogador
    (evento logDel e snapshot completo). Uso: node tests/teste-tronco-destruir.js [caminho/index.html]. Sai com codigo 1 se algo falhar. */
 const path = require('path');
 const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'index.html'));
@@ -20,8 +20,12 @@ const { chromium } = require('playwright');
     let golpes = 0; for (let i = 0; i < 12 && logList().includes(L); i++) { P.cd = 0; P.face = Math.PI / 2; attack(); golpes++; }
     o.sumiu = !logList().includes(L); o.golpes = golpes; o.wood1 = countInv('wood'); o.solido = querySolidNear(L.x, L.y - 3, 6).length === 0;
     o.evt = sent.some(m => JSON.stringify(m).includes('logDel'));
-    // tronco gerado com o mundo nao sai
-    logList().push({ x: 1700, y: 1700, a: 'h', g: 1 }); const G = logList().find(l => l.g); P.x = G.x; P.y = G.y - 22; for (let i = 0; i < 12; i++) { P.cd = 0; P.face = Math.PI / 2; attack(); } o.gerado = logList().includes(G);
+    // tronco gerado com o mundo tambem pode ser destruido: devolve 4 madeiras, avisa o outro jogador e nao volta ao recarregar
+    const G = { x: 1700, y: 1700, a: 'h', g: 1 }; logList().push(G); sent.length = 0; P.inv = []; P.x = G.x; P.y = G.y - 22;
+    for (let i = 0; i < 12 && logList().includes(G); i++) { P.cd = 0; P.face = Math.PI / 2; attack(); }
+    o.gerado = !logList().includes(G); o.woodG = countInv('wood'); o.chave = structPack().includes('o:1700,1700,h'); o.evtG = sent.some(m => JSON.stringify(m).includes('structBreak') && JSON.stringify(m).includes('o:1700,1700,h'));
+    logList().push({ x: 1700, y: 1700, a: 'h', g: 1 }); structLoad(structPack()); o.naoVolta = !logList().some(l => l.x === 1700 && l.y === 1700);   // o mundo regenera o tronco pela semente e o save o remove de novo
+    logList().push({ x: 1750, y: 1750, a: 'v', g: 1 }); structRemote('o:1750,1750,v'); o.remotoG = !logList().some(l => l.x === 1750);
     // sentado: levanta
     fenceBuild(false); P.inv = [{ t: 'wood', n: 4 }]; P.tool = 'log'; P.x = 1500; P.y = 1500; P.face = Math.PI / 2; fenceBuild(false);
     const L2 = logList().find(l => !l.g); P.tool = null; P.x = L2.x - 10; P.y = L2.y - 10; logSit(L2); o.sentou = !!P.sitting;
@@ -38,7 +42,9 @@ const { chromium } = require('playwright');
   ok(r.wood1 - 0 === 4 && r.wood0 === 0, 'devolve as 4 madeiras (' + r.wood1 + ')');
   ok(r.solido, 'tronco destruido nao bloqueia mais a passagem');
   ok(r.evt, 'avisa o outro jogador (logDel)');
-  ok(r.gerado, 'tronco gerado com o mundo nao e destruido');
+  ok(r.gerado && r.woodG === 4, 'tronco que veio com o mapa tambem e destruido e devolve 4 madeiras (' + r.woodG + ')');
+  ok(r.chave && r.evtG && r.naoVolta, 'o tronco do mapa destruido vai no save, avisa o outro jogador e nao volta ao recarregar');
+  ok(r.remotoG, 'o outro jogador destruir um tronco do mapa tambem o remove aqui');
   ok(r.levantou, 'quem estava sentado levanta');
   ok(r.add && r.del, 'evento logAdd/logDel do outro jogador');
   ok(r.mantem && r.reconcilia, 'snapshot completo remove o tronco que o anfitriao nao tem (sem remover na atualizacao parcial)');

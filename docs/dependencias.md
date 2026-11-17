@@ -57,7 +57,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |
 | 18-plantacao | 36 | 6 | 22 | 77 | 16 |  |  | 13 | 1 | 1 | 8 | 3 | 139 |  | 1 |  |  | . |  |  |  |  |  |  |  |  |
-| 19-cerca | 36 | 13 | 3 | 114 | 12 |  |  | 1 |  | 5 | 5 | 6 | 70 |  |  |  |  |  | . |  |  |  |  |  |  |  |
+| 19-cerca | 36 | 13 | 3 | 115 | 12 |  |  | 1 |  | 5 | 5 | 7 | 70 |  |  |  |  |  | . |  |  |  |  |  |  |  |
 | 20-piso-telhado | 39 | 3 | 6 | 37 | 6 |  |  | 1 |  |  | 2 | 2 | 30 |  |  |  |  |  |  | . |  |  |  |  |  |  |
 | 21-frutiferas | 17 | 1 | 7 | 25 | 2 |  |  |  |  |  | 1 | 3 | 13 |  | 1 |  |  |  |  |  | . |  |  |  |  |  |
 | 22-bau | 25 | 14 | 11 | 80 | 12 |  |  | 1 |  | 3 | 9 | 6 |  |  |  |  |  |  |  |  |  | . |  |  |  |  |
@@ -74,13 +74,13 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 |---|---|---|---:|---:|
 | P | let | 04-estado:14 | 21 | 1963 |
 | selectedMap | let | 04-estado:3 | 21 | 219 |
-| MP | let | 04-estado:19 | 20 | 577 |
+| MP | let | 04-estado:19 | 20 | 578 |
 | beep | funcao | 02-audio:42 | 19 | 136 |
 | rnd | const | 01-base:16 | 18 | 434 |
 | T | let | 04-estado:14 | 17 | 115 |
 | WW | let | 03-dados:2 | 17 | 96 |
 | WH | let | 03-dados:2 | 17 | 85 |
-| sendEvt | funcao | 12-crafting-multiplayer:112 | 17 | 61 |
+| sendEvt | funcao | 12-crafting-multiplayer:112 | 17 | 62 |
 | toast | funcao | 11-pesca-update:1254 | 16 | 201 |
 | clamp | const | 01-base:4 | 16 | 98 |
 | parts | let | 04-estado:10 | 16 | 75 |
