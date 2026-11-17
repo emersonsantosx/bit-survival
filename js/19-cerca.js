@@ -138,8 +138,8 @@ function structTarget(w){
     if(P.inside.furn)for(const f of P.inside.furn)consider(f,f,'m');
     return best;
   }
-  if(window.logList)for(const L of logList()){   // tronco feito pelo jogador
-    if(L.g||Math.abs(L.x-P.x)>reach+50||Math.abs(L.y-P.y)>reach+50)continue;
+  if(window.logList)for(const L of logList()){   // troncos do jogador e os que ja vem no mapa
+    if(Math.abs(L.x-P.x)>reach+50||Math.abs(L.y-P.y)>reach+50)continue;
     const r=logRectOf(L);consider({x:r.x0,y:r.y0,w:r.x1-r.x0,h:r.y1-r.y0},L,'l');
   }
   const cx=Math.floor(P.x/CELL),cy=Math.floor(P.y/CELL);
@@ -200,9 +200,10 @@ function logHit(st,w){
   for(let i=0;i<5;i++)parts.push({x:st.x,y:st.y-4,vx:rnd(-30,30),vy:rnd(-40,-5),t:.35,c:'#9a6a3a'});
   makeNoise(P.x,P.y,50);
   if(L.hp>0)return;
-  const x=L.x,y=L.y,a=L.a==='h'?0:1,n=(window.LOG_COST&&LOG_COST.wood)||4;
+  const x=L.x,y=L.y,a=L.a==='h'?0:1,n=(window.LOG_COST&&LOG_COST.wood)||4,gen=!!L.g;
   if(!logRemove(L))return;
-  if(MP.active)sendEvt('logDel',{x:Math.round(x),y:Math.round(y),a});
+  if(gen){const key='o:'+Math.round(x)+','+Math.round(y)+','+L.a;broken.add(key);if(MP.active)sendEvt('structBreak',{k:key});}   // tronco do mapa: a chave vai no save e no multiplayer (senao voltava pela semente)
+  else if(MP.active)sendEvt('logDel',{x:Math.round(x),y:Math.round(y),a});
   giveWood(n,st.x,st.y);
   toast('Tronco destruído! +'+n+' Madeira');beep(240,.14,'triangle',.08,-60);
 }
@@ -212,6 +213,11 @@ function removeKey(key){
     const m=/^m:(\d+),(-?\d+),(-?\d+),(.+)$/.exec(key);if(!m)return;
     const b=blds[+m[1]];if(!b||!b.furn)return;
     const f=b.furn.find(q=>Math.round(q.x)===+m[2]&&Math.round(q.y)===+m[3]&&q.k===m[4]);if(f)furnRemove(b,f);
+    return;
+  }
+  if(key.charAt(0)==='o'){   // tronco que veio com o mapa
+    const m=/^o:(-?\d+),(-?\d+),([hv])$/.exec(key);if(!m)return;
+    const L=logList().find(l=>l.g&&Math.round(l.x)===+m[1]&&Math.round(l.y)===+m[2]&&l.a===m[3]);if(L)logRemove(L);
     return;
   }
   if(key.charAt(0)==='f'){
@@ -227,7 +233,7 @@ function structRemote(k){if(typeof k!=='string'||k.length>60)return;broken.add(k
 function structPack(){return [...broken].slice(0,3000);}
 function structLoad(a){   // depois de gerar o mundo e antes de carregar as cercas do jogador
   broken.clear();
-  if(Array.isArray(a))for(const k of a)if(typeof k==='string'&&k.length<=60){broken.add(k);if(k.charAt(0)==='d'||k.charAt(0)==='m'||(k.charAt(0)==='f'&&fmap.get(k.slice(2))&&fmap.get(k.slice(2)).s))removeKey(k);}
+  if(Array.isArray(a))for(const k of a)if(typeof k==='string'&&k.length<=60){broken.add(k);if(k.charAt(0)==='d'||k.charAt(0)==='m'||k.charAt(0)==='o'||(k.charAt(0)==='f'&&fmap.get(k.slice(2))&&fmap.get(k.slice(2)).s))removeKey(k);}
 }
 
 /* ---- desenho ---- */

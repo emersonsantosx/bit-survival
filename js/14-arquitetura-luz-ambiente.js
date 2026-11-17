@@ -451,7 +451,7 @@ function drawFacade(b){
 const SUN={dx:0,dy:.4,len:.5,a:.3,e:1,h:12,fs:'rgba(8,10,28,.3)',f:0,ax:0,by:.05};   // f: 0 a 1 = quanto a sombra de dia segue a forma do objeto (so com o sol no ceu); ax/by: quanto cada px de altura desloca a sombra
 function updateSun(){
   const h=(START_HOUR+T/DAY_SECONDS*24)%24;SUN.h=h;
-  if(P&&P.inside){SUN.e=.6;SUN.dx=0;SUN.dy=.3;SUN.len=.35;SUN.a=.28;SUN.fs='rgba(8,10,28,.28)';SUN.f=0;return;}
+  if(P&&P.inside){SUN.e=.6;SUN.dx=0;SUN.dy=.3;SUN.len=.35;SUN.a=.28;SUN.fs='rgba(8,10,28,.28)';SUN.f=1;SUN.ax=0;SUN.by=.035;return;}
   const st=(h-5.5)/14;let e,dx,a0;
   if(st>0&&st<1){e=Math.sin(Math.PI*st);dx=-Math.cos(Math.PI*st);a0=.32;}
   else{const mt=Math.min(1,Math.max(0,((h-19.5+24)%24)/10));e=Math.sin(Math.PI*mt);dx=-Math.cos(Math.PI*mt);a0=.16;}
@@ -459,7 +459,7 @@ function updateSun(){
   SUN.e=e;SUN.dx=dx;SUN.dy=.4;SUN.len=Math.min(2.5,.32+(1-e)*2.1);
   SUN.a=a0*Math.min(1,.4+e*1.4)*wf;
   SUN.fs='rgba(8,10,28,'+SUN.a.toFixed(3)+')';
-  SUN.f=(st>0&&st<1)?Math.min(1,Math.max(0,(e-.05)/.2)):0;   // nascer e por do sol: volta devagar as sombras simples; a noite fica como era
+  SUN.f=1;   // sombras que seguem a forma em qualquer hora (dia, noite e dentro de casa); 0 volta para as elipses simples
   SUN.ax=dx*SUN.len*.55;SUN.by=SUN.dy*SUN.len*.33;
 }
 function shadow(x,y,rx,ry){

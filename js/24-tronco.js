@@ -182,9 +182,9 @@ function logsGen(){
   }
 }
 function logReset(){logs=[];}
-/* tronco do jogador destruido (bater com arma, ver 19-cerca): quem estava sentado levanta; os gerados com o mundo nao saem (voltam pela semente) */
+/* tronco destruido (bater com arma, ver 19-cerca): quem estava sentado levanta. Os gerados com o mundo tambem saem; quem chama guarda a chave 'o:' em `broken` para eles nao voltarem pela semente */
 function logRemove(L){
-  const i=logs.indexOf(L);if(i<0||L.g)return false;
+  const i=logs.indexOf(L);if(i<0)return false;
   if(P&&P.sitting&&P.sitting.L===L)logStand(true);
   logs.splice(i,1);rebuildSolidGrid();return true;
 }

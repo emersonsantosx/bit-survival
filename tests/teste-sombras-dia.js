@@ -1,4 +1,4 @@
-/* Sombras de dia que seguem a forma (arvores, pessoas, veiculos); a noite continua com as sombras simples. */
+/* Sombras que seguem a forma (arvores, pessoas, veiculos) em qualquer hora, inclusive de noite. */
 const path = require('path');
 const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'index.html'));
 const { chromium } = require('playwright');
@@ -31,8 +31,8 @@ const { chromium } = require('playwright');
   ok(r.silCache, 'a silhueta da arvore e criada uma vez e guardada');
   ok(r.silMeio > 0, 'de dia as arvores desenham a silhueta (' + r.silMeio + ')');
   ok(r.axManha * r.axTarde < 0, 'a sombra troca de lado entre manha e tarde (' + r.axManha.toFixed(2) + ' / ' + r.axTarde.toFixed(2) + ')');
-  ok(r.fPoente < r.fMeio, 'ao poente a sombra volta devagar para a simples (f=' + r.fPoente.toFixed(2) + ')');
-  ok(r.fNoite === 0 && r.fMadrugada === 0 && r.silNoite === 0, 'de noite nada muda: sombras simples (f=' + r.fNoite + ', silhuetas ' + r.silNoite + ')');
+  ok(r.fPoente === 1, 'ao poente a sombra continua seguindo a forma (f=' + r.fPoente.toFixed(2) + ')');
+  ok(r.fNoite === 1 && r.fMadrugada === 1 && r.silNoite > 0, 'de noite as sombras tambem seguem a forma (f=' + r.fNoite + ', silhuetas ' + r.silNoite + ')');
   ok(r.fills <= 4, 'pessoa e carro usam poucos desenhos (' + r.fills + ')');
   ok(errs.length === 0, 'sem erros de JS ' + errs.join(';'));
   await b.close(); process.exit(bad ? 1 : 0);
