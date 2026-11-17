@@ -20,7 +20,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 10-jogo-saves | 117 | 81 | 36 | 0 | 13 | 13 |
 | 11-pesca-update | 36 | 11 | 25 | 0 | 13 | 16 |
 | 12-crafting-multiplayer | 48 | 19 | 29 | 0 | 13 | 18 |
-| 13-render-personagens | 101 | 48 | 53 | 0 | 12 | 15 |
+| 13-render-personagens | 105 | 48 | 57 | 0 | 12 | 15 |
 | 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 12 | 0 |
 | 15-missoes-ui-controles | 90 | 18 | 72 | 0 | 9 | 11 |
 | 16-orientacao | 0 | 0 | 0 | 0 | 3 | 0 |
@@ -51,7 +51,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 10-jogo-saves | 89 | 51 | 57 | 700 | 18 | 3 | 12 | 10 | 7 | . | 88 | 25 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |  |  |
 | 11-pesca-update | 251 | 40 | 55 | 879 | 63 | 2 | 3 | 5 | 20 | 64 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |  |
-| 13-render-personagens | 326 | 40 | 21 | 255 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |  |
+| 13-render-personagens | 330 | 40 | 22 | 250 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 655 | 13 | 16 | 318 | 17 |  | 8 | 8 | 23 | 7 | 3 | 1 | 176 | . |  |  |  |  |  |  |  |  |  |  |  |  |
 | 15-missoes-ui-controles | 192 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 11 | 23 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |
 | 16-orientacao | 1 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |  |
@@ -73,7 +73,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
 | P | let | 04-estado:14 | 21 | 1967 |
-| selectedMap | let | 04-estado:3 | 21 | 220 |
+| selectedMap | let | 04-estado:3 | 21 | 215 |
 | MP | let | 04-estado:19 | 20 | 578 |
 | beep | funcao | 02-audio:42 | 19 | 136 |
 | rnd | const | 01-base:16 | 18 | 434 |
@@ -84,11 +84,11 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | toast | funcao | 11-pesca-update:1267 | 16 | 201 |
 | clamp | const | 01-base:4 | 16 | 98 |
 | parts | let | 04-estado:10 | 16 | 75 |
-| ctx | const | 01-base:27 | 15 | 1045 |
+| ctx | const | 01-base:27 | 15 | 1049 |
 | items | let | 04-estado:10 | 15 | 63 |
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
 | blds | let | 04-estado:10 | 14 | 58 |
-| R | funcao | 13-render-personagens:2 | 13 | 1251 |
+| R | funcao | 13-render-personagens:2 | 13 | 1232 |
 | weather | let | 04-estado:6 | 13 | 86 |
 | pointInLake | funcao | 05-geometria:113 | 13 | 46 |
 | trees | let | 04-estado:10 | 12 | 55 |
@@ -149,7 +149,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **10-jogo-saves** (36): SAVE_KEY, SAVE_PREFIX, SAVE_VER, slotKey, autoSlot, packObj, canSave, saveWorldOk, iceLoad, doorsLoad, normalizeLoadout, GUEST_SKIP, guestKey, guestForget, FRUIT_FOOD, eatLock, SEED_OF, seedGain, giveSeedFor, applyUse, consumeOne, putAwayHold, closeTool, chooseWeapon, dropWeaponFromArsenal, ...
 - **11-pesca-update** (25): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, BURN_R, BURN_T, BURN_DPS, burnTick, updateP, updateZ, CHAINSAW_LEN, CHAINSAW_R, chainsawHit, CAM_FAR, camSpeedZoom
 - **12-crafting-multiplayer** (29): canCraft, craft, STRUCT_EVT, LOCAL_GRACE, handleEvt, loadPeerJS, makeRoomCode, hostRetryTimer, hostOpenPeer, hostSignalRetry, RECONN_MAX_MS, showReconnectUI, updateReconnectUI, hideReconnectUI, mpReconnectFail, mpGuestReconnectAttempt, hostResumeGuest, guestResumed, hostBuildWorld, setupConn, handleNetData, vehSetTarget, applySnapshot, goneList, restoreBase, ...
-- **13-render-personagens** (53): skinLook, snowOutfit, _shc, Sh, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, TSP, treeSprite, treeShadow, treeShadow0, TREE_ALTS, treeAlt, SNOWTOP, drawDecoration0, drawOpenVeh, vehDriverLook, ...
+- **13-render-personagens** (57): skinLook, snowOutfit, _shc, Sh, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, RSP, ROCK_PAL, rockKind, rockSprite, TSP, treeSprite, treeShadow, treeShadow0, TREE_ALTS, treeAlt, ...
 - **15-missoes-ui-controles** (72): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACH_MAPS, ACHD, achSave, achChime, achCheck, achSet, achMeta, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, achRow, renderAch, renderHostWorlds, lockHostWorlds, bindSlider, ...
 
 ## Possivelmente mortas (revisar antes de apagar: podem ser chamadas por onclick no HTML ou pelos testes)
