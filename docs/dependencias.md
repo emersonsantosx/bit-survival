@@ -48,7 +48,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 05-geometria | 118 | 7 | 27 | 147 | . | 6 |  | 5 | 9 |  | 2 | 1 | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 06-interiores-portas | 42 | 11 | 7 | 36 | 1 | . |  |  |  |  |  | 1 | 30 |  |  |  |  |  |  |  |  |  |  |  |  | 2 |  |  |
 | 07-loot-mapa | 135 | 3 | 30 | 128 | 3 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 08-cidade-vilas-marcos | 138 | 3 | 17 | 136 | 21 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 08-cidade-vilas-marcos | 135 | 3 | 17 | 136 | 21 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 09-milharal-geracao | 203 | 10 | 87 | 275 | 40 |  | 1 | 35 | . | 3 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 10-jogo-saves | 90 | 52 | 57 | 706 | 18 | 3 | 12 | 10 | 7 | . | 89 | 25 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |
 | 11-pesca-update | 255 | 40 | 55 | 886 | 63 | 2 | 3 | 5 | 20 | 64 | . | 13 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |
@@ -86,7 +86,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | WW | let | 03-dados:2 | 17 | 96 |
 | WH | let | 03-dados:2 | 17 | 85 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 17 | 62 |
-| ctx | const | 01-base:27 | 16 | 1076 |
+| ctx | const | 01-base:27 | 16 | 1073 |
 | clamp | const | 01-base:4 | 16 | 98 |
 | parts | let | 04-estado:10 | 16 | 75 |
 | items | let | 04-estado:10 | 15 | 64 |
@@ -159,4 +159,4 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 ## Possivelmente mortas (revisar antes de apagar: podem ser chamadas por onclick no HTML ou pelos testes)
 
 - `updateCreatureVoices` (funcao, 02-audio:397)
-- `drawAurora` (funcao, 08-cidade-vilas-marcos:594)
+- `drawAurora` (funcao, 08-cidade-vilas-marcos:587)

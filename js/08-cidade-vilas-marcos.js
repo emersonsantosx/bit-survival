@@ -520,14 +520,7 @@ function drawPrints(vx0,vx1,vy0,vy1){
     if(p.x<vx0||p.x>vx1||p.y<vy0||p.y>vy1)continue;
     ctx.globalAlpha=Math.min(1,p.l/10)*.55;
     const nx=Math.round(-Math.sin(p.a)*2*p.s),ny=Math.round(Math.cos(p.a)*2*p.s),sh=p.l<6?1:0;   // quase cobertas: encolhem
-    const px=Math.round(p.x+nx)-1,py=Math.round(p.y+ny),big=p.z?1:0;
-    if(Math.abs(Math.cos(p.a))>Math.abs(Math.sin(p.a))){   // andando de lado: sola deitada, ponta para onde vai
-      const f=Math.cos(p.a)>0?1:-1;
-      ctx.fillRect(f>0?px:px+3+big,py,2+big,2-sh+big);ctx.fillRect(f>0?px+3+big:px,py,1,Math.max(1,1+big-sh));
-    }else{                                                      // andando para cima ou para baixo: sola em pe
-      const f=Math.sin(p.a)>0?1:-1;
-      ctx.fillRect(px,f>0?py:py+3+big,2+big-sh,2);ctx.fillRect(px,f>0?py+3+big:py,Math.max(1,1+big-sh),1);
-    }
+    ctx.fillRect(Math.round(p.x+nx)-1,Math.round(p.y+ny),(p.z?3:2)-sh,(p.z?4:3)-sh);
   }
   ctx.globalAlpha=1;
 }

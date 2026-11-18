@@ -32,7 +32,7 @@ const PXG={
   wood:['..NNNNN..','.NnnnnnN.','NnNNNNNnN','NnNnnnNnN','NnNNNNNnN','.NnnnnnN.','..NNNNN..'],
   stone:['...HHHH..','..HqJJjH.','.HqJJjjjH','HqJJjHhhH','HJjjjhhhH','.HjjhhhHH','..HHHHH..'],
   bandage:['.nnnnnnn.','nnnWWWnnn','nnnWWWnnn','.nnnnnnn.'],
-  cloth:['..kkkkkkkkkk..','.kEEEEEEEEEEkk','kEEEEEEEEEEnek','kEEEnEEEEEnnek','kEEnnnEEEnnnek','kNnNnNnNnNnNek','kEnnnnnnnnnnek','kneeennnneeeek','kkkkkkkkkkkkkk','.k.k.k.k.k.k..','.k...k...k.k..'],
+  cloth:['.kkkkkkk.','kEEEEEnek','kEEnEEnek','kEnnnnnek','kEnNnNnek','kneeeeeek','.kkkkkkk.'],
   medkit:['...sss...','WWWWWWWWW','WWWWRWWWW','WWWRRRWWW','WWWWRWWWW','WWWWWWWWW','sssssssss'],
   fists:['.kkkkkkkkkkk.','kffkffkffkffk','kffkffkffkffk','kfFkfFkfFkfFk','kffffffffffFk','kFFFFFFFFFFFk','kkkkkkkkfffFk','kfffffkkfffFk','.kfffffffffk.','..kfffffffk..','..kkkkkkkkk..','..kBBBBBBBk..','..kbbbbbbbk..','..kkkkkkkkk..'],
   bow:['...NNNW..','..NN..W..','.NN...W..','.N....W..','NN....W..','N.SSSSSYY','NN....W..','.N....W..','.NN...W..','..NN..W..','...NNNW..'],
