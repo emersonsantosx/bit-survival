@@ -40,9 +40,15 @@ jobs:
           cordova platform add android
 
       - name: Compilar APK de Debug
+        # o Maven Central as vezes responde 429 (muitos pedidos) para os servidores do GitHub; tenta de novo ate 4 vezes, esperando mais a cada tentativa
         run: |
           cd projeto
-          cordova build android --debug
+          for i in 1 2 3 4; do
+            cordova build android --debug && exit 0
+            echo "Tentativa $i falhou, esperando para tentar de novo..."
+            sleep $((i * 45))
+          done
+          exit 1
 
       - name: Salvar APK gerado
         uses: actions/upload-artifact@v4
