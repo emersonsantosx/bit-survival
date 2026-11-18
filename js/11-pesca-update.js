@@ -1357,7 +1357,9 @@ function updateHud(force){
        for(const it of l){
          const b=document.createElement('button');b.className='btn'+(itemTakeable(it)?'':' no');
          b.setAttribute('aria-label','Pegar '+ITEMS[it.t].n);b.title=ITEMS[it.t].n;b.innerHTML=pxFit(ITEMS[it.t].e,34,34);
-         b.addEventListener("pointerdown",e=>{e.preventDefault();aud();pickItemBtn(it);updateHud(true);});
+         let did=0;   // pointerdown pega na hora; o click so vale se o pointerdown nao chegou (alguns aparelhos/WebViews soltam so o click)
+         const go=e=>{e.preventDefault();e.stopPropagation();const n=performance.now();if(n-did<500)return;did=n;aud();pickItemBtn(it);updateHud(true);};
+         b.addEventListener("pointerdown",go);b.addEventListener("click",go);
          px.appendChild(b);
        }
      }

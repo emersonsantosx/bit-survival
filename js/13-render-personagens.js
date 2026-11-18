@@ -575,8 +575,6 @@ function rockSprite(k,a,v){
     for(let x=X0;x<=X1+1;x++)if(at(x,Y1-1)||at(x,Y1-2)){dot(x+1,y1>0?Math.round(y1):0,'rgba(0,0,0,.28)');}
     for(let y=Y0;y<=Y1;y++)for(let x=X0;x<=X1;x++){
       if(!at(x,y))continue;
-      const edge=!at(x-1,y)||!at(x+1,y)||!at(x,y-1)||!at(x,y+1);
-      if(edge){dot(x,y,snowMapEdge(x,y,cy,opt)||'#1c1c26');continue;}
       const nx=(x-cx)/rx,ny=(y-cy)/ry;let d=-nx*.55-ny*.85+(hsh(x,y)-.5)*.34;
       if(opt.strata&&((y-Y0)%4===0))d-=.5;                       // camadas de arenito/laje
       let col=d>.5?P[3]:d>.05?P[2]:d>-.45?P[1]:P[0];
@@ -594,7 +592,6 @@ function rockSprite(k,a,v){
         if(ny<-.18+hsh(x,y)*.18&&!(at(x-1,y-1)===0&&at(x,y-1)===0&&false))dot(x,y,ny<-.5||nx<-.1?'#ffffff':'#e4eef6');}
     }
   };
-  const snowMapEdge=(x,y,cy,opt)=>null;
   const blob=(cx,by,rx,ry,n)=>{   // contorno irregular, base mais achatada
     const V=[],j=r()*6.283;n=n||8;
     for(let i=0;i<n;i++){const an=j+i/n*6.283,sn=Math.sin(an),cs=Math.cos(an),rr=.8+.32*r();let Y=sn*ry*rr;if(sn>0)Y*=.55;V.push([cx+cs*rx*rr,by-ry*.55+Y]);}
