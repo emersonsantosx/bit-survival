@@ -62,3 +62,33 @@ window.drawPuddles=function(vx0,vy0,vx1,vy1){
 };
 
 })();
+
+/* LAREIRA: casas e cabanas cujo telhado tem chamine ganham uma lareira por dentro (arquivo 06 coloca o movel; se nao couber, o telhado perde a chamine).
+   Acesa na neve o tempo todo; nos outros mapas, de noite ou com chuva. Acesa ela esquenta (como fogueira), seca a roupa, assa comida, ilumina o comodo
+   e solta fumaca pela chamine. Nada e guardado: a lareira nasce da semente da casa, igual nos dois jogadores. */
+function bldWantsChimney(b){
+  if(b.type!=='house'&&b.type!=='cabin')return false;
+  const L=b._look||(b._look=bldLook(b));
+  return !L._noChim&&(L.ext.indexOf('chimney')>=0||L.ext.indexOf('chimneyStone')>=0);
+}
+function bldDropChimney(b){const L=b._look||(b._look=bldLook(b));L._noChim=true;b._rc=null;}
+function hearthBox(f){return f.w>=f.h?{x:f.x+5,y:f.y+3,w:f.w-10,h:f.h-5}:{x:f.x+3,y:f.y+5,w:f.w-5,h:f.h-10};}
+function hearthLit(){return selectedMap==='snow'||weather==='rain'||weather==='snow'||dark>.3;}
+function hearthOf(b){return b&&b._hearth&&b.furn&&b.furn.indexOf(b._hearth)>=0?b._hearth:null;}
+function hearthOn(b){return !!(hearthOf(b)&&hearthLit());}
+function hearthNear(x,y,r){   // lareira acesa do predio em que o jogador esta, mais perto que r (so conta dentro de casa)
+  const b=P&&P.inside,f=hearthOf(b);if(!f||!hearthLit())return null;
+  const d=Math.hypot(f.x+f.w/2-x,f.y+f.h/2-y);return d<r?{f:f,d:d}:null;
+}
+function drawHearthFlames(b){
+  const f=hearthOf(b);if(!f||!hearthLit()||!seeIn(b,f.x+f.w/2,f.y+f.h/2))return;
+  const o=hearthBox(f),n=Math.max(2,Math.floor((o.w>=o.h?o.w:o.h)/3));
+  for(let i=0;i<n;i++){
+    const fx=o.w>=o.h?o.x+1+i*3:o.x+1,fy=o.w>=o.h?o.y+1:o.y+1+i*3;
+    const hh=2+Math.round((Math.sin(T*9+i*1.9)+1)*(Math.min(o.w,o.h)>4?1.4:.9));
+    const bw=o.w>=o.h?2:Math.min(o.w-2,2+hh),bh=o.w>=o.h?Math.min(o.h-1,hh+1):2;
+    R(fx,fy+(o.w>=o.h?o.h-1-bh:0),bw,bh,'#e0501a');
+    R(fx,fy+(o.w>=o.h?o.h-1-Math.max(1,bh-1):0),Math.max(1,bw-(o.w>=o.h?1:1)),Math.max(1,bh-1),'#ffa030');
+  }
+  R(o.x+2,o.y+o.h-2,o.w-4,1,'#ffd870');
+}

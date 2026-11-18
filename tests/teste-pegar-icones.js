@@ -23,6 +23,12 @@ const { chromium } = require('playwright');
     btns()[0].dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
     o.pegouAgua = P.inv.some(s => s.t === 'water'); o.feijaoNoChao = items.some(i => i.t === 'food'); o.naoPegouFeijao = !P.inv.some(s => s.t === 'food');
     updateHud(true); o.extrasDepois = btns().length;
+    // item velho (objeto recriado, como na sincronia do multiplayer): o toque ainda pega pelo tipo e pelo lugar
+    ponha([['food', 5, 0], ['water', -4, 3]]); { const b0 = btns()[0]; const copia = items.map(i => Object.assign({}, i)); items.length = 0; items.push(...copia); b0.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true })); }
+    o.pegouVelho = P.inv.some(s => s.t === 'water'); P.inv.length = 0;
+    // so o click (sem pointerdown) tambem pega, e pointerdown + click juntos pegam uma vez so
+    ponha([['food', 5, 0], ['water', -4, 3], ['meat', 6, 4]]); btns()[0].click(); o.clickPegou = P.inv.length === 1; updateHud(true);
+    { const b1 = btns()[0]; b1.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true })); b1.click(); } o.umSo = P.inv.length === 2; P.inv.length = 0;
     // 5 itens: no maximo 3 extras (alem do que o botao mostra)
     ponha([['food', 3, 0], ['water', 5, 2], ['meat', -5, 2], ['bandage', 6, -3], ['corn', -6, -4]]); o.extras5 = btns().length;
     // item longe nao aparece
@@ -36,6 +42,7 @@ const { chromium } = require('playwright');
   ok(r.icone1 === r.esperado1 && r.extras1 === 0, 'com 1 item o botao mostra o icone do item (' + r.icone1 + ') e nao ha extras');
   ok(r.alvo === 'food' && r.extras2 === 1 && /Água/i.test(r.extraNome || ''), 'com 2 itens ha 1 icone extra para o outro (' + r.extraNome + ')');
   ok(r.pegouAgua && r.feijaoNoChao && r.naoPegouFeijao, 'tocar no icone extra pega aquele item e deixa o outro no chao');
+  ok(r.pegouVelho, 'item velho (objeto recriado) ainda e pego pelo tipo e lugar'); ok(r.clickPegou, 'so o click tambem pega'); ok(r.umSo, 'pointerdown + click pegam uma vez so');
   ok(r.extrasDepois === 0, 'depois de pegar os extras somem');
   ok(r.extras5 === 3, 'no maximo 3 icones extras (' + r.extras5 + ')');
   ok(r.extrasLonge === 0, 'item longe nao ganha icone');

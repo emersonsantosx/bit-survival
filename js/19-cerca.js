@@ -109,7 +109,7 @@ const FBREAK={
   medbed:{tool:'pickaxe',hp:5,mat:[['stone',2,2],['cloth',1,1]],n:'Maca'},bunk:{tool:'axe',hp:7,mat:[['wood',3,3],['cloth',1,1]],n:'Beliche'},
   wardrobe:{tool:'axe',hp:7,mat:[['wood',3,4]],n:'Guarda-roupa'},nightstand:{tool:'axe',hp:3,mat:[['wood',1,2]],n:'Criado-mudo'},
   shelf:{tool:'axe',hp:4,mat:[['wood',2,3]],n:'Prateleira'},counter:{tool:'axe',hp:6,mat:[['wood',2,3]],n:'Balcão'},
-  fridge:{tool:'pickaxe',hp:5,mat:[['stone',2,3]],n:'Geladeira'},stove:{tool:'pickaxe',hp:5,mat:[['stone',2,3]],n:'Fogão'},
+  fridge:{tool:'pickaxe',hp:5,mat:[['stone',2,3]],n:'Geladeira'},stove:{tool:'pickaxe',hp:5,mat:[['stone',2,3]],n:'Fogão'},fireplace:{tool:'pickaxe',hp:9,mat:[['stone',3,4]],n:'Lareira'},
   ksink:{tool:'pickaxe',hp:4,mat:[['stone',2,2]],n:'Pia'},sink:{tool:'pickaxe',hp:4,mat:[['stone',1,2]],n:'Pia'},
   toilet:{tool:'pickaxe',hp:4,mat:[['stone',2,2]],n:'Vaso'},tub:{tool:'pickaxe',hp:6,mat:[['stone',3,3]],n:'Banheira'},
   desk:{tool:'axe',hp:5,mat:[['wood',2,3]],n:'Escrivaninha'},locker:{tool:'pickaxe',hp:4,mat:[['stone',2,2]],n:'Armário de aço'},

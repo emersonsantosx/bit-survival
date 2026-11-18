@@ -418,6 +418,8 @@ function envTemp(){
       else tg+=14*f;
     }
   }
+  { const hn=hearthNear(P.x,P.y,80);                          // lareira acesa dentro de casa: mesmo efeito da fogueira
+    if(hn){const f=1-hn.d/80;if(tg<22)tg=Math.max(tg,Math.min(tg+70*f,22));else tg+=14*f;} }
   if(P.sprint) tg+=10;                                        // correr gera calor
   // o corpo regula pior a temperatura quando está debilitado
   if(P.food<25) tg-=(25-P.food)*.4;                           // sem comer: sente mais frio (até -10)
@@ -433,7 +435,7 @@ function tempTick(dt){
     const inW=!P.inVehicle&&pointInLake(P.x,P.y), snow=selectedMap==='snow';
     const sheltered=!!((P.inVehicle&&vehKind(P.inVehicle)==='car')||bldAt(P.x,P.y)||shelterAt(P.x,P.y)>0||nearTent(P.x,P.y,34));
     const rainWet=!inW&&weather==='rain'&&!sheltered;                       // chuva molha quem esta ao relento
-    let nearFire=false;for(const c of campfires){if(Math.hypot(c.x-P.x,c.y-P.y)<70){nearFire=true;break;}}
+    let nearFire=!!hearthNear(P.x,P.y,70);for(const c of campfires){if(Math.hypot(c.x-P.x,c.y-P.y)<70){nearFire=true;break;}}
     const dry=(snow?55:30)/(nearFire?3:1);                                   // perto da fogueira seca bem mais rapido
     P.wet=clamp((P.wet||0)+(inW?dt/(snow?16:26):(rainWet?dt/(snow?60:90):-dt/dry)),0,1);
     P._inW=inW;
@@ -1357,7 +1359,9 @@ function updateHud(force){
        for(const it of l){
          const b=document.createElement('button');b.className='btn'+(itemTakeable(it)?'':' no');
          b.setAttribute('aria-label','Pegar '+ITEMS[it.t].n);b.title=ITEMS[it.t].n;b.innerHTML=pxFit(ITEMS[it.t].e,34,34);
-         b.addEventListener("pointerdown",e=>{e.preventDefault();aud();pickItemBtn(it);updateHud(true);});
+         let did=0;   // pointerdown pega na hora; o click so vale se o pointerdown nao chegou (alguns aparelhos/WebViews soltam so o click)
+         const go=e=>{e.preventDefault();e.stopPropagation();const n=performance.now();if(n-did<500)return;did=n;aud();pickItemBtn(it);updateHud(true);};
+         b.addEventListener("pointerdown",go);b.addEventListener("click",go);
          px.appendChild(b);
        }
      }

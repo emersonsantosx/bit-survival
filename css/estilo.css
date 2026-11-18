@@ -145,7 +145,7 @@ body.nomap #mm{display:none!important}
 #pick{right:calc(118px*var(--ui,1));bottom:calc(26px*var(--ui,1));width:calc(64px*var(--ui,1));height:calc(64px*var(--ui,1))}
 /* icones extras: um por item ao alcance alem do que o botao de pegar ja mostra (toque = pega aquele) */
 #pickx{position:absolute;right:calc(190px*var(--ui,1));bottom:calc(32px*var(--ui,1));display:flex;flex-direction:row-reverse;gap:calc(6px*var(--ui,1));pointer-events:none}
-#hud #pickx button.btn{position:relative;pointer-events:auto;width:calc(50px*var(--ui,1));height:calc(50px*var(--ui,1));padding:0;border-color:#ffd84a;box-shadow:0 0 calc(8px*var(--ui,1)) rgba(255,216,74,.7);background:rgba(20,20,20,.7)}
+#hud #pickx button.btn{position:relative;pointer-events:auto;touch-action:manipulation;width:calc(50px*var(--ui,1));height:calc(50px*var(--ui,1));padding:0;border-color:#ffd84a;box-shadow:0 0 calc(8px*var(--ui,1)) rgba(255,216,74,.7);background:rgba(20,20,20,.7)}
 #hud #pickx button.btn.no{opacity:.5;border-color:rgba(255,255,255,.55);box-shadow:none}
 #tools{right:calc(190px*var(--ui,1));bottom:calc(96px*var(--ui,1));width:calc(52px*var(--ui,1));height:calc(52px*var(--ui,1))}
 #tools.act{border-color:#ff9a2e;background:rgba(255,140,30,.42);box-shadow:0 0 calc(8px*var(--ui,1)) #ff9a2e}

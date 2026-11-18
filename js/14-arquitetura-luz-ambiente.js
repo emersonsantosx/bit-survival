@@ -81,6 +81,7 @@ function bldLook(b){
   let i=0;for(const e of T.ext){if(H(20+i)<e[1])L.ext.push(e[0]);i++;}
   return L;
 }
+window.bldLook=bldLook;   // a lareira (arquivo 06/26) consulta se o telhado tem chamine
 
 /* ---- telhados ---- */
 function rfEdges(q,w,h,c){q(0,0,w,1,shadeCol(c,.3));q(0,0,1,h,shadeCol(c,-.2));q(w-1,0,1,h,shadeCol(c,-.35));q(0,h-2,w,2,shadeCol(c,-.4));}
@@ -225,7 +226,8 @@ function rfExtras(q,w,h,L,H,snowNow){
     sd++;let p;
     switch(e){
       case 'chimney':case 'chimneyStone':{
-        p=spot(7,9,H(60)<.5?-3:3,Math.round(h*.5));if(!p)break;
+        if(L._noChim)break;
+        p=spot(7,9,H(60)<.5?-3:3,Math.round(h*.5))||[Math.round(w*.7),Math.round(h*.25)];   // sem lugar sorteado, usa um fixo: a lareira de dentro depende da chamine existir
         const st=e==='chimneyStone',col=st?'#8a8a86':'#7a4a3a';L._chimP=[p[0],p[1]];
         q(p[0]+1,p[1]+8,7,2,'rgba(0,0,0,.28)');q(p[0],p[1],7,9,col);q(p[0],p[1],7,2,shadeCol(col,.25));q(p[0]+1,p[1]+2,5,2,'#241810');q(p[0],p[1]+8,7,1,shadeCol(col,-.3));
         if(st){q(p[0]+2,p[1]+5,2,1,shadeCol(col,-.2));q(p[0]+4,p[1]+6,2,1,shadeCol(col,.15));}else{q(p[0]+3,p[1]+4,1,4,'rgba(0,0,0,.18)');}
@@ -828,7 +830,7 @@ function buildSigns(){
 function citySignsList(){if(_sgB!==blds)buildSigns();return citySigns;}
 function bldTopFx(b){
   if(b.roofA<.3)return;
-  if(selectedMap==='snow'&&b._look&&b._look._chimP&&b._rc){   // fumaça sai da chaminé que o telhado já tem
+  if(b._look&&b._look._chimP&&b._rc&&hearthOn(b)){   // fumaça sai da chaminé que o telhado já tem
     const cx=Math.round(b._rx+b._look._chimP[0]+3),cy=b._ry+b._look._chimP[1]+1,ph0=bHash(b,78);
     for(let k=0;k<5;k++){
       const ph=(T*.32+k*.2+ph0)%1,s2=2+Math.round(ph*5);
@@ -970,6 +972,7 @@ function drawLighting(sx,sy){
       if(fx<-fr||fy<-fr||fx>W+fr||fy>H+fr)continue;
       punch(fx,fy,fr);
     }
+    {const hf=hearthOf(P&&P.inside);if(hf&&hearthLit()){const [hx,hy]=sp(hf.x+hf.w/2,hf.y+hf.h/2),hr=(70+Math.sin(T*7)*3)*Z;punch(hx,hy,hr);}}
     for(const l of lampList){
       const [lx,ly]=sp(l.x,l.y-8),lr=74*Z;
       if(lx<-lr||ly<-lr||lx>W+lr||ly>H+lr)continue;
@@ -1025,6 +1028,7 @@ function drawLighting(sx,sy){
       ctx.globalAlpha=Math.min(1,dark*1.15)*.3*GL;
       const cr=24*Z*fl;ctx.drawImage(warmSprite,fx-cr,fy-cr-6*Z,2*cr,2*cr);
     }
+    {const hf=hearthOf(P&&P.inside);if(hf&&hearthLit()){const [hx,hy]=sp(hf.x+hf.w/2,hf.y+hf.h/2),hr=(66+Math.sin(T*7)*3)*Z;ctx.globalAlpha=Math.min(1,dark*1.15)*.5*GL;ctx.drawImage(fireSprite,hx-hr,hy-hr,2*hr,2*hr);}}
     ctx.globalAlpha=Math.min(1,dark*1.1)*GL;
     for(const l of lampList){
       const [lx,ly]=sp(l.x,l.y-8),lr=64*Z;

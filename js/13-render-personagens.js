@@ -575,8 +575,6 @@ function rockSprite(k,a,v){
     for(let x=X0;x<=X1+1;x++)if(at(x,Y1-1)||at(x,Y1-2)){dot(x+1,y1>0?Math.round(y1):0,'rgba(0,0,0,.28)');}
     for(let y=Y0;y<=Y1;y++)for(let x=X0;x<=X1;x++){
       if(!at(x,y))continue;
-      const edge=!at(x-1,y)||!at(x+1,y)||!at(x,y-1)||!at(x,y+1);
-      if(edge){dot(x,y,snowMapEdge(x,y,cy,opt)||'#1c1c26');continue;}
       const nx=(x-cx)/rx,ny=(y-cy)/ry;let d=-nx*.55-ny*.85+(hsh(x,y)-.5)*.34;
       if(opt.strata&&((y-Y0)%4===0))d-=.5;                       // camadas de arenito/laje
       let col=d>.5?P[3]:d>.05?P[2]:d>-.45?P[1]:P[0];
@@ -594,7 +592,6 @@ function rockSprite(k,a,v){
         if(ny<-.18+hsh(x,y)*.18&&!(at(x-1,y-1)===0&&at(x,y-1)===0&&false))dot(x,y,ny<-.5||nx<-.1?'#ffffff':'#e4eef6');}
     }
   };
-  const snowMapEdge=(x,y,cy,opt)=>null;
   const blob=(cx,by,rx,ry,n)=>{   // contorno irregular, base mais achatada
     const V=[],j=r()*6.283;n=n||8;
     for(let i=0;i<n;i++){const an=j+i/n*6.283,sn=Math.sin(an),cs=Math.cos(an),rr=.8+.32*r();let Y=sn*ry*rr;if(sn>0)Y*=.55;V.push([cx+cs*rx*rr,by-ry*.55+Y]);}
@@ -2114,6 +2111,11 @@ function furnDraw(c,f,ox,oy){
     case 'bookcase':R(x,y,w,h,'#3e2a18');R(x+1,y+1,w-2,h-2,'#5e4228');{const bc=['#b04a3a','#3a6aa0','#c8a038','#4a8a52','#7a4a8a'];
       if(long){for(let i=0;i<w-3;i+=2)R(x+2+i,y+1,1,h-2,bc[(i/2+sd)%5|0]);}else{for(let i=0;i<h-3;i+=2)R(x+1,y+2+i,w-2,1,bc[(i/2+sd)%5|0]);}}break;
     case 'dresser':R(x,y,w,h,'#4e3622');R(x+1,y+1,w-2,h-2,'#7a583a');if(long){R(x+w/3,y+1,1,h-2,'#4e3622');R(x+2*w/3,y+1,1,h-2,'#4e3622');R(x+w/6,y+h/2,2,1,'#f0d070');R(x+w/2,y+h/2,2,1,'#f0d070');R(x+5*w/6-1,y+h/2,2,1,'#f0d070');}break;
+    case 'fireplace':{R(x,y,w,h,'#4a4640');R(x+1,y+1,w-2,h-2,'#7e786e');
+      for(let i=2;i<(long?w:h)-2;i+=4){if(long)R(x+i,y+1,1,h-2,'#6a655c');else R(x+1,y+i,w-2,1,'#6a655c');}   // tijolos
+      back('#5a554d',3);
+      const o=hearthBox(f);R(o.x-1,o.y-1,o.w+2,o.h+2,'#2a2622');R(o.x,o.y,o.w,o.h,'#0e0c0a');
+      R(o.x+1,o.y+o.h-2,o.w-2,1,'#4a2a1a');R(o.x+2,o.y+o.h-2,2,1,'#8a3a1a');if(o.w>6)R(o.x+o.w-4,o.y+o.h-2,2,1,'#8a3a1a');break;}
     case 'lamp':R(x+1,y+h-3,w-2,3,'#3a3028');R(x,y,w,h-2,'#e8d890');R(x+1,y+1,w-2,h-4,'#fff4b8');break;
     case 'plant':R(x+1,y+h-4,w-2,4,'#7a4a30');R(x,y,w,h-3,'#2f7a38');R(x+2,y+1,w-4,h-6,'#4aa050');break;
     case 'pallet':R(x,y,w,h,'#5e4626');R(x+1,y+1,w-2,h-2,'#9a7a46');for(let i=4;i<w-1;i+=5)R(x+i,y+1,1,h-2,'#6e5430');R(x+3,y+3,8,7,'#b48c50');R(x+4,y+4,6,5,'#c89c5c');break;
@@ -2180,6 +2182,7 @@ function drawInterior(b){
   ctx.drawImage(b._fc,b.x,b.y);
   ctx.restore();ctx.imageSmoothingEnabled=sm;
   drawDoors(b);
+  drawHearthFlames(b);
   const near=nearestItem(),mine=[];roomsAt(b,P.x,P.y-2,mine);   // item so aparece no comodo do proprio jogador (o comodo de outro jogador mostra os moveis, nao o chao)
   for(const it of items)if(it.x>=b.x&&it.x<=b.x+b.w&&it.y>=b.y&&it.y<=b.y+b.h&&mine.some(r=>it.x>=r.x-3&&it.x<=r.x+r.w+3&&it.y>=r.y-3&&it.y<=r.y+r.h+3))drawItem(it,it===near);
 }

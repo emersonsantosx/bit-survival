@@ -30,7 +30,7 @@ const PXG={
   meat:['..rrrrr...', '.rRRRRRWr.', 'rRRPPRRRWr', 'rRRPRRPRRr', 'rRRRRPPRRr', '.rRRRRRRr.', '..rrrrrr..'],
   cookedmeat:['..kkkkk...', '.kNNNNNnk.', 'kNNnnNNNnk', 'kNNnNNnNNk', 'kNNNNnnNNk', '.kNNkNNNk.', '..kkkkkk..'],
   wood:['..NNNNN..','.NnnnnnN.','NnNNNNNnN','NnNnnnNnN','NnNNNNNnN','.NnnnnnN.','..NNNNN..'],
-  stone:['...HHH......','..HqqJHH..H.','.HqJJJJjHHjH','HqJJJJjjjjjH','HJJJjHjjjjhH','HJJjjHHjjhhH','.HjjjjjHhhhH','.HjjhhhhhhhH','HjjhhhhhhhHH','.HHhhhhhHH..','...HHHHH....'],
+  stone:['...HHHH..','..HqJJjH.','.HqJJjjjH','HqJJjHhhH','HJjjjhhhH','.HjjhhhHH','..HHHHH..'],
   bandage:['.nnnnnnn.','nnnWWWnnn','nnnWWWnnn','.nnnnnnn.'],
   cloth:['..kkkkkkkkkk..','.kEEEEEEEEEEkk','kEEEEEEEEEEnek','kEEEnEEEEEnnek','kEEnnnEEEnnnek','kNnNnNnNnNnNek','kEnnnnnnnnnnek','kneeennnneeeek','kkkkkkkkkkkkkk','.k.k.k.k.k.k..','.k...k...k.k..'],
   medkit:['...sss...','WWWWWWWWW','WWWWRWWWW','WWWRRRWWW','WWWWRWWWW','WWWWWWWWW','sssssssss'],

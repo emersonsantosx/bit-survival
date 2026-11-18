@@ -21,7 +21,7 @@ const FURN={
   nightstand:[9,9,'along',1], shelf:[24,8,'along',1], counter:[28,9,'along',1], fridge:[11,11,'along',1], stove:[11,11,'along',0], ksink:[26,10,'along',1],
   desk:[22,12,'along',1], locker:[16,8,'along',1], crate:[11,11,'along',1], barrel:[9,9,'along',0], bench:[24,8,'along',0],
   medbed:[26,14,'perp',0], medcab:[16,8,'along',1], bunk:[26,13,'perp',0], rack:[26,8,'along',1], workbench:[28,12,'along',1],
-  hay:[14,12,'along',0], plant:[8,8,'along',0], toilet:[9,11,'along',0], sink:[12,9,'along',1], tub:[30,14,'along',0], bookcase:[24,8,'along',1], dresser:[20,9,'along',1], lamp:[6,6,'along',0], pallet:[22,22,'free',1], aisle:[26,8,'free',1], meet:[44,16,'free',1]
+  hay:[14,12,'along',0], plant:[8,8,'along',0], toilet:[9,11,'along',0], sink:[12,9,'along',1], tub:[30,14,'along',0], bookcase:[24,8,'along',1], dresser:[20,9,'along',1], lamp:[6,6,'along',0], fireplace:[22,10,'along',0], pallet:[22,22,'free',1], aisle:[26,8,'free',1], meet:[44,16,'free',1]
 };
 const ROOMFURN={
   living:[['couch',1,1],['tv',1,1],['table',0,1],['bookcase',0,1],['shelf',0,1],['lamp',0,2],['plant',0,1]],
@@ -338,6 +338,13 @@ function genInterior(b){
       return null;
     };
     const cnt=(r,k)=>b.furn.filter(f=>f.room===r&&f.k===k).length;
+    /* lareira: so quem tem chamine no telhado ganha lareira por dentro (e quem nao consegue lareira perde a chamine do telhado), sempre na parede, de preferencia na sala */
+    if(window.bldWantsChimney&&bldWantsChimney(b)){
+      const order=rooms.filter(r=>r.k==='living').concat(rooms.filter(r=>r.k==='bedroom'),rooms.filter(r=>r.k==='kitchen'),rooms.filter(r=>r.k==='storage'));
+      let hf=null;
+      for(const r of order){hf=addF(r,'fireplace');if(hf)break;}
+      if(hf)b._hearth=hf;else bldDropChimney(b);
+    }
     for(const r of rooms){
       if(r.k==='kitchen'){
         const fr=b.furn.filter(f=>f.room===r&&f.k==='counter');
@@ -366,7 +373,7 @@ function genInterior(b){
    1) camas, beliches e macas por comodo limitados pelo tamanho do comodo (3 beliches num quartinho fechavam a passagem);
    2) dois moveis num vao de 6 a 12 px: estreito demais para passar e feio. Cola (ate 6 px) ou abre (12 px ou mais): o movel mais novo muda de lugar,
       e se nao couber em lugar nenhum sai (so ficam os essenciais: cama, fogao, pia, vaso, geladeira). */
-const SLEEPERS={bed:1,bed2:1,bunk:1,medbed:1},KEEPF={stove:1,ksink:1,toilet:1,sink:1,fridge:1,bed:1,bed2:1};
+const SLEEPERS={bed:1,bed2:1,bunk:1,medbed:1},KEEPF={fireplace:1,stove:1,ksink:1,toilet:1,sink:1,fridge:1,bed:1,bed2:1};
 function rectGap(a,c){return Math.hypot(Math.max(0,a.x-(c.x+c.w),c.x-(a.x+a.w)),Math.max(0,a.y-(c.y+c.h),c.y-(a.y+a.h)));}
 function organizeFurn(b,rooms,zones,keys,baseUn){
   const lr=mkRng(((Math.round(b.x)*173+Math.round(b.y)*97+(b.h|0)*11)%99991)/99991);
