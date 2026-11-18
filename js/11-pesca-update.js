@@ -534,6 +534,7 @@ function updateP(dt){
     }
     const VS=vehSpec(v),wf=(weather==='rain'||weather==='sand')?.92:1; // chuva/areia pioram um pouco
     const tr=vehTerr(v,terrainFor(v.x,v.y));
+    if(KBM)kbVehicle();
     const maxSpd=VS.top*tr.spd*wf, maxRev=VS.rev*tr.spd*wf;
     if(touchGas>0)v.spd=Math.min(maxSpd,v.spd+VS.acc*tr.acc*dt);
     else if(touchGas<0)v.spd=Math.max(maxRev,v.spd-40*tr.acc*dt);
@@ -655,7 +656,9 @@ function updateP(dt){
     return;
   }
   if(P.fish)tickFishing(dt);
-  let mx=joy.x,my=joy.y,len=Math.hypot(mx,my);
+  let mx=joy.x,my=joy.y;
+  if(KBM){const km=kbMove();if(km){mx=km.x;my=km.y;}}   // WASD/setas no computador
+  let len=Math.hypot(mx,my);
   if(len>1){mx/=len;my/=len;len=1;}
   if(P.fish&&P.fish.ph>=1){mx=0;my=0;len=0;}                     // fisgou: o jogador fica parado na vara
   P.moving=len>.12;
@@ -679,6 +682,7 @@ function updateP(dt){
     stepT-=dt;
     if(stepT<=0){stepT=P.sprint?0.28:0.42;footstep(inWater||(selectedMap==='city'&&ORLA&&inSea(P.x,P.y)),stepSurf(),P.sprint);}
   }
+  if(KBM){const ka=kbAim();if(ka!==null)P.face=ka;}   // computador: o personagem sempre olha para o mouse (anda de lado, de costas...)
   if(P.sprint){
     const stamDrain=17*(weather==='rain'?1.35:weather==='snow'?1.2:weather==='sand'?1.15:1)*(P._tsd||1);
     P.stam-=stamDrain*dt;if(P.stam<=0){P.stam=0;P.exhausted=true;}

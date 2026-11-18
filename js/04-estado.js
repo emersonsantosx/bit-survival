@@ -184,6 +184,7 @@ const joy={id:null,ox:0,oy:0,px:0,py:0,x:0,y:0,active:false};
 
 /* ============ FULLSCREEN LANDSCAPE ============ */
 function lockLandscape(){
+  if(KBM)return Promise.resolve();   // computador ja e paisagem: nada de travar
   try{
     if(screen.orientation && typeof screen.orientation.lock === 'function'){
       return screen.orientation.lock('landscape').catch(()=>{
@@ -197,7 +198,7 @@ function lockLandscape(){
 let userWantsFS=false;
 function tryFullscreenFromGesture(){
   // Called from real user input (touch/click) so browsers allow requestFullscreen
-  if(!userWantsFS || !CFG.fullscreen) return;
+  if(!userWantsFS || !CFG.fullscreen || KBM) return;
   if(state!=='play' && state!=='craft' && state!=='pause') return;
   if(isFullscreen()) return;
   requestFullscreenLandscape(true);

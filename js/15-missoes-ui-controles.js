@@ -883,7 +883,7 @@ function startGame(){
   setChatButtonVisible(false);
   const cm=$('chat-msgs'); if(cm) cm.innerHTML=''; resetChatHistory();
   // E4: respect "Tela cheia ao jogar" config
-  if(CFG.fullscreen){
+  if(CFG.fullscreen&&!KBM){
     userWantsFS=true;
     requestFullscreenLandscape(true);
   } else {
