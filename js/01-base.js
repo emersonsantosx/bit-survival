@@ -41,6 +41,7 @@ const mmC=$('mm'), mm=mmC.getContext('2d');
 const mmStatic=document.createElement('canvas'); mmStatic.width=76; mmStatic.height=76;
 const mms=mmStatic.getContext('2d');
 
+let KBM=false;   // modo teclado e mouse (computador); js/28-modo-desktop.js decide e troca sozinho
 const IS_MOBILE=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'')
   || ((navigator.maxTouchPoints||0)>1 && Math.min(screen.width||0,screen.height||0)<900);
 
@@ -64,7 +65,7 @@ function uiClasses(iw,ih,u){
 function applyUiScale(){
   const iw=window.innerWidth||800,ih=window.innerHeight||360;
   let coarse=true;try{coarse=window.matchMedia('(pointer:coarse)').matches||window.matchMedia('(hover:none)').matches;}catch(e){}
-  UIS=coarse?Math.round(Math.max(1,Math.min(UI_MAX,Math.min(iw,ih)/UI_REF))*100)/100:1;
+  UIS=coarse?Math.round(Math.max(1,Math.min(UI_MAX,Math.min(iw,ih)/UI_REF))*100)/100:Math.round(Math.max(1,Math.min(1.5,ih/820))*100)/100;   // computador: cresce com a altura da janela (1080p = 1.3)
   UIS=Math.round(UIS*CFG.ui*100)/100;   // ajuste do jogador (CONFIGURACOES > tamanho da interface)   // so celular/tablet (toque): no computador a interface fica no tamanho de sempre
   try{
     const el=document.documentElement,keep=el.className.split(/\s+/).filter(x=>x&&!/^(land|port|hle\d+|wle\d+)$/.test(x));

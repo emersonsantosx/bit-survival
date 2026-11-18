@@ -1117,7 +1117,7 @@ function enterMultiplayerGame(isHost){
   // Fullscreen no MP: só marca intenção. O navegador exige gesto do usuário
   // (enterMultiplayerGame é disparado por evento de rede, não por toque).
   // O primeiro toque em jogo chama tryFullscreenFromGesture().
-  if(CFG.fullscreen) userWantsFS=true;
+  if(CFG.fullscreen&&!KBM) userWantsFS=true;
   else userWantsFS=false;
   MP.isHost=isHost;MP.gameStarted=true;MP.reconnecting=false;MP.guestAway=false;
   try{

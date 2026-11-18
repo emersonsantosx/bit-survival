@@ -239,7 +239,7 @@ function continueGame(n){
   aud();
   closeChat(); setChatButtonVisible(false);
   const cm=$('chat-msgs'); if(cm) cm.innerHTML=''; resetChatHistory();
-  if(CFG.fullscreen){ userWantsFS=true; requestFullscreenLandscape(true); } else userWantsFS=false;
+  if(CFG.fullscreen&&!KBM){ userWantsFS=true; requestFullscreenLandscape(true); } else userWantsFS=false;   // computador: so entra em tela cheia se a pessoa pedir
   showScreen(null);
   $('hud').classList.remove('hide');
   restoreWalkHUD();
@@ -271,7 +271,7 @@ function buildInv(){
   const el=$('inv');el.innerHTML='';
   for(let i=0;i<MAX_SLOTS;i++){
     const b=document.createElement('button');
-    b.className='slot';b.dataset.idx=i;
+    b.className='slot';b.dataset.idx=i;b.dataset.key=String(i+1);   // numero da tecla (aparece so no computador)
     const slot=P.inv[i];
     if(slot&&P.hold&&slot.t===P.hold)b.classList.add('held');
     if(slot){

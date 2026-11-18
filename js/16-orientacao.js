@@ -25,7 +25,7 @@
     document.addEventListener('pointerdown',function once(){document.removeEventListener('pointerdown',once,true);goLand(false);},true);
     // 4) Em retrato durante a partida solo: pausa, para o jogador nao ser atacado sem ver a tela
     const portrait=matchMedia('(orientation:portrait)');
-    const onChange=()=>{try{if(portrait.matches&&state==='play'&&!MP.active)pause();}catch(e){}};
+    const onChange=()=>{try{if(!KBM&&portrait.matches&&state==='play'&&!MP.active)pause();}catch(e){}};
     if(portrait.addEventListener)portrait.addEventListener('change',onChange);else if(portrait.addListener)portrait.addListener(onChange);
   }catch(e){}
 })();
