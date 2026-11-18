@@ -577,9 +577,12 @@ function itemsNear(){
   l.sort((a,b)=>a[0]-b[0]);return l.map(q=>q[1]);
 }
 /* toque num icone extra: pega aquele item, nao o mais perto */
-function pickItemBtn(it){
+function pickItemBtn(ref){
   if(state!=='play'||!P||P.dead||P.inVehicle||P.sleeping||P.sitting||P.fish)return;
-  if(items.indexOf(it)<0||Math.hypot(it.x-P.x,it.y-P.y)>=24||!itemReach(it))return;
+  // acha o item pelo que ele e e pelo lugar (no multiplayer a lista de itens e recriada a cada sincronia e o objeto guardado no botao fica velho)
+  const it=items.indexOf(ref)>=0?ref:items.find(i=>i.t===ref.t&&Math.abs(i.x-ref.x)<1&&Math.abs(i.y-ref.y)<1);
+  if(!it)return;   // alguem ja pegou
+  if(Math.hypot(it.x-P.x,it.y-P.y)>=30||!itemReach(it)){toast('Chegue mais perto');beep(140,.06,'square',.04);return;}
   takeItem(it);
 }
 window.itemsNear=itemsNear;window.pickItemBtn=pickItemBtn;

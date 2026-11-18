@@ -48,7 +48,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 07-loot-mapa | 135 | 3 | 30 | 128 | 3 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |  |  |
 | 08-cidade-vilas-marcos | 119 | 3 | 17 | 130 | 19 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |
 | 09-milharal-geracao | 203 | 10 | 87 | 275 | 40 |  | 1 | 35 | . | 3 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |
-| 10-jogo-saves | 89 | 51 | 57 | 705 | 18 | 3 | 12 | 10 | 7 | . | 88 | 25 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |  | 1 |
+| 10-jogo-saves | 89 | 52 | 57 | 706 | 18 | 3 | 12 | 10 | 7 | . | 89 | 25 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |  | 1 |
 | 11-pesca-update | 251 | 40 | 55 | 883 | 63 | 2 | 3 | 5 | 20 | 64 | . | 13 | 14 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |
 | 12-crafting-multiplayer | 55 | 36 | 29 | 617 | 12 | 1 | 6 | 5 | 11 | 42 | 38 | . | 18 |  | 10 |  |  |  |  |  |  |  |  |  |  |  |
 | 13-render-personagens | 330 | 40 | 22 | 250 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |
@@ -75,17 +75,17 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | P | let | 04-estado:14 | 21 | 1982 |
 | selectedMap | let | 04-estado:3 | 21 | 215 |
 | MP | let | 04-estado:19 | 20 | 578 |
-| beep | funcao | 02-audio:42 | 19 | 136 |
+| beep | funcao | 02-audio:42 | 19 | 137 |
 | rnd | const | 01-base:16 | 18 | 434 |
 | T | let | 04-estado:14 | 17 | 118 |
 | WW | let | 03-dados:2 | 17 | 96 |
 | WH | let | 03-dados:2 | 17 | 85 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 17 | 62 |
-| toast | funcao | 11-pesca-update:1269 | 16 | 201 |
+| toast | funcao | 11-pesca-update:1269 | 16 | 202 |
 | clamp | const | 01-base:4 | 16 | 98 |
 | parts | let | 04-estado:10 | 16 | 75 |
 | ctx | const | 01-base:27 | 15 | 1051 |
-| items | let | 04-estado:10 | 15 | 63 |
+| items | let | 04-estado:10 | 15 | 64 |
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
 | blds | let | 04-estado:10 | 14 | 58 |
 | R | funcao | 13-render-personagens:2 | 13 | 1235 |
