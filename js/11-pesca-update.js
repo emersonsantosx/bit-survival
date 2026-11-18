@@ -280,8 +280,8 @@ function attack(){
     let hitRock=null,td=34;
     for(const r of rocks){const d=Math.hypot(r.x-P.x,r.y-P.y);if(d<td){td=d;hitRock=r;}}
     if(hitRock){
-      P.cd=w.cd;P.swing=.18;hitRock.hp-=1;shake=3;chopStone();
-      for(let i=0;i<6;i++)parts.push({x:hitRock.x,y:hitRock.y-4,vx:rnd(-50,50),vy:rnd(-55,-5),t:.4,c:'#9a9a9a'});
+      P.cd=w.cd;P.swing=.18;hitRock.hp-=1;hitRock._hit=T;shake=3;chopStone();
+      {const pc=(ROCK_PAL[selectedMap]||ROCK_PAL.forest);for(let i=0;i<9;i++)parts.push({x:hitRock.x+rnd(-5,5),y:hitRock.y-4,vx:rnd(-60,60),vy:rnd(-65,-5),t:.45,c:pc[i%4]});}   // lascas da cor da pedra do mapa
       if(MP.active) sendEvt('rockDmg', {x:hitRock.x, y:hitRock.y, dmg:1});
       if(hitRock.hp<=0){
         rocks.splice(rocks.indexOf(hitRock),1);

@@ -551,12 +551,12 @@ function rockKind(r){
   const h=posHash(r.x,r.y,31);
   return r._a=h<.30?0:h<.48?1:h<.66?2:h<.74?3:h<.90?4:5;
 }
-function rockSprite(k,a,v){
-  const map=selectedMap,key=map+'|'+k+'|'+a+'|'+v;
+function rockSprite(k,a,v,dm){
+  dm=dm|0;const map=selectedMap,key=map+'|'+k+'|'+a+'|'+v+'|'+dm;
   if(RSP[key])return RSP[key];
   const W=56,HH=44,ox=28,oy=38;
   const cv=document.createElement('canvas');cv.width=W;cv.height=HH;
-  const c=cv.getContext('2d'),r=mkRng((k*11+a*17+v*5+map.length*3+2)/97);
+  const c=cv.getContext('2d'),r=mkRng((k*11+a*17+v*5+map.length*3+2)/97),dr=mkRng((k*5+a*3+v*13+dm*29+map.length+7)/131);
   const pal=ROCK_PAL[map]||ROCK_PAL.forest,snowMap=map==='snow';
   const SZ=[1,1.12,1.22,.78,1.35][k]||1;
   let top=0,half=0;
@@ -575,7 +575,9 @@ function rockSprite(k,a,v){
     for(let x=X0;x<=X1+1;x++)if(at(x,Y1-1)||at(x,Y1-2)){dot(x+1,y1>0?Math.round(y1):0,'rgba(0,0,0,.28)');}
     for(let y=Y0;y<=Y1;y++)for(let x=X0;x<=X1;x++){
       if(!at(x,y))continue;
-      const nx=(x-cx)/rx,ny=(y-cy)/ry;let d=-nx*.55-ny*.85+(hsh(x,y)-.5)*.34;
+      const nx=(x-cx)/rx,ny=(y-cy)/ry;
+      if(dm>=2&&((nx>.5-.12*dm&&ny<-.15)||(dm>=4&&nx<-.45&&ny<-.3)))continue;   // lascas que ja sairam
+      let d=-nx*.55-ny*.85+(hsh(x,y)-.5)*.34;
       if(opt.strata&&((y-Y0)%4===0))d-=.5;                       // camadas de arenito/laje
       let col=d>.5?P[3]:d>.05?P[2]:d>-.45?P[1]:P[0];
       if(opt.glint&&d>.62&&hsh(x+3,y)<.5)col='#f4fbff';          // gelo brilhando
@@ -585,6 +587,12 @@ function rockSprite(k,a,v){
     for(let i=0,n=opt.cracks===undefined?(rx>6?2:1):opt.cracks;i<n;i++){
       let x=Math.round(cx+(r()-.5)*rx*.8),y=Math.round(y0+ry*.4+r()*ry*.3);
       for(let s2=0,L=Math.round(ry*(.6+r()*.5));s2<L;s2++){if(at(x,y)&&at(x-1,y)&&at(x+1,y)&&at(x,y+1))dot(x,y,P[0]);y++;if(r()<.4)x+=r()<.5?-1:1;}
+    }
+    if(dm>0&&!opt.noDmg){   // rachaduras de quem ja apanhou: mais compridas e escuras a cada golpe
+      for(let i=0,n=dm+1;i<n;i++){
+        let x=Math.round(cx+(dr()-.5)*rx*1.3),y=Math.round(y0+dr()*ry*.5);
+        for(let s2=0,L=Math.round(ry*(.7+dr()*.9));s2<L;s2++){if(at(x,y)&&at(x,y+1))dot(x,y,'rgba(12,12,20,.8)');y++;if(dr()<.5)x+=dr()<.5?-1:1;}
+      }
     }
     if(opt.moss){for(let y=Y0;y<=Y1;y++)for(let x=X0;x<=X1;x++)if(at(x,y)&&at(x,y-1)&&y<cy-ry*.1&&hsh(x*3,y*5)<.38+(cy-y)/ry*.18)dot(x,y,hsh(x,y*7)<.5?'#4f7a3c':'#6a9a4a');}
     if(snowMap||opt.snow){   // neve por cima (o mapa da neve e sempre nevado)
@@ -611,15 +619,17 @@ function rockSprite(k,a,v){
       else{const V=[[-9,0],[-10,-7],[-5,-11],[4,-10],[10,-6],[9,0]].map(q=>[q[0]*SZ*(.9+.2*r()),q[1]*SZ]);paint(V,pal,{cracks:2});   // concreto quebrado com vergalhao
         for(let i=0;i<3;i++){const bx=-3+i*4;for(let q=0;q<5;q++)dot(bx+(q>3?1:0)+(i-1)*(q>2?1:0),-11*SZ-q,q<3?'#8a4a2a':'#b0602e');}}
       drift(0,10*SZ);break;
-    default:{const n=4+(v&1);const L=[];for(let i=0;i<n;i++)L.push([-11+Math.round(r()*22),-1+Math.round(r()*3)]);L.sort((p,q)=>p[1]-q[1]);for(const q of L)stone(q[0],q[1],2+r()*2.2,1.8+r()*1.6,{n:6,cracks:0});drift(0,10);}
+    default:{const n=4+(v&1);const L=[];for(let i=0;i<n;i++)L.push([-11+Math.round(r()*22),-1+Math.round(r()*3)]);L.sort((p,q)=>p[1]-q[1]);for(const q of L)stone(q[0],q[1],2+r()*2.2,1.8+r()*1.6,{n:6,cracks:0,noDmg:1});drift(0,10);}
   }
   return RSP[key]={cv:cv,ox:ox,oy:oy,top:Math.max(4,top),half:Math.max(6,half)};
 }
 function drawRock(r){
-  const x=r.x,y=r.y,k=r.k|0,v=Math.floor((r.seed||0)*4)&3,s=rockSprite(k,rockKind(r),v);
+  const x=r.x,y=r.y,k=r.k|0,v=Math.floor((r.seed||0)*4)&3,dm=Math.max(0,Math.min(4,Math.round(5-(r.hp===undefined?5:r.hp)))),s=rockSprite(k,rockKind(r),v,dm);
   treeShadow(x,y,s);
+  const hit=r._hit!==undefined?T-r._hit:9,wob=hit<.22?Math.round(Math.sin(hit*70)*(1-hit/.22)*2):0;   // treme um instante quando leva um golpe
   const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(s.cv,x-s.ox,y-s.oy);ctx.imageSmoothingEnabled=sm;
+  ctx.drawImage(s.cv,x-s.ox+wob,y-s.oy);ctx.imageSmoothingEnabled=sm;
+  if(dm>=2){const c=ROCK_PAL[selectedMap]||ROCK_PAL.forest;R(x-12,y,2,1,c[2]);R(x+10,y-1,2,2,c[1]);if(dm>=3)R(x+7,y+1,2,1,c[2]);if(dm>=4)R(x-9,y+1,3,1,c[1]);}   // cacos no chao
   if(selectedMap!=='snow')snowCap(x-7,y-5,14,3);   // neve acumulada fora do mapa da neve (la ela ja vem no desenho)
 }
 /* ============ ÁRVORES ============
@@ -846,7 +856,7 @@ function drawTree(t){
 /* topos onde a neve se acumula (fora os que ja desenham a propria neve): [x do canto, y da base da capa, largura, altura cheia] relativos ao objeto */
 const SNOWTOP={crate:[-6,-8,12,3],log:[-8,-3,16,3],stump:[-5,-3,10,3],bench:[-9,-4,18,3],dumpster:[-9,-13,18,3],trash:[-4,-10,8,2]};
 function drawDecoration(d){
-  drawDecoration0(d);
+  if(window.decoDraw)decoDraw(d,drawDecoration0);else drawDecoration0(d);
   const st=SNOWTOP[d.type];if(st&&snowAcc()>.06)snowCap(d.x+st[0],d.y+st[1],st[2],st[3]);
 }
 function drawDecoration0(d){
