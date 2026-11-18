@@ -540,19 +540,90 @@ function humanDraw(x,y,face,o){
   }
   ctx.restore();
 }
+/* ============ PEDRAS ============
+   Cada pedra e um sprite guardado (um por mapa, tamanho, tipo e variacao): bloco facetado e sombreado, com contorno.
+   Tipos (sorteados pela posicao, sem mexer no gerador do mundo): 0 bloco, 1 laje, 2 grupo, 3 pico, 4 especial do mapa
+   (musgo na floresta, gelo na neve, arenito no deserto, concreto com vergalhao na cidade), 5 pedrinhas. */
+const RSP={};
+const ROCK_PAL={forest:['#3a3a42','#5e5e68','#8a8a94','#b4b4be'],snow:['#566478','#7e90a6','#a8b8ca','#d4e0ec'],desert:['#8a6842','#b08c5c','#d2b07c','#ecd2a4'],city:['#4a5058','#6a7078','#8e949a','#b4babe']};
+function rockKind(r){
+  if(r._a!==undefined)return r._a;
+  const h=posHash(r.x,r.y,31);
+  return r._a=h<.30?0:h<.48?1:h<.66?2:h<.74?3:h<.90?4:5;
+}
+function rockSprite(k,a,v){
+  const map=selectedMap,key=map+'|'+k+'|'+a+'|'+v;
+  if(RSP[key])return RSP[key];
+  const W=56,HH=44,ox=28,oy=38;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=HH;
+  const c=cv.getContext('2d'),r=mkRng((k*11+a*17+v*5+map.length*3+2)/97);
+  const pal=ROCK_PAL[map]||ROCK_PAL.forest,snowMap=map==='snow';
+  const SZ=[1,1.12,1.22,.78,1.35][k]||1;
+  let top=0,half=0;
+  const dot=(x,y,col)=>{x=Math.round(x);y=Math.round(y);c.fillStyle=col;c.fillRect(ox+x,oy+y,1,1);if(-y>top)top=-y;if(Math.abs(x)>half)half=Math.abs(x);};
+  const inPoly=(V,x,y)=>{let ins=false;for(let i=0,j=V.length-1;i<V.length;j=i++){const a=V[i],b=V[j];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])ins=!ins;}return ins;};
+  const hsh=(x,y)=>{let h=(x*374761393+y*668265263+(k+a*7+v*13)*1274126177)|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296;};
+  // pinta um polígono como pedra: 4 tons pela luz vinda de cima à esquerda, contorno escuro, rachaduras e detalhes do mapa
+  const paint=(V,P,opt)=>{
+    opt=opt||{};
+    let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;for(const q of V){x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1]);}
+    const cx=(x0+x1)/2,cy=(y0+y1)/2,rx=Math.max(2,(x1-x0)/2),ry=Math.max(2,(y1-y0)/2);
+    const X0=Math.floor(x0)-1,X1=Math.ceil(x1)+1,Y0=Math.floor(y0)-1,Y1=Math.ceil(y1)+1,w=X1-X0+1,h=Y1-Y0+1,m=new Uint8Array(w*h);
+    for(let y=Y0;y<=Y1;y++)for(let x=X0;x<=X1;x++)if(inPoly(V,x+.5,y+.5))m[(y-Y0)*w+(x-X0)]=1;
+    const at=(x,y)=>x<X0||x>X1||y<Y0||y>Y1?0:m[(y-Y0)*w+(x-X0)];
+    // sombra de contato
+    for(let x=X0;x<=X1+1;x++)if(at(x,Y1-1)||at(x,Y1-2)){dot(x+1,y1>0?Math.round(y1):0,'rgba(0,0,0,.28)');}
+    for(let y=Y0;y<=Y1;y++)for(let x=X0;x<=X1;x++){
+      if(!at(x,y))continue;
+      const edge=!at(x-1,y)||!at(x+1,y)||!at(x,y-1)||!at(x,y+1);
+      if(edge){dot(x,y,snowMapEdge(x,y,cy,opt)||'#1c1c26');continue;}
+      const nx=(x-cx)/rx,ny=(y-cy)/ry;let d=-nx*.55-ny*.85+(hsh(x,y)-.5)*.34;
+      if(opt.strata&&((y-Y0)%4===0))d-=.5;                       // camadas de arenito/laje
+      let col=d>.5?P[3]:d>.05?P[2]:d>-.45?P[1]:P[0];
+      if(opt.glint&&d>.62&&hsh(x+3,y)<.5)col='#f4fbff';          // gelo brilhando
+      dot(x,y,col);
+    }
+    // rachaduras
+    for(let i=0,n=opt.cracks===undefined?(rx>6?2:1):opt.cracks;i<n;i++){
+      let x=Math.round(cx+(r()-.5)*rx*.8),y=Math.round(y0+ry*.4+r()*ry*.3);
+      for(let s2=0,L=Math.round(ry*(.6+r()*.5));s2<L;s2++){if(at(x,y)&&at(x-1,y)&&at(x+1,y)&&at(x,y+1))dot(x,y,P[0]);y++;if(r()<.4)x+=r()<.5?-1:1;}
+    }
+    if(opt.moss){for(let y=Y0;y<=Y1;y++)for(let x=X0;x<=X1;x++)if(at(x,y)&&at(x,y-1)&&y<cy-ry*.1&&hsh(x*3,y*5)<.38+(cy-y)/ry*.18)dot(x,y,hsh(x,y*7)<.5?'#4f7a3c':'#6a9a4a');}
+    if(snowMap||opt.snow){   // neve por cima (o mapa da neve e sempre nevado)
+      for(let y=Y0;y<=Y1;y++)for(let x=X0;x<=X1;x++){if(!at(x,y))continue;const ny=(y-cy)/ry,nx=(x-cx)/rx;
+        if(ny<-.18+hsh(x,y)*.18&&!(at(x-1,y-1)===0&&at(x,y-1)===0&&false))dot(x,y,ny<-.5||nx<-.1?'#ffffff':'#e4eef6');}
+    }
+  };
+  const snowMapEdge=(x,y,cy,opt)=>null;
+  const blob=(cx,by,rx,ry,n)=>{   // contorno irregular, base mais achatada
+    const V=[],j=r()*6.283;n=n||8;
+    for(let i=0;i<n;i++){const an=j+i/n*6.283,sn=Math.sin(an),cs=Math.cos(an),rr=.8+.32*r();let Y=sn*ry*rr;if(sn>0)Y*=.55;V.push([cx+cs*rx*rr,by-ry*.55+Y]);}
+    return V;
+  };
+  const stone=(cx,by,rx,ry,opt)=>paint(blob(cx,by,rx,ry,opt&&opt.n),pal,opt);
+  const drift=(cx,rx)=>{if(snowMap)for(let x=-rx;x<=rx;x++)if(hsh(x,cx+9)<.7)dot(cx+x,0,'#e4eef6');};
+  switch(a){
+    case 0:stone(0,1,9*SZ,8*SZ);if(v&1)stone(11*SZ,2,4,3.5);if(v&2)stone(-11*SZ,2,3.5,3);drift(0,10*SZ);break;
+    case 1:stone(0,1,12*SZ,5.6*SZ,{strata:map==='desert'||v&1,cracks:1});if(v&2)stone(8*SZ,-3,5,3.6);drift(0,12*SZ);break;
+    case 2:stone(3,-1,7*SZ,7.5*SZ);stone(-8*SZ,2,5*SZ,5*SZ);stone(8*SZ,3,5*SZ,4.5*SZ);if(v&1)stone(0,3,3.5,3);drift(0,11*SZ);break;
+    case 3:{const H=21*SZ,V=[[-6,0],[-6,-7],[-3,-H*.75],[0.5+(v&1),-H],[3,-H*.72],[6.5,-6],[7,0]].map(q=>[q[0]*(.9+.2*r()),q[1]]);paint(V,pal,{cracks:2});drift(0,8);break;}
+    case 4:
+      if(map==='forest'){stone(0,1,10*SZ,9*SZ,{moss:true});for(let i=0;i<7;i++){const gx=-11+Math.round(r()*22);dot(gx,0,'#3f7a34');dot(gx,-1,'#5aa04a');if(r()<.5)dot(gx+1,-1,'#3f7a34');}}
+      else if(map==='snow'){stone(0,1,10*SZ,8.5*SZ,{glint:true,cracks:1});for(let i=0;i<3;i++){const gx=-6+i*6;dot(gx,0,'#cfe8f8');dot(gx,1,'#cfe8f8');}}   // bloco de gelo
+      else if(map==='desert'){const V=[[-9,0],[-10,-8],[-6,-12],[3,-13],[9,-9],[10,0]].map(q=>[q[0]*SZ*(.9+.2*r()),q[1]*SZ]);paint(V,['#6a3a22','#9a5a34','#c47a48','#e0a070'],{strata:true,cracks:1});}   // rocha vermelha em camadas
+      else{const V=[[-9,0],[-10,-7],[-5,-11],[4,-10],[10,-6],[9,0]].map(q=>[q[0]*SZ*(.9+.2*r()),q[1]*SZ]);paint(V,pal,{cracks:2});   // concreto quebrado com vergalhao
+        for(let i=0;i<3;i++){const bx=-3+i*4;for(let q=0;q<5;q++)dot(bx+(q>3?1:0)+(i-1)*(q>2?1:0),-11*SZ-q,q<3?'#8a4a2a':'#b0602e');}}
+      drift(0,10*SZ);break;
+    default:{const n=4+(v&1);const L=[];for(let i=0;i<n;i++)L.push([-11+Math.round(r()*22),-1+Math.round(r()*3)]);L.sort((p,q)=>p[1]-q[1]);for(const q of L)stone(q[0],q[1],2+r()*2.2,1.8+r()*1.6,{n:6,cracks:0});drift(0,10);}
+  }
+  return RSP[key]={cv:cv,ox:ox,oy:oy,top:Math.max(4,top),half:Math.max(6,half)};
+}
 function drawRock(r){
-  const x=r.x,y=r.y;shadow(x,y+2,8,4);
-  const base=selectedMap==='snow'?'#a8b8c8':selectedMap==='desert'?'#c8a878':selectedMap==='city'?'#707880':'#8a8a90';
-  const top=selectedMap==='snow'?'#d0dce8':selectedMap==='desert'?'#e0c090':selectedMap==='city'?'#909aa0':'#a8a8b0';
-  const k=r.k|0;
-  if(k===0){R(x-7,y-6,14,8,base);R(x-6,y-10,12,6,top);R(x-4,y-13,8,4,top);}
-  else if(k===1){R(x-6,y-8,12,10,base);R(x-5,y-12,10,6,top);R(x-2,y-14,5,3,top);}
-  else if(k===2){R(x-8,y-5,16,7,base);R(x-6,y-8,12,5,top);R(x-3,y-11,6,4,top);}
-  else if(k===3){R(x-5,y-7,10,9,base);R(x-4,y-11,8,5,top);R(x+2,y-5,4,4,base);}
-  else{R(x-9,y-4,18,6,base);R(x-7,y-7,14,4,top);R(x-5,y-9,10,3,top);R(x+3,y-6,5,5,base);}
-  R(x-3,y-4,2,2,'rgba(0,0,0,.25)');R(x+2,y-3,2,2,'rgba(255,255,255,.2)');
-  if(selectedMap==='forest' && (k===0||k===1)) R(x-2,y-8,3,2,'#3a6a3a'); // moss
-  snowCap(x-7,y-5,14,3);
+  const x=r.x,y=r.y,k=r.k|0,v=Math.floor((r.seed||0)*4)&3,s=rockSprite(k,rockKind(r),v);
+  treeShadow(x,y,s);
+  const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(s.cv,x-s.ox,y-s.oy);ctx.imageSmoothingEnabled=sm;
+  if(selectedMap!=='snow')snowCap(x-7,y-5,14,3);   // neve acumulada fora do mapa da neve (la ela ja vem no desenho)
 }
 /* ============ ÁRVORES ============
    Cada árvore é um sprite pré-desenhado (um por mapa, tipo e variação), bem maior que o personagem (que tem uns 20 px):
