@@ -127,7 +127,7 @@ function handleEvt(kind, data){
     if(t && Number.isFinite(data.dmg)){ t.hp -= clamp(data.dmg,0,10); if(t.hp<=0){ const i=trees.indexOf(t); if(i>=0){ trees.splice(i,1); rebuildSolidGrid(); } } }
   } else if(kind==='rockDmg'){
     const r = rocks.find(r => r.x===data.x && r.y===data.y);
-    if(r && Number.isFinite(data.dmg)){ r.hp -= clamp(data.dmg,0,10); if(r.hp<=0){ const i=rocks.indexOf(r); if(i>=0){ rocks.splice(i,1); rebuildSolidGrid(); } } }
+    if(r && Number.isFinite(data.dmg)){ r.hp -= clamp(data.dmg,0,10); r._hit=T; if(r.hp<=0){ const i=rocks.indexOf(r); if(i>=0){ rocks.splice(i,1); rebuildSolidGrid(); } } }
   } else if(kind==='itemRemoved'){
     for(let i=items.length-1;i>=0;i--){
       if(Math.abs(items[i].x-data.x)<4 && Math.abs(items[i].y-data.y)<4){ lootTaken(items[i]); items.splice(i,1); break; }

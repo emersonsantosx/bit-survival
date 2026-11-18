@@ -383,7 +383,7 @@ function genRuralVehicles(vId,carCols){
   return vId;
 }
 /* ============ MARCOS: Templo Enterrado (deserto) e Acampamento da Expedição (neve) ============ */
-let LM=null,chestList=[],prints=[];
+let LM=null,chestList=[],prints=[],tracks=[];   // prints: pegadas a pe; tracks: marcas de pneu e esqui dos veiculos
 function genLandmark(seed){
   LM=null;chestList=[];
   if(selectedMap!=='desert'&&selectedMap!=='snow')return;
@@ -491,7 +491,7 @@ function updateLM(dt){
     LM.seen=true;toast(LM.kind==='temple'?'Você avistou o Templo Enterrado':'Você avistou o Acampamento da Expedição');
   }
   const beach=selectedMap==='city'&&!!ORLA;
-  if(selectedMap!=='desert'&&selectedMap!=='snow'&&!beach){if(prints.length)prints.length=0;return;}
+  if(selectedMap!=='desert'&&selectedMap!=='snow'&&!beach){if(prints.length)prints.length=0;if(tracks.length)tracks.length=0;return;}
   // pegadas na areia e na neve (o jogador e os zumbis por perto)
   const mark=(o,big)=>{
     if(beach&&!onSand(o.x,o.y)){o._lp=null;return;}   // na praia so a areia marca
@@ -509,8 +509,10 @@ function updateLM(dt){
   for(const z of zombies){if(z.dead||Math.abs(z.x-P.x)>260||Math.abs(z.y-P.y)>200)continue;if(z.moving!==false)mark(z,true);}
   const pdec=selectedMap==='snow'&&weather==='snow'?2.2+blizzK*3:1;   // nevando, a neve cobre as pegadas bem mais rápido
   for(let k=prints.length-1;k>=0;k--){prints[k].l-=dt*pdec;if(prints[k].l<=0)prints.splice(k,1);}
+  updateTracks(dt);
 }
 function drawPrints(vx0,vx1,vy0,vy1){
+  drawTracks(vx0,vx1,vy0,vy1);
   if(!prints.length)return;
   const col=selectedMap==='snow'?'#9fb2c4':selectedMap==='city'?'#8f7640':'#a5854a';
   ctx.fillStyle=col;
@@ -518,7 +520,50 @@ function drawPrints(vx0,vx1,vy0,vy1){
     if(p.x<vx0||p.x>vx1||p.y<vy0||p.y>vy1)continue;
     ctx.globalAlpha=Math.min(1,p.l/10)*.55;
     const nx=Math.round(-Math.sin(p.a)*2*p.s),ny=Math.round(Math.cos(p.a)*2*p.s),sh=p.l<6?1:0;   // quase cobertas: encolhem
-    ctx.fillRect(Math.round(p.x+nx)-1,Math.round(p.y+ny),(p.z?3:2)-sh,(p.z?4:3)-sh);
+    const px=Math.round(p.x+nx)-1,py=Math.round(p.y+ny),big=p.z?1:0;
+    if(Math.abs(Math.cos(p.a))>Math.abs(Math.sin(p.a))){   // andando de lado: sola deitada, ponta para onde vai
+      const f=Math.cos(p.a)>0?1:-1;
+      ctx.fillRect(f>0?px:px+3+big,py,2+big,2-sh+big);ctx.fillRect(f>0?px+3+big:px,py,1,Math.max(1,1+big-sh));
+    }else{                                                      // andando para cima ou para baixo: sola em pe
+      const f=Math.sin(p.a)>0?1:-1;
+      ctx.fillRect(px,f>0?py:py+3+big,2+big-sh,2);ctx.fillRect(px,f>0?py+3+big:py,Math.max(1,1+big-sh),1);
+    }
+  }
+  ctx.globalAlpha=1;
+}
+/* marcas dos veiculos: duas linhas paralelas atras de quem anda (esqui na neve, pneu na areia), somem com o tempo (mais rapido nevando) */
+const TRACK_W={sled:5,buggy:9,atv:6,car:8};
+function updateTracks(dt){
+  const sn=selectedMap==='snow',beach=selectedMap==='city'&&!!ORLA;
+  for(const v of vehicles){
+    if(v.destroyed||v.dying||Math.abs(v.spd||0)<8){v._tp=null;continue;}
+    if(beach&&!onSand(v.x,v.y)){v._tp=null;continue;}
+    const lp=v._tp;if(!lp){v._tp={x:v.x,y:v.y};continue;}
+    const dx=v.x-lp.x,dy=v.y-lp.y;
+    if(dx*dx+dy*dy>36){
+      const k=vehKind(v);
+      tracks.push({x:v.x,y:v.y,px:lp.x,py:lp.y,w:TRACK_W[k]||7,l:sn?150:80,sk:k==='sled'});
+      v._tp={x:v.x,y:v.y};
+      if(tracks.length>420)tracks.shift();
+    }
+  }
+  const dec=sn&&weather==='snow'?2.2+blizzK*3:1;
+  for(let k=tracks.length-1;k>=0;k--){tracks[k].l-=dt*dec;if(tracks[k].l<=0)tracks.splice(k,1);}
+}
+function drawTracks(vx0,vx1,vy0,vy1){
+  if(!tracks.length)return;
+  const sn=selectedMap==='snow',dk=sn?'#8da3b8':selectedMap==='city'?'#8f7640':'#a5854a',lt=sn?'#f4f8fc':'#e0c890';
+  ctx.lineCap='butt';
+  for(const t of tracks){
+    if(Math.max(t.x,t.px)<vx0||Math.min(t.x,t.px)>vx1||Math.max(t.y,t.py)<vy0||Math.min(t.y,t.py)>vy1)continue;
+    const a=Math.atan2(t.y-t.py,t.x-t.px),nx=-Math.sin(a),ny=Math.cos(a),al=Math.min(1,t.l/14)*(sn?.6:.5);
+    for(const sd of [-1,1]){
+      const ox=nx*t.w*.5*sd,oy=ny*t.w*.5*sd;
+      ctx.globalAlpha=al;ctx.strokeStyle=dk;ctx.lineWidth=t.sk?2:3;
+      ctx.beginPath();ctx.moveTo(Math.round(t.px+ox),Math.round(t.py+oy));ctx.lineTo(Math.round(t.x+ox),Math.round(t.y+oy));ctx.stroke();
+      ctx.globalAlpha=al*.6;ctx.strokeStyle=lt;ctx.lineWidth=1;   // borda clara do sulco
+      ctx.beginPath();ctx.moveTo(Math.round(t.px+ox-ny*1.5*sd*0),Math.round(t.py+oy-1));ctx.lineTo(Math.round(t.x+ox),Math.round(t.y+oy-1));ctx.stroke();
+    }
   }
   ctx.globalAlpha=1;
 }
