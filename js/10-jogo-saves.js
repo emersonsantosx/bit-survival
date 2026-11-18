@@ -594,7 +594,12 @@ function nearestFurn(kinds,reach){
   }
   return best;
 }
-function nearestStove(){const f=nearestFurn(['stove'],16);return f?{x:f.x+f.w/2,y:f.y+f.h/2,stove:true}:null;}
+function nearestStove(){
+  let f=nearestFurn(['stove'],16);
+  const h=nearestFurn(['fireplace'],16);
+  if(h&&hearthOn(P.inside)&&(!f||Math.hypot(h.x+h.w/2-P.x,h.y+h.h/2-P.y)<Math.hypot(f.x+f.w/2-P.x,f.y+f.h/2-P.y)))f=h;   // lareira acesa tambem assa
+  return f?{x:f.x+f.w/2,y:f.y+f.h/2,stove:true}:null;
+}
 /* ===== O QUE O BOTAO FAZ: sempre o alvo mais PERTO do personagem =====
    Concorrem: item no chao, baú, cama/barraca, porta (abrir/fechar), torneira e veiculo. Distancia ate a borda do objeto;
    num empate (menos de 3 px) vale a ordem porta > baú > item > torneira > cama > veiculo. */
@@ -812,7 +817,7 @@ function pickup(){
       return;
     }
     const st=!TG&&!P.hold&&nearestStove();
-    if(st){toast('Segure carne, peixe ou milho crus para assar no fogão');return;}
+    if(st){toast('Segure carne, peixe ou milho crus para assar aqui');return;}
   }
   if(TG&&TG.k==='chest'){openChest(TG.ch,false);return;}
   if(TG&&TG.k==='stash'){openStash(TG.bx);return;}
