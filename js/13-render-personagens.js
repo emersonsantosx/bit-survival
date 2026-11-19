@@ -1226,28 +1226,29 @@ function drawCampfire(c){
   if(dark>.1){ctx.fillStyle='rgba(255,120,30,'+(0.12*dark).toFixed(3)+')';ctx.beginPath();ctx.arc(x,y-4,52,0,6.283);ctx.fill();}
   if(weather==='rain'){ R(x-3,y-18,6,5,'rgba(90,90,90,.4)'); }
 }
-function drawCityRoads(vx0,vy0,vx1,vy1){
+function drawCityRoads(vx0,vy0,vx1,vy1,pen){
+  if(!pen) pen=R;
   const vr=[];
   for(const r of roads) if(!(r.x-8>vx1||r.x+r.w+8<vx0||r.y-8>vy1||r.y+r.h+8<vy0)) vr.push(r);
   const vi=cityInter.filter(q=>!(q.x-14>vx1||q.x+q.w+14<vx0||q.y-14>vy1||q.y+q.h+14<vy0));
   for(const r of vr){ // calçadas
-    if(r.vert){R(r.x-8,r.y,8,r.h,'#7c7f84');R(r.x+r.w,r.y,8,r.h,'#7c7f84');}
-    else{R(r.x,r.y-8,r.w,8,'#7c7f84');R(r.x,r.y+r.h,r.w,8,'#7c7f84');}
+    if(r.vert){pen(r.x-8,r.y,8,r.h,'#7c7f84');pen(r.x+r.w,r.y,8,r.h,'#7c7f84');}
+    else{pen(r.x,r.y-8,r.w,8,'#7c7f84');pen(r.x,r.y+r.h,r.w,8,'#7c7f84');}
   }
-  for(const r of vr) R(r.x,r.y,r.w,r.h,'#3a3a40'); // asfalto (cruzamentos ficam limpos)
+  for(const r of vr) pen(r.x,r.y,r.w,r.h,'#3a3a40'); // asfalto (cruzamentos ficam limpos)
   const inI=(px,py,w,h)=>{for(const q of vi)if(px+w>q.x-2&&px<q.x+q.w+2&&py+h>q.y-2&&py<q.y+q.h+2)return true;return false;};
   for(const r of vr){ // faixa central tracejada, sem atravessar cruzamentos
     if(!r.vert){
       const cy=r.y+Math.floor(r.h/2)-1, a=Math.max(r.x+6,Math.floor(vx0)), b=Math.min(r.x+r.w-6,vx1);
-      for(let x=r.x+Math.floor((a-r.x)/20)*20;x<b;x+=20){ if(x<r.x+6||inI(x,cy,11,2))continue; R(x,cy,11,2,r.main?'#e0c040':'#c0c050'); }
+      for(let x=r.x+Math.floor((a-r.x)/20)*20;x<b;x+=20){ if(x<r.x+6||inI(x,cy,11,2))continue; pen(x,cy,11,2,r.main?'#e0c040':'#c0c050'); }
     } else {
       const cx=r.x+Math.floor(r.w/2)-1, a=Math.max(r.y+6,Math.floor(vy0)), b=Math.min(r.y+r.h-6,vy1);
-      for(let y=r.y+Math.floor((a-r.y)/20)*20;y<b;y+=20){ if(y<r.y+6||inI(cx,y,2,11))continue; R(cx,y,2,11,r.main?'#e0c040':'#c0c050'); }
+      for(let y=r.y+Math.floor((a-r.y)/20)*20;y<b;y+=20){ if(y<r.y+6||inI(cx,y,2,11))continue; pen(cx,y,2,11,r.main?'#e0c040':'#c0c050'); }
     }
   }
   for(const q of vi){ // faixas de pedestres nos 4 lados de cada cruzamento
-    for(let k=3;k<q.w-3;k+=6){ R(q.x+k,q.y-11,3,8,'#cfcfcf'); R(q.x+k,q.y+q.h+3,3,8,'#cfcfcf'); }
-    for(let k=3;k<q.h-3;k+=6){ R(q.x-11,q.y+k,8,3,'#cfcfcf'); R(q.x+q.w+3,q.y+k,8,3,'#cfcfcf'); }
+    for(let k=3;k<q.w-3;k+=6){ pen(q.x+k,q.y-11,3,8,'#cfcfcf'); pen(q.x+k,q.y+q.h+3,3,8,'#cfcfcf'); }
+    for(let k=3;k<q.h-3;k+=6){ pen(q.x-11,q.y+k,8,3,'#cfcfcf'); pen(q.x+q.w+3,q.y+k,8,3,'#cfcfcf'); }
   }
 }
 function drawOpenVeh(K,v,L,W){

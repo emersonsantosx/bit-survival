@@ -1151,6 +1151,34 @@ function lakeGlints(l){
     ctx.fillRect(Math.round(px)-1,Math.round(py),3,1);ctx.fillRect(Math.round(px),Math.round(py)-1,1,3);
   }
 }
+/* Um azulejo 16x16 do chao. q(x,y,w,h,cor) e quem pinta (R na tela, ou o pincel de um bloco pronto). Mesma conta para os dois caminhos */
+function groundTileDraw(q,tx,ty){
+  const h=((tx*73856093)^(ty*19349663))>>>0,v=h%100;
+  const px=tx*16,py=ty*16;
+  if(selectedMap==='forest'){
+    if(v<30) q(px,py,16,16,'#356427');
+    else if(v<40) q(px,py,16,16,'#3d7230');
+    else if(v<48){ q(px+4,py+4,3,3,'#4a8a3a'); q(px+10,py+9,2,2,'#2a5a20'); }
+    else if(v<52) q(px+6,py+8,4,2,'#5a9a4a');
+  } else if(selectedMap==='desert'){
+    if(v<28) q(px,py,16,16,'#b89c54');
+    else if(v<40) q(px,py,16,16,'#cbb06a');
+    else if(v<48) q(px,py,16,16,'#d4b878');
+    else if(v<55){ q(px+3,py+5,2,2,'#a88848'); q(px+10,py+10,2,2,'#e0c890'); }
+  } else if(selectedMap==='snow'){
+    if(v<30) q(px,py,16,16,'#c2ccd6');
+    else if(v<42) q(px,py,16,16,'#d8e0e8');
+    else if(v<50) q(px,py,16,16,'#e4ecf2');
+    else if(v<56){ q(px+4,py+6,3,3,'#b0c0d0'); q(px+9,py+3,2,2,'#f0f4f8'); }
+  } else { // city
+    if(v<25) q(px,py,16,16,'#4e5359');
+    else if(v<35) q(px,py,16,16,'#5a6068');
+    else if(v<42) q(px+6,py+6,4,4,'#606060');
+    else if(v<48){ q(px+2,py+2,12,1,'#4a4a50'); q(px+2,py+8,12,1,'#4a4a50'); }
+    else if(v<52) q(px+5,py+5,6,6,'#3a3a40');
+  }
+}
+window.groundTileDraw=groundTileDraw;   // o arquivo 30 monta os blocos de chao com esta mesma conta
 function render(){
   if(!P)return;
   const sk=shake>0&&CFG.shake,sx=sk?Math.round(rnd(-shake,shake)):0,sy=sk?Math.round(rnd(-shake,shake)):0;   // CONFIGURACOES: tremor de tela
@@ -1230,31 +1258,8 @@ function render(){
   ctx.save();ctx.beginPath();ctx.rect(0,0,WW,WH);ctx.clip();   // azulejos da ultima coluna/linha nao passam do fim do mundo (borda preta lisa)
   const tx0=Math.max(0,Math.floor(vx0/16)),tx1=Math.min(WW/16,Math.ceil(vx1/16));
   const ty0=Math.max(0,Math.floor(vy0/16)),ty1=Math.min(WH/16,Math.ceil(vy1/16));
-  for(let ty=ty0;ty<ty1;ty++)for(let tx=tx0;tx<tx1;tx++){
-    const h=((tx*73856093)^(ty*19349663))>>>0,v=h%100;
-    const px=tx*16,py=ty*16;
-    if(selectedMap==='forest'){
-      if(v<30) R(px,py,16,16,'#356427');
-      else if(v<40) R(px,py,16,16,'#3d7230');
-      else if(v<48){ R(px+4,py+4,3,3,'#4a8a3a'); R(px+10,py+9,2,2,'#2a5a20'); }
-      else if(v<52) R(px+6,py+8,4,2,'#5a9a4a');
-    } else if(selectedMap==='desert'){
-      if(v<28) R(px,py,16,16,'#b89c54');
-      else if(v<40) R(px,py,16,16,'#cbb06a');
-      else if(v<48) R(px,py,16,16,'#d4b878');
-      else if(v<55){ R(px+3,py+5,2,2,'#a88848'); R(px+10,py+10,2,2,'#e0c890'); }
-    } else if(selectedMap==='snow'){
-      if(v<30) R(px,py,16,16,'#c2ccd6');
-      else if(v<42) R(px,py,16,16,'#d8e0e8');
-      else if(v<50) R(px,py,16,16,'#e4ecf2');
-      else if(v<56){ R(px+4,py+6,3,3,'#b0c0d0'); R(px+9,py+3,2,2,'#f0f4f8'); }
-    } else { // city
-      if(v<25) R(px,py,16,16,'#4e5359');
-      else if(v<35) R(px,py,16,16,'#5a6068');
-      else if(v<42) R(px+6,py+6,4,4,'#606060');
-      else if(v<48){ R(px+2,py+2,12,1,'#4a4a50'); R(px+2,py+8,12,1,'#4a4a50'); }
-      else if(v<52) R(px+5,py+5,6,6,'#3a3a40');
-    }
+  if(!groundChunksDraw(tx0,tx1,ty0,ty1)){   // chao em blocos prontos (js/30); este laco so roda em zoom quebrado ou sem suporte
+    for(let ty=ty0;ty<ty1;ty++)for(let tx=tx0;tx<tx1;tx++)groundTileDraw(R,tx,ty);
   }
   ctx.restore();
   if(selectedMap==='city'&&cityGardens.length){   // gramados: quarteiroes de praca/parque/lote e quintais
@@ -1296,7 +1301,7 @@ function render(){
     const lr=l.r*1.25;
     if(l.cx+lr>vx0&&l.cx-lr<vx1&&l.cy+lr>vy0&&l.cy-lr<vy1) drawLake(l);
   }
-  if(selectedMap==='city'){ drawCityRoads(vx0,vy0,vx1,vy1); drawOrla(vx0,vy0,vx1,vy1); }
+  if(selectedMap==='city'){ cityRoadsChunksDraw(vx0,vy0,vx1,vy1); drawOrla(vx0,vy0,vx1,vy1); }
   else for(const r of roads){
     if(r.x>vx1||r.x+r.w<vx0||r.y>vy1||r.y+r.h<vy0)continue;
     const roadCol=selectedMap==='snow'?'#98a4b0':selectedMap==='desert'?'#8c7c5c':selectedMap==='city'?'#3a3a40':'#7a6a4a';

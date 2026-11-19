@@ -240,37 +240,56 @@ function structLoad(a){   // depois de gerar o mundo e antes de carregar as cerc
 function fencesInView(vx0,vx1,vy0,vy1){return fences.filter(f=>{const x=f.x*CELL,y=f.y*CELL;return x+CELL>vx0&&x-CELL<vx1&&y+CELL>vy0-12&&y-CELL<vy1+12;});}
 function fenceDepth(f){return f.d==='h'?f.y*CELL:f.y*CELL+CELL-1;}
 const PAL_W=['#f2efe6','#cfc9b8','#a8a290'],PAL_B=['#9a6a3a','#7a5230','#5a3c20'];   // branca (casas da cidade) e marrom (construida pelo jogador)
-function drawFence(f){drawFence0(f);fenceSnow(f);}
-function drawFence0(f){
+function drawFence0(f,q){
   if(f.g>=2){drawWall(f);return;}
   const x=f.x*CELL,y=f.y*CELL,WH1=(f.s?PAL_W:PAL_B)[0],WH2=(f.s?PAL_W:PAL_B)[1],WH3=(f.s?PAL_W:PAL_B)[2];
   if(f.d==='h'){
     if(!f.g){
-      for(let k=0;k<4;k++){const px=x+k*4+1;R(px,y-6,2,7,WH1);R(px,y-7,2,1,WH2);R(px+1,y-6,1,7,WH2);}
-      R(x,y-5,CELL,1,WH3);R(x,y-2,CELL,1,WH3);
+      for(let k=0;k<4;k++){const px=x+k*4+1;q(px,y-6,2,7,WH1);q(px,y-7,2,1,WH2);q(px+1,y-6,1,7,WH2);}
+      q(x,y-5,CELL,1,WH3);q(x,y-2,CELL,1,WH3);
     }else if(f.o){   // portinha aberta: so os dois postes e a folha virada para o lado
-      R(x+1,y-7,2,8,WH1);R(x+CELL-3,y-7,2,8,WH1);R(x+1,y-8,2,1,WH2);R(x+CELL-3,y-8,2,1,WH2);
-      R(x+1,y-13,3,6,WH2);R(x+1,y-13,1,6,WH1);R(x+3,y-12,1,5,WH3);
+      q(x+1,y-7,2,8,WH1);q(x+CELL-3,y-7,2,8,WH1);q(x+1,y-8,2,1,WH2);q(x+CELL-3,y-8,2,1,WH2);
+      q(x+1,y-13,3,6,WH2);q(x+1,y-13,1,6,WH1);q(x+3,y-12,1,5,WH3);
     }else{   // portinha: moldura com tabuas e travessa em diagonal
-      R(x+1,y-7,2,8,WH1);R(x+CELL-3,y-7,2,8,WH1);R(x+1,y-8,2,1,WH2);R(x+CELL-3,y-8,2,1,WH2);
-      R(x+3,y-5,CELL-6,5,WH2);R(x+3,y-5,CELL-6,1,WH1);R(x+3,y-1,CELL-6,1,WH1);
-      for(let k=0;k<CELL-7;k++)R(x+3+k,y-1-((k*3/(CELL-7))|0),1,1,WH3);
-      R(x+CELL-6,y-3,1,1,'#7a5a2a');
+      q(x+1,y-7,2,8,WH1);q(x+CELL-3,y-7,2,8,WH1);q(x+1,y-8,2,1,WH2);q(x+CELL-3,y-8,2,1,WH2);
+      q(x+3,y-5,CELL-6,5,WH2);q(x+3,y-5,CELL-6,1,WH1);q(x+3,y-1,CELL-6,1,WH1);
+      for(let k=0;k<CELL-7;k++)q(x+3+k,y-1-((k*3/(CELL-7))|0),1,1,WH3);
+      q(x+CELL-6,y-3,1,1,'#7a5a2a');
     }
   }else{
     const top=y;
     if(!f.g){
-      for(let k=0;k<4;k++){const py=top+k*4+3;R(x-1,py-6,3,7,WH1);R(x-1,py-7,3,1,WH2);R(x+1,py-6,1,7,WH2);}
-      R(x,top-4,1,CELL,WH3);R(x,top-1,1,CELL,WH3);
+      for(let k=0;k<4;k++){const py=top+k*4+3;q(x-1,py-6,3,7,WH1);q(x-1,py-7,3,1,WH2);q(x+1,py-6,1,7,WH2);}
+      q(x,top-4,1,CELL,WH3);q(x,top-1,1,CELL,WH3);
     }else if(f.o){
-      R(x-1,top-5,3,3,WH1);R(x-1,top+CELL-4,3,3,WH1);
-      R(x-1,top-4,7,2,WH2);R(x-1,top-4,7,1,WH1);
+      q(x-1,top-5,3,3,WH1);q(x-1,top+CELL-4,3,3,WH1);
+      q(x-1,top-4,7,2,WH2);q(x-1,top-4,7,1,WH1);
     }else{
-      R(x-1,top-5,3,3,WH1);R(x-1,top+CELL-4,3,3,WH1);
-      R(x,top-2,1,CELL-3,WH3);R(x-1,top+2,3,8,WH2);R(x-1,top+2,1,8,WH1);R(x+1,top+8,1,2,'#7a5a2a');
+      q(x-1,top-5,3,3,WH1);q(x-1,top+CELL-4,3,3,WH1);
+      q(x,top-2,1,CELL-3,WH3);q(x-1,top+2,3,8,WH2);q(x-1,top+2,1,8,WH1);q(x+1,top+8,1,2,'#7a5a2a');
     }
   }
 }
+/* Cerca baixa e portinha: sao 14 a 20 retangulos pequenos por peca e a cidade mostra dezenas por quadro. Cada formato (direcao, tipo, aberta,
+   cor) e pintado uma vez numa figurinha e depois so carimbado: o resultado e exatamente o mesmo desenho. Paredes altas seguem pelo caminho antigo. */
+const FENCE_SPR=new Map(),FENCE_OX=8,FENCE_OY=16;
+function fenceSprite(f){
+  const k=(f.d==='h'?0:1)+(f.g?2:0)+(f.o?4:0)+(f.s?8:0);
+  let c=FENCE_SPR.get(k);
+  if(c)return c;
+  c=document.createElement('canvas');c.width=CELL+FENCE_OX*2;c.height=CELL+FENCE_OY+8;
+  const g=c.getContext('2d');
+  const qq=(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect(x+FENCE_OX,y+FENCE_OY,w,h);};
+  drawFence0({x:0,y:0,d:f.d,g:f.g,o:f.o,s:f.s},qq);
+  FENCE_SPR.set(k,c);
+  return c;
+}
+function drawFence(f){
+  if(f.g>=2||!(CELL===16))drawFence0(f,R);
+  else{const k=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;ctx.drawImage(fenceSprite(f),f.x*CELL-FENCE_OX,f.y*CELL-FENCE_OY);ctx.imageSmoothingEnabled=k;}
+  fenceSnow(f);
+}
+
 /* neve no topo das cercas, portinhas e paredes (cresce com a neve acumulada) */
 function fenceSnow(f){
   if(snowAcc()<.06)return;
@@ -471,6 +490,6 @@ function fenceApplySnapshot(a,mode){   // mode 2: tambem tira as pecas que o anf
   if(mode===2){remoteOp=true;try{for(const f of fences.slice())if(!f.s&&!have.has(fkey(f.x,f.y,f.d)))dropPiece(f);}finally{remoteOp=false;}}
 }
 
-window.cellWalled=cellWalled;window.cellWallDirs=cellWallDirs;window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
+window.drawFence0=drawFence0;window.fenceSnow=fenceSnow;window.cellWalled=cellWalled;window.cellWallDirs=cellWallDirs;window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
 window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;
 })();
