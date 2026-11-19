@@ -369,7 +369,7 @@ function rebuildSolidGrid(){
   solidGrid=new Map();
   const put=(x,y,kind,ref)=>{
     const cx=Math.floor(x/SOLID_GRID), cy=Math.floor(y/SOLID_GRID);
-    const k=cx+','+cy;
+    const k=(cx+8)*4096+cy+8;   // chave numerica (antes era texto: 1 texto novo por consulta, lixo para o coletor)
     let arr=solidGrid.get(k);
     if(!arr){ arr=[]; solidGrid.set(k,arr); }
     arr.push({x,y,kind,ref});
@@ -389,7 +389,7 @@ function querySolidNear(x,y,pad){
   const out=[];
   for(let cx=cx0;cx<=cx1;cx++){
     for(let cy=cy0;cy<=cy1;cy++){
-      const arr=solidGrid.get(cx+','+cy);
+      const arr=solidGrid.get((cx+8)*4096+cy+8);
       if(arr) for(let i=0;i<arr.length;i++) out.push(arr[i]);
     }
   }
@@ -397,16 +397,22 @@ function querySolidNear(x,y,pad){
 }
 function pushOut(e,r){
   // Árvores / rochas / decorações sólidas via grade (bem mais barato)
-  const near=querySolidNear(e.x,e.y,24);
-  for(let i=0;i<near.length;i++){
-    const n=near[i];
-    const dx=e.x-n.x, dy=e.y-n.y;
-    if(dx>22||dx<-22||dy>22||dy<-22) continue;
-    const rad=n.kind==='tree'?r+4:r+6;
-    const d=Math.hypot(dx,dy);
-    if(d<rad){
-      if(d>.001){ e.x=n.x+dx/d*rad; e.y=n.y+dy/d*rad; }
-      else e.x+=rad;
+  if(solidGrid){   // mesma varredura de querySolidNear(e.x,e.y,24), sem montar a lista a cada chamada
+    const ex=e.x,ey=e.y,gx0=Math.floor((ex-24)/SOLID_GRID),gx1=Math.floor((ex+24)/SOLID_GRID),gy0=Math.floor((ey-24)/SOLID_GRID),gy1=Math.floor((ey+24)/SOLID_GRID);
+    for(let gx=gx0;gx<=gx1;gx++)for(let gy=gy0;gy<=gy1;gy++){
+      const arr=solidGrid.get((gx+8)*4096+gy+8);
+      if(!arr)continue;
+      for(let i=0;i<arr.length;i++){
+        const n=arr[i];
+        const dx=e.x-n.x, dy=e.y-n.y;
+        if(dx>22||dx<-22||dy>22||dy<-22) continue;
+        const rad=n.kind==='tree'?r+4:r+6;
+        const d=Math.hypot(dx,dy);
+        if(d<rad){
+          if(d>.001){ e.x=n.x+dx/d*rad; e.y=n.y+dy/d*rad; }
+          else e.x+=rad;
+        }
+      }
     }
   }
   for(const v of vehicles){

@@ -209,6 +209,7 @@ function genWorld(seed) {
   setWorldSize();
   setRng(seed);
   worldFlavor();
+  if(window.layerCachesFlush)layerCachesFlush();   // blocos prontos de chao/ruas (js/30) eram do mundo anterior
   solidGrid=null;SPG=null;FIELD=null;LM=null;chestList=[];   // grades de colisão do mundo anterior não podem vazar para a geração (senão o mesmo seed gera mundos diferentes)
   try {
   cityGardens=[];cityYards=[];cityPaths=[];cityDecor=[];fenceCityClear();ghLoad([]);
@@ -786,12 +787,25 @@ function drawBirdsAir(vx0,vx1,vy0,vy1){
     drawBirdBody(b,b.x,b.y-b.z,true);
   }
 }
-function updateAnimals(dt){
+let _animTick=0;
+function updateAnimals(dt0){
   if(!animals||!animals.length) return;
   // No multiplayer só o host simula; guest recebe posições no snapshot
   if(MP.active && !MP.isHost) return;
-  for(const a of animals){
+  /* Bicho longe de TODOS os jogadores (bem alem do que a tela mostra) nao precisa de colisao a cada quadro: anda de 4 em 4 quadros com o
+     tempo acumulado (mesmo caminho, passos mais longos). Quem esta perto ou na tela segue quadro a quadro. Eram ~190 bichos com colisao por quadro. */
+  const farD=Math.max(520,Math.hypot(W,H)/(2*Math.max(.5,Z))+200),farD2=farD*farD;
+  _animTick++;
+  for(let ai=0;ai<animals.length;ai++){
+    const a=animals[ai];
     if(a.dead) continue;
+    let dt=dt0;
+    if(P){
+      let near=(P.x-a.x)*(P.x-a.x)+(P.y-a.y)*(P.y-a.y)<farD2;
+      if(!near&&MP.active)for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&Number.isFinite(rp.x)&&(rp.x-a.x)*(rp.x-a.x)+(rp.y-a.y)*(rp.y-a.y)<farD2){near=true;break;}}
+      if(near){ a._lodT=0; }
+      else{ a._lodT=(a._lodT||0)+dt0; if((_animTick+ai)&3) continue; dt=Math.min(a._lodT,.3); a._lodT=0; }
+    }
     a.atkCD=(a.atkCD||0)-dt;
     const _ax0=a.x,_ay0=a.y;
     const aggressive=!!ANIMAL_AGGRO[a.k];
