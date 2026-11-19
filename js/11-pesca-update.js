@@ -1247,7 +1247,8 @@ function update(dt){
       }
     }
     // Timeout: sem pacote por 15s (mais tolerante em 4G)
-    if(MP.lastRecv && (performance.now()-MP.lastRecv)>9000){
+    if(MP.isHost&&!MP._gc){ hostCheckStale(); }
+    else if(MP.lastRecv && (performance.now()-MP.lastRecv)>9000){
       MP.lastRecv=performance.now();
       const dead=MP.conn;MP.connected=false;MP.conn=null;
       try{if(dead)dead.close();}catch(e){}

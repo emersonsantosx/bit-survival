@@ -296,7 +296,11 @@ function loadPeerJS(cb){
   document.head.appendChild(s);
 }
 function makeRoomCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<6;i++)s+=c[Math.floor(Math.random()*c.length)];return s;}
-function setStatus(id,msg,isErr){const e=$(id);if(!e)return;e.textContent=msg;e.classList.toggle('err',!!isErr);}
+function setStatus(id,msg,isErr){
+  const e=$(id);if(e){e.textContent=msg;e.classList.toggle('err',!!isErr);}
+  // na sala, erros e avisos de rede aparecem na linha de status dela
+  if(MP.lobbyOn&&(id==='hostStatus'||id==='joinStatus')&&(isErr||/Reconectando|Erro/.test(msg))){const l=$('lobStatus');if(l){l.textContent=msg;l.classList.toggle('err',!!isErr);}}
+}
 
 function mpHostStart(){
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
@@ -320,6 +324,7 @@ function mpHostStart(){
   MP.roomCode='MINISURV-'+code;MP.isHost=true;MP.active=true;
   const hc=$('hostCode');if(hc)hc.textContent=code;
   const wrap=$('hostCodeWrap');if(wrap)wrap.classList.remove('hide');
+  MP.players=mpPlayersList();
   setStatus('hostStatus','Carregando motor P2P...');
   loadPeerJS(err=>{
     if(err||typeof Peer==='undefined'){MP.active=false;MP.isHost=false;setStatus('hostStatus','Falha ao carregar P2P',true);return;}
@@ -335,18 +340,10 @@ function hostOpenPeer(recreate,tries){
   try{MP.peer=new Peer(MP.roomCode, peerOpts);}
   catch(e){setStatus('hostStatus','Erro: '+e.message,true);return;}
   const me=MP.peer;
-  me.on('open',id=>{MP.myId=id;setStatus('hostStatus','Sala criada! Aguardando jogador...');console.log('[Host] peer aberto:',id);});
+  me.on('open',id=>{MP.myId=id;MP._lobErr=false;setStatus('hostStatus','Sala criada! Aguardando jogadores...');console.log('[Host] peer aberto:',id);try{lobbyRender();}catch(e){}});
   me.on('connection',conn=>{
     console.log('[Host] nova conexão recebida');
-    if(MP.conn&&MP.conn.open){
-      // Em partida: se a conexão antiga está muda há >4s, é o convidado voltando — a nova assume
-      const stale=MP.gameStarted&&(performance.now()-MP.lastRecv>4000);
-      if(!stale){try{conn.close();}catch(e){}return;}
-      const old=MP.conn;MP.conn=null;MP.connected=false;
-      try{old.close();}catch(e){}
-    }
-    MP.conn=conn;
-    setupConn(conn,true);
+    hostAcceptConn(conn);
   });
   me.on('disconnected',()=>{ hostSignalRetry(0); }); // caiu do servidor de sinalização: volta com o mesmo código
   me.on('error',err=>{
@@ -363,13 +360,13 @@ function hostOpenPeer(recreate,tries){
     // Ao refazer a sala com o mesmo código, o servidor pode demorar a liberar o anterior: tenta algumas vezes
     if(t==='unavailable-id'&&recreate&&tries<6){
       setStatus('hostStatus','Reconectando a sala...');
-      clearTimeout(hostRetryTimer);hostRetryTimer=setTimeout(()=>{if(MP.isHost&&MP.active&&!MP.gameStarted&&!MP.connected)hostOpenPeer(true,tries+1);},2500);
+      clearTimeout(hostRetryTimer);hostRetryTimer=setTimeout(()=>{if(MP.isHost&&MP.active&&!MP.gameStarted)hostOpenPeer(true,tries+1);},2500);
       return;
     }
     const msg=t==='unavailable-id'
       ?'Código de sala ocupado. Volte e crie outra sala.'
       :('Falha de conexão: '+(t||'erro desconhecido'));
-    setStatus('hostStatus',msg,true);
+    MP._lobErr=true;setStatus('hostStatus',msg,true);
     if(!MP.connected){MP.active=false;MP.isHost=false;}
   });
 }
@@ -383,7 +380,7 @@ function hostSignalRetry(n){
 }
 /* Voltou do segundo plano com a sala ainda aguardando: confere se o código continua registrado */
 function hostCheckRoomAlive(){
-  if(!MP.active||!MP.isHost||MP.gameStarted||MP.connected||!MP.roomCode) return;
+  if(!MP.active||!MP.isHost||MP.gameStarted||!MP.roomCode) return;   // sala ainda aberta (com ou sem convidados): confere o código
   const p=MP.peer;
   if(!p||p.destroyed){ hostOpenPeer(true,0); }
   else if(p.disconnected){ hostSignalRetry(0); }
@@ -460,15 +457,13 @@ function hideReconnectUI(){const el=document.getElementById('reconn');if(el)el.s
 function mpResetReconnect(){
   clearTimeout(MP._rcT);clearTimeout(MP._rsT);
   MP.reconnecting=false;MP.guestAway=false;MP.gameStarted=false;MP.seed=null;MP._resumeSame=false;
+  MP.roster={};MP.players=[];MP.netId='guest';MP.slotIdx=1;MP.lobbyOn=false;MP._starting=false;MP._lobErr=false;MP.lobbyInfo='';
   hideReconnectUI();
 }
 function mpConnectionLost(){
   if(!MP.active||!MP.gameStarted||state==='menu')return;
   if(MP.isHost){
-    if(MP.guestAway)return;
-    MP.guestAway=true;
-    remotePlayers={};
-    toast('Convidado desconectou: aguardando reconexão…');
+    hostSync();   // quedas de convidados sao tratadas uma a uma em hostConnClosed
   } else {
     if(MP.reconnecting)return;
     MP.reconnecting=true;MP.reconnStart=performance.now();MP.reconnTries=0;MP._resumeSame=false;
@@ -520,18 +515,19 @@ function mpGuestReconnectAttempt(){
     np.on('disconnected',()=>{try{np.reconnect();}catch(e){}});
   }
 }
-function hostResumeGuest(){
-  MP.guestAway=false;
+function hostResumeGuest(conn,id){
+  const r=MP.roster[id];
   try{
-    if(MP.conn&&MP.conn.open){
-      MP.conn.send({type:'worldInit',seed:MP.seed,map:selectedMap,sv:worldExtraPack(),sp:P?[Math.round(P.x),Math.round(P.y)]:undefined});
-      MP.conn.send({type:'start',map:selectedMap,resume:true});
-    }
+    conn.send({type:'welcome',id:id,idx:MP_IDS.indexOf(id),ig:1});
+    conn.send({type:'worldInit',seed:MP.seed,map:selectedMap,sv:worldExtraPack(),sp:P?[Math.round(P.x),Math.round(P.y)]:undefined});
+    conn.send({type:'start',map:selectedMap,resume:true,idx:MP_IDS.indexOf(id)});
   }catch(e){console.warn('[Host resume]',e);}
+  hostSync();
   MP._vNext=0;
-  toast('Convidado conectado!');
-  const pushSnap=()=>{if(MP.conn&&MP.conn.open&&state!=='menu')mpSend(packSnapshot());};
+  toast((r&&r.name||'Jogador')+' conectado!');
+  const pushSnap=()=>{if(conn.open&&state!=='menu')mpSend(packSnapshot());};
   setTimeout(pushSnap,150);setTimeout(pushSnap,500);setTimeout(pushSnap,1200);
+  hostBroadcastLobby();
 }
 function guestResumed(){
   clearTimeout(MP._rcT);clearTimeout(MP._rsT);
@@ -556,6 +552,161 @@ function hostBuildWorld(){
   console.log('[Host] genWorld OK (seed='+seed+', slot='+MP.slot+'):',trees.length,'árvores,',rocks.length,'rochas');
   return {seed:seed,map:selectedMap,sv:worldExtraPack(),sp:L?[Math.round(L.P.x),Math.round(L.P.y)]:undefined};
 }
+/* ===== SALA (host) =====
+   O host e o centro: cada convidado tem uma conexao propria (MP.conns[g1..g3]) e uma vaga na tabela MP.roster.
+   Antes da partida a sala e um lobby: convidados marcam PRONTO e so o host inicia. Durante a partida a vaga de quem caiu fica reservada para ele voltar. */
+const MAP_NOME={forest:'Floresta',desert:'Deserto',snow:'Neve',city:'Cidade'};
+function mpPlayersList(){
+  const a=[{id:'host',name:MP.playerName||'Host',ready:true,host:true,away:false}];
+  for(const id of MP_IDS){ if(id==='host')continue; const r=MP.roster[id]; if(r)a.push({id:id,name:r.name,ready:!!r.ready,host:false,away:!!r.away}); }
+  return a;
+}
+function mpWorldInfo(){
+  const mp=MP.save?MP.save.map:(mpSelectedMap||'forest');
+  return (MP.save?'Mundo salvo: ':'Mundo novo: ')+(MAP_NOME[mp]||'Floresta');
+}
+function hostSync(){
+  if(!MP.isHost||MP._gc)return;
+  const n=mpOpenConns().length;
+  MP.connected=n>0;
+  if(MP.gameStarted)MP.guestAway=n===0;   // "ninguem conectado": o host segue jogando sozinho ate alguem voltar
+}
+function hostBroadcastLobby(){
+  if(!MP.isHost)return;
+  MP.players=mpPlayersList();
+  MP.lobbyInfo=mpWorldInfo();
+  mpSend({type:'lobby',players:MP.players,info:MP.lobbyInfo,ig:MP.gameStarted?1:0,starting:MP._starting?1:0});
+  try{lobbyRender();}catch(e){}
+}
+function hostFreeId(){for(const id of MP_IDS){if(id!=='host'&&!MP.roster[id])return id;}return null;}
+function hostUniqueName(name,exceptId){
+  const used=new Set([(MP.playerName||'').toLowerCase()]);
+  for(const id in MP.roster){if(id!==exceptId)used.add(MP.roster[id].name.toLowerCase());}
+  if(!used.has(name.toLowerCase()))return name;
+  for(let n=2;n<10;n++){const c=name.slice(0,11-String(n).length+1)+n;if(!used.has(c.toLowerCase()))return c.slice(0,12);}
+  return name;
+}
+function hostRefuse(conn,why){
+  try{conn.send({type:'full',why:why});}catch(e){}
+  setTimeout(()=>{try{conn.close();}catch(e){}},400);
+}
+function hostAcceptConn(conn){
+  conn._netId=null;conn._lastRecv=performance.now();
+  conn._helloT=setTimeout(()=>{if(!conn._netId){try{conn.close();}catch(e){}}},10000);   // quem nao se apresenta e descartado
+  conn.on('data',d=>{conn._lastRecv=performance.now();handleNetData(d,true,conn);});
+  conn.on('close',()=>hostConnClosed(conn));
+  conn.on('error',err=>console.error('[conn error]',err));
+}
+function hostOnHello(conn,data){
+  if(conn._netId)return;
+  clearTimeout(conn._helloT);
+  const name=sanitizeName(data.name);
+  const prev=(typeof data.prev==='string'&&NET_OK_IDS.has(data.prev)&&data.prev!=='host'&&data.prev!=='guest')?data.prev:null;
+  if(MP._starting){hostRefuse(conn,'iniciada');return;}
+  if(MP.gameStarted&&state!=='menu'){
+    // Partida em andamento: so volta quem ja estava nela (mesma vaga ou mesmo nome); a conexao antiga muda ha >4s e considerada caida
+    const now=performance.now();
+    const free=r=>!r.conn||!r.conn.open||(now-(r.conn._lastRecv||0)>4000);
+    let id=null;
+    if(prev&&MP.roster[prev]&&free(MP.roster[prev]))id=prev;
+    if(!id){for(const k in MP.roster){const r=MP.roster[k];if(r.name.toLowerCase()===name.toLowerCase()&&free(r)){id=k;break;}}}
+    if(!id){hostRefuse(conn,'iniciada');return;}
+    const r=MP.roster[id];
+    if(r.conn&&r.conn!==conn){const old=r.conn;r.conn=null;delete MP.conns[id];old._netId=null;try{old.close();}catch(e){}}
+    r.conn=conn;r.away=false;conn._netId=id;MP.conns[id]=conn;
+    hostResumeGuest(conn,id);
+    return;
+  }
+  const id=hostFreeId();
+  if(!id||Object.keys(MP.roster).length>=MP_MAX-1){hostRefuse(conn,'cheia');return;}
+  MP.roster[id]={id:id,name:hostUniqueName(name,id),ready:false,away:false,conn:conn};
+  conn._netId=id;MP.conns[id]=conn;
+  try{conn.send({type:'welcome',id:id,idx:MP_IDS.indexOf(id),ig:0});}catch(e){}
+  MP._lobErr=false;
+  hostSync();
+  hostBroadcastLobby();
+}
+function hostConnClosed(conn){
+  clearTimeout(conn._helloT);
+  const id=conn._netId;
+  if(!id)return;
+  conn._netId=null;
+  if(MP.conns[id]===conn)delete MP.conns[id];
+  const r=MP.roster[id];
+  if(!r||r.conn!==conn)return;
+  if(MP.gameStarted&&state!=='menu'){
+    r.conn=null;r.away=true;r.ready=false;
+    delete remotePlayers[id];
+    for(const v of vehicles){if(v.driverId===id){v.driverId=null;v.spd=0;}}
+    hostSync();
+    toast(r.name+' desconectou: a vaga fica reservada para voltar');
+  } else {
+    delete MP.roster[id];
+    hostSync();
+  }
+  hostBroadcastLobby();
+}
+function hostSetReady(id,ready){
+  const r=MP.roster[id];if(!r||MP.gameStarted||MP._starting)return;
+  r.ready=!!ready;
+  hostBroadcastLobby();
+}
+function hostKick(id){
+  const r=MP.roster[id];if(!r||MP.gameStarted)return;
+  const c=r.conn;
+  delete MP.roster[id];delete MP.conns[id];
+  if(c){c._netId=null;try{c.send({type:'kick',why:'kick'});}catch(e){}setTimeout(()=>{try{c.close();}catch(e){}},300);}
+  hostSync();hostBroadcastLobby();
+}
+/* O botao INICIAR so vale com pelo menos 1 convidado e todos prontos */
+function hostCanStart(){
+  if(!MP.isHost||!MP.active||MP.gameStarted||MP._starting)return false;
+  const g=mpPlayersList().filter(p=>!p.host);
+  return g.length>=1&&g.every(p=>p.ready&&!p.away);
+}
+function hostStartMatch(){
+  if(!hostCanStart()){toast('Espere todos ficarem prontos');return false;}
+  MP._starting=true;
+  hostBroadcastLobby();
+  setStatus('hostStatus','Gerando o mundo...');
+  setTimeout(()=>{
+    try{
+      const wi=hostBuildWorld();
+      for(const id in MP.roster){
+        const r=MP.roster[id],c=r.conn;
+        if(!c||!c.open)continue;
+        c.send({type:'worldInit',seed:wi.seed,map:wi.map,sv:wi.sv,sp:wi.sp});
+        c.send({type:'start',map:selectedMap,idx:MP_IDS.indexOf(id)});
+      }
+      for(const id in MP.roster){MP.roster[id].away=!(MP.roster[id].conn&&MP.roster[id].conn.open);}
+      MP._starting=false;
+      enterMultiplayerGame(true);   // com mundo salvo, usa MP.save (jogador, zumbis e relogio)
+      hostBroadcastLobby();
+    }catch(e){
+      console.error('[Host start]',e);
+      MP._starting=false;MP._lobErr=true;
+      setStatus('hostStatus','Erro ao iniciar: '+(e.message||e),true);
+      hostBroadcastLobby();
+    }
+  },60);
+  return true;
+}
+/* Host: sem pacote de um convidado por 9s, so ele cai (os outros seguem) */
+function hostCheckStale(){
+  const now=performance.now();
+  for(const id of Object.keys(MP.conns)){
+    const c=MP.conns[id];
+    if(c&&now-(c._lastRecv||now)>9000){c._lastRecv=now;try{c.close();}catch(e){}hostConnClosed(c);}
+  }
+}
+
+/* ===== convidado: conexao com o host ===== */
+function guestRoomClosed(msg){
+  try{if(MP.peer)MP.peer.destroy();}catch(e){}
+  MP.peer=null;MP.conn=null;MP.active=false;MP.isHost=false;MP.connected=false;MP.roomCode='';
+  mpResetReconnect();
+  if(state==='menu'){showScreen('mpjoinscreen');setStatus('joinStatus',msg,true);}
+}
 function setupConn(conn,isHostSide){
   let opened=false;
   const onOpen=()=>{
@@ -564,78 +715,72 @@ function setupConn(conn,isHostSide){
     if(MP.conn&&MP.conn!==conn){try{conn.close();}catch(e){}return;} // tentativa antiga que abriu tarde
     if(conn._joinTimer){clearTimeout(conn._joinTimer);conn._joinTimer=null;}
     MP.connected=true;MP.lastRecv=performance.now();
-    if(isHostSide&&MP.gameStarted&&state!=='menu'){ hostResumeGuest(); return; } // partida em andamento: NÃO regenera o mundo
-    if(!isHostSide&&MP.reconnecting){
+    try{conn.send({type:'hello',name:MP.playerName,prev:MP.gameStarted?MP.netId:null});}catch(e){}   // o host decide a vaga
+    if(MP.reconnecting){
       // espera o host liberar a retomada; se não vier em 8s, derruba e tenta de novo
       clearTimeout(MP._rsT);
       MP._rsT=setTimeout(()=>{ if(MP.reconnecting){ MP.connected=false;MP.conn=null;try{conn.close();}catch(e){} mpGuestReconnectAttempt(); } },8000);
       return;
     }
-    console.log('[MP] conn.on("open") disparado. Host?',isHostSide);
-    if(isHostSide){
-      setStatus('hostStatus','Jogador conectado! Gerando mundo...');
-      setTimeout(()=>{
-        try{
-          const wi=hostBuildWorld();
-          if(MP.conn && MP.conn.open){
-            console.log('[Host] enviando seed+map...');
-            MP.conn.send({type:'worldInit', seed: wi.seed, map: wi.map, sv: wi.sv, sp: wi.sp});
-            MP.conn.send({type:'start', map: selectedMap});
-            setStatus('hostStatus','Partida iniciada!');
-          } else {
-            setStatus('hostStatus','Conexão caiu antes do envio',true);
-            return;
-          }
-        }catch(e){
-          console.error('[Host gen/send]',e);
-          setStatus('hostStatus','Erro: '+(e.message||e),true);
-          return;
-        }
-        try{
-          enterMultiplayerGame(true);   // com mundo salvo, usa MP.save (jogador, zumbis e relogio)
-        }catch(e){
-          console.error('[Host enter]',e);
-          setStatus('hostStatus','Erro ao iniciar: '+(e.message||e),true);
-        }
-      }, 50);
-    }else{
-      setStatus('joinStatus','Conectado! Aguardando Host...');
-    }
+    console.log('[MP] conn.on("open") disparado.');
+    setStatus('joinStatus','Conectado! Entrando na sala...');
   };
   conn.on('open',onOpen);
   if(conn.open) setTimeout(onOpen,0);
-  conn.on('data',data=>handleNetData(data,isHostSide));
+  conn.on('data',data=>handleNetData(data,false,conn));
   conn.on('close',()=>{
     if(MP.conn&&MP.conn!==conn) return;            // conexão antiga já substituída
     MP.connected=false;
     if(MP.conn===conn) MP.conn=null;
     if(MP.active&&MP.gameStarted&&state!=='menu'){ mpConnectionLost(); return; } // em partida: espera/tenta reconectar
-    if(MP.active) setStatus(isHostSide?'hostStatus':'joinStatus','Conexão encerrada.',true);
+    if(MP.active&&MP.lobbyOn){ guestRoomClosed('A sala foi encerrada.'); return; }
+    if(MP.active) setStatus('joinStatus','Conexão encerrada.',true);
   });
   conn.on('error',err=>console.error('[conn error]',err));
 }
-function handleNetData(data,isHostSide){
+/* O que o host repassa aos outros convidados (cada convidado so fala com o host). Eventos que so o host resolve nao sao repassados */
+const NET_RELAY=new Set(['player','chat','evt','playerDied','playerRespawned','gameOver']);
+const NET_HOST_ONLY_EVT=new Set(['zombieDmg','animalDmg']);
+function handleNetData(data,isHostSide,conn){
   MP.lastRecv=performance.now();
   if(!data||typeof data!=='object'||typeof data.type!=='string') return;
   if(!NET_OK_TYPES.has(data.type)) return; // descarta tipo desconhecido
+  const fromGuest=!!(isHostSide&&conn);   // pacote que um convidado mandou ao host
+  if(fromGuest){
+    if(data.type==='hello'){ hostOnHello(conn,data); return; }
+    if(!conn._netId) return;               // quem ainda nao se apresentou e ignorado
+    if(data.type==='ready'){ hostSetReady(conn._netId,!!data.r); return; }
+    if(data.type==='leave'){ try{conn.close();}catch(e){} hostConnClosed(conn); return; }
+    if(data.id!==undefined) data.id=conn._netId;   // o id vem da vaga, nunca do pacote (ninguem se passa por outro)
+  }
+  if(data.type==='hello'||data.type==='ready'||data.type==='leave') return;   // so o host recebe
+  if(!isHostSide&&(data.type==='welcome'||data.type==='lobby'||data.type==='full'||data.type==='kick')){ guestRoomMsg(data); return; }
+  const relay=()=>{ if(fromGuest&&NET_RELAY.has(data.type)&&!(data.type==='evt'&&NET_HOST_ONLY_EVT.has(data.kind))) mpSend(data,conn); };
   // Chat first — never blocked by heavier handlers
   if(data.type==='chat'){
     if(typeof data.text!=='string' || data.text.length>60) return;
     if(data.name!=null) data.name=sanitizeName(data.name);
     if(data.id!=null && !NET_OK_IDS.has(data.id)) return;
+    relay();
     receiveChat(data);
     return;
   }
-  // Heartbeat / RTT
+  // Heartbeat / RTT (a resposta vai so para quem perguntou)
   if(data.type==='ping'){
-    mpSend({type:'pong', t:data.t});
+    const pong={type:'pong', t:data.t};
+    if(fromGuest){ try{conn.send(pong);}catch(e){} } else mpSend(pong);
     return;
   }
   if(data.type==='pong'){
-    if(Number.isFinite(data.t)) MP.rtt=Math.max(20, Math.min(800, performance.now()-data.t));
+    if(Number.isFinite(data.t)){
+      const rtt=Math.max(20, Math.min(800, performance.now()-data.t));
+      if(fromGuest){ conn._rtt=rtt; let m=0; for(const c of mpOpenConns()) m=Math.max(m,c._rtt||0); MP.rtt=Math.max(20,m||rtt); }   // o host usa o pior RTT entre os convidados
+      else MP.rtt=rtt;
+    }
     MP.failCount=0;
     return;
   }
+  relay();
   try{
   if(data.type==='worldInit'){
     if(!isHostSide && isFiniteNum(data.seed) && MP.reconnecting && MP.seed===data.seed){
@@ -658,6 +803,7 @@ function handleNetData(data,isHostSide){
       }
     }
   } else if(data.type==='start'){
+    if(!isHostSide&&Number.isInteger(data.idx)&&data.idx>=1&&data.idx<MP_MAX){ MP.slotIdx=data.idx; MP.netId=MP_IDS[data.idx]; }
     if(!isHostSide&&MP.reconnecting&&MP._resumeSame){ guestResumed(); return; }
     if(!isHostSide){
       if(MP.reconnecting){ clearTimeout(MP._rcT);clearTimeout(MP._rsT);MP.reconnecting=false;hideReconnectUI(); } // mundo diferente: entra como novo jogador
@@ -706,14 +852,14 @@ function handleNetData(data,isHostSide){
     if(isFiniteNum(data.fx)&&isFiniteNum(data.fy)){rp.fx=data.fx;rp.fy=data.fy;rp.fl=isFiniteNum(data.fl)?data.fl:3;}else{rp.fx=null;rp.fy=null;}
     rp.ob=(Array.isArray(data.ob)&&data.ob.length>=3&&data.ob.every(isFiniteNum))?data.ob:null;   // o Observador que o outro jogador está vendo
     rp.gh=(Array.isArray(data.gh)&&data.gh.length>=5&&data.gh.every(isFiniteNum))?data.gh:null;   // a aparição que o outro está vendo
-    rp.isHost=!isHostSide;rp.anim=(rp.anim||0)+(data.moving?0.25:0);
+    rp.isHost=(data.id==='host');rp.anim=(rp.anim||0)+(data.moving?0.25:0);
     remotePlayers[data.id]=rp;
     // Teammate just died and we are also dead → end the match
-    if(wasAlive && rp.alive===false && P && P.dead && !MP.gameOver){
+    if(wasAlive && rp.alive===false && P && P.dead && !MP.gameOver && !isOtherPlayerAlive()){
       MP.gameOver=true; state='dead';
       setAmbient(0);setRain(false);
       showDeathScreen(false);
-      toast('Seu amigo também morreu. Fim de jogo.');
+      toast('Todos morreram. Fim de jogo.');
     }
     if(data.vehicleId !== undefined && Number.isFinite(data.vehicleX) && Number.isFinite(data.vehicleY)){
       const v = vehicles.find(v => v.id === data.vehicleId);
@@ -747,13 +893,13 @@ function handleNetData(data,isHostSide){
       remotePlayers[data.id].alive=false;
       remotePlayers[data.id].hp=0;
     }
-    // If we are also dead, it's game over for both
-    if(P && P.dead && !MP.gameOver){
+    // Se estamos mortos e ninguem mais esta vivo, acabou para todos
+    if(P && P.dead && !MP.gameOver && !isOtherPlayerAlive()){
       MP.gameOver=true;
       state='dead';
       setAmbient(0);setRain(false);
       showDeathScreen(false);
-      toast('Seu amigo também morreu. Fim de jogo.');
+      toast('Todos morreram. Fim de jogo.');
     }
   } else if(data.type==='gameOver'){
     if(!MP.gameOver){
@@ -770,6 +916,31 @@ function handleNetData(data,isHostSide){
     }
   }
   }catch(err){ console.error('[handleNetData]', data&&data.type, err); }
+}
+/* Convidado: mensagens da sala (vaga, lista de jogadores, sala cheia, expulsao) */
+function guestRoomMsg(data){
+  if(data.type==='welcome'){
+    if(typeof data.id==='string'&&MP_IDS.indexOf(data.id)>0){ MP.netId=data.id; MP.slotIdx=MP_IDS.indexOf(data.id); }
+    if(!data.ig&&state==='menu'&&!MP.gameStarted){ MP.lobbyOn=true; MP.players=[]; MP._lobErr=false; try{lobbyShow();}catch(e){} }
+  } else if(data.type==='lobby'){
+    if(!Array.isArray(data.players)) return;
+    const list=[];
+    for(const p of data.players.slice(0,MP_MAX)){
+      if(!p||typeof p.id!=='string'||!NET_OK_IDS.has(p.id)) continue;
+      list.push({id:p.id,name:sanitizeName(p.name),ready:!!p.ready,host:p.id==='host',away:!!p.away});
+    }
+    MP.players=list;
+    MP.lobbyInfo=typeof data.info==='string'?data.info.replace(/[^\wÀ-ÿ\s:.\-]/g,'').slice(0,40):'';
+    MP._starting=!!data.starting;
+    if(data.ig){   // em partida: quem saiu some do mundo
+      for(const id in remotePlayers){ const p=list.find(q=>q.id===id); if(!p||p.away){ toast((remotePlayers[id].name||'Jogador')+' saiu'); delete remotePlayers[id]; } }
+    }
+    try{lobbyRender();}catch(e){}
+  } else if(data.type==='full'){
+    guestRoomClosed(data.why==='iniciada'?'A partida já começou. Peça ao host para criar outra sala.':'Sala cheia (máximo de '+MP_MAX+' jogadores).');
+  } else if(data.type==='kick'){
+    guestRoomClosed(data.why==='kick'?'Você foi removido da sala pelo host.':'O host encerrou a sala.');
+  }
 }
 /* Veículos que não dirigimos: guarda destino e interpola (antes pulavam a cada pacote e o snapshot desfazia a posição fresca do motorista) */
 function vehSetTarget(v,x,y,f){
@@ -1082,7 +1253,7 @@ function packSnapshot(){
   };
 }
 function myNetId(){
-  return MP.isHost ? 'host' : 'guest';
+  return MP.isHost ? 'host' : (MP.netId||'guest');
 }
 function packMyPlayer(){
   if(!P) return {type:'player',id:myNetId(),name:MP.playerName||'Jogador',x:0,y:0,alive:false};
@@ -1119,11 +1290,12 @@ function enterMultiplayerGame(isHost){
   // O primeiro toque em jogo chama tryFullscreenFromGesture().
   if(CFG.fullscreen&&!KBM) userWantsFS=true;
   else userWantsFS=false;
-  MP.isHost=isHost;MP.gameStarted=true;MP.reconnecting=false;MP.guestAway=false;
+  MP.isHost=isHost;MP.gameStarted=true;MP.reconnecting=false;MP.guestAway=false;MP.lobbyOn=false;
   try{
     if(!plane) throw new Error('mundo não carregado');
-    const offX = isHost ? 0 : 40;
-    const offY = isHost ? 0 : 40;
+    const SO=[[0,0],[40,40],[-40,40],[40,-40]][isHost?0:(MP.slotIdx|0)]||[40,40];   // cada jogador nasce num ponto diferente, perto do host
+    const offX = SO[0];
+    const offY = SO[1];
     const spx=(!isHost&&MP.spawn)?MP.spawn[0]-70:plane.x, spy=(!isHost&&MP.spawn)?MP.spawn[1]:plane.y;   // convidado nasce perto de onde o host esta
     // ⚠️ ORDEM CORRETA: cria P PRIMEIRO
     if(L) restorePlayerState(L); else

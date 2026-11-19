@@ -16,7 +16,9 @@ const DECAL_LIFE=45; // segundos até a mancha de sangue sumir
 let atkHeld=false,sprintHeld=false,noiseT=0,tt=null;
 let recentRemoved=[],recentAdded=[]; // convidado: mudanças de itens ainda não confirmadas pelo host
 let touchGas=0,touchSteer=0,stepT=0;
-let MP={gameStarted:false,reconnecting:false,guestAway:false,seed:null,reconnStart:0,reconnTries:0,active:false,isHost:false,peer:null,conn:null,roomCode:'',connected:false,syncT:0,lastRecv:0,myId:null,scriptLoaded:false,playerName:'Jogador',gameOver:false,rtt:80,pingT:0,snapT:0.16,failCount:0,slot:0,save:null,spawn:null};
+let MP={gameStarted:false,reconnecting:false,guestAway:false,seed:null,reconnStart:0,reconnTries:0,active:false,isHost:false,peer:null,roomCode:'',connected:false,syncT:0,lastRecv:0,myId:null,scriptLoaded:false,playerName:'Jogador',gameOver:false,rtt:80,pingT:0,snapT:0.16,failCount:0,slot:0,save:null,spawn:null,conns:{},roster:{},players:[],netId:'guest',slotIdx:1,lobbyOn:false,_starting:false,_gc:null};
+const MP_MAX=4;   // jogadores por sala (host + 3 convidados)
+const MP_IDS=['host','g1','g2','g3'];
 // STUN + TURN públicos (openrelay) — ajuda celular em 4G/CGNAT
 const PEER_ICE={iceServers:[
   {urls:'stun:stun.l.google.com:19302'},
@@ -27,16 +29,34 @@ const PEER_ICE={iceServers:[
   {urls:'turn:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject'},
   {urls:'turn:openrelay.metered.ca:80?transport=tcp', username:'openrelayproject', credential:'openrelayproject'}
 ], iceTransportPolicy:'all'};
-function mpSend(data){
+/* Host: tabela de conexoes (uma por convidado, chaveada pelo id de rede g1..g3). MP.conn continua existindo para o resto do jogo:
+   no convidado e a conexao com o host; no host e uma "conexao" que fala com TODOS os convidados de uma vez (open = tem alguem, send = envia a todos) */
+function mpOpenConns(){const a=[];for(const id in MP.conns){const c=MP.conns[id];if(c&&c.open)a.push(c);}return a;}
+const MP_HOST_ALL={
+  get open(){return mpOpenConns().length>0;},
+  send(d){for(const c of mpOpenConns())c.send(d);},
+  close(){for(const c of mpOpenConns()){try{c.close();}catch(e){}}},
+  get dataChannel(){let b=0;for(const c of mpOpenConns()){const q=c.dataChannel&&c.dataChannel.bufferedAmount;if(q>b)b=q;}return {bufferedAmount:b};}
+};
+Object.defineProperty(MP,'conn',{configurable:true,enumerable:true,
+  get(){ if(this.isHost&&!this._gc) return MP_HOST_ALL; return this._gc||null; },
+  set(v){ if(!v){ this._gc=null; this.conns={}; } else this._gc=v; }   // null limpa tudo; um valor so e usado pelo convidado (e por testes)
+});
+function mpSend(data,except){
+  if(MP.isHost&&!MP._gc){   // host: manda para todos os convidados (menos o de onde o pacote veio, no reenvio)
+    let n=0;
+    for(const c of mpOpenConns()){ if(c===except)continue; try{ c.send(data); n++; }catch(e){ MP.failCount=(MP.failCount||0)+1; } }
+    return n>0;
+  }
   if(!MP.conn||!MP.conn.open) return false;
   try{ MP.conn.send(data); return true; }
   catch(e){ MP.failCount=(MP.failCount||0)+1; return false; }
 }
 /* Validação básica de pacotes / nomes (anti-lixo) */
-const NET_OK_TYPES=new Set(['worldInit','start','evt','player','snapshot','chat','gameOver','playerDied','playerRespawned','ping','pong']);
+const NET_OK_TYPES=new Set(['worldInit','start','evt','player','snapshot','chat','gameOver','playerDied','playerRespawned','ping','pong','hello','welcome','lobby','ready','full','kick','leave']);
 const NET_OK_MAPS=new Set(['forest','desert','snow','city']);
 const NET_OK_EVT=new Set(['mission','treeDmg','rockDmg','itemRemoved','itemAdded','vehicleEnter','vehicleExit','vehicleLooted','shot','spit','campfireAdded','campfireRemoved','yeti','chestOpen','tentAdded','sleepSkip','zombieDmg','animalDmg','vehicleDying','vehicleExploded','vehDmg','ping','bolt','zAtk','aAtk','curse','doorSet','plotSet','fruitSet','iceBreak','ghAdd','fenceSet','structBreak','cellSet','wellAdd','logAdd','logDel','stashAdd','stashSet','stashDel']);
-const NET_OK_IDS=new Set(['host','guest']);
+const NET_OK_IDS=new Set(['host','guest','g1','g2','g3']);
 function sanitizeName(n){
   if(typeof n!=='string') return 'Jogador';
   // Letras (incl. acentos), números, espaço e -_. — sem regex unicode avançada (WebView antigo)

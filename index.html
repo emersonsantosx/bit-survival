@@ -174,7 +174,7 @@
 <div id="mpscreen" class="screen hide">
   <div class="card">
     <h2>MULTIPLAYER</h2>
-    <p style="font-size:calc(11px*var(--ui,1));margin-top:0">Jogue com um amigo via conexão direta P2P</p>
+    <p style="font-size:calc(11px*var(--ui,1));margin-top:0">Jogue com até 3 amigos (4 jogadores) via conexão direta P2P</p>
     <div class="menu-btns">
       <button class="menu-btn mp" id="btnMPHost">CRIAR SALA (Host)</button>
       <button class="menu-btn mp" id="btnMPJoin">ENTRAR EM SALA</button>
@@ -186,7 +186,7 @@
 <div id="mphostscreen" class="screen hide">
   <div class="card">
     <h2>CRIAR SALA</h2>
-    <p style="font-size:calc(11px*var(--ui,1))">Digite seu nome, escolha o mundo e compartilhe o código</p>
+    <p style="font-size:calc(11px*var(--ui,1))">Digite seu nome, escolha o mundo e crie a sala</p>
     <input type="text" id="hostName" class="name-input" placeholder="SEU NOME" maxlength="12" autocomplete="off">
     <div class="map-grid mp-worlds" id="hostWorlds"></div>
     <div class="map-grid" id="mpMapGrid" style="margin:calc(6px*var(--ui,1)) 0">
@@ -220,6 +220,24 @@
     <div style="display:flex;gap:calc(8px*var(--ui,1));justify-content:center;margin-top:calc(10px*var(--ui,1));flex-wrap:wrap">
       <button class="go" id="btnJoinConnect" style="margin:0">CONECTAR</button>
       <button class="back" id="btnJoinBack" style="margin:0">VOLTAR</button>
+    </div>
+  </div>
+</div>
+
+<div id="mplobby" class="screen hide">
+  <div class="card">
+    <h2 id="lobTitle">SALA</h2>
+    <div class="lob-code">
+      <div class="room-code" id="lobCode">------</div>
+      <button class="menu-btn" id="btnLobCopy">COPIAR CÓDIGO</button>
+    </div>
+    <p class="mp-note" id="lobInfo"></p>
+    <div class="lob-players" id="lobPlayers"></div>
+    <div class="mp-status" id="lobStatus"></div>
+    <div class="lob-btns">
+      <button class="go" id="btnLobReady">PRONTO</button>
+      <button class="go" id="btnLobStart">INICIAR PARTIDA</button>
+      <button class="back" id="btnLobLeave">SAIR</button>
     </div>
   </div>
 </div>
@@ -400,5 +418,6 @@
 <script src="js/26-clima-acabamento.js"></script>
 <script src="js/27-variedade-decoracao.js"></script>
 <script src="js/28-modo-desktop.js"></script>
+<script src="js/29-sala-multiplayer.js"></script>
 </body>
 </html>
