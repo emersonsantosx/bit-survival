@@ -892,13 +892,8 @@ function drawDecoration0(d){
         if(d.main&&((T*1.2)%2.4)<.3)R(x+3+Math.round(Math.sin(T*9)),y-15,2,2,'#fff');
       }
       break;}
-    case'oldtent':{
-      shadow(x,y+2,18,4);
-      ctx.fillStyle='#6a7a58';ctx.beginPath();ctx.moveTo(x-17,y+1);ctx.lineTo(x,y-20);ctx.lineTo(x+17,y+1);ctx.closePath();ctx.fill();
-      ctx.fillStyle='#4a5a3c';ctx.beginPath();ctx.moveTo(x+2,y+1);ctx.lineTo(x,y-20);ctx.lineTo(x+17,y+1);ctx.closePath();ctx.fill();
-      ctx.fillStyle='#eef4f8';ctx.beginPath();ctx.moveTo(x-9,y-9);ctx.lineTo(x,y-20);ctx.lineTo(x+9,y-9);ctx.lineTo(x+4,y-11);ctx.lineTo(x,y-9);ctx.lineTo(x-4,y-11);ctx.closePath();ctx.fill();
-      ctx.fillStyle='#1c2218';ctx.beginPath();ctx.moveTo(x-5,y+1);ctx.lineTo(x,y-9);ctx.lineTo(x+4,y+1);ctx.closePath();ctx.fill();
-      R(x-17,y,34,2,'#eef4f8');
+    case'oldtent':{   // barraca abandonada, tambem vista de cima (menor, gasta e com neve)
+      tentTopDraw(x,y,TENT_PAL.old,{L:22,h0:10,h1:15,snow:true,seed:(d.x*5+d.y*11)|0});
       break;}
     case'sled':
       shadow(x,y+2,11,3);R(x-11,y-1,22,1,'#3a2a1a');R(x-10,y-4,20,3,'#6a4a2a');R(x-6,y-9,12,5,'#8a6a3a');R(x-6,y-9,12,1,'#a98a5a');R(x-6,y-9,12,2,'#eef4f8');
@@ -1710,17 +1705,50 @@ function drawSleeper(x,y,sl,look){
   for(let i=0;i<3;i++){const ph=(T*.7+i*.33)%1;ctx.globalAlpha=Math.sin(ph*3.14)*.9;ctx.fillStyle='#e8e0cc';ctx.fillText('z',hx+6+ph*7,hy-5-ph*14);}
   ctx.restore();
 }
+/* Barraca VISTA DE CIMA (o jogo e de cima para baixo): cumeeira de ponta a ponta no meio, um lado da lona claro e o outro na sombra,
+   estacas com cordas nos cantos e a entrada aberta na frente (parte de baixo), mais larga que o fundo por causa da perspectiva.
+   Antes era um triangulo de fachada, que parecia estar de frente. pal: cores; o: {L comprimento, h0 meia largura no fundo, h1 na frente, bags, snow, seed} */
+const TENT_PAL={
+  mil:{l:'#86a866',d:'#3f5f33',edge:'#2a4223',ridge:'#c4daa4',seam:'#729a58',seamD:'#33502b',camoL:['#6a8e4e','#a2bb82','#b8a274'],camoD:['#2f4a28','#54704a','#6e5e40'],rope:'#cfc7a6'},
+  old:{l:'#6a7a58',d:'#4a5a3c',edge:'#2c3626',ridge:'#98a886',seam:'#5a6a4a',seamD:'#3a4a30',camoL:['#5a6a4a','#7a8a66','#8a7e5a'],camoD:['#3a4a30','#566648','#645a40'],rope:'#a8a28a'}
+};
+function tentTopDraw(x,y,pal,o){
+  const L=o.L,h0=o.h0,h1=o.h1,top=y-L+4,hf=r=>h0+Math.round(r*(h1-h0)/(L-1));
+  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x+3,y+3,h1+4,7,0,0,6.283);ctx.fill();
+  // estacas e cordas nos cantos da frente
+  for(const sx of [-1,1]){
+    R(x+sx*(h1+3)-1,y+1,2,3,'#5a3a24');
+    R(x+sx*(h1+1),y,1,1,pal.rope);R(x+sx*(h1+2),y+1,1,1,pal.rope);
+    R(x+sx*(h0+1)-(sx>0?0:1),top-3,1,1,pal.rope);   // cordinha do fundo
+  }
+  R(x-1,top-4,2,2,'#5a3a24');
+  for(let r=0;r<L;r++){
+    const half=hf(r),seam=r%8===7;
+    R(x-half,top+r,half,1,seam?pal.seam:pal.l);R(x,top+r,half,1,seam?pal.seamD:pal.d);
+    R(x-half,top+r,1,1,pal.edge);R(x+half-1,top+r,1,1,pal.edge);
+  }
+  R(x-h0,top-1,h0*2,1,pal.edge);R(x-h1,top+L,h1*2,1,pal.edge);
+  // manchas de camuflagem, sempre as mesmas para a mesma barraca
+  let hs=((o.seed|0)*2654435761)>>>0;
+  const nx=()=>{hs=(hs*1664525+1013904223)>>>0;return hs/4294967296;};
+  for(let i=0;i<9;i++){
+    const side=i%2?1:-1,r=1+Math.floor(nx()*(L-10)),w=2+Math.floor(nx()*3),hh=1+Math.floor(nx()*2),ox=2+Math.floor(nx()*Math.max(1,hf(r)-w-3));
+    const cs=side<0?pal.camoL:pal.camoD,col=cs[Math.floor(nx()*cs.length)];
+    R(side<0?x-ox-w:x+ox,top+r,w,hh,col);
+  }
+  R(x,top,1,L,pal.ridge);R(x-1,top,1,2,pal.ridge);R(x+1,top,1,2,pal.ridge);   // cumeeira e a ponta do mastro
+  if(o.snow){R(x-4,top+1,8,2,'#eef4f8');R(x-6,top+3,12,1,'#eef4f8');R(x-2,top+L-9,4,1,'#eef4f8');R(x-h0+1,top,3,1,'#eef4f8');R(x+h0-4,top,3,1,'#eef4f8');}
+  // entrada: abertura escura que alarga para a frente
+  const d0=Math.round(L*.42);
+  for(let r=d0;r<L;r++){const dh=2+Math.round((r-d0)*(o.bags?.6:.5));R(x-dh,top+r,dh*2,1,'#14181a');}
+  R(x-2,top+d0-1,4,1,pal.edge);   // topo da abertura
+  if(o.bags){   // dois sacos de dormir lado a lado na entrada
+    R(x-7,y-6,5,5,'#8a3a3a');R(x-7,y-6,5,2,'#d6d2c4');R(x+2,y-6,5,5,'#3a5a8a');R(x+2,y-6,5,2,'#d6d2c4');
+  }
+}
 function drawTent(t){
   const x=Math.round(t.x),y=Math.round(t.y);
-  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x,y+3,26,6,0,0,6.283);ctx.fill();
-  for(let r=0;r<22;r++){
-    const half=3+Math.round(r*.95),edge=r%7===6;
-    R(x-half,y-24+r,half,1,edge?'#4a6a3c':'#6d8f56');R(x,y-24+r,half,1,edge?'#33502c':'#4d7040');
-  }
-  R(x-1,y-26,2,3,'#a9c48a');
-  for(let r=8;r<22;r++){const dh=Math.round(1+(r-8)*.9);R(x-dh,y-24+r,dh*2,1,'#14181a');}          // entrada
-  R(x-8,y-9,6,6,'#8a3a3a');R(x-8,y-9,6,2,'#d6d2c4');R(x+2,y-9,6,6,'#3a5a8a');R(x+2,y-9,6,2,'#d6d2c4');  // dois sacos de dormir
-  R(x-25,y-1,2,3,'#5a3a24');R(x+23,y-1,2,3,'#5a3a24');
+  tentTopDraw(x,y,TENT_PAL.mil,{L:30,h0:15,h1:21,bags:true,seed:(t.x*7+t.y*13)|0});
   if(P.sleeping&&P.sleeping.ref===t)drawSleeper(P.x,P.y,P.sleeping,myLook());
   for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.sl&&rp.sl.tent&&rp.alive!==false&&Math.hypot(rp.x-t.x,rp.y-t.y)<40)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));}
 }
