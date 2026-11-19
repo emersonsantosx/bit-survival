@@ -1324,6 +1324,7 @@ function render(){
     ctx.globalAlpha=Math.max(0,Math.min(1,d.l/12));R(d.x-6,d.y-2,12,6,'#5a1010');
   }
   ctx.globalAlpha=1;
+  if(window.drawBloodDrops)drawBloodDrops(vx0,vx1,vy0,vy1,false);   // gotas do jogador sangrando, fora de prédios (arquivo 31)
   for(const p of parts)if(p.g)R(p.x,p.y,2,2,p.c);
   for(const b of blds)if(b.x-12<vx1&&b.x+b.w+12>vx0&&b.y<vy1&&b.y+b.h+10>vy0)drawBldGround(b);   // varanda, degraus e enfeites no chão, antes de veículos e itens
   drawCornFlat(vx0,vx1,vy0,vy1);   // terreno dos marcos/milharal ANTES dos veículos (carro nunca some embaixo)
@@ -1393,7 +1394,7 @@ function render(){
     const d=Math.hypot(it.x-P.x,it.y-P.y);
     if(d<nd){nd=d;nearIt=it;}
   }
-  drawGreenhouses(vx0,vx1,vy0,vy1);drawPlots(vx0,vx1,vy0,vy1);drawFloors(vx0,vx1,vy0,vy1);drawBeds(vx0,vx1,vy0,vy1);
+  drawGreenhouses(vx0,vx1,vy0,vy1);drawPlots(vx0,vx1,vy0,vy1);drawFloors(vx0,vx1,vy0,vy1);if(window.drawBloodDrops)drawBloodDrops(vx0,vx1,vy0,vy1,true);drawBeds(vx0,vx1,vy0,vy1);
   for(const it of items){
     if(it.x<vx0||it.x>vx1||it.y<vy0||it.y>vy1||itemIndoor(it))continue;
     drawItem(it,it===nearIt);
