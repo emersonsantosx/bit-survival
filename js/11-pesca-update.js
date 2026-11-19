@@ -492,7 +492,7 @@ function survivalTick(dt){
   P._sreg=.6+.4*clamp(nut/50,0,1);                           // bem nutrido recupera o fôlego mais rápido
   if(P.hp<35)P._sreg*=.75;
   // sangramento, fome, sede, congelamento e enjoo tiram vida
-  if(P.bleed){P.hp-=1.1*dt;if(Math.random()<dt*4)parts.push({x:P.x,y:P.y-2,vx:0,vy:10,t:.5,c:'#a01818',g:1});}
+  if(P.bleed){P.hp-=1.1*dt;if(Math.random()<dt*4)parts.push({x:P.x,y:P.y-2,vx:0,vy:10,t:.5,c:'#a01818',g:1});if(window.bloodDrip)bloodDrip(dt);}   // gotas que ficam no chão: arquivo 31
   if(P.food<=0)P.hp-=.7*dt;
   if(P.water<=0)P.hp-=1*dt;
   if(P._tdmg>0)P.hp-=P._tdmg*dt;
@@ -996,6 +996,7 @@ function update(dt){
   // Chuva lava o sangue depressa; a neve e a areia vão cobrindo aos poucos
   const decayK=weather==='rain'?3.2:(weather==='snow'?1.8:(weather==='sand'?1.6:1));
   for(let k=decals.length-1;k>=0;k--){decals[k].l-=dt*decayK;if(decals[k].l<=0)decals.splice(k,1);}
+  if(window.bloodAge)bloodAge(dt,decayK);   // gotas de sangue do jogador (arquivo 31)
   if(!MP.active||MP.isHost){
     for(const z of zombies){
       if(z.dead)continue;
@@ -1266,6 +1267,7 @@ function update(dt){
         rp.x+=dx*k; rp.y+=dy*k;
       }
     }
+    if(window.bloodDripRemote)bloodDripRemote(rp,dt);   // gotas de sangue do aliado ferido (arquivo 31)
     if(rp.flash) rp.flash=Math.max(0,rp.flash-dt);
     if(rp.swing) rp.swing=Math.max(0,rp.swing-dt);
   }

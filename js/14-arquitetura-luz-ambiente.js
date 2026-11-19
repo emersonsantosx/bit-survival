@@ -1201,6 +1201,7 @@ function render(){
       ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
       ctx.fillStyle=ALLY_COL(rp);ctx.fillText(label,rp.x,rp.y-21);
       if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
+      if(rp.bl&&window.drawBleedMark)drawBleedMark(rp);
     }
     for(const an of animals)if(!an.dead&&an.x>=b.x&&an.x<=b.x+b.w&&an.y>=b.y&&an.y<=b.y+b.h&&seeIn(b,an.x,an.y))drawAnimal(an);
     if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,sit:!!P.sitting,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
@@ -1324,6 +1325,7 @@ function render(){
     ctx.globalAlpha=Math.max(0,Math.min(1,d.l/12));R(d.x-6,d.y-2,12,6,'#5a1010');
   }
   ctx.globalAlpha=1;
+  if(window.drawBloodDrops)drawBloodDrops(vx0,vx1,vy0,vy1,false);   // gotas do jogador sangrando, fora de prédios (arquivo 31)
   for(const p of parts)if(p.g)R(p.x,p.y,2,2,p.c);
   for(const b of blds)if(b.x-12<vx1&&b.x+b.w+12>vx0&&b.y<vy1&&b.y+b.h+10>vy0)drawBldGround(b);   // varanda, degraus e enfeites no chão, antes de veículos e itens
   drawCornFlat(vx0,vx1,vy0,vy1);   // terreno dos marcos/milharal ANTES dos veículos (carro nunca some embaixo)
@@ -1393,7 +1395,7 @@ function render(){
     const d=Math.hypot(it.x-P.x,it.y-P.y);
     if(d<nd){nd=d;nearIt=it;}
   }
-  drawGreenhouses(vx0,vx1,vy0,vy1);drawPlots(vx0,vx1,vy0,vy1);drawFloors(vx0,vx1,vy0,vy1);drawBeds(vx0,vx1,vy0,vy1);
+  drawGreenhouses(vx0,vx1,vy0,vy1);drawPlots(vx0,vx1,vy0,vy1);drawFloors(vx0,vx1,vy0,vy1);if(window.drawBloodDrops)drawBloodDrops(vx0,vx1,vy0,vy1,true);drawBeds(vx0,vx1,vy0,vy1);
   for(const it of items){
     if(it.x<vx0||it.x>vx1||it.y<vy0||it.y>vy1||itemIndoor(it))continue;
     drawItem(it,it===nearIt);
@@ -1465,6 +1467,7 @@ function render(){
         ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
         ctx.fillStyle=ALLY_COL(rp);ctx.fillText(label,rp.x,rp.y-21);
         if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
+      if(rp.bl&&window.drawBleedMark)drawBleedMark(rp);
       }
     }else{
       if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,sit:!!P.sitting,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
