@@ -2,9 +2,21 @@
 
 Jogo de sobrevivência 2D em pixel art, feito com HTML, CSS e JavaScript puros (sem framework e sem etapa de compilação). Quatro mapas: floresta, neve, deserto e cidade. Será lançado nas lojas digitais.
 
+## O que tem no jogo
+
+- **Sobrevivência:** fome, sede, frio e vida; coleta, criação de itens, construção (cercas, portões, paredes, baús, poços, plantações, lareiras), pesca, árvores frutíferas e clima (chuva, neve, poças).
+- **Mundo:** predios com interior, vilas, cidade com ruas e carros, veículos (carro, moto de neve, quadriciclo, buggy), animais, zumbis, missões e mapa.
+- **Multiplayer P2P (até 4 jogadores):** o host cria a sala e passa o código de 6 caracteres; os amigos entram, marcam **PRONTO** e só o host inicia a partida. Sala cheia e partida já iniciada são recusadas; quem cai durante a partida mantém a vaga e volta pelo mesmo nome. Usa PeerJS (WebRTC), sem servidor próprio.
+- **Celular e computador:** o jogo detecta o dispositivo. No celular usa os controles de toque; no computador usa teclado e mouse (a tela de controles mostra as teclas).
+- **Desempenho:** chão, ruas e cercas em blocos/figurinhas prontos e bichos distantes em passo maior, sem alterar o visual.
+
 ## Como jogar no navegador
 
-Abra o `index.html` em qualquer navegador moderno. Não precisa de servidor.
+Abra o `index.html` em qualquer navegador moderno. Não precisa de servidor. O multiplayer precisa de internet (o PeerJS é carregado da rede).
+
+## Como gerar o APK
+
+O workflow `.github/workflows/build.yml` compila o APK de debug (Cordova) a cada push na `main` e guarda o arquivo como artefato da execução (aba Actions). A etapa de compilação tenta de novo até 4 vezes porque o download das dependências às vezes falha por limite de requisições.
 
 ## Estrutura
 
@@ -12,7 +24,7 @@ Abra o `index.html` em qualquer navegador moderno. Não precisa de servidor.
 |---|---|
 | `index.html` | A página e os botões da HUD |
 | `css/estilo.css` | Todo o visual |
-| `js/01-base.js` ... `js/21-frutiferas.js` | O jogo, em scripts clássicos carregados na ordem do número |
+| `js/01-base.js` ... `js/30-desempenho.js` | O jogo, em scripts clássicos carregados na ordem do número. Alguns pontos de partida: `12-crafting-multiplayer.js` (rede), `29-sala-multiplayer.js` (tela da sala), `28-modo-desktop.js` (teclado e mouse), `30-desempenho.js` (blocos prontos de chão e ruas) |
 | `tests/` | Testes automáticos (Playwright) |
 | `tools/dependencias.js` | Gera `docs/dependencias.md`, o mapa de quem usa o quê entre os arquivos `js/` |
 | `config.xml`, `icon.png`, `.github/workflows/build.yml` | Geração do APK (Cordova) |
@@ -29,7 +41,7 @@ npm run test:saves           # só os saves
 node tests/teste-cerca.js    # um teste específico
 ```
 
-Cada teste abre o jogo num navegador sem tela, simula o que for preciso e termina com código 1 se algo falhar. Os testes rodam sozinhos a cada PR (`.github/workflows/testes.yml`).
+Cada teste abre o jogo num navegador sem tela, simula o que for preciso e termina com código 1 se algo falhar. Os testes rodam sozinhos a cada PR (`.github/workflows/testes.yml`). `tests/teste-multiplayer-sala.js` cobre a sala de 4 jogadores e `tests/teste-desempenho.js` confere que a imagem otimizada é igual ao desenho direto.
 
 ## Saves
 
@@ -40,4 +52,5 @@ Os saves ficam no `localStorage` (`minisurv_save_1` a `minisurv_save_4`). Ao mud
 - Uma branch nova por mudança, a partir da `main` atualizada.
 - Nunca commitar direto na `main`: tudo entra por PR.
 - Antes de abrir o PR: `npm test`.
-- Ao fim de cada mudança, regerar `docs/dependencias.md`.
+- Ao fim de cada mudança, regerar `docs/dependencias.md` (se der conflito ao mesclar, é só rodar `node tools/dependencias.js` de novo).
+- Mexeu em algo que gera o mundo? Não mude a ordem nem a quantidade de sorteios da semente, senão os mundos salvos e o multiplayer deixam de bater.
