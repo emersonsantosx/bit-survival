@@ -1267,6 +1267,7 @@ function update(dt){
         rp.x+=dx*k; rp.y+=dy*k;
       }
     }
+    if(window.bloodDripRemote)bloodDripRemote(rp,dt);   // gotas de sangue do aliado ferido (arquivo 31)
     if(rp.flash) rp.flash=Math.max(0,rp.flash-dt);
     if(rp.swing) rp.swing=Math.max(0,rp.swing-dt);
   }

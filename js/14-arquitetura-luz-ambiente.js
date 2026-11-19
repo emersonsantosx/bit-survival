@@ -1201,6 +1201,7 @@ function render(){
       ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
       ctx.fillStyle=ALLY_COL(rp);ctx.fillText(label,rp.x,rp.y-21);
       if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
+      if(rp.bl&&window.drawBleedMark)drawBleedMark(rp);
     }
     for(const an of animals)if(!an.dead&&an.x>=b.x&&an.x<=b.x+b.w&&an.y>=b.y&&an.y<=b.y+b.h&&seeIn(b,an.x,an.y))drawAnimal(an);
     if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,sit:!!P.sitting,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
@@ -1466,6 +1467,7 @@ function render(){
         ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
         ctx.fillStyle=ALLY_COL(rp);ctx.fillText(label,rp.x,rp.y-21);
         if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
+      if(rp.bl&&window.drawBleedMark)drawBleedMark(rp);
       }
     }else{
       if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),moving:P.moving,sit:!!P.sitting,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();

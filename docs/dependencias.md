@@ -55,7 +55,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 09-milharal-geracao | 206 | 10 | 87 | 284 | 40 |  | 1 | 35 | . | 3 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |
 | 10-jogo-saves | 90 | 52 | 57 | 706 | 18 | 3 | 12 | 10 | 7 | . | 89 | 25 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |
 | 11-pesca-update | 255 | 40 | 55 | 888 | 63 | 2 | 3 | 5 | 20 | 64 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |
-| 12-crafting-multiplayer | 57 | 36 | 29 | 726 | 12 | 1 | 6 | 5 | 11 | 44 | 40 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |
+| 12-crafting-multiplayer | 57 | 36 | 29 | 728 | 12 | 1 | 6 | 5 | 11 | 44 | 40 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |
 | 13-render-personagens | 330 | 40 | 22 | 252 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 660 | 13 | 16 | 324 | 17 |  | 10 | 8 | 23 | 7 | 3 | 1 | 155 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |
 | 15-missoes-ui-controles | 195 | 60 | 21 | 254 |  |  | 17 |  |  | 68 | 11 | 21 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |
@@ -74,7 +74,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 28-modo-desktop | 45 | 2 |  | 41 |  |  | 2 |  |  | 7 | 2 |  |  |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |
 | 29-sala-multiplayer | 15 | 5 |  | 37 |  |  |  |  |  |  |  | 10 |  |  | 6 |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |
 | 30-desempenho | 4 |  | 10 | 1 |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |
-| 31-rastro-sangue | 2 |  |  | 18 | 1 |  |  |  |  |  |  |  | 4 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |
+| 31-rastro-sangue | 4 |  |  | 16 | 3 |  |  |  |  |  |  |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |
 
 (colunas = os dois primeiros digitos do nome do arquivo)
 
@@ -82,35 +82,35 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 23 | 2016 |
+| P | let | 04-estado:14 | 23 | 2013 |
 | MP | let | 04-estado:19 | 22 | 703 |
 | selectedMap | let | 04-estado:3 | 22 | 222 |
 | beep | funcao | 02-audio:42 | 19 | 137 |
-| ctx | const | 01-base:27 | 18 | 1083 |
+| ctx | const | 01-base:27 | 18 | 1085 |
 | rnd | const | 01-base:16 | 18 | 435 |
 | WW | let | 03-dados:2 | 18 | 101 |
 | WH | let | 03-dados:2 | 18 | 90 |
-| toast | funcao | 11-pesca-update:1275 | 17 | 205 |
+| toast | funcao | 11-pesca-update:1276 | 17 | 205 |
 | T | let | 04-estado:14 | 17 | 121 |
+| parts | let | 04-estado:10 | 17 | 76 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 17 | 62 |
 | clamp | const | 01-base:4 | 16 | 98 |
-| parts | let | 04-estado:10 | 16 | 75 |
 | items | let | 04-estado:10 | 15 | 64 |
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
-| R | funcao | 13-render-personagens:2 | 14 | 1178 |
+| R | funcao | 13-render-personagens:2 | 14 | 1185 |
 | blds | let | 04-estado:10 | 14 | 58 |
-| pointInLake | funcao | 05-geometria:113 | 14 | 47 |
+| pointInLake | funcao | 05-geometria:113 | 14 | 48 |
 | weather | let | 04-estado:6 | 13 | 89 |
 | trees | let | 04-estado:10 | 12 | 55 |
+| bldAt | funcao | 05-geometria:591 | 12 | 31 |
 | state | let | 04-estado:2 | 11 | 106 |
 | ITEMS | const | 03-dados:167 | 11 | 66 |
 | zombies | let | 04-estado:10 | 11 | 58 |
 | campfires | let | 04-estado:10 | 11 | 41 |
-| bldAt | funcao | 05-geometria:591 | 11 | 30 |
+| remotePlayers | let | 04-estado:11 | 10 | 98 |
 | dark | let | 04-estado:14 | 10 | 62 |
 | tents | let | 04-estado:10 | 10 | 23 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |
-| remotePlayers | let | 04-estado:11 | 9 | 96 |
 | rint | const | 01-base:17 | 9 | 70 |
 | animals | let | 04-estado:10 | 9 | 38 |
 | ORLA | let | 05-geometria:125 | 9 | 38 |
