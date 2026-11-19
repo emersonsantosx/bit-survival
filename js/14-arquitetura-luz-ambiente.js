@@ -1171,7 +1171,7 @@ function render(){
       if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,sit:!!rp.st,anim:rp.anim||0,wpn:rp.hold?null:(rp.weapon||'fists'),hold:rp.hold||null,swing:rp.swing||0,ph:punchHand(rp,rp.swing||0),flash:rp.flash||0});
       const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
       ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
-      ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
+      ctx.fillStyle=ALLY_COL(rp);ctx.fillText(label,rp.x,rp.y-21);
       if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
     }
     for(const an of animals)if(!an.dead&&an.x>=b.x&&an.x<=b.x+b.w&&an.y>=b.y&&an.y<=b.y+b.h&&seeIn(b,an.x,an.y))drawAnimal(an);
@@ -1458,7 +1458,7 @@ function render(){
         if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),moving:rp.moving,sit:!!rp.st,anim:rp.anim||0,wpn:rp.hold?null:(rp.weapon||'fists'),hold:rp.hold||null,swing:rp.swing||0,ph:punchHand(rp,rp.swing||0),flash:rp.flash||0});
         const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
         ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
-        ctx.fillStyle=rp.isHost?'#ff8080':'#80ffa0';ctx.fillText(label,rp.x,rp.y-21);
+        ctx.fillStyle=ALLY_COL(rp);ctx.fillText(label,rp.x,rp.y-21);
         if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
       }
     }else{

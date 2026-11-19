@@ -211,12 +211,12 @@ function renderAch(){
 /* ============ UI ============ */
 function showScreen(id){
   if(id==='menu') try{refreshContinue();}catch(e){}
-  const ids=['menu','invscr','stashscr','mapscreen','slotscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen','configscreen','craftscr','pausescr','deadscr'];
+  const ids=['menu','invscr','stashscr','mapscreen','slotscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen','mplobby','configscreen','craftscr','pausescr','deadscr'];
   for(const s of ids){const e=$(s);if(e)e.classList.add('hide');}
   if(id==='configscreen')try{cfgOpen(null);}catch(e){}   // sempre abre no menu de secoes
   if(id){const e=$(id);if(e)e.classList.remove('hide');}
   try{
-    const wantMusic=['menu','mapscreen','slotscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen'].includes(id)||(id==='configscreen'&&state!=='pause');
+    const wantMusic=['menu','mapscreen','slotscreen','skinscreen','achscreen','mpscreen','mphostscreen','mpjoinscreen','mplobby'].includes(id)||(id==='configscreen'&&state!=='pause');
     if(wantMusic)musicStart();else musicStop();
   }catch(e){}
 }
@@ -451,45 +451,41 @@ on('btnMPBack','click',()=>showScreen('menu'));
 on('btnMPHost','click',()=>{aud();showScreen('mphostscreen');const w=$('hostCodeWrap');if(w)w.classList.add('hide');setStatus('hostStatus','');lockHostWorlds(false);renderHostWorlds();});
 on('btnMPJoin','click',()=>{aud();showScreen('mpjoinscreen');setStatus('joinStatus','');const i=$('joinCode');if(i)i.value='';});
 
-on('btnHostCreate','click',()=>{aud();mpHostStart();if(MP.active&&MP.isHost)lockHostWorlds(true);});
-on('btnCopyCode','click',async e=>{
-  e.preventDefault();e.stopPropagation();
-  aud();
-  const codeEl=$('hostCode');
-  const code=(codeEl&&codeEl.textContent||'').trim().toUpperCase();
-  if(!code || code==='------' || code.length<4){
-    setStatus('hostStatus','Crie a sala primeiro para copiar o código',true);
-    return;
-  }
-  const btn=$('btnCopyCode');
+on('btnHostCreate','click',()=>{aud();mpHostStart();if(MP.active&&MP.isHost){lockHostWorlds(true);MP._lobErr=false;lobbyShow();}});
+/* copia o codigo da sala (com plano B para WebView antigo); btn: botao que mostra COPIADO; say: onde avisar */
+async function copyRoomCode(code,btn,say){
+  code=String(code||'').trim().toUpperCase();
+  if(!code||code==='------'||code.length<4){say('Crie a sala primeiro para copiar o código');return;}
   const ok=()=>{
     if(btn){btn.textContent='COPIADO!';setTimeout(()=>{if(btn)btn.textContent='COPIAR CÓDIGO';},1800);}
-    setStatus('hostStatus','Código '+code+' copiado!');
+    say('Código '+code+' copiado!');
     toast('Código copiado: '+code);
   };
   const fail=()=>{
-    // Fallback: select text so user can copy manually
-    try{
-      const range=document.createRange();range.selectNodeContents(codeEl);
+    try{   // plano B: seleciona o texto para o jogador copiar na mao
+      const el=$('lobCode')||$('hostCode');
+      const range=document.createRange();range.selectNodeContents(el);
       const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
     }catch(_){}
     if(btn){btn.textContent='SELECIONE E COPIE';setTimeout(()=>{if(btn)btn.textContent='COPIAR CÓDIGO';},2500);}
-    setStatus('hostStatus','Selecione o código e copie (Ctrl+C / pressione e segure)');
+    say('Selecione o código e copie (Ctrl+C / pressione e segure)');
   };
   try{
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      await navigator.clipboard.writeText(code);
-      ok();
-    } else {
-      // Older Android WebView fallback
+    if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(code);ok();}
+    else{
       const ta=document.createElement('textarea');
       ta.value=code;ta.style.position='fixed';ta.style.left='-9999px';
       document.body.appendChild(ta);ta.select();
       const done=document.execCommand('copy');
       document.body.removeChild(ta);
-      if(done) ok(); else fail();
+      if(done)ok();else fail();
     }
-  }catch(err){ fail(); }
+  }catch(err){fail();}
+}
+on('btnCopyCode','click',e=>{
+  e.preventDefault();e.stopPropagation();aud();
+  const codeEl=$('hostCode');
+  copyRoomCode(codeEl&&codeEl.textContent,$('btnCopyCode'),m=>setStatus('hostStatus',m));
 });
 on('btnHostBack','click',()=>{
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}

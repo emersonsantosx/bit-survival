@@ -106,7 +106,8 @@ function drawPingsEdge(){
 }
 
 /* ===== Aliado no multiplayer: ponto no minimapa, seta na borda da tela e mapa grande ===== */
-const ALLY_COL=rp=>rp.isHost?'#ff8080':'#80ffa0';
+const ALLY_COLS={host:'#ff8080',g1:'#80ffa0',g2:'#80c8ff',g3:'#ffd870'};   // cada jogador da sala tem a sua cor
+const ALLY_COL=rp=>ALLY_COLS[rp.id]||(rp.isHost?'#ff8080':'#80ffa0');
 function mmMarkers(){
   mmDot(P.x,P.y,4,4,Math.floor(T*2)%2?'#ffffff':'#4aa3ff');
   for(const c of campfires)mmDot(c.x,c.y,2,2,'#ff8020');
