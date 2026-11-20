@@ -515,6 +515,7 @@ function updateP(dt){
   if(P.sleeping){sleepTick(dt);return;}
   if(P.sitting){logSitTick(dt);if(P.sitting||P.dead)return;}
   if(P.inVehicle){
+    if(imPassenger()){passengerTick(dt);return;}   // passageiro: só acompanha o veículo (js/32)
     const v=P.inVehicle;
     if(P.fish)P.fish=null;
     if(v.hp===undefined){ v.hp=100; v.maxHp=100; }
@@ -861,7 +862,7 @@ function updateZ(z,dt){
     const v=P.inVehicle;vehHalf(v);
     const ex=Math.max(0,Math.abs(z.x-v.x)-v._hx),ey=Math.max(0,Math.abs(z.y-v.y)-v._hy);
     if(Math.hypot(ex,ey)<z.r+3){
-      carTakeHit(v,z.dmg*0.2);
+      riderHit(v,z.dmg*0.2);
       z.cd=z.berserk||z.kind===8?0.75:1.1;z.lunge=.15;
     }
   } else if(!z.ranged&&targetIsLocal&&(d<z.r*(z.kind===9?1.45:1)+P.r+(z.kind===9?12:6)||chainsawHit(z,P.x,P.y,P.r))&&z.cd<=0&&!P.dead&&!wallBlocks(z.x,z.y,P.x,P.y)){
@@ -1029,7 +1030,7 @@ function update(dt){
     if(s.t>0&&P&&P.inVehicle&&!P.dead){ // cuspe na lataria: o carro sofre, o jogador fica protegido
       const v=P.inVehicle;vehHalf(v);
       if(Math.abs(s.x-v.x)<=v._hx+1&&Math.abs(s.y-v.y)<=v._hy+1){
-        carTakeHit(v,8*0.2);
+        riderHit(v,8*0.2);
         for(let i=0;i<8;i++)parts.push({x:s.x,y:s.y,vx:rnd(-50,50),vy:rnd(-50,20),t:.45,c:'#80e060'});
         s.t=0;
       }
@@ -1139,10 +1140,11 @@ function update(dt){
   if(MP.active){
     const kv=Math.min(1,dt*14);
     for(const v of vehicles){
-      if(P&&P.inVehicle===v){ v._nx=undefined; continue; }
+      if(P&&P.inVehicle===v&&!imPassenger()){ v._nx=undefined; continue; }   // motorista local manda no veículo; o passageiro acompanha o motorista remoto
       if(v._nx===undefined) continue;
       v.x+=(v._nx-v.x)*kv; v.y+=(v._ny-v.y)*kv;
       v.face+=wrap((v._nf||0)-(v.face||0))*kv;
+      if(P&&P.inVehicle===v){P.x=v.x;P.y=v.y;P.face=v.face||0;}
     }
   }
   // Decay local damage prediction timers

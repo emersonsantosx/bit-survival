@@ -223,6 +223,7 @@ body.chatopen #chat-msgs{display:none}
 #v-down{right:calc(20px*var(--ui,1));bottom:calc(24px*var(--ui,1));width:calc(72px*var(--ui,1));height:calc(72px*var(--ui,1))}
 #v-left{left:calc(16px*var(--ui,1));bottom:calc(68px*var(--ui,1));width:calc(72px*var(--ui,1));height:calc(72px*var(--ui,1))}
 #v-right{left:calc(96px*var(--ui,1));bottom:calc(68px*var(--ui,1));width:calc(72px*var(--ui,1));height:calc(72px*var(--ui,1))}
+#veh-hud.pax .veh-btn:not(#v-exit){display:none}   /* passageiro nao dirige: so o botao de sair */
 #v-exit{left:50%;bottom:calc(20px*var(--ui,1));transform:translateX(-50%);width:calc(110px*var(--ui,1));height:calc(46px*var(--ui,1));background:rgba(160,30,30,.8);border-color:#ff6a5a;font-size:calc(12px*var(--ui,1));border-radius:calc(10px*var(--ui,1))}
 
 .screen{position:fixed;left:0;top:0;right:0;bottom:0;background:#060a06;display:flex;align-items:center;justify-content:center;padding:calc(8px*var(--ui,1));z-index:10;touch-action:auto;overflow:hidden}
