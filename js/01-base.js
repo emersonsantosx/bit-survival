@@ -75,14 +75,13 @@ function applyUiScale(){
 }
 
 /* Qualidade: 0 = Alta, 1 = Equilibrada, 2 = Economia.
-   O jogo começa sempre na qualidade escolhida (padrão: Alta, 60 FPS). Com o "ajuste automático" ligado,
-   ele só reduz os efeitos sozinho se o aparelho não conseguir manter a taxa de quadros. */
+   O jogo usa sempre a qualidade escolhida (padrão: Alta, 60 FPS). Não existe mais ajuste automático: nada muda sozinho. */
 const PERF_TIERS=[
   {weatherCap:160,weatherSpawn:.55,partsCap:180,fireRate:18,smokeRate:6, lightScale:2,hudInterval:.1, mmEvery:1},
   {weatherCap:120,weatherSpawn:.45,partsCap:140,fireRate:14,smokeRate:5, lightScale:2,hudInterval:.1, mmEvery:1},
   {weatherCap:85, weatherSpawn:.33,partsCap:100,fireRate:10,smokeRate:3.5,lightScale:4,hudInterval:.15,mmEvery:2}
 ];
-function perfTotal(){ return Math.min(2,(CFG.quality|0)+(CFG.autoperf?(CFG.autolvl|0):0)); }
+function perfTotal(){ return Math.min(2,CFG.quality|0); }
 function perf(){
   const total=perfTotal(), t=PERF_TIERS[Math.min(2,total)];
   const fps=+CFG.fps||0; // 0 = máximo (taxa da tela)
@@ -125,21 +124,21 @@ window.addEventListener('resize',resize);
 
 /* ============ CONFIG ============ */
 const CFG={master:0.8,sfx:1.0,amb:0.6,rain:0.7,step:0.8,music:0.5,hud:true,minimap:true,dmgflash:true,screenflash:true,fullscreen:true,tracers:true,
-  quality:0, fps:60, autoperf:true, autolvl:0,
+  quality:0, fps:60,
   joyS:1, sens:1, ui:1, shake:true, night:1, showFps:false};
 try{const raw=localStorage.getItem('minisurv_cfg');if(raw)Object.assign(CFG,JSON.parse(raw));}catch(e){}
 if(CFG.minimap===undefined) CFG.minimap=true;
 // Versão 3 das configurações: o "modo economia" antigo ligava sozinho no celular (30 FPS, poucos efeitos).
-// Agora todo mundo começa em Alta, 60 FPS e ajuste automático; as opções antigas deixam de existir.
+// Agora todo mundo começa em Alta e 60 FPS; as opções antigas deixam de existir.
 if(!CFG.cfgv||CFG.cfgv<3){
-  CFG.quality=0;CFG.fps=60;CFG.autoperf=true;CFG.autolvl=0;CFG.cfgv=3;
+  CFG.quality=0;CFG.fps=60;CFG.cfgv=3;
   delete CFG.economy;delete CFG.simplelight;delete CFG.lowres;
   try{localStorage.setItem('minisurv_cfg',JSON.stringify(CFG));}catch(e){}
 }
 if(![0,1,2].includes(CFG.quality)) CFG.quality=0;
 if(![0,30,60].includes(CFG.fps)) CFG.fps=60;
 delete CFG.lowres;
-CFG.autolvl=Math.max(0,Math.min(2,CFG.autolvl|0));
+delete CFG.autoperf;delete CFG.autolvl;   // ajuste automatico removido: quem tinha ele baixando a qualidade volta a usar so a qualidade escolhida
 // Controles e jogo: valores fora do intervalo (save antigo/editado) voltam para dentro dele
 const _cl=(v,a,b,d)=>Number.isFinite(+v)?Math.max(a,Math.min(b,+v)):d;
 CFG.joyS=_cl(CFG.joyS,.7,1.5,1);CFG.sens=_cl(CFG.sens,.5,1.5,1);CFG.ui=_cl(CFG.ui,.8,1.3,1);

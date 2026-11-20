@@ -293,7 +293,6 @@ bindSlider('cfg_step','step','v_step');
 bindSlider('cfg_music','music','v_music');
 bindToggle('cfg_hud','hud');
 bindToggle('cfg_minimap','minimap');
-bindToggle('cfg_autoperf','autoperf');
 bindToggle('cfg_shake','shake');
 bindToggle('cfg_showFps','showFps');
 /* CONTROLES: tamanho do joystick, sensibilidade e tamanho da interface (refaz o layout na hora) */
@@ -313,22 +312,17 @@ function bindSeg(id,key){
   const paint=()=>el.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',+b.dataset.v===+CFG[key]));
   paint();
   el.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
-    CFG[key]=+b.dataset.v;CFG.autolvl=0;AUTO.warm=3;AUTO.slowT=0;AUTO.fastT=0;saveCfg();paint();resize();
+    CFG[key]=+b.dataset.v;saveCfg();paint();resize();
   }));
   el._paint=paint;
 }
 bindSeg('cfg_quality','quality');
 bindSeg('cfg_fps','fps');
-// Reaplica canvas ao mudar perf
-['cfg_autoperf'].forEach(id=>{
-  const el=$(id); if(!el) return;
-  el.addEventListener('click',()=>{ CFG.autolvl=0;AUTO.warm=3;AUTO.slowT=0;AUTO.fastT=0;saveCfg();resize(); });
-});
 
 /* RESTAURAR: volta ao padrao so as opcoes da secao aberta. Todo controle tem id 'cfg_<chave>', entao a tela e repintada a partir do CFG. */
 const CFG_DEF={
   audio:{master:.8,sfx:1,amb:.6,rain:.7,step:.8,music:.5},
-  perf:{quality:0,fps:60,autoperf:true,autolvl:0},
+  perf:{quality:0,fps:60},
   ui:{hud:true,minimap:true},
   ctl:{joyS:1,sens:1,ui:1},
   game:{night:1,shake:true,showFps:false}
@@ -342,7 +336,6 @@ function cfgRestore(sec){
     else if(el.classList.contains('cfg-toggle'))el.classList.toggle('on',!!d[k]);
     else if(el._paint)el._paint();
   }
-  if(sec==='perf'){AUTO.warm=3;AUTO.slowT=0;AUTO.fastT=0;}
   try{musicUpdateVol();}catch(e){}
   applyHudClasses();resize();
 }
@@ -959,8 +952,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='p
 
 /* ============ FRAME LOOP ============ */
 let last=0;
-let lastFrameTs=0, rafPrev=0;
-/* Ajuste automático: acompanha o custo de cada quadro e só baixa a qualidade se o aparelho ficar devagar de forma contínua */
+let lastFrameTs=0;
 /* Contador de FPS (CONFIGURACOES > Mostrar FPS): media dos ultimos 0,5 s, so com o jogo rodando */
 const FPSH={n:0,t0:0,el:null};
 function fpsTick(ts){
@@ -968,25 +960,6 @@ function fpsTick(ts){
   if(!CFG.showFps){if(!el.classList.contains('hide'))el.classList.add('hide');FPSH.n=0;return;}
   if(!FPSH.t0)FPSH.t0=ts;FPSH.n++;
   if(ts-FPSH.t0>=500){el.textContent=Math.round(FPSH.n*1000/(ts-FPSH.t0))+' FPS';el.classList.remove('hide');FPSH.n=0;FPSH.t0=ts;}
-}
-const AUTO={work:0,intv:0,disp:33,warm:3,slowT:0,fastT:0};
-function perfMonitor(workMs,intervalMs){
-  if(!CFG.autoperf) return;
-  if(AUTO.warm>0){AUTO.warm-=intervalMs/1000;AUTO.work=workMs;AUTO.intv=intervalMs;return;}
-  if(intervalMs>160) return; // engasgo isolado (GC, troca de app): ignora
-  AUTO.work+=(workMs-AUTO.work)*.06; AUTO.intv+=(intervalMs-AUTO.intv)*.06;
-  const fps=+CFG.fps||0, expect=Math.max(fps>0?1000/fps:0, AUTO.disp);
-  const slow=AUTO.work>expect*.8 || AUTO.intv>expect*1.35;
-  const fast=AUTO.work<expect*.35 && AUTO.intv<expect*1.15;
-  const sec=intervalMs/1000;
-  AUTO.slowT=slow?AUTO.slowT+sec:Math.max(0,AUTO.slowT-sec*2);
-  AUTO.fastT=fast?AUTO.fastT+sec:0;
-  if(AUTO.slowT>4 && perfTotal()<2){
-    CFG.autolvl=(CFG.autolvl|0)+1;AUTO.slowT=0;AUTO.fastT=0;AUTO.warm=3;saveCfg();resize();
-    toast('Desempenho ajustado automaticamente');
-  } else if(AUTO.fastT>60 && (CFG.autolvl|0)>0){
-    CFG.autolvl=(CFG.autolvl|0)-1;AUTO.slowT=0;AUTO.fastT=0;AUTO.warm=3;saveCfg();resize();
-  }
 }
 function frame(ts){
   requestAnimationFrame(frame);
@@ -996,13 +969,9 @@ function frame(ts){
   const inGame=state==='play'||state==='craft'||state==='pause'||state==='dead';
   if(!inGame || !P){ last=ts; lastFrameTs=ts; if(FPSH.el)FPSH.el.classList.add('hide'); FPSH.t0=0; return; }
   // Limite de FPS escolhido nas configurações (30, 60 ou máximo = taxa da tela)
-  if(rafPrev){const d=ts-rafPrev; if(d>5&&d<60&&d<AUTO.disp) AUTO.disp=d;} // estima o intervalo da tela
-  rafPrev=ts;
   const minMs=1000/perf().targetFps;
   if(lastFrameTs && (ts-lastFrameTs)<minMs*0.9) return;
   const dt=Math.min(.05,((ts-last)/1000)||0.016);
-  const intervalMs=lastFrameTs?(ts-lastFrameTs):1000/60;
-  const t0=performance.now();
   last=ts;
   lastFrameTs=ts;
   // E5: MP continua simulando em pause/craft/dead
@@ -1012,7 +981,6 @@ function frame(ts){
   fpsTick(ts);
   if(state==='play'&&(!MP.active||(MP.isHost&&MP.gameStarted))&&P&&!P.dead){ saveT+=dt; if(saveT>=SAVE_EVERY){ saveT=0; saveGame(); } }
   else if(state==='play'&&MP.active&&!MP.isHost&&MP.gameStarted&&P&&!P.dead){ saveT+=dt; if(saveT>=SAVE_EVERY){ saveT=0; guestSave(); } }   // convidado: guarda o que conquistou, por mundo
-  if(state==='play') perfMonitor(performance.now()-t0,intervalMs); else AUTO.warm=Math.max(AUTO.warm,1.5);
 }
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){

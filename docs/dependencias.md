@@ -22,7 +22,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 12-crafting-multiplayer | 69 | 25 | 44 | 0 | 14 | 21 |
 | 13-render-personagens | 105 | 51 | 54 | 0 | 13 | 19 |
 | 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 14 | 0 |
-| 15-missoes-ui-controles | 91 | 21 | 70 | 0 | 10 | 13 |
+| 15-missoes-ui-controles | 89 | 20 | 69 | 0 | 10 | 13 |
 | 16-orientacao | 0 | 0 | 0 | 0 | 3 | 0 |
 | 17-arte-menu | 0 | 0 | 0 | 0 | 0 | 0 |
 | 18-plantacao | 0 | 0 | 0 | 0 | 12 | 0 |
@@ -55,12 +55,12 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 07-loot-mapa | 135 | 3 | 30 | 128 | 3 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 08-cidade-vilas-marcos | 135 | 3 | 17 | 136 | 21 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 09-milharal-geracao | 206 | 10 | 87 | 284 | 40 |  | 1 | 35 | . | 3 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |
-| 10-jogo-saves | 90 | 50 | 57 | 700 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 18 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |
+| 10-jogo-saves | 90 | 50 | 57 | 700 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 17 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |
 | 11-pesca-update | 255 | 40 | 55 | 894 | 63 | 2 | 3 | 5 | 20 | 62 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 57 | 36 | 29 | 739 | 12 | 1 | 6 | 5 | 11 | 46 | 42 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |  |  |
 | 13-render-personagens | 327 | 40 | 22 | 252 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 660 | 13 | 16 | 324 | 17 |  | 10 | 8 | 23 | 7 | 3 | 1 | 155 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  |
-| 15-missoes-ui-controles | 195 | 60 | 21 | 254 |  |  | 17 |  |  | 68 | 11 | 21 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |
+| 15-missoes-ui-controles | 178 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 10 | 21 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |
 | 16-orientacao | 2 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 18-plantacao | 36 | 6 | 22 | 77 | 16 |  |  | 13 | 1 | 1 | 8 | 3 | 139 |  | 1 |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
@@ -93,7 +93,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | ctx | const | 01-base:27 | 19 | 1090 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 19 | 64 |
 | rnd | const | 01-base:16 | 18 | 435 |
-| toast | funcao | 11-pesca-update:1278 | 18 | 210 |
+| toast | funcao | 11-pesca-update:1278 | 18 | 209 |
 | T | let | 04-estado:14 | 18 | 128 |
 | WW | let | 03-dados:2 | 18 | 101 |
 | WH | let | 03-dados:2 | 18 | 90 |
@@ -107,7 +107,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | weather | let | 04-estado:6 | 13 | 89 |
 | trees | let | 04-estado:10 | 12 | 54 |
 | bldAt | funcao | 05-geometria:598 | 12 | 31 |
-| state | let | 04-estado:2 | 11 | 106 |
+| state | let | 04-estado:2 | 11 | 105 |
 | remotePlayers | let | 04-estado:11 | 11 | 102 |
 | ITEMS | const | 03-dados:167 | 11 | 66 |
 | zombies | let | 04-estado:10 | 11 | 58 |
@@ -121,7 +121,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | rebuildSolidGrid | funcao | 05-geometria:374 | 9 | 35 |
 | lakes | let | 04-estado:10 | 9 | 31 |
 | addItem | funcao | 04-estado:271 | 9 | 20 |
-| $ | const | 01-base:2 | 8 | 185 |
+| $ | const | 01-base:2 | 8 | 184 |
 | H | let | 01-base:48 | 8 | 103 |
 | W | let | 01-base:48 | 8 | 98 |
 | rocks | let | 04-estado:10 | 8 | 49 |
@@ -130,7 +130,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | vehKind | funcao | 08-cidade-vilas-marcos:353 | 8 | 15 |
 | track | funcao | 15-missoes-ui-controles:60 | 8 | 13 |
 | Z | let | 01-base:48 | 7 | 118 |
-| CFG | const | 01-base:127 | 7 | 91 |
+| CFG | const | 01-base:126 | 7 | 78 |
 | aud | funcao | 02-audio:11 | 7 | 58 |
 | joy | const | 04-estado:203 | 7 | 58 |
 | vehicles | let | 04-estado:10 | 7 | 51 |
@@ -164,7 +164,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **11-pesca-update** (25): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, BURN_R, BURN_T, BURN_DPS, burnTick, updateP, updateZ, CHAINSAW_LEN, CHAINSAW_R, chainsawHit, CAM_FAR, camSpeedZoom
 - **12-crafting-multiplayer** (44): canCraft, craft, STRUCT_EVT, LOCAL_GRACE, handleEvt, loadPeerJS, makeRoomCode, hostRetryTimer, hostOpenPeer, hostSignalRetry, RECONN_MAX_MS, showReconnectUI, updateReconnectUI, hideReconnectUI, mpReconnectFail, mpGuestReconnectAttempt, hostResumeGuest, guestResumed, hostBuildWorld, MAP_NOME, hostSync, hostBroadcastLobby, hostFreeId, hostUniqueName, hostRefuse, ...
 - **13-render-personagens** (54): skinLook, snowOutfit, _shc, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, RSP, rockKind, rockSprite, TSP, treeSprite, treeShadow, treeShadow0, TREE_ALTS, treeAlt, SNOWTOP, drawDecoration0, ...
-- **15-missoes-ui-controles** (70): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACH_MAPS, ACHD, achSave, achChime, achCheck, achSet, achMeta, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, achRow, renderAch, bindSlider, bindToggle, bindSliderResize, ...
+- **15-missoes-ui-controles** (69): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACH_MAPS, ACHD, achSave, achChime, achCheck, achSet, achMeta, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, achRow, renderAch, bindSlider, bindToggle, bindSliderResize, ...
 - **29-sala-multiplayer** (2): LOB_COL, lobbyLeave
 - **30-desempenho** (5): GC_SZ, GC_M, GC_MAX, GC, layerDraw
 
