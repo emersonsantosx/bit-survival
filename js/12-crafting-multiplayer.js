@@ -107,7 +107,7 @@ function refreshCraft(){
 /* ============ EVENTOS REPLICADOS ============ */
 /* Eventos que mexem em estrutura do mundo: quem acabou de mandar um deles nao aceita a "correcao" do snapshot por um instante
    (o anfitriao ainda pode nao ter recebido, e a peca sumiria e voltaria na tela) */
-const STRUCT_EVT=new Set(['fenceSet','cellSet','plotSet','structBreak','ghAdd','stashAdd','stashSet','stashDel','wellAdd','logAdd','logDel','campfireAdded','campfireRemoved','tentAdded','doorSet','fruitSet','iceBreak','chestOpen']);
+const STRUCT_EVT=new Set(['structDmg','fenceSet','cellSet','plotSet','structBreak','ghAdd','stashAdd','stashSet','stashDel','wellAdd','logAdd','logDel','campfireAdded','campfireRemoved','tentAdded','doorSet','fruitSet','iceBreak','chestOpen']);
 const LOCAL_GRACE=2200;
 function sendEvt(kind, data){
   // Vale em qualquer momento da partida (pausa, mapa, morto...): antes so em jogo/criacao e o evento se perdia para sempre
@@ -124,7 +124,7 @@ function handleEvt(kind, data){
   if(!data || typeof data!=='object') return;
   if(kind==='treeDmg'){
     const t = trees.find(t => t.x===data.x && t.y===data.y);
-    if(t && Number.isFinite(data.dmg)){ t.hp -= clamp(data.dmg,0,10); if(t.hp<=0){ const i=trees.indexOf(t); if(i>=0){ trees.splice(i,1); rebuildSolidGrid(); } } }
+    if(t && Number.isFinite(data.dmg)){ t.hp -= clamp(data.dmg,0,10); t._hit=T; if(t.hp<=0){ const i=trees.indexOf(t); if(i>=0){ trees.splice(i,1); rebuildSolidGrid(); } } }
   } else if(kind==='rockDmg'){
     const r = rocks.find(r => r.x===data.x && r.y===data.y);
     if(r && Number.isFinite(data.dmg)){ r.hp -= clamp(data.dmg,0,10); r._hit=T; if(r.hp<=0){ const i=rocks.indexOf(r); if(i>=0){ rocks.splice(i,1); rebuildSolidGrid(); } } }
@@ -150,6 +150,8 @@ function handleEvt(kind, data){
     ghRemote(data);
   } else if(kind==='structBreak'){
     structRemote(data.k);
+  } else if(kind==='structDmg'){
+    structDmgRemote(data);
   } else if(kind==='fenceSet'){
     fenceRemote(data);
   } else if(kind==='cellSet'){

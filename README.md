@@ -41,7 +41,7 @@ npm run test:saves           # só os saves
 node tests/teste-cerca.js    # um teste específico
 ```
 
-Cada teste abre o jogo num navegador sem tela, simula o que for preciso e termina com código 1 se algo falhar. Os testes rodam sozinhos a cada PR (`.github/workflows/testes.yml`). `tests/teste-multiplayer-sala.js` cobre a sala de 4 jogadores e `tests/teste-desempenho.js` confere que a imagem otimizada é igual ao desenho direto e `tests/teste-desempenho-arvores.js` protege o desempenho em florestas densas (tiros pela grade, sombras em cache).
+Cada teste abre o jogo num navegador sem tela, simula o que for preciso e termina com código 1 se algo falhar. Os testes rodam sozinhos a cada PR (`.github/workflows/testes.yml`). `tests/teste-multiplayer-sala.js` cobre a sala de 4 jogadores e `tests/teste-desempenho.js` confere que a imagem otimizada é igual ao desenho direto e `tests/teste-desempenho-arvores.js` protege o desempenho em florestas densas (tiros pela grade, sombras em cache). `tests/teste-dano-visual.js` confere as marcas de dano em tudo que se quebra (`js/33-dano-visual.js`).
 
 ## Saves
 
