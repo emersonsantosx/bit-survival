@@ -249,10 +249,10 @@ function attack(){
     if(stT&&(!hitTree||stT.d<=td)){structHit(stT,w);return;}   // cerca, portao ou objeto do mapa mais perto que a arvore
     if(hitTree){
       P.cd=w.cd;P.swing=.18;
-      hitTree.hp=(hitTree.hp||4)-(w.chopRate||0.5);
+      hitTree.hp=(hitTree.hp||4)-(w.chopRate||0.5);hitTree._hit=T;
       shake=3;
       chopWood();
-      for(let i=0;i<5;i++)parts.push({x:hitTree.x,y:hitTree.y-10,vx:rnd(-35,35),vy:rnd(-45,0),t:.4,c:'#8a5a2a'});
+      for(let i=0,n=3+Math.round((w.chopRate||.5)*3);i<n;i++)parts.push({x:hitTree.x,y:hitTree.y-10,vx:rnd(-35,35),vy:rnd(-45,0),t:.4,c:'#8a5a2a'});
       if(MP.active) sendEvt('treeDmg', { x: hitTree.x, y: hitTree.y, dmg: w.chopRate || 0.5 });
       if(hitTree.hp <= 0){
         const fruitMsg=fruitFell(hitTree);   // frutifera: os frutos maduros caem no chao

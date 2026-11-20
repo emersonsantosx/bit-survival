@@ -158,9 +158,9 @@ function furnHit(st,w){
   f.hp-=Math.max(.5,w.chopRate||.5);shake=2;
   const metal=fb.tool==='pickaxe';
   if(metal)chopStone();else chopWood();
-  for(let i=0;i<5;i++)parts.push({x:st.x,y:st.y-4,vx:rnd(-30,30),vy:rnd(-40,-5),t:.35,c:metal?'#9a9a9a':'#9a6a3a'});
+  f._hit=T;for(let i=0,n=3+Math.round((w.chopRate||.5)*3);i<n;i++)parts.push({x:st.x,y:st.y-4,vx:rnd(-30,30),vy:rnd(-40,-5),t:.35,c:metal?'#9a9a9a':'#9a6a3a'});
   makeNoise(P.x,P.y,50);
-  if(f.hp>0)return;
+  if(f.hp>0){const bi0=blds.indexOf(b);if(bi0>=0)structDmgSend(mk(bi0,f),f.hp);return;}
   const bi=blds.indexOf(b);if(bi<0)return;
   const key=mk(bi,f);
   furnRemove(b,f);broken.add(key);
@@ -181,10 +181,10 @@ function structHit(st,w){
   P.cd=w.cd;P.swing=.18;shake=2;
   const metal=st.kind==='d'&&BREAK[o.type].s;
   if(metal)chopStone();else chopWood();
-  for(let i=0;i<5;i++)parts.push({x:st.x,y:st.y-4,vx:rnd(-30,30),vy:rnd(-40,-5),t:.35,c:metal?'#9a9a9a':st.kind==='f'&&o.s?'#e8e4d8':'#9a6a3a'});
+  o._hit=T;for(let i=0,n=3+Math.round((w.chopRate||.5)*3);i<n;i++)parts.push({x:st.x,y:st.y-4,vx:rnd(-30,30),vy:rnd(-40,-5),t:.35,c:metal?'#9a9a9a':st.kind==='f'&&o.s?'#e8e4d8':'#9a6a3a'});
   makeNoise(P.x,P.y,50);
-  if(o.hp>0)return;
   const key=st.kind==='f'?fk(o):dk(o);
+  if(o.hp>0){structDmgSend(key,o.hp);return;}
   let wood=0,nm='';
   if(st.kind==='f'){wood=o.g?1:((P._fbk=(P._fbk||0)+1)%2===0?1:0);nm=NAMES[o.g|0];}   // cerca: 1 madeira a cada 2 desmontadas (custou meia madeira)
   else{const b=BREAK[o.type];wood=rint(b.wood[0],b.wood[1]);nm=b.n;}
@@ -197,9 +197,9 @@ function structHit(st,w){
 function logHit(st,w){
   const L=st.o;if(L.hp===undefined)L.hp=4;
   L.hp-=Math.max(.5,w.chopRate||.5);P.cd=w.cd;P.swing=.18;shake=2;chopWood();
-  for(let i=0;i<5;i++)parts.push({x:st.x,y:st.y-4,vx:rnd(-30,30),vy:rnd(-40,-5),t:.35,c:'#9a6a3a'});
+  L._hit=T;for(let i=0,n=3+Math.round((w.chopRate||.5)*3);i<n;i++)parts.push({x:st.x,y:st.y-4,vx:rnd(-30,30),vy:rnd(-40,-5),t:.35,c:'#9a6a3a'});
   makeNoise(P.x,P.y,50);
-  if(L.hp>0)return;
+  if(L.hp>0){structDmgSend('o:'+Math.round(L.x)+','+Math.round(L.y)+','+L.a,L.hp);return;}
   const x=L.x,y=L.y,a=L.a==='h'?0:1,n=(window.LOG_COST&&LOG_COST.wood)||4,gen=!!L.g;
   if(!logRemove(L))return;
   if(gen){const key='o:'+Math.round(x)+','+Math.round(y)+','+L.a;broken.add(key);if(MP.active)sendEvt('structBreak',{k:key});}   // tronco do mapa: a chave vai no save e no multiplayer (senao voltava pela semente)
@@ -288,6 +288,7 @@ function drawFence(f){
   if(f.g>=2||!(CELL===16))drawFence0(f,R);
   else{const k=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;ctx.drawImage(fenceSprite(f),f.x*CELL-FENCE_OX,f.y*CELL-FENCE_OY);ctx.imageSmoothingEnabled=k;}
   fenceSnow(f);
+  if(f.hp!==undefined)fenceDmgFx(f);
 }
 
 /* neve no topo das cercas, portinhas e paredes (cresce com a neve acumulada) */
@@ -492,4 +493,5 @@ function fenceApplySnapshot(a,mode){   // mode 2: tambem tira as pecas que o anf
 
 window.drawFence0=drawFence0;window.fenceSnow=fenceSnow;window.cellWalled=cellWalled;window.cellWallDirs=cellWallDirs;window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
 window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;
+window.HP_F=HP_F;window.BREAK=BREAK;window.fbOf=fbOf;window.WH_=WH_;window.fenceAt=fenceAt;   // usados pelo dano visual (arquivo 33)
 })();

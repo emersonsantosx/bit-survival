@@ -863,14 +863,16 @@ function drawTree(t){
   const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
   const behind=P&&!P.inside&&P.y<y-3&&P.y>y-s.top&&Math.abs(P.x-x)<s.half;   // jogador atrás da copa
   if(behind)ctx.globalAlpha=.5;
-  ctx.drawImage(s.cv,x-s.ox,y-s.oy);
+  ctx.drawImage(s.cv,x-s.ox+(t._hit!==undefined?hitWobble(t,1.5):0),y-s.oy);
   ctx.globalAlpha=1;ctx.imageSmoothingEnabled=sm;
+  if(t.hp<4){const st=dmgStage(t.hp,4);if(st)treeDmgFx(t,st);}   // cortes no tronco conforme o dano das armas
 }
 /* topos onde a neve se acumula (fora os que ja desenham a propria neve): [x do canto, y da base da capa, largura, altura cheia] relativos ao objeto */
 const SNOWTOP={crate:[-6,-8,12,3],log:[-8,-3,16,3],stump:[-5,-3,10,3],bench:[-9,-4,18,3],dumpster:[-9,-13,18,3],trash:[-4,-10,8,2]};
 function drawDecoration(d){
   if(window.decoDraw)decoDraw(d,drawDecoration0);else drawDecoration0(d);
   const st=SNOWTOP[d.type];if(st&&snowAcc()>.06)snowCap(d.x+st[0],d.y+st[1],st[2],st[3]);
+  if(d.hp!==undefined)decorDmgFx(d);
 }
 function drawDecoration0(d){
   const x=d.x,y=d.y;
@@ -2213,6 +2215,7 @@ function drawInterior(b){
   ctx.clip();
   ctx.drawImage(b._fc,b.x,b.y);
   ctx.restore();ctx.imageSmoothingEnabled=sm;
+  for(const f of b.furn)if(f.hp!==undefined&&seeIn(b,f.x+f.w/2,f.y+f.h/2))furnDmgFx(f);   // marcas de dano nos moveis
   drawDoors(b);
   drawHearthFlames(b);
   const near=nearestItem(),mine=[];roomsAt(b,P.x,P.y-2,mine);   // item so aparece no comodo do proprio jogador (o comodo de outro jogador mostra os moveis, nao o chao)

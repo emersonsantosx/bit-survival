@@ -146,6 +146,7 @@ function drawLog(L){
     if(snow){R2(-6,-20,4,38,'#f0f6fa');R2(-7,-14,1,10,'#f0f6fa');R2(-2,-20,1,38,'#cfdde8');}
   }
   ctx.restore();
+  if(L.hp!==undefined)logDmgFx(L);
 }
 function logDepth(L){return L.a==='h'?L.y-6:L.y-14;}   // quem esta sentado (y do lugar) desenha por cima do tronco
 
