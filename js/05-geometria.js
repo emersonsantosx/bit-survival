@@ -355,8 +355,15 @@ function wallGrid(){
 }
 function pointSolid(px,py){
   {const a=wallGrid().get((Math.floor(px/WG_C)+8)*4096+Math.floor(py/WG_C)+8);if(a)for(let i=0;i<a.length;i++){const w=a[i];if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)return true;}}
-  for(const t of trees){const dx=px-t.x,dy=py-t.y;if(dx>-4&&dx<4&&dy>-4&&dy<4&&dx*dx+dy*dy<12)return true;}
-  for(const v of vehicles){vehHalf(v);if(px>=v.x-v._hx&&px<=v.x+v._hx&&py>=v.y-v._hy&&py<=v.y+v._hy)return true;}
+  if(!solidGrid)rebuildSolidGrid();
+  {   // arvores pela grade (antes varria as ~5000 a cada ponto de cada tiro)
+    const c0=Math.floor((px-4)/SOLID_GRID),c1=Math.floor((px+4)/SOLID_GRID),r0=Math.floor((py-4)/SOLID_GRID),r1=Math.floor((py+4)/SOLID_GRID);
+    for(let cx=c0;cx<=c1;cx++)for(let cy=r0;cy<=r1;cy++){
+      const a=solidGrid.get((cx+8)*4096+cy+8);if(!a)continue;
+      for(let i=0;i<a.length;i++){const e=a[i];if(e.kind!=='tree')continue;const dx=px-e.x,dy=py-e.y;if(dx>-4&&dx<4&&dy>-4&&dy<4&&dx*dx+dy*dy<12)return true;}
+    }
+  }
+  for(const v of vehicles){if(px<v.x-60||px>v.x+60||py<v.y-60||py>v.y+60)continue;vehHalf(v);if(px>=v.x-v._hx&&px<=v.x+v._hx&&py>=v.y-v._hy&&py<=v.y+v._hy)return true;}
   if(plane&&px>=plane.x-35&&px<=plane.x+35&&py>=plane.y-16&&py<=plane.y+16)return true;
   // (lago não bloqueia tiro nem cuspe)
   return false;
