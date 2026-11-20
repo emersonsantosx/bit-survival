@@ -255,7 +255,7 @@ function continueGame(n){
     applyHudClasses();
     buildInv();updateHud(true);
     state='play';
-    AUTO.warm=3;saveT=0;
+    saveT=0;
     toast('Jogo retomado: Dia '+day);
     startAmbient();startRain();
   }catch(err){
