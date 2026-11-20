@@ -1169,11 +1169,13 @@ function applySnapshot(snap){
   if(Number.isFinite(snap.kills)) kills = snap.kills;
 }
 let BASE_TREES=[],BASE_ROCKS=[],BASE_TOBJ=new Map(),BASE_ROBJ=new Map();
-function goneList(base,arr){const cur=new Set(arr.map(t=>t.x+','+t.y));const g=[];for(const k of base)if(!cur.has(k))g.push(k);return g;}
+/* chave "x,y" guardada no proprio objeto: montar ~5000 textos a cada snapshot completo (numero vira texto) pesava no celular */
+function objKey(t){return t._k!==undefined&&t._kx===t.x&&t._ky===t.y?t._k:(t._kx=t.x,t._ky=t.y,t._k=t.x+','+t.y);}
+function goneList(base,arr){const cur=new Set();for(let i=0;i<arr.length;i++)cur.add(objKey(arr[i]));const g=[];for(const k of base)if(!cur.has(k))g.push(k);return g;}
 /* o convidado perdeu uma árvore/pedra que o anfitrião ainda tem (golpe perdido, queda de conexão...): devolve do mapa original */
 function restoreBase(base,objs,arr,gone){
   if(!Array.isArray(gone)||!objs||!objs.size)return false;
-  const g=new Set(gone),have=new Set(arr.map(t=>t.x+','+t.y));let ch=false;
+  const g=new Set(gone),have=new Set();for(let i=0;i<arr.length;i++)have.add(objKey(arr[i]));let ch=false;
   for(const k of base){if(g.has(k)||have.has(k))continue;const o=objs.get(k);if(o){arr.push(Object.assign({},o));ch=true;}}
   return ch;
 }
@@ -1181,12 +1183,12 @@ function hpPack(arr,full){const o=[];for(const t of arr)if(Number.isFinite(t.hp)
 function hpApply(arr,list,full){
   if(!Array.isArray(list))return;
   const m=new Map();for(const a of list)if(Array.isArray(a)&&Number.isFinite(a[2]))m.set(a[0]+','+a[1],a[2]);
-  for(const o of arr){const h=m.get(o.x+','+o.y);if(h!==undefined)o.hp=h;else if(Number.isFinite(o.hp)&&o.hp<full-.001)o.hp=full;}
+  for(const o of arr){const h=m.get(objKey(o));if(h!==undefined)o.hp=h;else if(Number.isFinite(o.hp)&&o.hp<full-.001)o.hp=full;}
 }
 function applyGone(base,arr,gone){
   if(!Array.isArray(gone)||!gone.length)return false;
   const g=new Set(gone);let ch=false;
-  for(let i=arr.length-1;i>=0;i--)if(g.has(arr[i].x+','+arr[i].y)){arr.splice(i,1);ch=true;}
+  for(let i=arr.length-1;i>=0;i--)if(g.has(objKey(arr[i]))){arr.splice(i,1);ch=true;}
   return ch;
 }
 function packSnapshot(){

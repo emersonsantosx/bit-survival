@@ -14,7 +14,7 @@ const { chromium } = require('playwright');
     const hora = h => { T = ((h - START_HOUR + 24) % 24) / 24 * DAY_SECONDS; for (let i = 0; i < 12; i++) { update(.03); render(); } };
     const DI = CanvasRenderingContext2D.prototype.drawImage; let sil = 0;
     CanvasRenderingContext2D.prototype.drawImage = function (im) { if (im && im.__sil) sil++; return DI.apply(this, arguments); };
-    const marca = () => { for (const k in TSP) if (TSP[k].sh) TSP[k].sh.__sil = 1; };
+    const marca = () => { for (const k in TSP) { if (TSP[k].sh) TSP[k].sh.__sil = 1; if (TSP[k].shs) TSP[k].shs.cv.__sil = 1; } };   // a silhueta esticada fica em cache (shs) e e ela que vai para a tela
     const mede = () => { render(); marca(); sil = 0; render(); return sil; };
     hora(12); o.fMeio = SUN.f; const treeS = treeSprite(0, 0, false); treeShadow(100, 100, treeS); o.silCache = !!treeS.sh;
     o.silMeio = mede();

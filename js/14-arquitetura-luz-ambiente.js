@@ -1181,6 +1181,7 @@ function groundTileDraw(q,tx,ty){
 window.groundTileDraw=groundTileDraw;   // o arquivo 30 monta os blocos de chao com esta mesma conta
 function render(){
   if(!P)return;
+  SH_BUD=6;
   const sk=shake>0&&CFG.shake,sx=sk?Math.round(rnd(-shake,shake)):0,sy=sk?Math.round(rnd(-shake,shake)):0;   // CONFIGURACOES: tremor de tela
   ctx.setTransform(1,0,0,1,0,0);
   ctx.fillStyle='#070a07';ctx.fillRect(0,0,W,H);
