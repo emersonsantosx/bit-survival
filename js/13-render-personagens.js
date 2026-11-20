@@ -1285,13 +1285,17 @@ function drawOpenVeh(K,v,L,W){
 }
 /* piloto visto de cima nos veículos abertos (moto de neve, quadriciclo, buggy): corpo, cabeça, braços no guidão e pernas */
 function vehDriverLook(v){
-  if(P&&P.inVehicle===v)return myLook();
+  if(P&&P.inVehicle===v&&!imPassenger())return myLook();
   if(v.driverId){const rp=remotePlayers[v.driverId];if(rp&&rp.alive!==false)return remoteLook(rp);}
   return null;
 }
-function drawRider(K,lk,L,W){
+function drawRider(K,lk,L,W,pass){   // pass: passageiro (js/32): atrás do motorista na moto de neve e no quadriciclo, no banco da direita no buggy
   let cx,cy=0,hbx,hy;
   if(K==='sled'){cx=-5;hbx=0;hy=5;}else if(K==='atv'){cx=-4;hbx=2;hy=5;}else{cx=0;cy=Math.round(-W/2+6.5);hbx=7;hy=1;}
+  if(pass){
+    if(K==='buggy')cy=-cy;                      // banco do lado
+    else{cx-=7;hbx=cx+5;hy=3;}                  // atrás do motorista, mãos na cintura dele
+  }
   const sh=(lk.os==='tank'||lk.os==='bare')?lk.skin:lk.shirt;
   R(cx+1,cy-4,4,2,lk.pants);R(cx+1,cy+2,4,2,lk.pants);R(cx+4,cy-4,2,2,lk.boot||'#2a2420');R(cx+4,cy+2,2,2,lk.boot||'#2a2420'); // pernas e botas
   if(lk.pack)R(cx-4,cy-3,2,6,'#3a3a2a');
@@ -1370,7 +1374,10 @@ function drawVehicle(v){
     R(-2,-3,5,6,'#d9892b');
     R(-1,-2,3,2,'#e8a84a');
   }
-  if(VK!=='car'&&!v.destroyed){const lk=vehDriverLook(v);if(lk)drawRider(VK,lk,L,W);}
+  if(!v.destroyed){
+    if(VK==='car')drawCarSeats(v,L,W);                       // cabeças pelo vidro (js/32)
+    else{const lp=vehPassLook(v),lk=vehDriverLook(v);if(lp)drawRider(VK,lp,L,W,true);if(lk)drawRider(VK,lk,L,W);}   // passageiro primeiro: o motorista fica na frente dele
+  }
   // Indicador discreto se ocupado (borda no teto, não parece luz)
   if(v.driverId){
     R(-3,-W/2,6,1,'#80ffa0');
@@ -1383,6 +1390,7 @@ function drawVehicle(v){
     R(-2,-W/2-2,4,2,'#ff6020');
   }
   ctx.restore();
+  if(!v.destroyed)drawVehTags(v);   // nome dos aliados que estão dentro (js/32)
   // Barra de vida do carro (ao dirigir ou se já sofreu dano)
   if(!v.destroyed && (v.showHp>0 || (v.hp!==undefined && v.hp<(v.maxHp||100)) || v.dying)){
     const maxH=v.maxHp||100;

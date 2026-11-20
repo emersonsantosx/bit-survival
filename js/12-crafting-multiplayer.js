@@ -196,17 +196,33 @@ function handleEvt(kind, data){
   } else if(kind==='vehicleEnter'){
     const v = vehicles.find(v => v.id===data.id);
     if(v){
-      v.driverId = data.driver || 'remote';
-      // If we somehow thought we were in this car, kick us out
-      if(P && P.inVehicle===v && v.driverId!==myNetId()){
-        P.inVehicle=null;
-        restoreWalkHUD();
-        toast('Veículo já estava ocupado!');
+      const who=(typeof data.who==='string'&&data.who)?data.who:(data.driver||'remote');
+      const seat=data.seat==='p'?'p':'d';
+      const me=myNetId();
+      if(who===me){/* eco do que a gente mesmo fez */}
+      else if(seat==='d'){
+        if(v.passId===who)v.passId=null;
+        if(P&&P.inVehicle===v&&v.driverId===me&&!imPassenger()){
+          // os dois entraram juntos como motorista: o 'host' (ou o menor id) fica no volante; o outro vira passageiro
+          const theyWin=(who==='host')||(me!=='host'&&who<me);
+          if(!theyWin)return;
+          v.driverId=who;v.passId=me;v.spd=0;touchGas=0;touchSteer=0;showVehicleHUD();
+          if(MP.active)sendEvt('vehicleEnter',{id:v.id,driver:who,who:me,seat:'p'});
+          toast('Outro jogador já estava dirigindo: você é passageiro');
+        }else v.driverId=who;
+      }else{
+        if(v.driverId===who)v.driverId=null;
+        if(P&&P.inVehicle===v&&imPassenger()){
+          // os dois pegaram o lugar de passageiro juntos: o 'host' (ou o menor id) fica; o outro desce
+          const theyWin=(who==='host')||(me!=='host'&&who<me);
+          if(!theyWin)return;
+          v.passId=who;exitVehicle();toast('Lugar já ocupado!');
+        }else v.passId=who;
       }
     }
   } else if(kind==='vehicleExit'){
     const v = vehicles.find(v => v.id===data.id);
-    if(v){ v.driverId=null; v.spd=0; }
+    if(v) vehSeatLeave(v,(typeof data.who==='string'&&data.who)?data.who:v.driverId);
   } else if(kind==='ping'){
     recvPing(data);
   } else if(kind==='vehDmg'){
@@ -218,9 +234,10 @@ function handleEvt(kind, data){
   } else if(kind==='vehicleExploded'){
     const v = vehicles.find(v => v.id===data.id);
     if(v){
-      v.destroyed=true; v.dying=false; v.hp=0; v.spd=0; v.driverId=null;
+      const rider=!!(P && P.inVehicle===v);
+      v.destroyed=true; v.dying=false; v.hp=0; v.spd=0; v.driverId=null; v.passId=null;
       for(let i=0;i<20;i++) parts.push({x:v.x,y:v.y,vx:rnd(-100,100),vy:rnd(-120,30),t:rnd(.4,.9),c:pick(['#ff4020','#ff8020','#333'])});
-      if(P && P.inVehicle===v) exitVehicle();
+      if(rider){P.inVehicle=null;restoreWalkHUD();toast('Você explodiu com o carro!');die();}   // quem ainda estava dentro (motorista ou passageiro) morre na explosão, igual ao jogo local
     }
   } else if(kind==='zombieDmg'){
     let best=null;
@@ -637,7 +654,7 @@ function hostConnClosed(conn){
   if(MP.gameStarted&&state!=='menu'){
     r.conn=null;r.away=true;r.ready=false;
     delete remotePlayers[id];
-    for(const v of vehicles){if(v.driverId===id){v.driverId=null;v.spd=0;}}
+    for(const v of vehicles)vehSeatLeave(v,id);   // libera a vaga; se era o motorista, o passageiro assume (js/32)
     hostSync();
     toast(r.name+' desconectou: a vaga fica reservada para voltar');
   } else {
@@ -862,14 +879,24 @@ function handleNetData(data,isHostSide,conn){
       showDeathScreen(false);
       toast('Todos morreram. Fim de jogo.');
     }
+    rp.vehicleId=data.inVehicle?(data.vehicleId!==undefined?data.vehicleId:data.vs):undefined;   // em qual veículo o aliado está (conta nas vagas, js/32)
+    if(data.vp===1&&data.inVehicle&&data.vs!==undefined){
+      // passageiro: não manda o veículo, só diz em qual está
+      const pv=vehicles.find(v=>v.id===data.vs);
+      if(pv&&pv.passId!==data.id&&pv.passId!==myNetId()){   // (se o lugar é nosso, quem decide é o evento vehicleEnter)
+        if(pv.driverId===data.id)pv.driverId=null;
+        if(!pv.passId||!remotePlayers[pv.passId]||!remotePlayers[pv.passId].inVehicle)pv.passId=data.id;
+      }
+    }
     if(data.vehicleId !== undefined && Number.isFinite(data.vehicleX) && Number.isFinite(data.vehicleY)){
       const v = vehicles.find(v => v.id === data.vehicleId);
-      // Motorista remoto é autoridade — nunca sobrescreve o carro que NÓS dirigimos
-      if(v && P.inVehicle !== v){
+      // Motorista remoto é autoridade — nunca sobrescreve o carro que NÓS dirigimos (o passageiro, ao contrário, acompanha)
+      if(v && (P.inVehicle !== v || imPassenger())){
         vehSetTarget(v, data.vehicleX, data.vehicleY, data.vehicleFace || 0); v._pT = performance.now();
         v.spd = data.vehicleSpd || 0;
         v.looted = data.vehicleLooted || false;
         v.driverId = data.id || v.driverId || 'remote';
+        if(v.passId===data.id)v.passId=null;
         if(Number.isFinite(data.vehicleHp)) v.hp = data.vehicleHp;
         if(Number.isFinite(data.vehicleMaxHp)) v.maxHp = data.vehicleMaxHp;
         if(data.vehicleDestroyed){ v.destroyed=true; v.dying=false; v.hp=0; v.spd=0; }
@@ -882,10 +909,8 @@ function handleNetData(data,isHostSide,conn){
         v.showHp=2;
       }
     } else if(data.inVehicle===false || data.inVehicle===undefined){
-      // Remote left their vehicle — clear driver mark if it was them
-      for(const v of vehicles){
-        if(v.driverId===data.id){ v.driverId=null; v.spd=0; }
-      }
+      // Remote left their vehicle: libera a vaga dele (e o passageiro assume o volante, se for o caso)
+      for(const v of vehicles)vehSeatLeave(v,data.id);
     }
   } else if(data.type==='snapshot'){
     if(!isHostSide && data && typeof data==='object') applySnapshot(data);
@@ -1066,7 +1091,7 @@ function applySnapshot(snap){
       if(!sv || sv.id===undefined) continue;
       let v = byId.get(sv.id);
       if(!v) v = {id:sv.id,x:sv.x,y:sv.y,w:sv.w,h:sv.h,col:sv.col,looted:!!sv.looted,spd:sv.spd||0,face:sv.face||0,driverId:null,hp:sv.hp,maxHp:sv.maxHp||100};
-      const weDrive = (v === P?.inVehicle);
+      const weDrive = (v === P?.inVehicle) && !imPassenger();
       // Motorista local é autoridade: snapshot NÃO sobrescreve pos/hp do carro que dirigimos
       if(!weDrive){
         if(!(v._pT&&performance.now()-v._pT<500)) vehSetTarget(v,sv.x,sv.y,sv.face||0); // motorista remoto manda posição mais fresca
@@ -1268,7 +1293,9 @@ function packMyPlayer(){
   if(P.bleed&&!P.dead)p.bl=1;   // sangrando: os aliados veem as gotas e o aviso ao lado da barra de vida (arquivo 31)
   if(P.sleeping){const sl=P.sleeping;p.sl=[SLC[sl.s]|0,sl.hx|0,sl.hy|0,sl.tent?1:0];}
   if(P.fish){p.fx=Math.round(P.fish.x);p.fy=Math.round(P.fish.y);p.fl=P.fish.ph?0:+Math.max(0,P.fish.wait-P.fish.t).toFixed(1);}
-  if(P.inVehicle){
+  if(P.inVehicle&&imPassenger()){
+    p.vs=P.inVehicle.id;p.vp=1;   // passageiro: só avisa em qual veículo está; quem manda no veículo é o motorista
+  }else if(P.inVehicle){
     const v=P.inVehicle;
     p.vehicleId = v.id;
     p.vehicleX = Math.round(v.x);

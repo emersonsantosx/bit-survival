@@ -658,37 +658,23 @@ function nearestCampfire(){
   for(const c of campfires){const d=Math.hypot(c.x-P.x,c.y-P.y);if(d<bd){bd=d;b=c;}}
   return b;
 }
-function isVehicleOccupied(v){
-  if(!v) return false;
-  // Local player already driving
-  if(P && P.inVehicle===v) return true;
-  // Marked by network
-  if(v.driverId && v.driverId!==myNetId()) return true;
-  // Remote player claims this vehicle
-  for(const id in remotePlayers){
-    const rp=remotePlayers[id];
-    if(!rp || rp.alive===false) continue;
-    if(rp.inVehicle && (rp.vehicleId===v.id || (Number.isFinite(rp.x)&&Math.hypot(rp.x-v.x,rp.y-v.y)<18))) return true;
-  }
-  return false;
-}
 function restoreWalkHUD(){
   // Always restore on-foot controls (fixes quit while driving → broken next game)
-  const vh=$('veh-hud'); if(vh) vh.classList.add('hide');
+  const vh=$('veh-hud'); if(vh){vh.classList.add('hide');vh.classList.remove('pax');}
   const show=['inv','atk','pick','run','swap','bpack'];
   for(const id of show){ const e=$(id); if(e) e.classList.remove('hide'); }
   touchGas=0; touchSteer=0;
 }
 function showVehicleHUD(){
-  const vh=$('veh-hud'); if(vh) vh.classList.remove('hide');
+  const vh=$('veh-hud'); if(vh){vh.classList.remove('hide');vh.classList.toggle('pax',imPassenger());}   // passageiro: so o botao de sair
   const hide=['inv','atk','pick','run','swap','bpack'];
   for(const id of hide){ const e=$(id); if(e) e.classList.add('hide'); }
 }
 function exitVehicle(){
   if(!P||!P.inVehicle)return;
-  const v=P.inVehicle;
-  if(v.driverId===myNetId()) v.driverId=null;
-  v.spd=0;
+  const v=P.inVehicle,wasPass=imPassenger();
+  vehSeatLeave(v,myNetId());   // libera a vaga; se era o motorista, o passageiro assume o volante (js/32)
+  if(!wasPass) v.spd=0;
   { // procura um ponto livre ao redor do carro (nunca dentro de casa, parede, árvore, lago ou cerca)
     const okAt=(x,y)=>{
       for(const b of blds)if(x>b.x-9&&x<b.x+b.w+9&&y>b.y-9&&y<b.y+b.h+9)return false;
@@ -698,7 +684,7 @@ function exitVehicle(){
       return Math.hypot(q.x-x,q.y-y)<.6;
     };
     let best=null;
-    const base=v.face+1.57;
+    const base=v.face+(wasPass?-1.57:1.57);   // motorista sai pela direita, passageiro pela esquerda: dois saindo juntos não se empilham
     outer:for(const d of [26,34,44,56,70]){
       for(const a of [0,3.1416,.7,-.7,2.4,-2.4,1.57,-1.57,.35,-.35,2.8,-2.8]){
         const x=v.x+Math.cos(base+a)*d,y=v.y+Math.sin(base+a)*d;
@@ -710,7 +696,7 @@ function exitVehicle(){
   }
   P.inVehicle=null;
   restoreWalkHUD();
-  if(MP.active) sendEvt('vehicleExit', {id:v.id});
+  if(MP.active) sendEvt('vehicleExit', {id:v.id,who:myNetId()});
   toast('Saiu do veículo');beep(300,.1,'square',.05);
 }
 function startVehicleDeath(v){
@@ -761,8 +747,8 @@ function updateVehicles(dt){
         // Não saiu a tempo → morre na explosão
         P.inVehicle=null;
         restoreWalkHUD();
-        if(v.driverId===myNetId()) v.driverId=null;
-        if(MP.active) sendEvt('vehicleExit', {id:v.id});
+        vehSeatLeave(v,myNetId());
+        if(MP.active) sendEvt('vehicleExit', {id:v.id,who:myNetId()});
         toast('Você explodiu com o carro!');
         die();
       } else if(P && !P.dead && Math.hypot(P.x-v.x,P.y-v.y)<70){
@@ -878,14 +864,7 @@ function pickup(){
       if(nv.destroyed || nv.dying || (nv.hp!==undefined && nv.hp<=0)){
         toast('Veículo destruído!');beep(160,.08,'square',.05);return;
       }
-      if(isVehicleOccupied(nv)){
-        toast('Veículo ocupado!');beep(160,.08,'square',.05);return;
-      }
-      if(nv.hp===undefined){ nv.hp=100; nv.maxHp=100; }
-      P.inVehicle=nv;nv.spd=0;nv.driverId=myNetId();nv.showHp=3;
-      showVehicleHUD();
-      if(MP.active) sendEvt('vehicleEnter', {id:nv.id, driver:myNetId()});
-      toast(vehKind(nv)==='atv'?'Pilotando o quadriciclo':vehKind(nv)==='sled'?'Pilotando a moto de neve':vehKind(nv)==='buggy'?'Pilotando o buggy':'Dirigindo');beep(440,.15,'square',.06);return;
+      boardVehicle(nv);return;   // motorista se estiver vazio, passageiro se já tiver motorista, recusa se lotado (js/32)
     }
   }
 
@@ -996,12 +975,12 @@ function carTakeHit(v,dmg){
   if(v.hp<=0&&!v.dying)startVehicleDeath(v);
 }
 function zombieHurt(n,bleedChance){
-  if(P&&P.inVehicle){carTakeHit(P.inVehicle,n*0.2);} // quem está no veículo não se machuca; só o veículo sofre (20% do dano)
+  if(P&&P.inVehicle){riderHit(P.inVehicle,n*0.2);} // quem está no veículo não se machuca; só o veículo sofre (20% do dano)
   else hurt(n,bleedChance);
 }
 /* Dano de animal agressivo: igual ao de zumbi — dentro do carro o jogador fica protegido e o carro sofre 20% do dano */
 function animalHurt(n,bleedChance){
-  if(P&&P.inVehicle){carTakeHit(P.inVehicle,n*0.2);}
+  if(P&&P.inVehicle){riderHit(P.inVehicle,n*0.2);}
   else hurt(n,bleedChance);
 }
 function isOtherPlayerAlive(){
