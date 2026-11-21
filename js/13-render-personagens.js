@@ -815,14 +815,14 @@ function treeSprite(k,v,snow,a){
   }
   return TSP[key]={cv:cv,ox:ox,oy:oy,top:top,half:Math.max(8,half)};
 }
-window.SH_BUD=6;   // orcamento de sombras refeitas por quadro (reposto no inicio do render)
+window.SH_BUD=12;   // orcamento de sombras refeitas por quadro (reposto no inicio do render)
 function treeShadow(x,y,s){
   const f=SUN.f;
   if(f>.02){   // de dia: a propria silhueta da copa e do tronco, esticada para longe do sol
     if(!s.sh){const c=document.createElement('canvas');c.width=s.cv.width;c.height=s.cv.height;const q=c.getContext('2d');q.drawImage(s.cv,0,0);q.globalCompositeOperation='source-in';q.fillStyle='#080a1c';q.fillRect(0,0,c.width,c.height);s.sh=c;}
     const cap=Math.min(1,56/Math.max(8,s.top)),ga=ctx.globalAlpha;
     ctx.globalAlpha=ga*f*SUN.a;
-    const c=Math.round(-SUN.ax*cap*24)/24,d=Math.round(-(SUN.by*cap+.15)*24)/24;   // sol quantizado: a sombra esticada fica em cache e so e refeita quando ele anda de verdade
+    const c=Math.round(-SUN.ax*cap*48)/48,d=Math.round(-(SUN.by*cap+.15)*48)/48;   // sol quantizado: a sombra esticada fica em cache e so e refeita quando ele anda de verdade
     let q=s.shs;
     if(!q||(q.c!==c||q.d!==d)&&SH_BUD-->0){   // no maximo SH_BUD refeitas por quadro: com o sol andando, as outras seguem com a sombra anterior por um instante (nao trava)
       const w=s.cv.width,h=s.cv.height,u0=-s.ox,u1=w-s.ox,v0=-s.oy,v1=h-s.oy;

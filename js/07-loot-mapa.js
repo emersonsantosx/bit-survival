@@ -288,7 +288,7 @@ function drawPingsMini(){
    O mundo é dividido em quadras de 200x200. Na geração cada quadra guarda quantas árvores e pedras tinha. Com o tempo, a quadra mais esvaziada
    (abaixo de 70% do original) ganha 1 novo item por tentativa, num ponto livre e fora da vista de todos os jogadores; nunca passa dos 70%,
    então regiões ainda cheias não recebem nada e o mapa nunca fica mais denso que o original. Só o anfitrião decide; o convidado recebe a lista. */
-const RG_CELL=200,RG_FRAC=.7,RG_TREE_S=40,RG_ROCK_S=100;      // intervalo de tentativas em segundos de jogo (dia = 480 s)
+const RG_CELL=200,RG_FRAC=.7,RG_TREE_S=40,RG_ROCK_S=100;      // intervalo de tentativas em segundos de jogo (dia = 600 s)
 let RG_BT=null,RG_BR=null,RG_SET_T=new Set(),RG_SET_R=new Set(),rgAccT=0,rgAccR=0;
 function rgKey(x,y){return Math.floor(x/RG_CELL)+','+Math.floor(y/RG_CELL);}
 function rgCount(arr){const m=new Map();for(const o of arr){const k=rgKey(o.x,o.y);m.set(k,(m.get(k)||0)+1);}return m;}

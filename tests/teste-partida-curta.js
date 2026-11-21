@@ -1,4 +1,4 @@
-/* Partida curta: uma sessao continua de 7 minutos de jogo (mais de um dia inteiro: o dia 2 comeca aos 5 min) em cada mapa, SEM teleporte
+/* Partida curta: uma sessao continua de 7 minutos de jogo (passa da virada do dia, que acontece aos 6 min e 15 s) em cada mapa, SEM teleporte
    (o teste-fumaca teleporta e muda a hora; aqui o jogo corre sozinho): o jogador anda, corre, ataca, o dia vira, zumbis e animais nascem e se mexem,
    o salvamento automatico roda a cada 20 s e, no fim, o jogo salvo volta com o mesmo dia.
    So repoe vida, fome e sede quando ficam perigosamente baixas, para a partida nao acabar no meio: tudo o mais e o jogo de verdade.
@@ -52,6 +52,7 @@ const MAPS = ['forest', 'snow', 'desert', 'city'];
       const s = JSON.parse(localStorage.getItem('minisurv_save_1')); o.saveT = s.T; o.saveDay = s.day;
       state = 'menu'; continueGame(1);
       o.voltou = state === 'play'; o.diaVoltou = day;
+      P.hp = 100; zombies = zombies.filter(z => Math.hypot(z.x - P.x, z.y - P.y) > 250);   // o fim da partida cai de madrugada: tira os zumbis colados no jogador, so conferimos que o jogo volta e roda, nao que ele sobrevive
       for (let i = 0; i < 100; i++) { update(DT); render(); }   // e o jogo continua rodando depois de carregar
       o.seguiu = state === 'play' && fin(P.x) && fin(P.hp);
       return o;

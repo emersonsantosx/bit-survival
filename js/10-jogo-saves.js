@@ -74,7 +74,7 @@ function saveGame(){
     const ps=JSON.parse(JSON.stringify(P,(k,v)=>(k==='inside'||k==='inVehicle'||k==='fish'||k==='sleeping'||k[0]==='_')?undefined:v));
     const data={
       v:SAVE_VER, ws:WW, at:Date.now(), map:selectedMap, seed:worldSeed, sk:SKIN_SEL,
-      T:_q(T,2), day, kills, weather, weatherTimer:_q(weatherTimer,1), spawnTimer:_q(spawnTimer,1),
+      T:_q(T,2), ds:DAY_SECONDS, day, kills, weather, weatherTimer:_q(weatherTimer,1), spawnTimer:_q(spawnTimer,1),
       P:ps, inVeh:P.inVehicle?vehicles.indexOf(P.inVehicle):-1,
       trees:trees.map(t=>[t.x,t.y,_q(t.hp,2)]),
       rocks:rocks.map(r=>[r.x,r.y,_q(r.hp,2)]),
@@ -99,6 +99,16 @@ function saveWorldOk(d){
   /* a cidade tem a margem da direita aparada depois de gerada (ver genOrla), entao o WW salvo pode ser menor que o tamanho-base; a geracao continua sendo a mesma */
   return d.ws===base||(d.map==='city'&&d.ws<=base&&d.ws>=base-700);
 }
+/* save feito com outro tamanho de dia (antes 480 s): reescala tudo que conta em segundos de jogo, para a hora do dia, as plantas, as frutas e o loot ficarem no mesmo ponto */
+function saveDayScale(d){
+  const ds=Number.isFinite(d.ds)&&d.ds>0?d.ds:480,k=DAY_SECONDS/ds;
+  if(k===1)return;
+  d.T*=k;d.ds=DAY_SECONDS;
+  const sc=(a,i)=>{if(Array.isArray(a)&&Number.isFinite(a[i])&&a[i]>=0)a[i]=Math.round(a[i]*k);};
+  if(Array.isArray(d.plots))for(const r of d.plots){sc(r,3);sc(r,4);}
+  if(Array.isArray(d.fr))for(const r of d.fr)sc(r,2);
+  if(Array.isArray(d.rl))for(const r of d.rl)sc(r,2);
+}
 function readSave(n){
   let d=null;
   try{
@@ -107,6 +117,7 @@ function readSave(n){
     const ok=d && d.v===SAVE_VER && saveWorldOk(d) && MAP_NAMES[d.map] && Number.isFinite(d.seed) && d.seed>0 && Number.isFinite(d.T) && d.P && Number.isFinite(d.P.hp) && d.P.hp>0
       && Array.isArray(d.trees)&&Array.isArray(d.rocks)&&Array.isArray(d.items)&&Array.isArray(d.zombies)&&Array.isArray(d.vehicles)&&Array.isArray(d.animals)&&Array.isArray(d.fires);
     if(!ok){ toast('Save do slot '+n+' incompatível com esta versão'); return null; }   // não apaga: o jogador pode recuperar com a versão certa
+    saveDayScale(d);
     return d;
   }catch(e){ clearSave(n); return null; }
 }

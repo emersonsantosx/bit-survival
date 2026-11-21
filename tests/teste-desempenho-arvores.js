@@ -32,7 +32,7 @@ const { chromium } = require('playwright');
     const ms = []; for (let i = 0; i < 60; i++) { update(1 / 60); const a = performance.now(); render(); ms.push(performance.now() - a); } ms.sort((a, b) => a - b);
     o.denso = best.d; o.medianaMs = ms[30];
     // 5) orcamento de sombras por quadro
-    o.orc = typeof SH_BUD === 'number' && SH_BUD <= 6;
+    o.orc = typeof SH_BUD === 'number' && SH_BUD <= 12;
     return o;
   });
   ok(r.arvores > 1000, 'mapa com muitas arvores (' + r.arvores + ')');
