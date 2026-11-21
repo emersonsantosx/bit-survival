@@ -4,7 +4,7 @@ let selectedMap='forest';
 let mpSelectedMap='forest';
 let mpSlot=-1;   // mundo escolhido pelo host: 1..4 = slot de save (novo se vazio), 0 = mundo temporario, sem salvar, -1 = ainda nao escolheu (a tela sugere um)
 let weather='none';
-let weatherTimer=120;
+let weatherTimer=120,weatherK=1;   // weatherK: intensidade do clima atual (0,5 fraco a 1,5 forte); so muda a quantidade de gotas e flocos
 let weatherParticles=[];
 let cityInter=[],cityCrash=null,lampList=[];
 let trees=[],rocks=[],blds=[],walls=[],items=[],zombies=[],roads=[],decals=[],parts=[],tracers=[],towns=[],lakes=[],vehicles=[],campfires=[],tents=[],spits=[],decorations=[],animals=[];

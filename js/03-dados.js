@@ -314,6 +314,17 @@ function pickWeather(rf){
   if(selectedMap==='snow') return r<.45?'none':'snow';
   return r<.65?'none':'rain';
 }
+/* Proxima rodada do clima (so em jogo; o sorteio da semente continua usando pickWeather, com um sorteio so).
+   Cada rodada tem a sua propria chance de tempo ruim (a base do mapa vezes um fator sorteado), a sua duracao (curta ou longa, de 40 a 300 s)
+   e a sua intensidade, entao nao ha padrao: garoa curta, chuva forte longa, dias limpos seguidos... */
+const WX_BASE={desert:.3,snow:.55,forest:.35,city:.35};
+function weatherRoll(rf){
+  const base=WX_BASE[selectedMap]||.35,f=.35+rf()*1.5,p=Math.min(.85,Math.max(.06,base*f));
+  const bad=rf()<p,type=selectedMap==='desert'?'sand':selectedMap==='snow'?'snow':'rain';
+  const dur=bad?40+180*Math.pow(rf(),1.4):60+240*Math.pow(rf(),1.4);
+  const k=bad?.5+rf():1;
+  return {w:bad?type:'none',dur,k};
+}
 function lakeLoot(t){return mapHasLake()?Object.assign({fishingrod:1.5},t):t;}
 /* fora dos prédios só existem pedra e taco; todo o resto (comida, água, armas, curativos) fica dentro das casas */
 const OUT_LOOT={stone:6,bat:.25};

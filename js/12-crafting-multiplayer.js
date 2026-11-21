@@ -1168,6 +1168,7 @@ function applySnapshot(snap){
     }
   }
   if(Number.isFinite(snap.weatherTimer)) weatherTimer=clamp(snap.weatherTimer,0,300);
+  weatherK=Number.isFinite(snap.wk)?clamp(snap.wk,.4,1.6):1;
   if(Number.isFinite(snap.kills)) kills = snap.kills;
 }
 let BASE_TREES=[],BASE_ROCKS=[],BASE_TOBJ=new Map(),BASE_ROBJ=new Map();
@@ -1265,7 +1266,7 @@ function packSnapshot(){
     if(!inc) continue;
     vPack.push({id:v.id,x:Math.round(v.x),y:Math.round(v.y),w:v.w,h:v.h,col:v.col,looted:!!v.looted,spd:+(v.spd||0).toFixed(1),face:+(v.face||0).toFixed(2),hp:v.hp,maxHp:v.maxHp,dying:!!v.dying,destroyed:!!v.destroyed,explodeT:v.explodeT});
   }
-  return {type:'snapshot',day,dark:+dark.toFixed(3),T:+T.toFixed(1),weather,weatherTimer:Math.round(weatherTimer),kills,
+  return {type:'snapshot',day,dark:+dark.toFixed(3),T:+T.toFixed(1),weather,weatherTimer:Math.round(weatherTimer),wk:+weatherK.toFixed(2),kills,
     zs:zPack,
     it:iPack,
     an:aPack,
