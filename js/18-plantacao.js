@@ -94,7 +94,7 @@ function plotNeedsSeed(){   // canteiro vazio ao alcance, semente na mochila mas
 function hoeTill(quiet){
   if(!P||P.dead||P.inVehicle||P.inside||P.tool!=='hoe')return;
   const f=frontCell();
-  if(plotAt(f.cx,f.cy)){if(!quiet)toast('Essa terra já está arada');return;}
+  if(plotAt(f.cx,f.cy)){if(!quiet)say('Essa terra já está arada');return;}
   if(plots.length>=PLOT_MAX){if(!quiet)toast('Terra arada demais: plante ou espere voltar ao normal');return;}
   plotDo({act:'ARAR',cell:f,quiet});
 }
@@ -116,11 +116,11 @@ function plotDo(T){
     const s=seedFor(p);
     if(!s){const s0=heldSeed();if(s0){const c=CROPS[SEED2CROP[s0]];toast(c.n+' não vinga aqui ('+c.maps.map(m=>MAPN[m]).join(' e ')+', ou numa estufa)');beep(130,.08,'square',.04);}return;}
     removeInv(s,1);if(countInv(s)<=0){P.hold=null;try{buildInv();}catch(e){}}p.c=SEED2CROP[s];p.g=0;send(p);
-    beep(260,.07,'sine',.04);puff(p.cx*CELL+8,p.cy*CELL+8,'#6a4a2c',5);toast('Plantou: '+CROPS[p.c].n);
+    beep(260,.07,'sine',.04);puff(p.cx*CELL+8,p.cy*CELL+8,'#6a4a2c',5);say('Plantou: '+CROPS[p.c].n);
   }else if(a==='REGAR'){
     if(countInv('water')<1)return;
     removeInv('water',1);p.w=DAY_SECONDS*.9;send(p);
-    beep(430,.1,'sine',.045);puff(p.cx*CELL+8,p.cy*CELL+6,'#8cc8f0',7);toast('Regou a plantação');
+    beep(430,.1,'sine',.045);puff(p.cx*CELL+8,p.cy*CELL+6,'#8cc8f0',7);say('Regou a plantação');
   }else if(a==='COLHER'){
     if(!mature(p))return;
     const cr=CROPS[p.c],got=[];
@@ -130,7 +130,7 @@ function plotDo(T){
     if(cr.keep)p.g=cr.grow*cr.keep;else{p.c=null;p.g=0;}   // perene: continua plantada e rebrota
     send(p);
     beep(520,.08,'triangle',.05,120);puff(p.cx*CELL+8,p.cy*CELL+4,'#e8c040',9);
-    toast('Colheu: '+n+' '+ITEMS[cr.yield[0]].n+(ns>0?' e '+ns+' semente'+(ns>1?'s':''):''));
+    say('Colheu: '+n+' '+ITEMS[cr.yield[0]].n+(ns>0?' e '+ns+' semente'+(ns>1?'s':''):''));
     try{track('harvest');}catch(e){}
   }
 }

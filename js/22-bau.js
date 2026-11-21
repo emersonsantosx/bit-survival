@@ -83,8 +83,8 @@ function deposit(i){
   const s=open;if(!s||!P)return;
   const sl=P.inv[i];if(!sl)return;
   const ex=s.s.find(q=>q.t===sl.t);
-  if(!ex&&s.s.length>=SLOTS){toast('Baú cheio ('+SLOTS+' espaços)');beep(120,.1,'square',.05);return;}
-  const n=Math.min(sl.n,MAXN-(ex?ex.n:0));if(n<=0){toast('Esse espaço do baú está no limite');return;}
+  if(!ex&&s.s.length>=SLOTS){say('Baú cheio ('+SLOTS+' espaços)');beep(120,.1,'square',.05);return;}
+  const n=Math.min(sl.n,MAXN-(ex?ex.n:0));if(n<=0){say('Esse espaço do baú está no limite');return;}
   if(ex)ex.n+=n;else s.s.push({t:sl.t,n:n});
   sl.n-=n;if(sl.n<=0)P.inv.splice(i,1);
   if(P.hold&&countInv(P.hold)<=0){P.hold=null;try{EAT=null;}catch(e){}}
@@ -108,7 +108,7 @@ function takeAll(){
     addItem(sl.t,sl.n);s.s.splice(i,1);moved++;
   }
   if(!moved){toast(s.s.length?'Mochila cheia':'O baú está vazio');beep(120,.1,'square',.05);return;}
-  if(s.s.length)toast('Pegou o que coube na mochila');
+  if(s.s.length)say('Pegou o que coube na mochila');
   syncOut(s);uiTap();render_();
 }
 function dismantle(){

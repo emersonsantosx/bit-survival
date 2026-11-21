@@ -2061,7 +2061,7 @@ function drawItem(it,near){
     case'roof':R(x-5,y-7+b,10,7,'#b44a3a');R(x-5,y-7+b,10,1,'#d9705c');for(let i=0;i<3;i++)R(x-5,y-5+b+i*2,10,1,'#7a2e24');break;
     case'fence':for(let i=0;i<4;i++){R(x-5+i*3,y-6+b,2,6,'#9a6a3a');}R(x-5,y-4+b,10,1,'#5a3c20');break;
     case'hoe':for(let i=0;i<10;i++)R(x-5+i,y-3+b-(i>>2),1,1,'#8a6a3a');R(x+3,y-7+b,4,3,'#c0c8d4');break;
-    case'katana':R(x-7,y-3+b,4,2,'#222831');R(x-6,y-3+b,1,1,'#8a8468');R(x-3,y-5+b,1,6,'#222831');R(x-2,y-4+b,1,4,'#ffd84a');for(let i=0;i<9;i++){const u=i>5?(i>7?2:1):0;R(x-1+i,y-3+b-u,1,2,'#c0c8d4');R(x-1+i,y-2+b-u,1,1,'#f0ead8');}R(x+8,y-6+b,1,1,'#f0ead8');break;
+    case'katana':R(x-7,y-3+b,4,2,'#222831');R(x-6,y-3+b,1,1,'#8a8468');R(x-3,y-5+b,1,6,'#222831');R(x-2,y-4+b,1,4,'#ffd84a');for(let i=0;i<9;i++){R(x-1+i,y-3+b,1,2,'#c0c8d4');R(x-1+i,y-2+b,1,1,'#f0ead8');}R(x+8,y-2+b,1,1,'#f0ead8');break;
     case'spear':for(let i=0;i<11;i++)R(x-5+i,y-3+b,1,1,'#8a6a3a');R(x+6,y-4+b,3,3,'#c0c8d4');break;
     case'fishingrod':for(let i=0;i<11;i++)R(x-5+i,y-2+b-(i>>2),1,1,'#8a6a3a');R(x-3,y-1+b,3,2,'#c0c0c8');R(x+5,y-5+b,1,3,'#e8e8e8');break;
     case'bow':R(x-4,y-7+b,2,10,'#8a5a2a');R(x-3,y-7+b,6,2,'#c0a070');R(x-3,y+1+b,6,2,'#c0a070');break;

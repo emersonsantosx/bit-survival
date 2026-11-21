@@ -1292,6 +1292,7 @@ function render(){
       ctx.fillStyle=f.col;ctx.fillText(f.txt,f.x,f.y);
       ctx.globalAlpha=1;
     }
+    drawSay();
     ctx.restore();
     // Screen overlays (flash, joystick, minimap) — shared with outdoor path
     ctx.setTransform(1,0,0,1,0,0);
@@ -1561,6 +1562,7 @@ function render(){
     ctx.fillStyle=f.col;ctx.fillText(f.txt,f.x,f.y);
     ctx.globalAlpha=1;
   }
+  drawSay();
   drawLighting(sx,sy);
   ctx.setTransform(1,0,0,1,0,0);
   sleepFx();
