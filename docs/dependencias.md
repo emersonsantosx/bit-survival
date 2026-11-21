@@ -54,9 +54,9 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 06-interiores-portas | 42 | 11 | 7 | 36 | 1 | . |  |  |  |  |  | 1 | 30 |  |  |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
 | 07-loot-mapa | 135 | 3 | 30 | 128 | 3 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 08-cidade-vilas-marcos | 135 | 3 | 17 | 136 | 21 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 09-milharal-geracao | 206 | 10 | 87 | 284 | 40 |  | 1 | 35 | . | 3 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |
-| 10-jogo-saves | 90 | 50 | 60 | 700 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 17 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |
-| 11-pesca-update | 262 | 40 | 66 | 897 | 63 | 2 | 3 | 5 | 20 | 64 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
+| 09-milharal-geracao | 206 | 10 | 87 | 284 | 40 |  | 1 | 35 | . | 2 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |
+| 10-jogo-saves | 89 | 50 | 60 | 700 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 17 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |
+| 11-pesca-update | 262 | 40 | 66 | 897 | 63 | 2 | 3 | 5 | 20 | 66 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 57 | 36 | 29 | 739 | 12 | 1 | 6 | 5 | 11 | 46 | 42 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |  |  |
 | 13-render-personagens | 327 | 40 | 22 | 252 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 658 | 13 | 16 | 324 | 17 |  | 10 | 8 | 23 | 7 | 5 | 1 | 155 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  |
@@ -66,7 +66,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 18-plantacao | 36 | 6 | 22 | 77 | 16 |  |  | 13 | 1 | 1 | 8 | 3 | 139 |  | 1 |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 19-cerca | 40 | 13 | 3 | 119 | 12 |  |  | 1 |  | 5 | 5 | 7 | 35 |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 20-piso-telhado | 39 | 3 | 6 | 37 | 6 |  |  | 1 |  |  | 2 | 2 | 30 |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 21-frutiferas | 17 | 1 | 7 | 25 | 2 |  |  |  |  |  | 1 | 3 | 13 |  | 1 |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |
+| 21-frutiferas | 17 | 1 | 7 | 25 | 2 |  |  |  |  |  | 2 | 3 | 13 |  | 1 |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |
 | 22-bau | 25 | 14 | 11 | 80 | 12 |  |  | 1 |  | 3 | 9 | 6 |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |
 | 23-poco | 15 | 4 | 4 | 51 | 14 |  |  | 2 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |
 | 24-tronco | 23 | 5 | 4 | 100 | 15 |  |  | 1 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |
@@ -94,7 +94,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 19 | 64 |
 | rnd | const | 01-base:16 | 18 | 435 |
 | T | let | 04-estado:14 | 18 | 128 |
-| toast | funcao | 11-pesca-update:1330 | 18 | 123 |
+| toast | funcao | 11-pesca-update:1334 | 18 | 120 |
 | WW | let | 03-dados:2 | 18 | 103 |
 | WH | let | 03-dados:2 | 18 | 92 |
 | clamp | const | 01-base:4 | 17 | 99 |
@@ -112,6 +112,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | ITEMS | const | 03-dados:167 | 11 | 70 |
 | zombies | let | 04-estado:10 | 11 | 58 |
 | campfires | let | 04-estado:10 | 11 | 41 |
+| say | funcao | 11-pesca-update:1318 | 10 | 92 |
 | dark | let | 04-estado:14 | 10 | 62 |
 | tents | let | 04-estado:10 | 10 | 23 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |
@@ -121,10 +122,9 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | rebuildSolidGrid | funcao | 05-geometria:374 | 9 | 35 |
 | lakes | let | 04-estado:10 | 9 | 31 |
 | addItem | funcao | 04-estado:271 | 9 | 20 |
-| $ | const | 01-base:2 | 8 | 184 |
+| $ | const | 01-base:2 | 8 | 183 |
 | H | let | 01-base:48 | 8 | 103 |
 | W | let | 01-base:48 | 8 | 98 |
-| say | funcao | 11-pesca-update:1316 | 8 | 88 |
 | rocks | let | 04-estado:10 | 8 | 49 |
 | atkHeld | let | 04-estado:16 | 8 | 18 |
 | sprintHeld | let | 04-estado:16 | 8 | 16 |

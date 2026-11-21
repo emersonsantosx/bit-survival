@@ -17,13 +17,13 @@ const fs = require('fs');
     const tel = document.getElementById('toast'); tel.textContent = ''; tel.classList.remove('show');
     // 1) aviso do jogador: balao, sem toast
     floaters.length = 0; say('Inventário cheio'); const fl = floaters.find(f => f.say); o.say = fl && fl.txt; o.longa = fl && fl.t; o.toastCalado = tel.textContent === ''; say('Pegou: Pistola (+12 munição)'); o.umPorVez = floaters.filter(f => f.say).length; o.longaMais = floaters.find(f => f.say).t; o.curto = floaters.find(f => f.say).txt;
-    const L = m => sayLines(m).map(l => l.t); o.tit = sayLines('Pegou: Madeira'); o.arv = sayLines('Árvore derrubada! +3 Madeira'); o.ped = sayLines('Pedra quebrada! +2 Pedra'); o.col = sayLines('Colheu: 3 Milho e 2 sementes'); o.mun = sayLines('+12 munição'); o.cores = ['Madeira', 'Pedra', 'Munição', 'Maçã'].map(itemColor); o.semItem = sayLines('Inventário cheio').every(l => !l.i); o.l1 = L('Pegou: Madeira'); o.l2 = L('Pegou: Pistola (+12 munição)'); o.l3 = L('Sede saciada · inventário cheio'); o.l4 = L('Você já tem Pistola: deixe pro parceiro e coma depois de assar tudo isso aqui');
+    const L = m => sayLines(m).map(l => l.t); o.tit = sayLines('Pegou: Madeira'); o.arv = sayLines('Árvore derrubada! +3 Madeira'); o.ped = sayLines('Pedra quebrada! +2 Pedra'); o.col = sayLines('Colheu: 3 Milho e 2 sementes'); o.mun = sayLines('+12 munição'); o.fru = sayLines('Colheu: 3 Maçã · 1 no chão (inventário cheio)'); o.cac = sayLines('Caçou: Carne crua'); o.pla = sayLines('Plantou: Milho'); o.todos = Object.keys(ITEMS).every(k => /^rgb\(/.test(itemColor(ITEMS[k].n))); o.peixes = Object.keys(FISH).every(k => /^rgb\(/.test(itemColor(FISH[k].n))); o.cores = ['Madeira', 'Pedra', 'Munição', 'Maçã'].map(itemColor); o.semItem = sayLines('Inventário cheio').every(l => !l.i); o.l1 = L('Pegou: Madeira'); o.l2 = L('Pegou: Pistola (+12 munição)'); o.l3 = L('Sede saciada · inventário cheio'); o.l4 = L('Você já tem Pistola: deixe pro parceiro e coma depois de assar tudo isso aqui');
     const FT = CanvasRenderingContext2D.prototype.fillText; let desenhou = 0;
     CanvasRenderingContext2D.prototype.fillText = function (t) { if (/Pistola|munição/.test(t)) desenhou++; return FT.apply(this, arguments); };
     for (let i = 0; i < 6; i++) { update(1 / 60); render(); }
     o.desenhou = desenhou;
     // some sozinho
-    for (let i = 0; i < 200; i++) update(1 / 60); o.sumiu = !floaters.some(f => f.say);
+    for (let i = 0; i < 200; i++) update(1 / 60); o.sumiu = !floaters.some(f => f.say); say('Comeu'); say('Pegou: Sementes de milho', 1); o.junto = floaters.find(f => f.say).lines.map(l => l.t).join('|');
     // 2) aviso do jogo continua no toast
     toast('Chuva: fogueiras apagam e stamina cai mais'); o.toastTexto = tel.textContent;
     // 4) katana: 3 golpes seguidos sem texto COMBO, dano do 3o maior
@@ -47,6 +47,9 @@ const fs = require('fs');
   const T_ = a => a.map(l => l.t + (l.b ? '*' : '')).join('|');
   ok(T_(r.tit) === 'Madeira*|+1' && T_(r.arv) === 'Madeira*|+3' && T_(r.ped) === 'Pedra*|+2' && T_(r.col) === 'Milho*|+3|+2 sementes' && T_(r.mun) === 'Munição*|+12', 'ganho de item: nome em negrito e a quantidade embaixo (' + T_(r.arv) + ', ' + T_(r.col) + ')');
   ok(r.cores.every(c => /^rgb\(/.test(c)) && new Set(r.cores).size === 4 && r.semItem, 'o negrito do item tem a cor do item (' + r.cores.join(' ') + ') e textos comuns nao');
+  ok(r.todos && r.peixes, 'todo item e todo peixe tem cor propria');
+  ok(T_(r.fru) === 'Maçã*|+3|1 no chão (inventário cheio)' && T_(r.cac) === 'Carne crua*|Caçou' && T_(r.pla) === 'Milho*|Plantou', 'colheita, caca e plantio: item em negrito colorido');
+  ok(r.junto === 'Comeu|Sementes de milho|+1', 'semente ganha ao comer entra junto com o aviso de comer (' + r.junto + ')');
   ok(r.sumiu, 'o texto some sozinho');
   ok(/Chuva/.test(r.toastTexto), 'aviso do jogo (clima) continua no topo');
   const src = fs.readdirSync(path.join(__dirname, '..', 'js')).map(f => fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8')).join('\n');

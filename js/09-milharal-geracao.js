@@ -893,13 +893,12 @@ function damageAnimal(a,dmg,net){
   if(a.hp<=0){
     a.dead=true;
     if(!net)track('killAnimal');
-    addFloater(a.x,a.y-18,'+carne','#ffa060');
     for(let i=0;i<8;i++)parts.push({x:a.x,y:a.y,vx:rnd(-35,35),vy:rnd(-45,10),t:.45,c:'#a03030',g:1});
     if(!MP.active || MP.isHost){
       items.push({t:'meat',x:a.x,y:a.y});
       if(MP.active) sendEvt('itemAdded',{t:'meat',x:a.x,y:a.y});
     }
-    toast('Caçou: carne crua');
+    say('Caçou: Carne crua');
   }
 }
 function drawAnimal(a){

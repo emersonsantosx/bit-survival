@@ -129,7 +129,7 @@ function drawFishMini(){
     ctx.strokeStyle='#E8E0CC';ctx.lineWidth=2;ctx.strokeRect(bx+1,by+1,bw-2,bh-2);
     const ic=pxCanvas('fish_'+q.id);ctx.imageSmoothingEnabled=false;
     if(ic)ctx.drawImage(ic,bx+10,by+8,ic.width*3,ic.height*3);
-    ctx.textAlign='left';ctx.fillStyle='#8DA568';ctx.font='bold 10px "Courier New",monospace';ctx.fillText(sp.n.toUpperCase(),bx+60,by+20);
+    ctx.textAlign='left';ctx.fillStyle=itemColor(sp.n)||'#8DA568';ctx.font='bold 10px "Courier New",monospace';ctx.fillText(sp.n.toUpperCase(),bx+60,by+20);
     ctx.fillStyle='#C79A54';ctx.font='bold 9px "Courier New",monospace';ctx.fillText(q.kg+' kg'+(q.n>1?'   x'+q.n:''),bx+60,by+34);
     if(q.perfect){ctx.fillStyle='#ffe040';ctx.fillText('PERFEITO! Pescaria dupla',bx+10,by+52);}
     ctx.restore();
@@ -1305,7 +1305,9 @@ function sayLines(msg){   // devolve as linhas do aviso: [{t:texto,b:negrito}]. 
   if((m=/^\+(\d+) (munição|flechas)$/.exec(msg)))return [L_(m[2]==='flechas'?'Flechas':'Munição',1,1),L_('+'+m[1])];
   if((m=/^(?:Árvore derrubada|Tronco destruído)! \+(\d+) Madeira(?: · (.*))?$/.exec(msg)))return [L_('Madeira',1,1),L_('+'+m[1])].concat(m[2]?[L_(m[2].replace(/ no chão$/,''))]:[]);
   if((m=/^Pedra quebrada! \+(\d+) Pedra$/.exec(msg)))return [L_('Pedra',1,1),L_('+'+m[1])];
+  if((m=/^Colheu: (\d+) (.+?) · (.*)$/.exec(msg)))return [L_(m[2],1,1),L_('+'+m[1]),L_(m[3])];
   if((m=/^Colheu: (\d+) (.+?)(?: e (\d+) sementes?)?$/.exec(msg)))return [L_(m[2],1,1),L_('+'+m[1])].concat(m[3]?[L_('+'+m[3]+' semente'+(m[3]>1?'s':''))]:[]);
+  if((m=/^(Plantou|Descartou|Caçou): (.+)$/.exec(msg)))return [L_(m[2],1,1),L_(m[1])];
   if((m=/^Fabricou: (.+?)(?: x(\d+))?(?: \(\+(\d+) flechas\))?$/.exec(msg)))return [L_(m[1],1,1),L_(m[3]?'+'+m[3]+' flechas':'Fabricou'+(m[2]?' x'+m[2]:''))];
   for(const [re,to] of SAY_SHORT)msg=msg.replace(re,to);
   const out=[];
@@ -1313,12 +1315,14 @@ function sayLines(msg){   // devolve as linhas do aviso: [{t:texto,b:negrito}]. 
   if(out.length>3)out.length=3;
   return out;
 }
-function say(msg){
+function say(msg,add){   // add: junta as linhas ao aviso que acabou de subir (ex.: comeu e ganhou semente) em vez de trocar
   if(!P||state!=='play'||P.dead){toast(msg);return;}
   msg=String(msg);
   const lines=sayLines(msg),all=lines.map(l=>l.t).join(' ');
   const col=/cheio|sem |já tem|insuficiente|vazio|escapou|perdeu|não |nada|só a|salgada|lotado/i.test(msg)?'#ffd060':/comeu|bebeu|assad|usad|colheu|plantou|regou|equipad|vestido|fabricou|pegou|achou|derrubada|destru|quebrada|\+/i.test(msg)?'#b4ff94':'#fff1c0';
+  const old=add&&floaters.find(f=>f.say&&f.t>.3);
   floaters=floaters.filter(f=>!f.say);   // um aviso por vez: o novo troca o anterior
+  if(old){const ls=old.lines.concat(lines).slice(-4);floaters.push({x:old.x,y:old.y,txt:ls.map(l=>l.t).join(' '),lines:ls,col:old.col,t:Math.min(2.4,Math.max(old.t,1.1+all.length*.04)),vy:-14,say:1});return;}
   floaters.push({x:P.x,y:P.y-24,txt:all,lines,col,t:Math.min(2.2,1.1+all.length*.04),vy:-14,say:1});
 }
 function fText(f){   // desenha um floater; os avisos do jogador (say) saem em bloco, a ultima linha na posicao do floater (negrito na cor do aviso; a linha de baixo, normal e mais clara)

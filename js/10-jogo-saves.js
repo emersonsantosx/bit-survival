@@ -339,11 +339,10 @@ const SEED_OF={corn:'seed_corn',cookedcorn:'seed_corn',potato:'seed_potato',bake
 let seedGain=null;
 function giveSeedFor(){
   const sd=seedGain;seedGain=null;if(!sd||!P)return;
-  const el=$('toast'),base=el&&el.classList.contains('show')?el.textContent:'';
-  if(addItem(sd)){toast((base?base+' · ':'')+'+1 '+ITEMS[sd].n.toLowerCase().replace('sementes de ','semente de '));}
+  if(addItem(sd)){say('Pegou: '+ITEMS[sd].n,1);}
   else{   // sem espaco: a semente cai aos pes
     const it={t:sd,x:P.x+rnd(-6,6),y:P.y+rnd(2,8)};items.push(it);if(MP.active)sendEvt('itemAdded',{t:it.t,x:it.x,y:it.y});
-    toast((base?base+' · ':'')+'a semente caiu no chão (inventário cheio)');
+    say('Semente no chão · inventário cheio',1);
   }
 }
 /* aplica o efeito de um item; devolve true se foi usado */
