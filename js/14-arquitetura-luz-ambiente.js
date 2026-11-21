@@ -1289,7 +1289,7 @@ function render(){
     ctx.textAlign='center';ctx.font='bold 9px "Courier New",monospace';
     for(const f of floaters){
       ctx.globalAlpha=Math.min(1,f.t*1.4);
-      ctx.fillStyle=f.col;ctx.fillText(f.txt,f.x,f.y);
+      ctx.fillStyle=f.col;fText(f);
       ctx.globalAlpha=1;
     }
     ctx.restore();
@@ -1558,7 +1558,7 @@ function render(){
   ctx.textAlign='center';ctx.font='bold 9px "Courier New",monospace';
   for(const f of floaters){
     ctx.globalAlpha=Math.min(1,f.t*1.4);
-    ctx.fillStyle=f.col;ctx.fillText(f.txt,f.x,f.y);
+    ctx.fillStyle=f.col;fText(f);
     ctx.globalAlpha=1;
   }
   drawLighting(sx,sy);

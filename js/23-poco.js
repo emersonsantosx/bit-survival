@@ -24,7 +24,7 @@ function wellUse(w){
   if(!w||!P||P.dead)return;
   const splash=()=>{for(let i=0;i<5;i++)parts.push({x:w.x+rnd(-5,5),y:w.y-6,vx:rnd(-12,12),vy:rnd(-30,-10),t:.35,c:'#8cc8f0'});};
   if(frozen(w)){
-    w.thaw=T+THAW;toast('Você quebrou o gelo do poço');beep(300,.08,'square',.05,-120);
+    w.thaw=T+THAW;say('Você quebrou o gelo do poço');beep(300,.08,'square',.05,-120);
     for(let i=0;i<7;i++)parts.push({x:w.x+rnd(-6,6),y:w.y-6,vx:rnd(-24,24),vy:rnd(-40,-10),t:.4,c:'#e8f6ff'});
     return;
   }
@@ -34,10 +34,10 @@ function wellUse(w){
     if(w.q<1){toast('O poço secou por agora. Volte daqui a pouco');beep(140,.06,'square',.04);return;}
   }
   if(P.water<97){
-    P.water=Math.min(100,P.water+SIP);toast('Você bebeu água do poço');
+    P.water=Math.min(100,P.water+SIP);say('Você bebeu água do poço');
   }else{
-    if(!addItem('water')){toast('Sede saciada · inventário cheio');return;}
-    toast('Garrafa enchida no poço');
+    if(!addItem('water')){say('Sede saciada · inventário cheio');return;}
+    say('Garrafa enchida no poço');
   }
   if(selectedMap==='desert')w.q-=1;
   beep(430,.1,'sine',.045);splash();

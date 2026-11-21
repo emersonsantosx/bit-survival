@@ -40,7 +40,7 @@ function tryFish(){
   }
   P.fish={x:bx,y:by,t:0,wait:fishCastWait(),ph:0};
   P.cd=.5;P.swing=.18;
-  toast('Isca lançada... aguarde a fisgada');
+  say('Isca lançada... aguarde a fisgada');
   beep(380,.08,'sine',.04,-80);
   for(let i=0;i<6;i++)parts.push({x:bx+rnd(-3,3),y:by,vx:rnd(-14,14),vy:rnd(-35,-12),t:.35,c:'#8cc8f0'});
   return true;
@@ -56,10 +56,10 @@ function fishEnd(ok){
   const f=P.fish;if(!f)return;
   const mg=f.mg,sp=FISH[f.id]||FISH.lambari;
   P.fish=null;reelKey=false;P.cd=.5;
-  if(!ok){toast('O peixe escapou!');beep(300,.25,'triangle',.05,-160);return;}
+  if(!ok){say('O peixe escapou!');beep(300,.25,'triangle',.05,-160);return;}
   const kg=+(sp.kg[0]+Math.pow(Math.random(),1.6)*(sp.kg[1]-sp.kg[0])).toFixed(1)*(mg.perfect?1.15:1);
   const n=mg.perfect?2:1;
-  if(!addItem('f_'+f.id,n)){toast('Inventário cheio: o peixe escapou');return;}
+  if(!addItem('f_'+f.id,n)){say('Inventário cheio: o peixe escapou');return;}
   track('fish',n);
   fishPop={id:f.id,kg:+kg.toFixed(1),perfect:mg.perfect,n,t:3.2};
   beep(520,.1,'sine',.05);setTimeout(()=>beep(660,.1,'sine',.05),90);setTimeout(()=>beep(880,.18,'sine',.05),190);
@@ -79,7 +79,7 @@ function tickFishing(dt){
     }
   }else if(f.ph===1){
     f.bt-=dt;
-    if(f.bt<=0){f.ph=0;f.t=0;f.wait=rr(2.5,5);toast('Perdeu a fisgada! Aguarde a próxima');beep(200,.12,'triangle',.04,-60);}
+    if(f.bt<=0){f.ph=0;f.t=0;f.wait=rr(2.5,5);say('Perdeu a fisgada! Aguarde a próxima');beep(200,.12,'triangle',.04,-60);}
   }else{
     const mg=f.mg,sp=FISH[f.id]||FISH.lambari;
     mg.t+=dt;
@@ -129,7 +129,7 @@ function drawFishMini(){
     ctx.strokeStyle='#E8E0CC';ctx.lineWidth=2;ctx.strokeRect(bx+1,by+1,bw-2,bh-2);
     const ic=pxCanvas('fish_'+q.id);ctx.imageSmoothingEnabled=false;
     if(ic)ctx.drawImage(ic,bx+10,by+8,ic.width*3,ic.height*3);
-    ctx.textAlign='left';ctx.fillStyle='#8DA568';ctx.font='bold 10px "Courier New",monospace';ctx.fillText(sp.n.toUpperCase(),bx+60,by+20);
+    ctx.textAlign='left';ctx.fillStyle=itemColor(sp.n)||'#8DA568';ctx.font='bold 10px "Courier New",monospace';ctx.fillText(sp.n.toUpperCase(),bx+60,by+20);
     ctx.fillStyle='#C79A54';ctx.font='bold 9px "Courier New",monospace';ctx.fillText(q.kg+' kg'+(q.n>1?'   x'+q.n:''),bx+60,by+34);
     if(q.perfect){ctx.fillStyle='#ffe040';ctx.fillText('PERFEITO! Pescaria dupla',bx+10,by+52);}
     ctx.restore();
@@ -182,16 +182,16 @@ function autoSwitchMelee(){
     if((m.dmg||0)>bd){bd=m.dmg||0;best=k;}
   }
   P.weapon=best;updateWeaponHud();
-  toast('Sem munição! Equipou: '+WEAPONS[best].n);
+  say('Sem munição! Equipou: '+WEAPONS[best].n);
   beep(300,.06,'square',.045);
 }
-/* Espada: 3º golpe seguido (em até 1,3 s) é um combo com +60% de dano */
+/* Katana: 3º golpe seguido (em até 1,3 s) dá +60% de dano (sem aviso na tela) */
 function meleeDmg(w){
   let d=w.dmg||8;
   if(w.combo){
     const now=performance.now();
     P._cmb=(now-(P._cmbT||0)<1300)?(P._cmb||0)+1:1;P._cmbT=now;
-    if(P._cmb>=3){P._cmb=0;d*=1.6;try{addFloater(P.x,P.y-24,'COMBO','#ffb040');}catch(e){}}
+    if(P._cmb>=3){P._cmb=0;d*=1.6;}
   }
   return d;
 }
@@ -265,7 +265,7 @@ function attack(){
             if(MP.active) sendEvt('itemAdded', {t:'wood', x:hitTree.x, y:hitTree.y});
           }
         }
-        toast('Árvore derrubada! +' + n + ' Madeira' + fruitMsg);
+        say('Árvore derrubada! +' + n + ' Madeira' + fruitMsg);
         beep(260, .18, 'triangle', .09, 120);
       }
       makeNoise(P.x, P.y, 60);
@@ -274,7 +274,7 @@ function attack(){
   }
 
   if(!w.mines&&w.melee&&!w.rod&&(P._rockHintT||0)<performance.now()){
-    for(const r of rocks){if(Math.hypot(r.x-P.x,r.y-P.y)<26){P._rockHintT=performance.now()+4000;toast('Só a picareta quebra pedras');break;}}
+    for(const r of rocks){if(Math.hypot(r.x-P.x,r.y-P.y)<26){P._rockHintT=performance.now()+4000;say('Só a picareta quebra pedras');break;}}
   }
   if(w.mines){
     let hitRock=null,td=34;
@@ -294,7 +294,7 @@ function attack(){
             if(MP.active) sendEvt('itemAdded', {t:'stone', x:sx, y:sy});
           }
         }
-        toast('Pedra quebrada! +'+n+' Pedra');beep(320,.18,'triangle',.09,80);
+        say('Pedra quebrada! +'+n+' Pedra');beep(320,.18,'triangle',.09,80);
       }
       makeNoise(P.x,P.y,70);return;
     }
@@ -302,10 +302,10 @@ function attack(){
 
   if(w.firearm){
     if(w.bow){
-      if((P.arrows||0)<=0){P.cd=.4;toast('Sem flechas');beep(140,.06,'square',.05);return;}
+      if((P.arrows||0)<=0){P.cd=.4;say('Sem flechas');beep(140,.06,'square',.05);return;}
       P.arrows--;
     } else {
-      if(P.ammo<=0){P.cd=.35;toast('Sem munição');beep(140,.06,'square',.05);return;}
+      if(P.ammo<=0){P.cd=.35;say('Sem munição');beep(140,.06,'square',.05);return;}
       P.ammo--;
     }
     P.cd=w.cd;
@@ -1275,6 +1275,62 @@ function update(dt){
   }
 }
 
+/* Aviso sobre o jogador (inventario cheio, pegou, usou, sem municao...): texto que sobe da cabeca do personagem e some, sem fundo,
+   no estilo do antigo COMBO. Duracao cresce um pouco com o tamanho do texto. Status (sangrando, frio, calor, queimadura) e avisos do jogo ficam no toast do topo.
+   Sem jogador na tela, cai no toast. */
+const SAY_SHORT=[[/^Você já tem /,'Já tem '],[/^Você já veste.*/,'Já está vestindo'],[/^Você já tem.*/,'Já tem'],
+  [/^Você bebeu água.*/,'Bebeu água'],[/^Você comeu/,'Comeu'],[/^Garrafa enchida.*/,'Garrafa cheia'],[/^Pegou o que coube.*/,'Pegou o que coube'],
+  [/^Você quebrou o gelo.*/,'Quebrou o gelo'],[/^Água salgada.*/,'Água salgada'],[/^Isca lançada.*/,'Isca lançada'],[/^Segure o alimento cru.*/,'Segure o cru na mão'],
+  [/^Segure a semente.*/,'Segure a semente'],[/ · /,'\n']];
+const L_=(t,b,i)=>({t,b:!!b,i:!!i});   // i: o texto e nome de item (a cor do negrito vem do desenho do item)
+const _icol={};
+function itemColor(name){   // cor do item: a cor mais presente no desenho dele (sem os contornos escuros), clareada para ler bem sobre o chao
+  if(name in _icol)return _icol[name];
+  let key=null;for(const k in ITEMS)if(ITEMS[k].n===name){key=k;break;}
+  if(!key&&typeof WEAPONS!=='undefined')for(const k in WEAPONS)if(WEAPONS[k].n===name){key=k;break;}
+  const rows=key&&PXG[(ITEMS[key]&&ITEMS[key].e)||key]||(key&&PXG[key]);
+  let out=null;
+  if(rows){
+    const cnt={};for(const r of rows)for(const ch of r){const c=PXPAL[ch];if(!c)continue;const v=parseInt(c.length===4?c.replace(/#(.)(.)(.)/,'#$1$1$2$2$3$3').slice(1):c.slice(1),16),R=v>>16,G=v>>8&255,B=v&255;if(.299*R+.587*G+.114*B<70)continue;cnt[ch]=(cnt[ch]||0)+1;}
+    let best=null;for(const ch in cnt)if(!best||cnt[ch]>cnt[best])best=ch;
+    if(best){let c=PXPAL[best];if(c.length===4)c=c.replace(/#(.)(.)(.)/,'#$1$1$2$2$3$3');let R=parseInt(c.slice(1,3),16),G=parseInt(c.slice(3,5),16),B=parseInt(c.slice(5,7),16);
+      const lum=.299*R+.587*G+.114*B;if(lum<150){const m=(150-lum)/(255-lum);R+=(255-R)*m;G+=(255-G)*m;B+=(255-B)*m;}
+      out='rgb('+(R|0)+','+(G|0)+','+(B|0)+')';}
+  }
+  return _icol[name]=out;
+}
+function sayLines(msg){   // devolve as linhas do aviso: [{t:texto,b:negrito}]. Ganhos de item: nome em negrito e a quantidade embaixo ("+3"); o resto, texto curto em bloco de ate 3 linhas de 16 letras
+  let m;
+  if((m=/^(?:Pegou|Achou): (.+?)(?: \(\+(\d+) (munição|flechas)\))?$/.exec(msg)))return [L_(m[1],1,1),L_(m[2]?'+'+m[2]+' '+m[3]:'+1')];
+  if((m=/^\+(\d+) (munição|flechas)$/.exec(msg)))return [L_(m[2]==='flechas'?'Flechas':'Munição',1,1),L_('+'+m[1])];
+  if((m=/^(?:Árvore derrubada|Tronco destruído)! \+(\d+) Madeira(?: · (.*))?$/.exec(msg)))return [L_('Madeira',1,1),L_('+'+m[1])].concat(m[2]?[L_(m[2].replace(/ no chão$/,''))]:[]);
+  if((m=/^Pedra quebrada! \+(\d+) Pedra$/.exec(msg)))return [L_('Pedra',1,1),L_('+'+m[1])];
+  if((m=/^Colheu: (\d+) (.+?) · (.*)$/.exec(msg)))return [L_(m[2],1,1),L_('+'+m[1]),L_(m[3])];
+  if((m=/^Colheu: (\d+) (.+?)(?: e (\d+) sementes?)?$/.exec(msg)))return [L_(m[2],1,1),L_('+'+m[1])].concat(m[3]?[L_('+'+m[3]+' semente'+(m[3]>1?'s':''))]:[]);
+  if((m=/^(Plantou|Descartou|Caçou): (.+)$/.exec(msg)))return [L_(m[2],1,1),L_(m[1])];
+  if((m=/^Fabricou: (.+?)(?: x(\d+))?(?: \(\+(\d+) flechas\))?$/.exec(msg)))return [L_(m[1],1,1),L_(m[3]?'+'+m[3]+' flechas':'Fabricou'+(m[2]?' x'+m[2]:''))];
+  for(const [re,to] of SAY_SHORT)msg=msg.replace(re,to);
+  const out=[];
+  for(const part of msg.split('\n')){let cur='';for(const w of part.split(' ')){if(cur&&(cur+' '+w).length>16){out.push(L_(cur,1));cur=w;}else cur=cur?cur+' '+w:w;}if(cur)out.push(L_(cur,1));}
+  if(out.length>3)out.length=3;
+  return out;
+}
+function say(msg,add){   // add: junta as linhas ao aviso que acabou de subir (ex.: comeu e ganhou semente) em vez de trocar
+  if(!P||state!=='play'||P.dead){toast(msg);return;}
+  msg=String(msg);
+  const lines=sayLines(msg),all=lines.map(l=>l.t).join(' ');
+  const col=/cheio|sem |já tem|insuficiente|vazio|escapou|perdeu|não |nada|só a|salgada|lotado/i.test(msg)?'#ffd060':/comeu|bebeu|assad|usad|colheu|plantou|regou|equipad|vestido|fabricou|pegou|achou|derrubada|destru|quebrada|\+/i.test(msg)?'#b4ff94':'#fff1c0';
+  const old=add&&floaters.find(f=>f.say&&f.t>.3);
+  floaters=floaters.filter(f=>!f.say);   // um aviso por vez: o novo troca o anterior
+  if(old){const ls=old.lines.concat(lines).slice(-4);floaters.push({x:old.x,y:old.y,txt:ls.map(l=>l.t).join(' '),lines:ls,col:old.col,t:Math.min(2.4,Math.max(old.t,1.1+all.length*.04)),vy:-14,say:1});return;}
+  floaters.push({x:P.x,y:P.y-24,txt:all,lines,col,t:Math.min(2.2,1.1+all.length*.04),vy:-14,say:1});
+}
+function fText(f){   // desenha um floater; os avisos do jogador (say) saem em bloco, a ultima linha na posicao do floater (negrito na cor do aviso; a linha de baixo, normal e mais clara)
+  if(!f.lines){ctx.fillText(f.txt,f.x,f.y);return;}
+  const n=f.lines.length,col=ctx.fillStyle;
+  for(let i=0;i<n;i++){const l=f.lines[i];ctx.font=(l.b?'bold ':'')+'9px "Courier New",monospace';ctx.fillStyle=l.b?(l.i&&itemColor(l.t)||col):'#fff1c0';ctx.fillText(l.t,f.x,f.y-(n-1-i)*9);}
+  ctx.font='bold 9px "Courier New",monospace';ctx.fillStyle=col;
+}
 function toast(msg){
   const el=$('toast');if(!el)return;
   el.textContent=msg;el.classList.add('show');

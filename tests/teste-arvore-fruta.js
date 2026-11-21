@@ -23,7 +23,7 @@ const run=(map,kind)=>pg.evaluate(({map,kind})=>{
   o.fruitOnGround=items.filter(i=>i.t===f).length;o.otherFruit=items.filter(i=>FRUIT_FOOD[i.t]&&i.t!==f).length;
   o.wood=P.inv.reduce((n,s)=>n+(s.t==='wood'?s.n:0),0)+items.filter(i=>i.t==='wood').length-w0;
   o.near=items.filter(i=>i.t===f).every(i=>Math.hypot(i.x-t.x,i.y-t.y)<30);
-  o.msg=document.getElementById('toast').textContent;
+  o.msg=(floaters.find(f=>f.say)||{txt:''}).txt;   // o aviso agora sobe da cabeca (say)
   return o;},{map,kind});
 for(const [map,what] of [['forest','apple'],['desert','date']]){
   const r=await run(map,'ripe');console.log(JSON.stringify(r));

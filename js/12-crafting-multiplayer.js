@@ -2,14 +2,14 @@
 let craftFilter='all';
 function canCraft(r){for(const k in r.need)if(countInv(k)<r.need[k])return false;return true;}
 function craft(r){
-  if(!canCraft(r)){toast('Recursos insuficientes');beep(120,.1,'square',.05);return;}
+  if(!canCraft(r)){say('Recursos insuficientes');beep(120,.1,'square',.05);return;}
   const out=r.out;
   // Não gasta recursos para fabricar uma arma que já está no arsenal
   if((['pickaxe','axe','katana','spear','bat','fishingrod'].includes(out)||BUILD_TOOLS.includes(out))&&((P.meleeWeapons||[]).includes(out)||P.melee===out||toolList().includes(out))){
-    toast('Você já tem: '+ITEMS[out].n);beep(120,.1,'square',.05);return;
+    say('Você já tem: '+ITEMS[out].n);beep(120,.1,'square',.05);return;
   }
-  if(out==='bow'&&P.firearms.bow){toast('Você já tem um arco');beep(120,.1,'square',.05);return;}
-  if(out==='backpack'&&P.pack){toast('Você já tem uma mochila');beep(120,.1,'square',.05);return;}
+  if(out==='bow'&&P.firearms.bow){say('Você já tem um arco');beep(120,.1,'square',.05);return;}
+  if(out==='backpack'&&P.pack){say('Você já tem uma mochila');beep(120,.1,'square',.05);return;}
   if(out==='greenhouse'&&!GREENHOUSE_OK()){toast('A estufa só é necessária no mapa de neve');beep(120,.1,'square',.05);return;}
   if(out==='greenhouse'){
     const sp=ghSpot();
@@ -26,7 +26,7 @@ function craft(r){
     if(!tp){toast(P.inside?'Monte a barraca ao ar livre':'Sem espaço para a barraca aqui');beep(120,.1,'square',.05);return;}
     P._tp=tp;
   }
-  if(out!=='campfire'&&out!=='tent'&&out!=='stash'&&out!=='well'&&out!=='greenhouse'&&!['pickaxe','axe','katana','spear','bow','arrows','bat','fishingrod'].includes(out)&&!BUILD_TOOLS.includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){toast('Inventário cheio');beep(120,.1,'square',.05);return;}
+  if(out!=='campfire'&&out!=='tent'&&out!=='stash'&&out!=='well'&&out!=='greenhouse'&&!['pickaxe','axe','katana','spear','bow','arrows','bat','fishingrod'].includes(out)&&!BUILD_TOOLS.includes(out)&&out!=='backpack'&&P.inv.length>=invCap()&&!P.inv.some(slot=>slot.t===out)){say('Inventário cheio');beep(120,.1,'square',.05);return;}
   for(const k in r.need)removeInv(k,r.need[k]);
   if(out==='greenhouse'){
     const sp=P._gh||ghSpot();P._gh=null;
@@ -62,16 +62,16 @@ function craft(r){
     else{addMeleeWeapon(out);P.weapon=out;updateWeaponHud();
     toast(out==='fishingrod'?'Fabricou: Vara de Pesca! Mire no lago e use ATACAR.':'Fabricou: '+ITEMS[out].n+'! Arma adicionada ao arsenal.');buildSound();}
   }else if(out==='bow'){
-    if(P.firearms.bow){ toast('Você já tem um arco'); }
-    else { P.firearms.bow=true; P.arrows=(P.arrows||0)+6; P.weapon='bow'; updateWeaponHud(); toast('Fabricou: Arco (+6 flechas)'); }
+    if(P.firearms.bow){ say('Você já tem um arco'); }
+    else { P.firearms.bow=true; P.arrows=(P.arrows||0)+6; P.weapon='bow'; updateWeaponHud(); say('Fabricou: Arco (+6 flechas)'); }
     buildSound();
   }else if(out==='backpack'){
-    P.pack=true;buildInv();toast('Mochila equipada! Agora você carrega 12 itens');buildSound();
+    P.pack=true;buildInv();say('Mochila equipada: 12 itens');buildSound();
   }else if(out==='arrows'){
-    P.arrows=(P.arrows||0)+6; toast('+6 flechas'); buildSound();
+    P.arrows=(P.arrows||0)+6; say('+6 flechas'); buildSound();
   }else{
-    if(!addItem(out,r.qty||1)){toast('Inventário cheio');return;}
-    toast('Fabricou: '+ITEMS[out].n+(r.qty>1?' x'+r.qty:''));buildSound();
+    if(!addItem(out,r.qty||1)){say('Inventário cheio');return;}
+    say('Fabricou: '+ITEMS[out].n+(r.qty>1?' x'+r.qty:''));buildSound();
   }
   track('craft');if(out==='bandage')achStat('craft_bandage',1);if(out==='campfire')track('campfire');
   refreshCraft();

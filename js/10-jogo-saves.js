@@ -315,7 +315,7 @@ function buildInv(){
 }
 function discardItem(i){
   const slot=P.inv[i];
-  if(!slot){toast('Slot vazio');return;}
+  if(!slot){say('Slot vazio');return;}
   const it=slot.t;
   const a=rnd(0,6.283),d=rnd(14,20);
   let dx=P.x+Math.cos(a)*d,dy=P.y+Math.sin(a)*d;
@@ -325,7 +325,7 @@ function discardItem(i){
   slot.n--;
   if(slot.n<=0)P.inv.splice(i,1);
   buildInv();
-  toast('Descartou: '+ITEMS[it].n);
+  say('Descartou: '+ITEMS[it].n);
   beep(280,.1,'triangle',.06,-80);
   for(let k=0;k<4;k++)parts.push({x:dx,y:dy,vx:rnd(-20,20),vy:rnd(-30,0),t:.4,c:'#a0a0a0'});
 }
@@ -339,30 +339,29 @@ const SEED_OF={corn:'seed_corn',cookedcorn:'seed_corn',potato:'seed_potato',bake
 let seedGain=null;
 function giveSeedFor(){
   const sd=seedGain;seedGain=null;if(!sd||!P)return;
-  const el=$('toast'),base=el&&el.classList.contains('show')?el.textContent:'';
-  if(addItem(sd)){toast((base?base+' · ':'')+'+1 '+ITEMS[sd].n.toLowerCase().replace('sementes de ','semente de '));}
+  if(addItem(sd)){say('Pegou: '+ITEMS[sd].n,1);}
   else{   // sem espaco: a semente cai aos pes
     const it={t:sd,x:P.x+rnd(-6,6),y:P.y+rnd(2,8)};items.push(it);if(MP.active)sendEvt('itemAdded',{t:it.t,x:it.x,y:it.y});
-    toast((base?base+' · ':'')+'a semente caiu no chão (inventário cheio)');
+    say('Semente no chão · inventário cheio',1);
   }
 }
 /* aplica o efeito de um item; devolve true se foi usado */
 function applyUse(it){
   let ok=false;
-  if(it==='food'){if(P.food<95){P.food=Math.min(100,P.food+35);ok=true;toast('Você comeu');}}
-  else if(isFishItem(it)){if(P.food<95){P.food=Math.min(100,P.food+(it==='fish'?30:FISH[ITEMS[it].fish].food));P.water=Math.max(0,P.water-5);ok=true;if(Math.random()<.35){P.sick=25;toast('Peixe cru: você passou mal!');}else toast('Peixe cru... melhor assar');}}
-  else if(it==='cookedfish'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+10);P.food=Math.min(100,P.food+55);P.hp=Math.min(100,P.hp+5);ok=true;toast('Peixe assado! +5 HP');}}
-  else if(it==='meat'){if(P.food<95){P.food=Math.min(100,P.food+25);ok=true;if(Math.random()<.35){P.sick=25;toast('Carne crua: você passou mal!');}else toast('Carne crua... melhor assar');}}
-  else if(it==='cookedmeat'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+10);P.food=Math.min(100,P.food+60);P.hp=Math.min(100,P.hp+8);ok=true;toast('Carne assada! +8 HP');}}
-  else if(it==='corn'){if(P.food<95){P.food=Math.min(100,P.food+14);ok=true;toast('Milho cru... melhor assar');}}
-  else if(it==='potato'){if(P.food<95){P.food=Math.min(100,P.food+8);ok=true;toast('Batata crua... melhor assar');}}
-  else if(it==='bakedpotato'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+4);P.food=Math.min(100,P.food+28);P.hp=Math.min(100,P.hp+2);ok=true;toast('Batata assada! +2 HP');}}
-  else if(it==='melon'){if(P.food<98||P.water<98){P.food=Math.min(100,P.food+10);P.water=Math.min(100,P.water+22);ok=true;toast('Melancia fresca!');}}
-  else if(it==='cookedcorn'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+6);P.food=Math.min(100,P.food+32);P.hp=Math.min(100,P.hp+3);ok=true;toast('Milho assado! +3 HP');}}
+  if(it==='food'){if(P.food<95){P.food=Math.min(100,P.food+35);ok=true;say('Você comeu');}}
+  else if(isFishItem(it)){if(P.food<95){P.food=Math.min(100,P.food+(it==='fish'?30:FISH[ITEMS[it].fish].food));P.water=Math.max(0,P.water-5);ok=true;if(Math.random()<.35){P.sick=25;toast('Peixe cru: você passou mal!');}else say('Peixe cru... melhor assar');}}
+  else if(it==='cookedfish'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+10);P.food=Math.min(100,P.food+55);P.hp=Math.min(100,P.hp+5);ok=true;say('Peixe assado! +5 HP');}}
+  else if(it==='meat'){if(P.food<95){P.food=Math.min(100,P.food+25);ok=true;if(Math.random()<.35){P.sick=25;toast('Carne crua: você passou mal!');}else say('Carne crua... melhor assar');}}
+  else if(it==='cookedmeat'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+10);P.food=Math.min(100,P.food+60);P.hp=Math.min(100,P.hp+8);ok=true;say('Carne assada! +8 HP');}}
+  else if(it==='corn'){if(P.food<95){P.food=Math.min(100,P.food+14);ok=true;say('Milho cru... melhor assar');}}
+  else if(it==='potato'){if(P.food<95){P.food=Math.min(100,P.food+8);ok=true;say('Batata crua... melhor assar');}}
+  else if(it==='bakedpotato'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+4);P.food=Math.min(100,P.food+28);P.hp=Math.min(100,P.hp+2);ok=true;say('Batata assada! +2 HP');}}
+  else if(it==='melon'){if(P.food<98||P.water<98){P.food=Math.min(100,P.food+10);P.water=Math.min(100,P.water+22);ok=true;say('Melancia fresca!');}}
+  else if(it==='cookedcorn'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+6);P.food=Math.min(100,P.food+32);P.hp=Math.min(100,P.hp+3);ok=true;say('Milho assado! +3 HP');}}
   else if(FRUIT_FOOD[it]){const f=FRUIT_FOOD[it];if(P.food<97||(f[1]>0&&P.water<97)){P.food=Math.min(100,P.food+f[0]);P.water=Math.min(100,P.water+f[1]);P.hp=Math.min(100,P.hp+f[2]);ok=true;toast(f[3]);}}
-  else if(it==='water'){if(P.water<95){P.water=Math.min(100,P.water+40);ok=true;toast('Você bebeu água');}}
-  else if(it==='bandage'){if(P.bleed||P.hp<95){P.bleed=false;P.hp=Math.min(100,P.hp+10);ok=true;toast('Bandagem usada');track('use_bandage');}}
-  else if(it==='medkit'){if(P.bleed||P.hp<90||P.sick>0){P.bleed=false;P.sick=0;P.hp=Math.min(100,P.hp+50);ok=true;toast('Kit médico usado');}}
+  else if(it==='water'){if(P.water<95){P.water=Math.min(100,P.water+40);ok=true;say('Você bebeu água');}}
+  else if(it==='bandage'){if(P.bleed||P.hp<95){P.bleed=false;P.hp=Math.min(100,P.hp+10);ok=true;say('Bandagem usada');track('use_bandage');}}
+  else if(it==='medkit'){if(P.bleed||P.hp<90||P.sick>0){P.bleed=false;P.sick=0;P.hp=Math.min(100,P.hp+50);ok=true;say('Kit médico usado');}}
   seedGain=(ok&&SEED_OF[it])||null;   // entregue depois que o item sai do inventario (abre vaga)
   return ok;
 }
@@ -386,7 +385,7 @@ function useItem(i){
   // alimentos vão para a mão; o botão de ataque vira COMER
   if(HOLDABLE(it)){
     if(P.hold===it){putAwayHold();beep(300,.06,'triangle',.04);return;}
-    if(P.inVehicle||P.sleeping){toast('Agora não dá para segurar');return;}
+    if(P.inVehicle||P.sleeping){say('Agora não dá para segurar');return;}
     P.hold=it;EAT=null;eatLock=false;
     buildInv();
     toast('Na mão: '+ITEMS[it].n+(EATABLE(it)?' · botão COMER':' · chegue num canteiro arado e use PLANTAR'));
@@ -397,7 +396,7 @@ function useItem(i){
   if(it==='stone'){toast('Pedra é usada no crafting (tecla C)');return;}
   if(it==='cloth'){toast('Tecido é usado no crafting (tecla C)');return;}
   const ok=applyUse(it);
-  if(!ok){toast('Não precisa agora');return;}
+  if(!ok){say('Não precisa agora');return;}
   slot.n--;
   if(slot.n<=0)P.inv.splice(i,1);
   giveSeedFor();
@@ -407,7 +406,7 @@ function useItem(i){
 /* comer segurando o botão (como no Minecraft) */
 function eatStart(){
   if(!P.hold||!EATABLE(P.hold)||EAT||eatLock)return;
-  if(P.food>=95){toast('Sem fome agora');eatLock=true;return;}
+  if(P.food>=95){say('Sem fome agora');eatLock=true;return;}
   EAT={t:0,dur:P.hold==='food'?.9:1.2,c:0};
 }
 function eatTick(dt){
@@ -708,7 +707,7 @@ function exitVehicle(){
   P.inVehicle=null;
   restoreWalkHUD();
   if(MP.active) sendEvt('vehicleExit', {id:v.id,who:myNetId()});
-  toast('Saiu do veículo');beep(300,.1,'square',.05);
+  say('Saiu do veículo');beep(300,.1,'square',.05);
 }
 function startVehicleDeath(v){
   if(!v || v.dying) return;
@@ -810,8 +809,8 @@ function pickup(){
   const TG=pickTarget();   // alvo mais perto do personagem (porta, cama, baú, torneira, item ou veiculo)
   {const tap=TG&&TG.k==='tap'&&TG.tap;   // torneira da pia (cozinha e banheiro): bebe direto ou enche uma garrafa
     if(tap){
-      if(P.water<97){P.water=Math.min(100,P.water+14);toast('Você bebeu água da torneira');}
-      else{if(!addItem('water')){toast('Sede saciada · inventário cheio');return;}toast('Garrafa enchida na torneira');}
+      if(P.water<97){P.water=Math.min(100,P.water+14);say('Você bebeu água da torneira');}
+      else{if(!addItem('water')){say('Sede saciada · inventário cheio');return;}say('Garrafa enchida na torneira');}
       beep(430,.1,'sine',.045);
       for(let i=0;i<5;i++)parts.push({x:tap.x+tap.w/2+rnd(-4,4),y:tap.y+tap.h/2,vx:rnd(-10,10),vy:rnd(-30,-10),t:.35,c:'#8cc8f0'});
       return;
@@ -829,15 +828,15 @@ function pickup(){
   if(TG&&TG.k==='fgate'){fenceToggle(TG.f);return;}
   if(TG&&TG.k==='bed'){const sp=findSleepSpot();if(sp){trySleep(sp);return;}}
   // Pesca no lago (só Floresta/Neve) — inventário local de cada player (sem sync de item no chão)
-  if(ORLA&&inSea(P.x,P.y)&&!nearFountain(P.x,P.y)&&!TG){ toast('Água salgada, não dá pra beber'); beep(140,.06,'square',.04); return; }
+  if(ORLA&&inSea(P.x,P.y)&&!nearFountain(P.x,P.y)&&!TG){ say('Água salgada, não dá pra beber'); beep(140,.06,'square',.04); return; }
   if((pointInLake(P.x,P.y)||nearFountain(P.x,P.y)) && mapHasLake() && !TG){ // item solto por perto tem prioridade sobre a água
     if(P.water<97){
       P.water=Math.min(100,P.water+14);
       toast(selectedMap==='city'?'Você bebeu água da fonte':selectedMap==='snow'?'Você bebeu água gelada do lago':(selectedMap==='desert'?'Você bebeu água do oásis':'Você bebeu água do lago'));
     } else {
       // Sede saciada: enche uma garrafa (empilha no inventário)
-      if(!addItem('water')){ toast('Sede saciada · inventário cheio'); return; }
-      toast('Garrafa enchida');
+      if(!addItem('water')){ say('Sede saciada · inventário cheio'); return; }
+      say('Garrafa enchida');
     }
     beep(430,.1,'sine',.045);
     for(let i=0;i<5;i++)parts.push({x:P.x+rnd(-5,5),y:P.y,vx:rnd(-12,12),vy:rnd(-30,-10),t:.35,c:'#8cc8f0'});
@@ -858,15 +857,15 @@ function pickup(){
       // E2: only mark looted AFTER successful loot (don't lose item on full bag)
       const found=wpick(LOOT.car);
       if(found==='ammo'){
-        const n=AMMO_PACK;P.ammo+=n;toast('+'+n+' munição');
+        const n=AMMO_PACK;P.ammo+=n;say('+'+n+' munição');
         nv.looted=true; if(MP.active) sendEvt('vehicleLooted', { id: nv.id });
       } else if(found==='pistol'){
-        if(P.firearms.pistol){P.ammo+=WEAPON_AMMO;toast('+'+WEAPON_AMMO+' munição');}
-        else{P.firearms.pistol=true;P.ammo+=WEAPON_AMMO;P.weapon='pistol';updateWeaponHud();toast('Pegou: Pistola (+'+WEAPON_AMMO+' munição)');}
+        if(P.firearms.pistol){P.ammo+=WEAPON_AMMO;say('+'+WEAPON_AMMO+' munição');}
+        else{P.firearms.pistol=true;P.ammo+=WEAPON_AMMO;P.weapon='pistol';updateWeaponHud();say('Pegou: Pistola (+'+WEAPON_AMMO+' munição)');}
         nv.looted=true; if(MP.active) sendEvt('vehicleLooted', { id: nv.id });
       } else {
-        if(!addItem(found)){toast('Inventário cheio');beep(140,.08,'square',.05);return;}
-        toast('Achou: '+ITEMS[found].n);
+        if(!addItem(found)){say('Inventário cheio');beep(140,.08,'square',.05);return;}
+        say('Achou: '+ITEMS[found].n);
         nv.looted=true; if(MP.active) sendEvt('vehicleLooted', { id: nv.id });
       }
       beep(620,.12,'square',.05);
@@ -882,61 +881,61 @@ function pickup(){
   if(!it){
     const cc=nearestCactus();
     if(cc){
-      if(P.water>=95){toast('Sem sede agora');return;}
-      cc.sap=T+150;P.water=Math.min(100,P.water+16);toast('Seiva do cacto: +16 sede (espetou a mão)');hurt(2,0);beep(430,.1,'sine',.045);
+      if(P.water>=95){say('Sem sede agora');return;}
+      cc.sap=T+150;P.water=Math.min(100,P.water+16);say('Seiva do cacto: +16 sede');hurt(2,0);beep(430,.1,'sine',.045);
       for(let i=0;i<5;i++)parts.push({x:cc.x+rnd(-4,4),y:cc.y-8,vx:rnd(-12,12),vy:rnd(-30,-10),t:.35,c:'#9ad8a0'});
       return;
     }
-    if(cf&&!P.hold&&(firstFishItem()||countInv('meat')>0||countInv('corn')>0||countInv('potato')>0)){toast('Segure o alimento cru na mão para assar');return;}
-    if(window.plotNeedsSeed&&plotNeedsSeed()){toast('Segure a semente na mão para plantar');return;}
-    toast('Nada por perto');return;}
+    if(cf&&!P.hold&&(firstFishItem()||countInv('meat')>0||countInv('corn')>0||countInv('potato')>0)){say('Segure o alimento cru na mão para assar');return;}
+    if(window.plotNeedsSeed&&plotNeedsSeed()){say('Segure a semente na mão para plantar');return;}
+    say('Nada por perto');return;}
   takeItem(it);
 }
 /* pega exatamente este item do chao (o botao de pegar chama com o alvo mais perto; os icones extras, com o que o jogador tocou) */
 function takeItem(it){
   const t=it.t;
-  if(t==='ammo'){const n=AMMO_PACK;P.ammo+=n;toast('+'+n+' munição');}
+  if(t==='ammo'){const n=AMMO_PACK;P.ammo+=n;say('+'+n+' munição');}
   else if(t==='arrows'){
-    const n=rint(4,8);P.arrows=(P.arrows||0)+n;toast('+'+n+' flechas');
+    const n=rint(4,8);P.arrows=(P.arrows||0)+n;say('+'+n+' flechas');
   }
   else if(t==='pistol'||t==='smg'||t==='shotgun'||t==='rifle'||t==='bow'){
     // Já tem essa arma? Deixa no chão pro outro player
     if(P.firearms[t]){
       // no multiplayer a arma só fica no chão se o aliado ainda não tem; se os dois já têm, vira munição como no solo
-      if(MP.active&&!allyHasFirearm(t)){ toast('Você já tem '+ITEMS[t].n+': deixe pro parceiro'); return; }
+      if(MP.active&&!allyHasFirearm(t)){ say('Você já tem '+ITEMS[t].n+': deixe pro parceiro'); return; }
       // a arma repetida vira munição e some do chão, sem trocar a arma da mão
-      if(t==='bow'){ P.arrows=(P.arrows||0)+6; toast('Você já tem Arco: +6 flechas'); }
-      else { P.ammo+=WEAPON_AMMO; toast('Você já tem '+ITEMS[t].n+': +'+WEAPON_AMMO+' munição'); }
+      if(t==='bow'){ P.arrows=(P.arrows||0)+6; say('Você já tem Arco: +6 flechas'); }
+      else { P.ammo+=WEAPON_AMMO; say('Você já tem '+ITEMS[t].n+': +'+WEAPON_AMMO+' munição'); }
     }else{
       P.firearms[t]=true;
-      if(t==='bow'){ P.arrows=(P.arrows||0)+6; P.weapon='bow'; toast('Pegou: Arco (+6 flechas)'); }
-      else { P.ammo+=WEAPON_AMMO; P.weapon=t; toast('Pegou: '+ITEMS[t].n+' (+'+WEAPON_AMMO+' munição)'); }
+      if(t==='bow'){ P.arrows=(P.arrows||0)+6; P.weapon='bow'; say('Pegou: Arco (+6 flechas)'); }
+      else { P.ammo+=WEAPON_AMMO; P.weapon=t; say('Pegou: '+ITEMS[t].n+' (+'+WEAPON_AMMO+' munição)'); }
     }
     updateWeaponHud();
   }
   else if(t==='turban'){
-    if(P[t]){toast('Você já veste isso'+(MP.active?': deixe pro parceiro':''));return;}
-    P[t]=true;toast('Turbante vestido! Menos calor no deserto');
+    if(P[t]){say('Você já veste isso'+(MP.active?': deixe pro parceiro':''));return;}
+    P[t]=true;say('Turbante vestido');
     try{refreshInvScr();}catch(e){}
   }
   else if(t==='flashlight'){
-    if(P.torch){toast('Você já tem uma lanterna'+(MP.active?': deixe pro parceiro':''));return;}
+    if(P.torch){say('Você já tem uma lanterna'+(MP.active?': deixe pro parceiro':''));return;}
     P.torch=true;P.flashOn=false;toast('Lanterna! Liga e desliga no botão abaixo do menu');
     try{updateFlashBtn();}catch(e){}
   }
   else if(t==='backpack'){
-    if(P.pack){toast('Você já tem uma mochila'+(MP.active?': deixe pro parceiro':''));return;}
-    P.pack=true;buildInv();toast('Mochila equipada! Agora você carrega 12 itens');
+    if(P.pack){say('Você já tem uma mochila'+(MP.active?': deixe pro parceiro':''));return;}
+    P.pack=true;buildInv();say('Mochila equipada: 12 itens');
   }
   else if(t==='bat'||t==='axe'||t==='pickaxe'||t==='katana'||t==='spear'||t==='fishingrod'||BUILD_TOOLS.includes(t)){
     if((P.meleeWeapons||[]).includes(t) || P.melee===t || toolList().includes(t)){
-      toast('Você já tem '+ITEMS[t].n+(MP.active?': deixe pro parceiro':'')); return;
+      say('Você já tem '+ITEMS[t].n+(MP.active?': deixe pro parceiro':'')); return;
     }
-    addMeleeWeapon(t);P.weapon=t;updateWeaponHud();toast('Pegou: '+ITEMS[t].n);
+    addMeleeWeapon(t);P.weapon=t;updateWeaponHud();say('Pegou: '+ITEMS[t].n);
   }
   else {
-    if(!addItem(t)){toast('Inventário cheio');return;}
-    toast('Pegou: '+ITEMS[t].n);
+    if(!addItem(t)){say('Inventário cheio');return;}
+    say('Pegou: '+ITEMS[t].n);
   }
   lootTaken(it);
   items.splice(items.indexOf(it), 1);

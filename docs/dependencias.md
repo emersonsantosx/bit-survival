@@ -10,7 +10,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 |---|---:|---:|---:|---:|---:|---:|
 | 01-base | 57 | 45 | 12 | 0 | 0 | 30 |
 | 02-audio | 68 | 32 | 35 | 1 | 5 | 22 |
-| 03-dados | 49 | 38 | 11 | 0 | 2 | 22 |
+| 03-dados | 49 | 39 | 10 | 0 | 2 | 22 |
 | 04-estado | 88 | 82 | 6 | 0 | 6 | 28 |
 | 05-geometria | 57 | 43 | 14 | 0 | 10 | 19 |
 | 06-interiores-portas | 40 | 18 | 22 | 0 | 8 | 6 |
@@ -18,7 +18,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 08-cidade-vilas-marcos | 48 | 23 | 24 | 1 | 11 | 17 |
 | 09-milharal-geracao | 64 | 36 | 28 | 0 | 13 | 9 |
 | 10-jogo-saves | 117 | 83 | 34 | 0 | 14 | 15 |
-| 11-pesca-update | 36 | 11 | 25 | 0 | 14 | 18 |
+| 11-pesca-update | 43 | 13 | 30 | 0 | 14 | 18 |
 | 12-crafting-multiplayer | 69 | 25 | 44 | 0 | 14 | 21 |
 | 13-render-personagens | 105 | 51 | 54 | 0 | 13 | 19 |
 | 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 14 | 0 |
@@ -54,19 +54,19 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 06-interiores-portas | 42 | 11 | 7 | 36 | 1 | . |  |  |  |  |  | 1 | 30 |  |  |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
 | 07-loot-mapa | 135 | 3 | 30 | 128 | 3 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 08-cidade-vilas-marcos | 135 | 3 | 17 | 136 | 21 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 09-milharal-geracao | 206 | 10 | 87 | 284 | 40 |  | 1 | 35 | . | 3 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |
-| 10-jogo-saves | 90 | 50 | 60 | 700 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 17 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |
-| 11-pesca-update | 255 | 40 | 55 | 894 | 63 | 2 | 3 | 5 | 20 | 62 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
+| 09-milharal-geracao | 206 | 10 | 87 | 284 | 40 |  | 1 | 35 | . | 2 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |
+| 10-jogo-saves | 89 | 50 | 60 | 700 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 17 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |
+| 11-pesca-update | 262 | 40 | 66 | 897 | 63 | 2 | 3 | 5 | 20 | 66 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 57 | 36 | 29 | 739 | 12 | 1 | 6 | 5 | 11 | 46 | 42 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |  |  |
 | 13-render-personagens | 327 | 40 | 22 | 252 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 660 | 13 | 16 | 324 | 17 |  | 10 | 8 | 23 | 7 | 3 | 1 | 155 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  |
+| 14-arquitetura-luz-ambiente | 658 | 13 | 16 | 324 | 17 |  | 10 | 8 | 23 | 7 | 5 | 1 | 155 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  |
 | 15-missoes-ui-controles | 178 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 10 | 21 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |
 | 16-orientacao | 2 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 18-plantacao | 36 | 6 | 22 | 77 | 16 |  |  | 13 | 1 | 1 | 8 | 3 | 139 |  | 1 |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 19-cerca | 40 | 13 | 3 | 119 | 12 |  |  | 1 |  | 5 | 5 | 7 | 35 |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 20-piso-telhado | 39 | 3 | 6 | 37 | 6 |  |  | 1 |  |  | 2 | 2 | 30 |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 21-frutiferas | 17 | 1 | 7 | 25 | 2 |  |  |  |  |  | 1 | 3 | 13 |  | 1 |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |
+| 21-frutiferas | 17 | 1 | 7 | 25 | 2 |  |  |  |  |  | 2 | 3 | 13 |  | 1 |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |
 | 22-bau | 25 | 14 | 11 | 80 | 12 |  |  | 1 |  | 3 | 9 | 6 |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |
 | 23-poco | 15 | 4 | 4 | 51 | 14 |  |  | 2 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |
 | 24-tronco | 23 | 5 | 4 | 100 | 15 |  |  | 1 |  | 1 | 6 | 2 |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |
@@ -86,15 +86,15 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 24 | 2046 |
+| P | let | 04-estado:14 | 24 | 2048 |
 | MP | let | 04-estado:19 | 24 | 707 |
 | selectedMap | let | 04-estado:3 | 22 | 224 |
 | beep | funcao | 02-audio:42 | 20 | 139 |
-| ctx | const | 01-base:27 | 19 | 1090 |
+| ctx | const | 01-base:27 | 19 | 1095 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 19 | 64 |
 | rnd | const | 01-base:16 | 18 | 435 |
-| toast | funcao | 11-pesca-update:1278 | 18 | 209 |
 | T | let | 04-estado:14 | 18 | 128 |
+| toast | funcao | 11-pesca-update:1334 | 18 | 120 |
 | WW | let | 03-dados:2 | 18 | 103 |
 | WH | let | 03-dados:2 | 18 | 92 |
 | clamp | const | 01-base:4 | 17 | 99 |
@@ -107,11 +107,12 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | weather | let | 04-estado:6 | 13 | 89 |
 | trees | let | 04-estado:10 | 12 | 54 |
 | bldAt | funcao | 05-geometria:598 | 12 | 31 |
-| state | let | 04-estado:2 | 11 | 105 |
+| state | let | 04-estado:2 | 11 | 106 |
 | remotePlayers | let | 04-estado:11 | 11 | 102 |
-| ITEMS | const | 03-dados:167 | 11 | 66 |
+| ITEMS | const | 03-dados:167 | 11 | 70 |
 | zombies | let | 04-estado:10 | 11 | 58 |
 | campfires | let | 04-estado:10 | 11 | 41 |
+| say | funcao | 11-pesca-update:1318 | 10 | 92 |
 | dark | let | 04-estado:14 | 10 | 62 |
 | tents | let | 04-estado:10 | 10 | 23 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |
@@ -121,7 +122,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | rebuildSolidGrid | funcao | 05-geometria:374 | 9 | 35 |
 | lakes | let | 04-estado:10 | 9 | 31 |
 | addItem | funcao | 04-estado:271 | 9 | 20 |
-| $ | const | 01-base:2 | 8 | 184 |
+| $ | const | 01-base:2 | 8 | 183 |
 | H | let | 01-base:48 | 8 | 103 |
 | W | let | 01-base:48 | 8 | 98 |
 | rocks | let | 04-estado:10 | 8 | 49 |
@@ -145,15 +146,14 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | removeInv | funcao | 04-estado:287 | 7 | 11 |
 | plane | let | 04-estado:13 | 6 | 62 |
 | touchGas | let | 04-estado:18 | 6 | 19 |
-| touchSteer | let | 04-estado:18 | 6 | 19 |
 
-(94 no total, mostrando ate 60)
+(95 no total, mostrando ate 60)
 
 ## Candidatas a esconder (so usadas dentro do proprio arquivo)
 
 - **01-base** (12): makeLightSprite, mmC, dispH, UI_REF, UI_MAX, MQ_H, MQ_W, UIS, uiClasses, applyUiScale, PERF_TIERS, _cl
 - **02-audio** (35): muted, gAtk, ambientSrc, ambientGain, rainNoise, ACT, sndBusy, _sndT, sndThrottle, stepNoise, VOICE_BOOST, voice, ZVB, creatureGain, AVB, musicWanted, musicOn, musicGain, musicTimer, musicNext, musicStepN, musicVerb, MUSIC_BASE, MUSIC_STEP, MUSIC_CACHE, ...
-- **03-dados** (11): PXPAL, pxLines, pxRot, PXURL, PXCV, hydratePx, FISH_TPL, fishGrid, FISH_POOL, SEED_POOL, ZUNLOCK
+- **03-dados** (10): pxLines, pxRot, PXURL, PXCV, hydratePx, FISH_TPL, fishGrid, FISH_POOL, SEED_POOL, ZUNLOCK
 - **04-estado** (6): MP_HOST_ALL, chatLog, chatUnread, chatTime, chatAddHistory, chatShowEmpty
 - **05-geometria** (14): iceOf, orlaHit, _PAVE, _SANDP, orlaPatterns, TERR, SPG_C, spgSync, WG_C, WG, wallGrid, SOLID_GRID, wallBlockerAt, obbHitsCircle
 - **06-interiores-portas** (22): FURN, ROOMFURN, BLD_ROOMS, ROOM_FLOOR, rectsHit, intConnected, intUnreached, DOOR_BREAK, doorHearable, doorSound, SLEEPERS, KEEPF, rectGap, organizeFurn, intBlocked, bldSpawnPoint, roomSpawnPoint, FLOOT, furnLootTable, SEED_BONUS, bonusSpot, FLASH_BONUS
@@ -161,7 +161,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **08-cidade-vilas-marcos** (24): bldDims, bldDims0, bldSize, cityPickType, cityFillBlock, cityRubble, cityPark, cityHouseFence, bldSizeRural, ruralPickType, genTown, ruralCarFree, SLED_COLS, BUGGY_COLS, ATV_COLS, prints, tracks, LM_SIDE_D, LM_SIDE_S, chestLoot, lmCurse, TRACK_W, updateTracks, drawTracks
 - **09-milharal-geracao** (28): CORNT, genField, YT, _stalkCache, worldFlavor, MM_K, buildMinimap, bigBase, ANIMAL_PREY, BIRD_MAP, BIRD_FLOCK, birds, birdsReady, flockT, birdChirpT, birdSeq, BKEYS, BST, birdAnchors, birdOK, birdSound, newBird, initBirds, birdTakeoff, updateBirdsGuest, ...
 - **10-jogo-saves** (34): SAVE_KEY, SAVE_PREFIX, SAVE_VER, slotKey, autoSlot, packObj, canSave, saveWorldOk, saveDayScale, iceLoad, doorsLoad, normalizeLoadout, GUEST_SKIP, guestKey, guestForget, FRUIT_FOOD, eatLock, SEED_OF, seedGain, giveSeedFor, applyUse, consumeOne, putAwayHold, closeTool, chooseWeapon, ...
-- **11-pesca-update** (25): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, BURN_R, BURN_T, BURN_DPS, burnTick, updateP, updateZ, CHAINSAW_LEN, CHAINSAW_R, chainsawHit, CAM_FAR, camSpeedZoom
+- **11-pesca-update** (30): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, BURN_R, BURN_T, BURN_DPS, burnTick, updateP, updateZ, CHAINSAW_LEN, CHAINSAW_R, chainsawHit, CAM_FAR, camSpeedZoom, ...
 - **12-crafting-multiplayer** (44): canCraft, craft, STRUCT_EVT, LOCAL_GRACE, handleEvt, loadPeerJS, makeRoomCode, hostRetryTimer, hostOpenPeer, hostSignalRetry, RECONN_MAX_MS, showReconnectUI, updateReconnectUI, hideReconnectUI, mpReconnectFail, mpGuestReconnectAttempt, hostResumeGuest, guestResumed, hostBuildWorld, MAP_NOME, hostSync, hostBroadcastLobby, hostFreeId, hostUniqueName, hostRefuse, ...
 - **13-render-personagens** (54): skinLook, snowOutfit, _shc, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, RSP, rockKind, rockSprite, TSP, treeSprite, treeShadow, treeShadow0, TREE_ALTS, treeAlt, SNOWTOP, drawDecoration0, ...
 - **15-missoes-ui-controles** (68): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACH_MAPS, ACHD, achSave, achChime, achCheck, achSet, achMeta, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, achRow, renderAch, bindSlider, bindToggle, bindSliderResize, ...

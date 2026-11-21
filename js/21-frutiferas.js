@@ -49,7 +49,7 @@ function fruitPick(o){
   if(MP.active)sendEvt('fruitSet',{x:o.x,y:o.y,r:Math.round(REGROW)});
   beep(520,.07,'triangle',.05,100);
   for(let i=0;i<7;i++)parts.push({x:o.x+rnd(-8,8),y:o.y-rnd(8,26),vx:rnd(-20,20),vy:rnd(-30,-5),t:.45,c:f==='apple'?'#e03a2a':f==='berry'?'#8a3aa8':f==='date'?'#e8902a':'#e0407a'});
-  toast('Colheu: '+n+' '+ITEMS[f].n.toLowerCase()+(left?' · '+left+' no chão (inventário cheio)':' · coma para ganhar uma semente'));
+  say('Colheu: '+n+' '+ITEMS[f].n+(left?' · '+left+' no chão (inventário cheio)':''));if(!left)toast('Coma a fruta para ganhar uma semente');
   try{track('harvest');}catch(e){}
 }
 /* arvore frutifera derrubada: os frutos maduros caem no chao em volta do toco (se ainda estava sem fruto, nao cai nada). Devolve o texto do aviso */

@@ -772,7 +772,7 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyQ')cycleWeapon();
   if(e.code==='KeyC')openCraft();
   if(e.code==='KeyI')openInv();
-  if(e.code==='KeyR'){if(P.inv.length>0)discardItem(P.inv.length-1);else toast('Inventário vazio');}
+  if(e.code==='KeyR'){if(P.inv.length>0)discardItem(P.inv.length-1);else say('Inventário vazio');}
   if(e.code>='Digit1'&&e.code<='Digit6')useItem(+e.code.slice(5)-1);
   if(e.code==='KeyT'&&MP.active){ e.preventDefault(); openChat(); }
 });

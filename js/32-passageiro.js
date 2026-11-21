@@ -35,7 +35,7 @@ window.boardVehicle=function(nv){
   const me=myNetId();
   if(!nv.driverId&&nv.passId){nv.driverId=nv.passId;nv.passId=null;}   // sobrou só um passageiro: ele é o motorista
   const seat=vehFreeSeat(nv);
-  if(!seat){toast('Veículo lotado (2 lugares)!');beep(160,.08,'square',.05);return false;}
+  if(!seat){say('Veículo lotado (2 lugares)!');beep(160,.08,'square',.05);return false;}
   if(seat==='p'&&Math.abs(nv.spd||0)>14){toast('Espere o veículo parar para entrar');beep(160,.08,'square',.05);return false;}
   if(nv.hp===undefined){nv.hp=100;nv.maxHp=100;}
   P.inVehicle=nv;nv.showHp=3;touchGas=0;touchSteer=0;
@@ -60,7 +60,7 @@ window.vehSeatLeave=function(v,id){
   v.driverId=v.passId;v.passId=null;v._nx=undefined;
   if(P&&P.inVehicle===v&&v.driverId===myNetId()){
     touchGas=0;touchSteer=0;showVehicleHUD();
-    toast('Você assumiu o volante');beep(440,.15,'square',.06);
+    say('Você assumiu o volante');beep(440,.15,'square',.06);
   }
 };
 
