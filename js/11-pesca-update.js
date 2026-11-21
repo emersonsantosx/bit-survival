@@ -451,10 +451,10 @@ function tempTick(dt){
   if(selectedMap==='snow') fm*=1.15;       // corpo queima mais calorias
   P._fm=fm;P._wm=wm;P._tspd=spd;P._tsr=sr;P._tsd=sd;P._tdmg=dmg;
   if(Math.abs(code)>Math.abs(P._tc||0)){
-    if(code===-1) say('Você está com frio: abrigue-se ou chegue perto de uma fogueira');
-    else if(code===-2) say('Você está congelando! Procure fogo ou um abrigo');
-    else if(code===1) say('Calor forte: procure sombra, água ou abrigo');
-    else if(code===2) say('Insolação! Saia do sol e beba água');
+    if(code===-1) toast('Você está com frio: abrigue-se ou chegue perto de uma fogueira');
+    else if(code===-2) toast('Você está congelando! Procure fogo ou um abrigo');
+    else if(code===1) toast('Calor forte: procure sombra, água ou abrigo');
+    else if(code===2) toast('Insolação! Saia do sol e beba água');
   }
   P._tc=code;
 }
@@ -465,12 +465,12 @@ function burnTick(dt){
   const inWater=!P.inVehicle&&(pointInLake(P.x,P.y)||nearFountain(P.x,P.y));
   let touch=false;
   if(!P.inVehicle&&!inWater)for(const c of campfires){if(Math.hypot(c.x-P.x,c.y-P.y)<BURN_R){touch=true;break;}}
-  if(inWater&&P.burn>0){P.burn=0;say('A água apagou a queimadura');beep(500,.1,'sine',.04,-120);for(let i=0;i<6;i++)parts.push({x:P.x+rnd(-4,4),y:P.y-6,vx:rnd(-10,10),vy:rnd(-30,-10),t:.4,c:'#cfe8ff'});}
-  if(touch){if(!(P.burn>0)){say('Você se queimou na fogueira!');beep(180,.12,'sawtooth',.06,-40);flash=Math.max(flash,.25);}P.burn=BURN_T;}
+  if(inWater&&P.burn>0){P.burn=0;toast('A água apagou a queimadura');beep(500,.1,'sine',.04,-120);for(let i=0;i<6;i++)parts.push({x:P.x+rnd(-4,4),y:P.y-6,vx:rnd(-10,10),vy:rnd(-30,-10),t:.4,c:'#cfe8ff'});}
+  if(touch){if(!(P.burn>0)){toast('Você se queimou na fogueira!');beep(180,.12,'sawtooth',.06,-40);flash=Math.max(flash,.25);}P.burn=BURN_T;}
   if(P.burn>0){
     P.burn=Math.max(0,P.burn-dt);P.hp-=BURN_DPS*dt;
     if(Math.random()<dt*14)parts.push({x:P.x+rnd(-4,4),y:P.y-rnd(2,12),vx:rnd(-6,6),vy:rnd(-34,-14),t:rnd(.3,.5),c:Math.random()<.5?'#ff8a30':'#ffd040'});
-    if(P.burn===0)say('A queimadura passou');
+    if(P.burn===0)toast('A queimadura passou');
   }
 }
 function survivalTick(dt){
@@ -1179,7 +1179,6 @@ function update(dt){
   for(const p of parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=90*dt;p.t-=dt;}
   parts=parts.filter(p=>p.t>0);
   for(const f of floaters){f.y+=f.vy*dt;f.t-=dt;f.vy*=0.98;}
-  if(P&&P._say){P._say.t-=dt;P._say.age+=dt;if(P._say.t<=0)P._say=null;}
   floaters=floaters.filter(f=>f.t>0);
   for(const t of tracers)t.t-=dt;
   tracers=tracers.filter(t=>t.t>0);
@@ -1276,26 +1275,15 @@ function update(dt){
   }
 }
 
-/* Aviso sobre o proprio jogador (inventario cheio, fome, frio, sangramento, municao...): um balaozinho em cima do personagem.
-   Avisos do jogo (clima, missoes, save, multiplayer) continuam no toast la em cima. Sem jogador na tela, cai no toast. */
+/* Aviso sobre o jogador (inventario cheio, pegou, usou, sem municao...): texto que sobe da cabeca do personagem e some, sem fundo,
+   no estilo do antigo COMBO. Duracao cresce um pouco com o tamanho do texto. Status (sangrando, frio, calor, queimadura) e avisos do jogo ficam no toast do topo.
+   Sem jogador na tela, cai no toast. */
 function say(msg){
   if(!P||state!=='play'||P.dead){toast(msg);return;}
   msg=String(msg);
-  const col=/sangr|queim|passou mal|explod|congel|insola|frio|calor|morr/i.test(msg)?'#ff7a6a':/cheio|sem |já tem|insuficiente|vazio|escapou|perdeu|não |nada|só a|salgada|lotado/i.test(msg)?'#ffd060':/comeu|bebeu|assad|usad|colheu|plantou|regou|equipad|vestido|ressuscit|fabricou|\+/i.test(msg)?'#9be58f':'#f0ead8';
-  P._say={txt:msg,col,t:2.2,age:0};
-}
-function drawSay(){
-  const q=P&&P._say;if(!q||P.dead)return;
-  const a=Math.min(1,q.t*2.2,q.age*8+.25);
-  ctx.save();ctx.font='bold 6px "Courier New",monospace';ctx.textAlign='center';ctx.textBaseline='alphabetic';
-  const w=Math.ceil(ctx.measureText(q.txt).width)+6,h=9,rise=Math.min(3,q.age*12);
-  const x=Math.round(P.x-w/2),y=Math.round(P.y-19-h-rise);
-  ctx.globalAlpha=a;
-  ctx.fillStyle='rgba(10,12,20,.86)';ctx.fillRect(x,y,w,h);
-  ctx.fillStyle=q.col;ctx.fillRect(x,y,w,1);ctx.fillRect(x,y+h-1,w,1);ctx.fillRect(x,y,1,h);ctx.fillRect(x+w-1,y,1,h);
-  ctx.fillStyle='rgba(10,12,20,.86)';ctx.fillRect(Math.round(P.x)-2,y+h,4,2);ctx.fillStyle=q.col;ctx.fillRect(Math.round(P.x)-2,y+h,1,2);ctx.fillRect(Math.round(P.x)+1,y+h,1,2);
-  ctx.fillStyle=q.col;ctx.fillText(q.txt,Math.round(P.x),y+7);
-  ctx.restore();
+  const col=/cheio|sem |já tem|insuficiente|vazio|escapou|perdeu|não |nada|só a|salgada|lotado/i.test(msg)?'#ffd060':/comeu|bebeu|assad|usad|colheu|plantou|regou|equipad|vestido|fabricou|\+/i.test(msg)?'#b4ff94':'#fff1c0';
+  floaters=floaters.filter(f=>!f.say);   // um aviso por vez: o novo troca o anterior
+  floaters.push({x:P.x,y:P.y-24,txt:msg,col,t:Math.min(2.4,1.2+msg.length*.04),vy:-14,say:1});
 }
 function toast(msg){
   const el=$('toast');if(!el)return;

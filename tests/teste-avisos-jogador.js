@@ -1,8 +1,10 @@
-/* Avisos sobre o jogador aparecem num balaozinho em cima do personagem (say), avisos do jogo continuam no topo (toast);
+/* Avisos sobre o jogador (inventario cheio, pegou, sem municao...) sobem da cabeca do personagem como texto simples, sem fundo (say);
+   status (sangrando, frio, calor, queimadura) e avisos do jogo continuam no topo (toast);
    a katana e reta (ícone, na mao) e o 3o golpe seguido nao mostra mais o texto COMBO (o dano extra continua). */
 const path = require('path');
 const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'index.html'));
 const { chromium } = require('playwright');
+const fs = require('fs');
 (async () => {
   const b = await chromium.launch(); let bad = 0;
   const ok = (c, m) => { console.log(c ? 'OK  ' : 'FAIL', m); if (!c) bad++; };
@@ -14,17 +16,15 @@ const { chromium } = require('playwright');
     zombies.length = 0; weatherTimer = 99999; P.dead = false; P.hp = 100;
     const tel = document.getElementById('toast'); tel.textContent = ''; tel.classList.remove('show');
     // 1) aviso do jogador: balao, sem toast
-    say('Inventário cheio'); o.say = P._say && P._say.txt; o.toastCalado = tel.textContent === '';
+    floaters.length = 0; say('Inventário cheio'); const fl = floaters.find(f => f.say); o.say = fl && fl.txt; o.longa = fl && fl.t; o.toastCalado = tel.textContent === ''; say('Pegou: Pistola (+12 munição)'); o.umPorVez = floaters.filter(f => f.say).length; o.longaMais = floaters.find(f => f.say).t;
     const FT = CanvasRenderingContext2D.prototype.fillText; let desenhou = 0;
-    CanvasRenderingContext2D.prototype.fillText = function (t) { if (t === 'Inventário cheio') desenhou++; return FT.apply(this, arguments); };
+    CanvasRenderingContext2D.prototype.fillText = function (t) { if (t === 'Pegou: Pistola (+12 munição)') desenhou++; return FT.apply(this, arguments); };
     for (let i = 0; i < 6; i++) { update(1 / 60); render(); }
     o.desenhou = desenhou;
     // some sozinho
-    for (let i = 0; i < 160; i++) update(1 / 60); o.sumiu = !P._say;
+    for (let i = 0; i < 200; i++) update(1 / 60); o.sumiu = !floaters.some(f => f.say);
     // 2) aviso do jogo continua no toast
     toast('Chuva: fogueiras apagam e stamina cai mais'); o.toastTexto = tel.textContent;
-    // 3) o save nao leva o balao (campo _say) e a mochila cheia usa say
-    say('Você está sangrando!'); o.saveSemSay = !JSON.stringify(P, (k, v) => k[0] === '_' ? undefined : v).includes('sangrando');
     // 4) katana: 3 golpes seguidos sem texto COMBO, dano do 3o maior
     CanvasRenderingContext2D.prototype.fillText = FT;
     floaters.length = 0; const w = WEAPONS.katana; P._cmb = 0; P._cmbT = 0; const d = [meleeDmg(w), meleeDmg(w), meleeDmg(w)];
@@ -38,11 +38,13 @@ const { chromium } = require('playwright');
     o.hLinhas = H.map((l, i) => /[SW]/.test(l) ? i : -1).filter(i => i >= 0);
     return o;
   });
-  ok(r.say === 'Inventário cheio' && r.toastCalado, 'aviso do jogador vira balao e nao usa o toast do topo');
-  ok(r.desenhou >= 1, 'o balao e desenhado em cima do personagem (' + r.desenhou + ' vezes)');
-  ok(r.sumiu, 'o balao some sozinho');
+  ok(r.say === 'Inventário cheio' && r.toastCalado, 'aviso do jogador sobe da cabeca e nao usa o toast do topo');
+  ok(r.desenhou >= 1, 'o texto e desenhado (' + r.desenhou + ' vezes)');
+  ok(r.umPorVez === 1 && r.longaMais > r.longa && r.longa >= 1.2 && r.longaMais <= 2.4, 'um aviso por vez; texto maior dura um pouco mais (' + r.longa.toFixed(2) + ' s e ' + r.longaMais.toFixed(2) + ' s)');
+  ok(r.sumiu, 'o texto some sozinho');
   ok(/Chuva/.test(r.toastTexto), 'aviso do jogo (clima) continua no topo');
-  ok(r.saveSemSay, 'o balao nao entra no save');
+  const src = fs.readdirSync(path.join(__dirname, '..', 'js')).map(f => fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8')).join('\n');
+  ok(!/say\('(Você está sangrando|Você está com frio|Você está congelando|Calor forte|Insolação|Você se queimou)/.test(src), 'status (sangrando, frio, calor, queimadura) continuam no topo');
   ok(r.combo === false && r.dano[2] > r.dano[0] * 1.5, 'sem texto COMBO e o 3o golpe segue com dano extra (' + r.dano.join(', ') + ')');
   ok(r.lamDiag && r.lamTodas.every(n => n === 2), 'katana do icone: lamina reta em diagonal (2 pixels por linha, sem dobra)');
   ok(r.hLinhas.length === 2 && r.hLinhas[1] === r.hLinhas[0] + 1, 'katana na mao: lamina reta em 2 linhas (' + r.hLinhas.join(',') + ')');

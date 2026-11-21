@@ -12,7 +12,7 @@ Jogo de sobrevivência 2D em pixel art, feito com HTML, CSS e JavaScript puros (
 
 ## Avisos na tela
 
-Avisos sobre o personagem (inventário cheio, fome, frio, sangramento, munição, o que pegou ou usou) usam `say(texto)` e aparecem num balão em cima dele (`js/11-pesca-update.js`). Avisos do jogo (clima, missões, save, multiplayer, dicas) continuam em `toast(texto)`, no topo da tela.
+Avisos sobre o que o personagem fez (inventário cheio, sem munição, o que pegou, comeu ou usou) usam `say(texto)`: texto simples que sobe da cabeça dele e some, sem fundo (`js/11-pesca-update.js`). Status (sangrando, frio, calor, queimadura), avisos do jogo (clima, missões, save, multiplayer) e dicas continuam em `toast(texto)`, no topo da tela.
 
 ## Como jogar no navegador
 
@@ -45,7 +45,7 @@ npm run test:saves           # só os saves
 node tests/teste-cerca.js    # um teste específico
 ```
 
-Cada teste abre o jogo num navegador sem tela, simula o que for preciso e termina com código 1 se algo falhar. Os testes rodam sozinhos a cada PR (`.github/workflows/testes.yml`). `tests/teste-multiplayer-sala.js` cobre a sala de 4 jogadores e `tests/teste-desempenho.js` confere que a imagem otimizada é igual ao desenho direto e `tests/teste-desempenho-arvores.js` protege o desempenho em florestas densas (tiros pela grade, sombras em cache). `tests/teste-dano-visual.js` confere as marcas de dano em tudo que se quebra (`js/33-dano-visual.js`). `tests/teste-partida-curta.js` roda 7 minutos de jogo seguidos (mais de meio dia, com o dia virando) em cada mapa e confere números válidos, dia virando, salvamento e carregamento. `tests/teste-avisos-jogador.js` confere os avisos sobre o jogador (balãozinho em cima do personagem) e a katana reta. `tests/teste-missoes.js` cobre as missões (lista só pela semente, progresso, conclusão e próxima missão).
+Cada teste abre o jogo num navegador sem tela, simula o que for preciso e termina com código 1 se algo falhar. Os testes rodam sozinhos a cada PR (`.github/workflows/testes.yml`). `tests/teste-multiplayer-sala.js` cobre a sala de 4 jogadores e `tests/teste-desempenho.js` confere que a imagem otimizada é igual ao desenho direto e `tests/teste-desempenho-arvores.js` protege o desempenho em florestas densas (tiros pela grade, sombras em cache). `tests/teste-dano-visual.js` confere as marcas de dano em tudo que se quebra (`js/33-dano-visual.js`). `tests/teste-partida-curta.js` roda 7 minutos de jogo seguidos (mais de meio dia, com o dia virando) em cada mapa e confere números válidos, dia virando, salvamento e carregamento. `tests/teste-avisos-jogador.js` confere os avisos sobre o jogador (texto que sobe da cabeça do personagem) e a katana reta. `tests/teste-missoes.js` cobre as missões (lista só pela semente, progresso, conclusão e próxima missão).
 
 ## Saves
 

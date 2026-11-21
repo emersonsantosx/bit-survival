@@ -18,7 +18,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 08-cidade-vilas-marcos | 48 | 23 | 24 | 1 | 11 | 17 |
 | 09-milharal-geracao | 64 | 36 | 28 | 0 | 13 | 9 |
 | 10-jogo-saves | 117 | 83 | 34 | 0 | 14 | 15 |
-| 11-pesca-update | 38 | 13 | 25 | 0 | 14 | 18 |
+| 11-pesca-update | 37 | 12 | 25 | 0 | 14 | 18 |
 | 12-crafting-multiplayer | 69 | 25 | 44 | 0 | 14 | 21 |
 | 13-render-personagens | 105 | 51 | 54 | 0 | 13 | 19 |
 | 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 14 | 0 |
@@ -56,10 +56,10 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 08-cidade-vilas-marcos | 135 | 3 | 17 | 136 | 21 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 09-milharal-geracao | 206 | 10 | 87 | 284 | 40 |  | 1 | 35 | . | 3 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |
 | 10-jogo-saves | 90 | 50 | 60 | 700 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 17 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |
-| 11-pesca-update | 276 | 40 | 55 | 911 | 63 | 2 | 3 | 5 | 20 | 61 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
+| 11-pesca-update | 255 | 40 | 55 | 897 | 63 | 2 | 3 | 5 | 20 | 64 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 57 | 36 | 29 | 739 | 12 | 1 | 6 | 5 | 11 | 46 | 42 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |  |  |
 | 13-render-personagens | 327 | 40 | 22 | 252 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 660 | 13 | 16 | 324 | 17 |  | 10 | 8 | 23 | 7 | 5 | 1 | 155 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  |
+| 14-arquitetura-luz-ambiente | 660 | 13 | 16 | 324 | 17 |  | 10 | 8 | 23 | 7 | 3 | 1 | 155 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  |
 | 15-missoes-ui-controles | 178 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 10 | 21 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |
 | 16-orientacao | 2 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
@@ -86,15 +86,15 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 24 | 2062 |
+| P | let | 04-estado:14 | 24 | 2048 |
 | MP | let | 04-estado:19 | 24 | 707 |
 | selectedMap | let | 04-estado:3 | 22 | 224 |
 | beep | funcao | 02-audio:42 | 20 | 139 |
-| ctx | const | 01-base:27 | 19 | 1111 |
+| ctx | const | 01-base:27 | 19 | 1090 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 19 | 64 |
 | rnd | const | 01-base:16 | 18 | 435 |
 | T | let | 04-estado:14 | 18 | 128 |
-| toast | funcao | 11-pesca-update:1300 | 18 | 113 |
+| toast | funcao | 11-pesca-update:1288 | 18 | 126 |
 | WW | let | 03-dados:2 | 18 | 103 |
 | WH | let | 03-dados:2 | 18 | 92 |
 | clamp | const | 01-base:4 | 17 | 99 |
@@ -130,7 +130,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | vehKind | funcao | 08-cidade-vilas-marcos:353 | 8 | 15 |
 | track | funcao | 15-missoes-ui-controles:60 | 8 | 13 |
 | Z | let | 01-base:48 | 7 | 118 |
-| say | funcao | 11-pesca-update:1281 | 7 | 98 |
+| say | funcao | 11-pesca-update:1281 | 7 | 85 |
 | CFG | const | 01-base:126 | 7 | 78 |
 | aud | funcao | 02-audio:11 | 7 | 58 |
 | joy | const | 04-estado:203 | 7 | 58 |

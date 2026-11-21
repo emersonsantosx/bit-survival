@@ -350,9 +350,9 @@ function giveSeedFor(){
 function applyUse(it){
   let ok=false;
   if(it==='food'){if(P.food<95){P.food=Math.min(100,P.food+35);ok=true;say('Você comeu');}}
-  else if(isFishItem(it)){if(P.food<95){P.food=Math.min(100,P.food+(it==='fish'?30:FISH[ITEMS[it].fish].food));P.water=Math.max(0,P.water-5);ok=true;if(Math.random()<.35){P.sick=25;say('Peixe cru: você passou mal!');}else say('Peixe cru... melhor assar');}}
+  else if(isFishItem(it)){if(P.food<95){P.food=Math.min(100,P.food+(it==='fish'?30:FISH[ITEMS[it].fish].food));P.water=Math.max(0,P.water-5);ok=true;if(Math.random()<.35){P.sick=25;toast('Peixe cru: você passou mal!');}else say('Peixe cru... melhor assar');}}
   else if(it==='cookedfish'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+10);P.food=Math.min(100,P.food+55);P.hp=Math.min(100,P.hp+5);ok=true;say('Peixe assado! +5 HP');}}
-  else if(it==='meat'){if(P.food<95){P.food=Math.min(100,P.food+25);ok=true;if(Math.random()<.35){P.sick=25;say('Carne crua: você passou mal!');}else say('Carne crua... melhor assar');}}
+  else if(it==='meat'){if(P.food<95){P.food=Math.min(100,P.food+25);ok=true;if(Math.random()<.35){P.sick=25;toast('Carne crua: você passou mal!');}else say('Carne crua... melhor assar');}}
   else if(it==='cookedmeat'){if(P.food<95){P.temp=Math.min(100,(P.temp||0)+10);P.food=Math.min(100,P.food+60);P.hp=Math.min(100,P.hp+8);ok=true;say('Carne assada! +8 HP');}}
   else if(it==='corn'){if(P.food<95){P.food=Math.min(100,P.food+14);ok=true;say('Milho cru... melhor assar');}}
   else if(it==='potato'){if(P.food<95){P.food=Math.min(100,P.food+8);ok=true;say('Batata crua... melhor assar');}}
@@ -760,7 +760,7 @@ function updateVehicles(dt){
         restoreWalkHUD();
         vehSeatLeave(v,myNetId());
         if(MP.active) sendEvt('vehicleExit', {id:v.id,who:myNetId()});
-        say('Você explodiu com o carro!');
+        toast('Você explodiu com o carro!');
         die();
       } else if(P && !P.dead && Math.hypot(P.x-v.x,P.y-v.y)<70){
         // quanto mais perto da explosão, mais dano (de ~50 colado no carro até ~5 na borda)
@@ -972,7 +972,7 @@ function hurt(n,bleedChance){
   if(EAT){EAT=null;eatLock=true;}
   P.hp-=n;flash=.45;shake=4;
   if(P.fish)cancelFishing('A linha se soltou!');
-  if(Math.random()<bleedChance&&!P.bleed){P.bleed=true;say('Você está sangrando!');}
+  if(Math.random()<bleedChance&&!P.bleed){P.bleed=true;toast('Você está sangrando!');}
   beep(120,.18,'sawtooth',.07,-60);
   if(P.hp<=0)die();
 }
@@ -1087,7 +1087,7 @@ function respawnPlayer(){
   state='play';
   const d=$('deadscr'); if(d) d.classList.add('hide');
   applyHudClasses();
-  say('Você ressuscitou!');
+  toast('Você ressuscitou!');
   beep(520,.15,'sine',.07,200);
   startAmbient(); startRain();
   try{ if(MP.conn&&MP.conn.open) MP.conn.send({type:'playerRespawned', id:myNetId(), hp:P.hp}); }catch(e){}

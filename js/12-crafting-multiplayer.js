@@ -239,7 +239,7 @@ function handleEvt(kind, data){
       const rider=!!(P && P.inVehicle===v);
       v.destroyed=true; v.dying=false; v.hp=0; v.spd=0; v.driverId=null; v.passId=null;
       for(let i=0;i<20;i++) parts.push({x:v.x,y:v.y,vx:rnd(-100,100),vy:rnd(-120,30),t:rnd(.4,.9),c:pick(['#ff4020','#ff8020','#333'])});
-      if(rider){P.inVehicle=null;restoreWalkHUD();say('Você explodiu com o carro!');die();}   // quem ainda estava dentro (motorista ou passageiro) morre na explosão, igual ao jogo local
+      if(rider){P.inVehicle=null;restoreWalkHUD();toast('Você explodiu com o carro!');die();}   // quem ainda estava dentro (motorista ou passageiro) morre na explosão, igual ao jogo local
     }
   } else if(kind==='zombieDmg'){
     let best=null;
