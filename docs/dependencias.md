@@ -18,7 +18,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 08-cidade-vilas-marcos | 48 | 23 | 24 | 1 | 11 | 17 |
 | 09-milharal-geracao | 64 | 36 | 28 | 0 | 13 | 9 |
 | 10-jogo-saves | 117 | 83 | 34 | 0 | 14 | 15 |
-| 11-pesca-update | 43 | 13 | 30 | 0 | 14 | 18 |
+| 11-pesca-update | 44 | 14 | 30 | 0 | 14 | 18 |
 | 12-crafting-multiplayer | 69 | 25 | 44 | 0 | 14 | 21 |
 | 13-render-personagens | 105 | 51 | 54 | 0 | 13 | 19 |
 | 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 14 | 0 |
@@ -56,9 +56,9 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 08-cidade-vilas-marcos | 135 | 3 | 17 | 136 | 21 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 09-milharal-geracao | 206 | 10 | 87 | 284 | 40 |  | 1 | 35 | . | 2 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |
 | 10-jogo-saves | 89 | 50 | 60 | 700 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 17 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |
-| 11-pesca-update | 262 | 40 | 66 | 897 | 63 | 2 | 3 | 5 | 20 | 66 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
+| 11-pesca-update | 263 | 41 | 67 | 906 | 63 | 2 | 3 | 5 | 20 | 66 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 57 | 36 | 29 | 739 | 12 | 1 | 6 | 5 | 11 | 46 | 42 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |  |  |
-| 13-render-personagens | 327 | 40 | 22 | 252 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
+| 13-render-personagens | 326 | 39 | 22 | 251 | 13 | 22 | 2 | 2 |  | 4 | 9 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 663 | 13 | 16 | 324 | 17 |  | 10 | 8 | 23 | 8 | 6 | 1 | 155 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  |
 | 15-missoes-ui-controles | 178 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 10 | 21 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |
 | 16-orientacao | 2 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
@@ -93,8 +93,8 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | ctx | const | 01-base:27 | 19 | 1100 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 19 | 64 |
 | rnd | const | 01-base:16 | 18 | 435 |
-| T | let | 04-estado:14 | 18 | 128 |
-| toast | funcao | 11-pesca-update:1334 | 18 | 120 |
+| T | let | 04-estado:14 | 18 | 129 |
+| toast | funcao | 11-pesca-update:1343 | 18 | 120 |
 | WW | let | 03-dados:2 | 18 | 103 |
 | WH | let | 03-dados:2 | 18 | 92 |
 | clamp | const | 01-base:4 | 17 | 99 |
@@ -104,7 +104,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | blds | let | 04-estado:10 | 15 | 60 |
 | solidPoint | funcao | 05-geometria:327 | 15 | 35 |
 | pointInLake | funcao | 05-geometria:113 | 14 | 48 |
-| weather | let | 04-estado:6 | 13 | 89 |
+| weather | let | 04-estado:6 | 13 | 92 |
 | trees | let | 04-estado:10 | 12 | 54 |
 | bldAt | funcao | 05-geometria:598 | 12 | 31 |
 | state | let | 04-estado:2 | 11 | 106 |

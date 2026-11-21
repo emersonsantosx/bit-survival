@@ -1331,6 +1331,15 @@ function fText(f){   // desenha um floater; os avisos do jogador (say) saem em b
   for(let i=0;i<n;i++){const l=f.lines[i];ctx.font=(l.b?'bold ':'')+'7px "Courier New",monospace';ctx.fillStyle=l.b?(l.i&&itemColor(l.t)||col):'#fff1c0';ctx.fillText(l.t,f.x,f.y-(n-1-i)*8);}
   ctx.font='bold 9px "Courier New",monospace';ctx.fillStyle=col;
 }
+/* Passa `sec` segundos de clima de uma vez (ao dormir a noite pula horas): sorteia o clima nas mesmas rodadas de sempre,
+   entao a chuva nao some nem fica por causa do sono. So o host (ou o jogo solo) chama; o convidado recebe o clima pelo snapshot. */
+function weatherAdvance(sec){
+  if(!(sec>0))return;
+  const prev=weather;let rem=sec;
+  while(rem>=weatherTimer){rem-=weatherTimer;weather=pickWeather(Math.random);weatherTimer=rnd(100,220);}
+  weatherTimer-=rem;
+  if(weather!==prev){setRain(weather==='rain');weatherParticles.length=0;}
+}
 function toast(msg){
   const el=$('toast');if(!el)return;
   el.textContent=msg;el.classList.add('show');

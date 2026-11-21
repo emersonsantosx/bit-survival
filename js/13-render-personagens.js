@@ -1703,7 +1703,7 @@ function sleepDo(){
   const hr=START_HOUR+T/DAY_SECONDS*24,h24=hr%24;
   let target=Math.floor(hr/24)*24+6;if(h24>=6)target+=24;
   const nT=(target-START_HOUR)/24*DAY_SECONDS;
-  weather='none';setRain(false);weatherTimer=rnd(120,240);
+  weatherAdvance(nT-T);   // o clima nao depende do sono: segue o relogio, como se o jogador tivesse ficado acordado
   const who=[P];for(const id in remotePlayers){const r=remotePlayers[id];if(r&&r.alive!==false)who.push(r);}
   zombies=zombies.filter(z=>z.dead||who.some(k=>Math.hypot(k.x-z.x,k.y-z.y)<380));   // os que estavam longe sumiram durante a noite
   if(MP.active&&MP.isHost)sendEvt('sleepSkip',{T:nT});
