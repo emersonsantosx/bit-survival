@@ -16,9 +16,10 @@ const fs = require('fs');
     zombies.length = 0; weatherTimer = 99999; P.dead = false; P.hp = 100;
     const tel = document.getElementById('toast'); tel.textContent = ''; tel.classList.remove('show');
     // 1) aviso do jogador: balao, sem toast
-    floaters.length = 0; say('Inventário cheio'); const fl = floaters.find(f => f.say); o.say = fl && fl.txt; o.longa = fl && fl.t; o.toastCalado = tel.textContent === ''; say('Pegou: Pistola (+12 munição)'); o.umPorVez = floaters.filter(f => f.say).length; o.longaMais = floaters.find(f => f.say).t;
+    floaters.length = 0; say('Inventário cheio'); const fl = floaters.find(f => f.say); o.say = fl && fl.txt; o.longa = fl && fl.t; o.toastCalado = tel.textContent === ''; say('Pegou: Pistola (+12 munição)'); o.umPorVez = floaters.filter(f => f.say).length; o.longaMais = floaters.find(f => f.say).t; o.curto = floaters.find(f => f.say).txt;
+    const L = m => sayLines(m); o.l1 = L('Pegou: Madeira'); o.l2 = L('Pegou: Pistola (+12 munição)'); o.l3 = L('Sede saciada · inventário cheio'); o.l4 = L('Você já tem Pistola: deixe pro parceiro e coma depois de assar tudo isso aqui');
     const FT = CanvasRenderingContext2D.prototype.fillText; let desenhou = 0;
-    CanvasRenderingContext2D.prototype.fillText = function (t) { if (t === 'Pegou: Pistola (+12 munição)') desenhou++; return FT.apply(this, arguments); };
+    CanvasRenderingContext2D.prototype.fillText = function (t) { if (/Pistola|munição/.test(t)) desenhou++; return FT.apply(this, arguments); };
     for (let i = 0; i < 6; i++) { update(1 / 60); render(); }
     o.desenhou = desenhou;
     // some sozinho
@@ -41,6 +42,8 @@ const fs = require('fs');
   ok(r.say === 'Inventário cheio' && r.toastCalado, 'aviso do jogador sobe da cabeca e nao usa o toast do topo');
   ok(r.desenhou >= 1, 'o texto e desenhado (' + r.desenhou + ' vezes)');
   ok(r.umPorVez === 1 && r.longaMais > r.longa && r.longa >= 1.2 && r.longaMais <= 2.4, 'um aviso por vez; texto maior dura um pouco mais (' + r.longa.toFixed(2) + ' s e ' + r.longaMais.toFixed(2) + ' s)');
+  ok(r.l1.join('|') === '+ Madeira' && r.curto === '+ Pistola +12 munição' && r.l2.join('|') === '+ Pistola|+12 munição', 'avisos de pegar ficam curtos (' + r.l1 + ' / ' + r.curto + ')');
+  ok([r.l1, r.l2, r.l3, r.l4].every(l => l.length >= 1 && l.length <= 3 && l.every(x => x.length <= 16 || !x.includes(' '))), 'texto vira bloco de ate 3 linhas curtas (' + JSON.stringify([r.l2, r.l3]) + ')');
   ok(r.sumiu, 'o texto some sozinho');
   ok(/Chuva/.test(r.toastTexto), 'aviso do jogo (clima) continua no topo');
   const src = fs.readdirSync(path.join(__dirname, '..', 'js')).map(f => fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8')).join('\n');

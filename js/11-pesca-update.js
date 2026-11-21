@@ -1278,12 +1278,28 @@ function update(dt){
 /* Aviso sobre o jogador (inventario cheio, pegou, usou, sem municao...): texto que sobe da cabeca do personagem e some, sem fundo,
    no estilo do antigo COMBO. Duracao cresce um pouco com o tamanho do texto. Status (sangrando, frio, calor, queimadura) e avisos do jogo ficam no toast do topo.
    Sem jogador na tela, cai no toast. */
+const SAY_SHORT=[[/^Pegou: /,'+ '],[/^Achou: /,'+ '],[/^Você já tem /,'Já tem '],[/^Você já veste.*/,'Já está vestindo'],[/^Você já tem.*/,'Já tem'],
+  [/^Você bebeu água.*/,'Bebeu água'],[/^Você comeu/,'Comeu'],[/^Garrafa enchida.*/,'Garrafa cheia'],[/^Fabricou: /,'Fabricou '],[/^Pegou o que coube.*/,'Pegou o que coube'],
+  [/^Você quebrou o gelo.*/,'Quebrou o gelo'],[/^Água salgada.*/,'Água salgada'],[/^Isca lançada.*/,'Isca lançada'],[/^Segure o alimento cru.*/,'Segure o cru na mão'],
+  [/^Segure a semente.*/,'Segure a semente'],[/ \(\+(\d+) (munição|flechas)\)/,'\n+$1 $2'],[/ · /,'\n']];
+function sayLines(msg){   // texto curto, quebrado em bloco de ate 3 linhas de 16 letras
+  for(const [re,to] of SAY_SHORT)msg=msg.replace(re,to);
+  const out=[];
+  for(const part of msg.split('\n')){let cur='';for(const w of part.split(' ')){if(cur&&(cur+' '+w).length>16){out.push(cur);cur=w;}else cur=cur?cur+' '+w:w;}if(cur)out.push(cur);}
+  if(out.length>3){out.length=3;}
+  return out;
+}
 function say(msg){
   if(!P||state!=='play'||P.dead){toast(msg);return;}
   msg=String(msg);
+  const lines=sayLines(msg),all=lines.join(' ');
   const col=/cheio|sem |já tem|insuficiente|vazio|escapou|perdeu|não |nada|só a|salgada|lotado/i.test(msg)?'#ffd060':/comeu|bebeu|assad|usad|colheu|plantou|regou|equipad|vestido|fabricou|\+/i.test(msg)?'#b4ff94':'#fff1c0';
   floaters=floaters.filter(f=>!f.say);   // um aviso por vez: o novo troca o anterior
-  floaters.push({x:P.x,y:P.y-24,txt:msg,col,t:Math.min(2.4,1.2+msg.length*.04),vy:-14,say:1});
+  floaters.push({x:P.x,y:P.y-24,txt:all,lines,col,t:Math.min(2.2,1.1+all.length*.04),vy:-14,say:1});
+}
+function fText(f){   // desenha um floater; os avisos do jogador (say) saem em bloco, a ultima linha na posicao do floater
+  if(!f.lines){ctx.fillText(f.txt,f.x,f.y);return;}
+  const n=f.lines.length;for(let i=0;i<n;i++)ctx.fillText(f.lines[i],f.x,f.y-(n-1-i)*9);
 }
 function toast(msg){
   const el=$('toast');if(!el)return;
