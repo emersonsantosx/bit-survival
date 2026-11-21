@@ -1151,15 +1151,67 @@ function lakeGlints(l){
     ctx.fillRect(Math.round(px)-1,Math.round(py),3,1);ctx.fillRect(Math.round(px),Math.round(py)-1,1,3);
   }
 }
+/* Gramado da floresta: manchas suaves de tom (ruido de valor em blocos de 4 px, sem emendas entre azulejos), tufos de capim, folhas secas,
+   gravetos, pedrinhas e florzinhas raras. Sem terra nem musgo em mancha: caminhos de terra (js/09, '#7a6a4a') nunca se confundem com o mato.
+   Conta pura de (tx,ty) e tudo fica dentro do proprio azulejo, entao o bloco pronto (js/30) sai igual ao desenho direto. */
+const GRAMA_TONS=['#2f5d26','#336228','#366829','#386a2c','#3b6f2f','#3f7632','#437c35'];
+const GRAMA_FOLHAS=['#8a5a2a','#a8742f','#6a4a24','#9a6a2c'];
+const GRAMA_BUF=new Uint8Array(16);
+function gramaHash(a,b,s){
+  let h=(Math.imul(a|0,374761393)+Math.imul(b|0,668265263)+Math.imul(s,2246822519))|0;
+  h=Math.imul(h^(h>>>15),2246822519);h=Math.imul(h^(h>>>13),3266489917);h^=h>>>16;
+  return(h>>>0)/4294967296;
+}
+/* ruido de valor de um bloco 4x4 de celulas: os pontos da grade sao sorteados uma vez por azulejo (no maximo 3x3) e as 16 celulas so interpolam */
+const GRAMA_LAT=new Float64Array(9),GRAMA_RUI=new Float64Array(16);
+function gramaOitava(cx,cy,s,sc,w,first){
+  const L=GRAMA_LAT,out=GRAMA_RUI,x0=Math.floor(cx/sc),y0=Math.floor(cy/sc),nx=Math.floor((cx+3)/sc)-x0+2,ny=Math.floor((cy+3)/sc)-y0+2;
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)L[j*3+i]=gramaHash(x0+i,y0+j,s);
+  for(let j=0;j<4;j++){
+    const fy=(cy+j)/sc,iy=Math.floor(fy),ry=(iy-y0)*3;let v=fy-iy;v=v*v*(3-2*v);
+    for(let i=0;i<4;i++){
+      const fx=(cx+i)/sc,ix=Math.floor(fx),k=ry+ix-x0;let u=fx-ix;u=u*u*(3-2*u);
+      const a=L[k],b=L[k+1],c=L[k+3],d=L[k+4],n=(a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v)*w;
+      out[j*4+i]=first?n:out[j*4+i]+n;
+    }
+  }
+}
+function gramaTons(cx,cy,tm){
+  gramaOitava(cx,cy,11,10,.62,true);gramaOitava(cx,cy,23,4.4,.38,false);
+  for(let i=0;i<16;i++){const n=(GRAMA_RUI[i]-.5)*1.5+.5;tm[i]=Math.max(0,Math.min(6,Math.floor(n*7)));}
+}
+function gramaTile(q,tx,ty){
+  const px=tx*16,py=ty*16,cx=tx*4,cy=ty*4,tm=GRAMA_BUF;
+  gramaTons(cx,cy,tm);
+  const base=tm[5];
+  q(px,py,16,16,GRAMA_TONS[base]);
+  for(let j=0;j<4;j++){
+    let i=0;
+    while(i<4){
+      const t=tm[j*4+i];let k=i+1;
+      while(k<4&&tm[j*4+k]===t)k++;
+      if(t!==base)q(px+i*4,py+j*4,(k-i)*4,4,GRAMA_TONS[t]);
+      i=k;
+    }
+  }
+  let s=(((tx*73856093)^(ty*19349663))^0x9e3779b9)>>>0;
+  const rnd=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};
+  const nt=Math.floor(rnd()*1.999+(base/6-.5));
+  for(let k=0;k<nt;k++){
+    const x=px+3+Math.floor(rnd()*10),y=py+3+Math.floor(rnd()*9);
+    q(x,y-1,1,3,'#559546');q(x-2,y,1,2,'#468538');q(x+2,y,1,2,'#468538');q(x-1,y+2,3,1,'#264e1d');
+  }
+  if(rnd()<.012){const x=px+2+Math.floor(rnd()*12),y=py+2+Math.floor(rnd()*11);q(x,y,1,1,rnd()<.5?'#f0d860':'#ece6d2');q(x,y+1,1,1,'#264e1d');}
+  if(rnd()<.30){const x=px+2+Math.floor(rnd()*11),y=py+2+Math.floor(rnd()*12),c=GRAMA_FOLHAS[Math.floor(rnd()*4)];q(x,y,2,1,c);if(rnd()<.35)q(x+1,y+1,1,1,c);}
+  if(rnd()<.07){const x=px+1+Math.floor(rnd()*9),y=py+2+Math.floor(rnd()*12);q(x,y,4,1,'#4a3420');q(x+3,y-1,1,1,'#4a3420');}
+  if(rnd()<.03){const x=px+2+Math.floor(rnd()*11),y=py+2+Math.floor(rnd()*12);q(x,y,2,1,'#8a8a78');q(x,y+1,2,1,'#5a5a4c');}
+}
 /* Um azulejo 16x16 do chao. q(x,y,w,h,cor) e quem pinta (R na tela, ou o pincel de um bloco pronto). Mesma conta para os dois caminhos */
 function groundTileDraw(q,tx,ty){
   const h=((tx*73856093)^(ty*19349663))>>>0,v=h%100;
   const px=tx*16,py=ty*16;
   if(selectedMap==='forest'){
-    if(v<30) q(px,py,16,16,'#356427');
-    else if(v<40) q(px,py,16,16,'#3d7230');
-    else if(v<48){ q(px+4,py+4,3,3,'#4a8a3a'); q(px+10,py+9,2,2,'#2a5a20'); }
-    else if(v<52) q(px+6,py+8,4,2,'#5a9a4a');
+    gramaTile(q,tx,ty);
   } else if(selectedMap==='desert'){
     if(v<28) q(px,py,16,16,'#b89c54');
     else if(v<40) q(px,py,16,16,'#cbb06a');
