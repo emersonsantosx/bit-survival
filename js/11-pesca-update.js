@@ -911,12 +911,11 @@ function update(dt){
   weatherTimer-=dt;
   if(weatherTimer<=0&&MP.active&&!MP.isHost)weatherTimer=30; // convidado: só o host sorteia (snapshot manda)
   if(weatherTimer<=0){
-    weatherTimer=rnd(100,220);
-    const prev=weather;
-    weather=pickWeather(Math.random);
+    const prev=weather,nx=weatherRoll(Math.random);
+    weatherTimer=nx.dur;weather=nx.w;weatherK=nx.k;
     if(prev!==weather){
       setRain(weather==='rain');
-      if(weather==='rain') toast('Chuva: fogueiras apagam e stamina cai mais');
+      if(weather==='rain') toast((weatherK<.8?'Garoa':weatherK>1.2?'Chuva forte':'Chuva')+': fogueiras apagam e stamina cai mais');
       else if(weather==='snow') toast('Neve: movimento e recuperação mais lentos');
       else if(weather==='sand') toast('Tempestade de areia: visão e velocidade reduzidas');
       else if(prev!=='none') toast('Clima limpo');
@@ -925,7 +924,7 @@ function update(dt){
   if(weather!=='none'){
     const pf=perf();
     // Densidade por segundo: igual em 30, 60 ou 120 FPS
-    weatherAcc=Math.min(14,weatherAcc+pf.weatherSpawn*dt*60*(1+blizzK*2));
+    weatherAcc=Math.min(14,weatherAcc+pf.weatherSpawn*dt*60*(1+blizzK*2)*weatherK);
     const wcap=pf.weatherCap*(1+(perfTotal()<2?blizzK*1.2:0));
     while(weatherAcc>=1){ weatherAcc-=1; if(weatherParticles.length>=wcap) continue;
       if(weather==='sand') weatherParticles.push({x:camX-20,y:camY+rnd(0,H/Z),vx:rnd(160,260),vy:rnd(-12,30),sz:rnd(1,2),t:rnd(.7,1.3)});
@@ -1336,7 +1335,7 @@ function fText(f){   // desenha um floater; os avisos do jogador (say) saem em b
 function weatherAdvance(sec){
   if(!(sec>0))return;
   const prev=weather;let rem=sec;
-  while(rem>=weatherTimer){rem-=weatherTimer;weather=pickWeather(Math.random);weatherTimer=rnd(100,220);}
+  while(rem>=weatherTimer){rem-=weatherTimer;const nx=weatherRoll(Math.random);weather=nx.w;weatherTimer=nx.dur;weatherK=nx.k;}
   weatherTimer-=rem;
   if(weather!==prev){setRain(weather==='rain');weatherParticles.length=0;}
 }

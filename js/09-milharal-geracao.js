@@ -381,7 +381,7 @@ function genWorld(seed) {
   }
 
   weather=pickWeather(_rng);
-  weatherTimer=rnd(120,240);
+  weatherTimer=rnd(120,240);weatherK=1;
   weatherParticles=[];
   // Animais por mapa (passivos, caça = comida)
   plotsLoad([]);fruitReset();fenceLoad([]);cellLoad(null);animals=[];birds=[];birdsReady=false;flockT=rnd(15,40);
