@@ -265,7 +265,7 @@ function attack(){
             if(MP.active) sendEvt('itemAdded', {t:'wood', x:hitTree.x, y:hitTree.y});
           }
         }
-        toast('Árvore derrubada! +' + n + ' Madeira' + fruitMsg);
+        say('Árvore derrubada! +' + n + ' Madeira' + fruitMsg);
         beep(260, .18, 'triangle', .09, 120);
       }
       makeNoise(P.x, P.y, 60);
@@ -294,7 +294,7 @@ function attack(){
             if(MP.active) sendEvt('itemAdded', {t:'stone', x:sx, y:sy});
           }
         }
-        toast('Pedra quebrada! +'+n+' Pedra');beep(320,.18,'triangle',.09,80);
+        say('Pedra quebrada! +'+n+' Pedra');beep(320,.18,'triangle',.09,80);
       }
       makeNoise(P.x,P.y,70);return;
     }
@@ -1278,28 +1278,38 @@ function update(dt){
 /* Aviso sobre o jogador (inventario cheio, pegou, usou, sem municao...): texto que sobe da cabeca do personagem e some, sem fundo,
    no estilo do antigo COMBO. Duracao cresce um pouco com o tamanho do texto. Status (sangrando, frio, calor, queimadura) e avisos do jogo ficam no toast do topo.
    Sem jogador na tela, cai no toast. */
-const SAY_SHORT=[[/^Pegou: /,'+ '],[/^Achou: /,'+ '],[/^Você já tem /,'Já tem '],[/^Você já veste.*/,'Já está vestindo'],[/^Você já tem.*/,'Já tem'],
-  [/^Você bebeu água.*/,'Bebeu água'],[/^Você comeu/,'Comeu'],[/^Garrafa enchida.*/,'Garrafa cheia'],[/^Fabricou: /,'Fabricou '],[/^Pegou o que coube.*/,'Pegou o que coube'],
+const SAY_SHORT=[[/^Você já tem /,'Já tem '],[/^Você já veste.*/,'Já está vestindo'],[/^Você já tem.*/,'Já tem'],
+  [/^Você bebeu água.*/,'Bebeu água'],[/^Você comeu/,'Comeu'],[/^Garrafa enchida.*/,'Garrafa cheia'],[/^Pegou o que coube.*/,'Pegou o que coube'],
   [/^Você quebrou o gelo.*/,'Quebrou o gelo'],[/^Água salgada.*/,'Água salgada'],[/^Isca lançada.*/,'Isca lançada'],[/^Segure o alimento cru.*/,'Segure o cru na mão'],
-  [/^Segure a semente.*/,'Segure a semente'],[/ \(\+(\d+) (munição|flechas)\)/,'\n+$1 $2'],[/ · /,'\n']];
-function sayLines(msg){   // texto curto, quebrado em bloco de ate 3 linhas de 16 letras
+  [/^Segure a semente.*/,'Segure a semente'],[/ · /,'\n']];
+const L_=(t,b)=>({t,b:!!b});
+function sayLines(msg){   // devolve as linhas do aviso: [{t:texto,b:negrito}]. Ganhos de item: nome em negrito e a quantidade embaixo ("+3"); o resto, texto curto em bloco de ate 3 linhas de 16 letras
+  let m;
+  if((m=/^(?:Pegou|Achou): (.+?)(?: \(\+(\d+) (munição|flechas)\))?$/.exec(msg)))return [L_(m[1],1),L_(m[2]?'+'+m[2]+' '+m[3]:'+1')];
+  if((m=/^\+(\d+) (munição|flechas)$/.exec(msg)))return [L_(m[2]==='flechas'?'Flechas':'Munição',1),L_('+'+m[1])];
+  if((m=/^(?:Árvore derrubada|Tronco destruído)! \+(\d+) Madeira(?: · (.*))?$/.exec(msg)))return [L_('Madeira',1),L_('+'+m[1])].concat(m[2]?[L_(m[2].replace(/ no chão$/,''))]:[]);
+  if((m=/^Pedra quebrada! \+(\d+) Pedra$/.exec(msg)))return [L_('Pedra',1),L_('+'+m[1])];
+  if((m=/^Colheu: (\d+) (.+?)(?: e (\d+) sementes?)?$/.exec(msg)))return [L_(m[2],1),L_('+'+m[1])].concat(m[3]?[L_('+'+m[3]+' semente'+(m[3]>1?'s':''))]:[]);
+  if((m=/^Fabricou: (.+?)(?: x(\d+))?(?: \(\+(\d+) flechas\))?$/.exec(msg)))return [L_(m[1],1),L_(m[3]?'+'+m[3]+' flechas':'Fabricou'+(m[2]?' x'+m[2]:''))];
   for(const [re,to] of SAY_SHORT)msg=msg.replace(re,to);
   const out=[];
-  for(const part of msg.split('\n')){let cur='';for(const w of part.split(' ')){if(cur&&(cur+' '+w).length>16){out.push(cur);cur=w;}else cur=cur?cur+' '+w:w;}if(cur)out.push(cur);}
-  if(out.length>3){out.length=3;}
+  for(const part of msg.split('\n')){let cur='';for(const w of part.split(' ')){if(cur&&(cur+' '+w).length>16){out.push(L_(cur,1));cur=w;}else cur=cur?cur+' '+w:w;}if(cur)out.push(L_(cur,1));}
+  if(out.length>3)out.length=3;
   return out;
 }
 function say(msg){
   if(!P||state!=='play'||P.dead){toast(msg);return;}
   msg=String(msg);
-  const lines=sayLines(msg),all=lines.join(' ');
-  const col=/cheio|sem |já tem|insuficiente|vazio|escapou|perdeu|não |nada|só a|salgada|lotado/i.test(msg)?'#ffd060':/comeu|bebeu|assad|usad|colheu|plantou|regou|equipad|vestido|fabricou|\+/i.test(msg)?'#b4ff94':'#fff1c0';
+  const lines=sayLines(msg),all=lines.map(l=>l.t).join(' ');
+  const col=/cheio|sem |já tem|insuficiente|vazio|escapou|perdeu|não |nada|só a|salgada|lotado/i.test(msg)?'#ffd060':/comeu|bebeu|assad|usad|colheu|plantou|regou|equipad|vestido|fabricou|pegou|achou|derrubada|destru|quebrada|\+/i.test(msg)?'#b4ff94':'#fff1c0';
   floaters=floaters.filter(f=>!f.say);   // um aviso por vez: o novo troca o anterior
   floaters.push({x:P.x,y:P.y-24,txt:all,lines,col,t:Math.min(2.2,1.1+all.length*.04),vy:-14,say:1});
 }
-function fText(f){   // desenha um floater; os avisos do jogador (say) saem em bloco, a ultima linha na posicao do floater
+function fText(f){   // desenha um floater; os avisos do jogador (say) saem em bloco, a ultima linha na posicao do floater (negrito na cor do aviso; a linha de baixo, normal e mais clara)
   if(!f.lines){ctx.fillText(f.txt,f.x,f.y);return;}
-  const n=f.lines.length;for(let i=0;i<n;i++)ctx.fillText(f.lines[i],f.x,f.y-(n-1-i)*9);
+  const n=f.lines.length,col=ctx.fillStyle;
+  for(let i=0;i<n;i++){const l=f.lines[i];ctx.font=(l.b?'bold ':'')+'9px "Courier New",monospace';ctx.fillStyle=l.b?col:'#fff1c0';ctx.fillText(l.t,f.x,f.y-(n-1-i)*9);}
+  ctx.font='bold 9px "Courier New",monospace';ctx.fillStyle=col;
 }
 function toast(msg){
   const el=$('toast');if(!el)return;

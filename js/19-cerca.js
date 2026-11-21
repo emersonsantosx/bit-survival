@@ -205,7 +205,7 @@ function logHit(st,w){
   if(gen){const key='o:'+Math.round(x)+','+Math.round(y)+','+L.a;broken.add(key);if(MP.active)sendEvt('structBreak',{k:key});}   // tronco do mapa: a chave vai no save e no multiplayer (senao voltava pela semente)
   else if(MP.active)sendEvt('logDel',{x:Math.round(x),y:Math.round(y),a});
   giveWood(n,st.x,st.y);
-  toast('Tronco destruído! +'+n+' Madeira');beep(240,.14,'triangle',.08,-60);
+  say('Tronco destruído! +'+n+' Madeira');beep(240,.14,'triangle',.08,-60);
 }
 /* tira o objeto da lista (cerca da cidade, cerca do jogador ou decoracao) */
 function removeKey(key){
