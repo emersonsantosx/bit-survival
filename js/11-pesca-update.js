@@ -1282,15 +1282,31 @@ const SAY_SHORT=[[/^Você já tem /,'Já tem '],[/^Você já veste.*/,'Já está
   [/^Você bebeu água.*/,'Bebeu água'],[/^Você comeu/,'Comeu'],[/^Garrafa enchida.*/,'Garrafa cheia'],[/^Pegou o que coube.*/,'Pegou o que coube'],
   [/^Você quebrou o gelo.*/,'Quebrou o gelo'],[/^Água salgada.*/,'Água salgada'],[/^Isca lançada.*/,'Isca lançada'],[/^Segure o alimento cru.*/,'Segure o cru na mão'],
   [/^Segure a semente.*/,'Segure a semente'],[/ · /,'\n']];
-const L_=(t,b)=>({t,b:!!b});
+const L_=(t,b,i)=>({t,b:!!b,i:!!i});   // i: o texto e nome de item (a cor do negrito vem do desenho do item)
+const _icol={};
+function itemColor(name){   // cor do item: a cor mais presente no desenho dele (sem os contornos escuros), clareada para ler bem sobre o chao
+  if(name in _icol)return _icol[name];
+  let key=null;for(const k in ITEMS)if(ITEMS[k].n===name){key=k;break;}
+  if(!key&&typeof WEAPONS!=='undefined')for(const k in WEAPONS)if(WEAPONS[k].n===name){key=k;break;}
+  const rows=key&&PXG[(ITEMS[key]&&ITEMS[key].e)||key]||(key&&PXG[key]);
+  let out=null;
+  if(rows){
+    const cnt={};for(const r of rows)for(const ch of r){const c=PXPAL[ch];if(!c)continue;const v=parseInt(c.length===4?c.replace(/#(.)(.)(.)/,'#$1$1$2$2$3$3').slice(1):c.slice(1),16),R=v>>16,G=v>>8&255,B=v&255;if(.299*R+.587*G+.114*B<70)continue;cnt[ch]=(cnt[ch]||0)+1;}
+    let best=null;for(const ch in cnt)if(!best||cnt[ch]>cnt[best])best=ch;
+    if(best){let c=PXPAL[best];if(c.length===4)c=c.replace(/#(.)(.)(.)/,'#$1$1$2$2$3$3');let R=parseInt(c.slice(1,3),16),G=parseInt(c.slice(3,5),16),B=parseInt(c.slice(5,7),16);
+      const lum=.299*R+.587*G+.114*B;if(lum<150){const m=(150-lum)/(255-lum);R+=(255-R)*m;G+=(255-G)*m;B+=(255-B)*m;}
+      out='rgb('+(R|0)+','+(G|0)+','+(B|0)+')';}
+  }
+  return _icol[name]=out;
+}
 function sayLines(msg){   // devolve as linhas do aviso: [{t:texto,b:negrito}]. Ganhos de item: nome em negrito e a quantidade embaixo ("+3"); o resto, texto curto em bloco de ate 3 linhas de 16 letras
   let m;
-  if((m=/^(?:Pegou|Achou): (.+?)(?: \(\+(\d+) (munição|flechas)\))?$/.exec(msg)))return [L_(m[1],1),L_(m[2]?'+'+m[2]+' '+m[3]:'+1')];
-  if((m=/^\+(\d+) (munição|flechas)$/.exec(msg)))return [L_(m[2]==='flechas'?'Flechas':'Munição',1),L_('+'+m[1])];
-  if((m=/^(?:Árvore derrubada|Tronco destruído)! \+(\d+) Madeira(?: · (.*))?$/.exec(msg)))return [L_('Madeira',1),L_('+'+m[1])].concat(m[2]?[L_(m[2].replace(/ no chão$/,''))]:[]);
-  if((m=/^Pedra quebrada! \+(\d+) Pedra$/.exec(msg)))return [L_('Pedra',1),L_('+'+m[1])];
-  if((m=/^Colheu: (\d+) (.+?)(?: e (\d+) sementes?)?$/.exec(msg)))return [L_(m[2],1),L_('+'+m[1])].concat(m[3]?[L_('+'+m[3]+' semente'+(m[3]>1?'s':''))]:[]);
-  if((m=/^Fabricou: (.+?)(?: x(\d+))?(?: \(\+(\d+) flechas\))?$/.exec(msg)))return [L_(m[1],1),L_(m[3]?'+'+m[3]+' flechas':'Fabricou'+(m[2]?' x'+m[2]:''))];
+  if((m=/^(?:Pegou|Achou): (.+?)(?: \(\+(\d+) (munição|flechas)\))?$/.exec(msg)))return [L_(m[1],1,1),L_(m[2]?'+'+m[2]+' '+m[3]:'+1')];
+  if((m=/^\+(\d+) (munição|flechas)$/.exec(msg)))return [L_(m[2]==='flechas'?'Flechas':'Munição',1,1),L_('+'+m[1])];
+  if((m=/^(?:Árvore derrubada|Tronco destruído)! \+(\d+) Madeira(?: · (.*))?$/.exec(msg)))return [L_('Madeira',1,1),L_('+'+m[1])].concat(m[2]?[L_(m[2].replace(/ no chão$/,''))]:[]);
+  if((m=/^Pedra quebrada! \+(\d+) Pedra$/.exec(msg)))return [L_('Pedra',1,1),L_('+'+m[1])];
+  if((m=/^Colheu: (\d+) (.+?)(?: e (\d+) sementes?)?$/.exec(msg)))return [L_(m[2],1,1),L_('+'+m[1])].concat(m[3]?[L_('+'+m[3]+' semente'+(m[3]>1?'s':''))]:[]);
+  if((m=/^Fabricou: (.+?)(?: x(\d+))?(?: \(\+(\d+) flechas\))?$/.exec(msg)))return [L_(m[1],1,1),L_(m[3]?'+'+m[3]+' flechas':'Fabricou'+(m[2]?' x'+m[2]:''))];
   for(const [re,to] of SAY_SHORT)msg=msg.replace(re,to);
   const out=[];
   for(const part of msg.split('\n')){let cur='';for(const w of part.split(' ')){if(cur&&(cur+' '+w).length>16){out.push(L_(cur,1));cur=w;}else cur=cur?cur+' '+w:w;}if(cur)out.push(L_(cur,1));}
@@ -1308,7 +1324,7 @@ function say(msg){
 function fText(f){   // desenha um floater; os avisos do jogador (say) saem em bloco, a ultima linha na posicao do floater (negrito na cor do aviso; a linha de baixo, normal e mais clara)
   if(!f.lines){ctx.fillText(f.txt,f.x,f.y);return;}
   const n=f.lines.length,col=ctx.fillStyle;
-  for(let i=0;i<n;i++){const l=f.lines[i];ctx.font=(l.b?'bold ':'')+'9px "Courier New",monospace';ctx.fillStyle=l.b?col:'#fff1c0';ctx.fillText(l.t,f.x,f.y-(n-1-i)*9);}
+  for(let i=0;i<n;i++){const l=f.lines[i];ctx.font=(l.b?'bold ':'')+'9px "Courier New",monospace';ctx.fillStyle=l.b?(l.i&&itemColor(l.t)||col):'#fff1c0';ctx.fillText(l.t,f.x,f.y-(n-1-i)*9);}
   ctx.font='bold 9px "Courier New",monospace';ctx.fillStyle=col;
 }
 function toast(msg){
