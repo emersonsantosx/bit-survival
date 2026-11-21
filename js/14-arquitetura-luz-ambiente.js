@@ -1288,11 +1288,19 @@ function render(){
     // Números de dano / feedback
     ctx.textAlign='center';ctx.font='bold 9px "Courier New",monospace';
     for(const f of floaters){
+      if(f.say)continue;   // os avisos do jogador sao desenhados abaixo, fora do recorte do predio (senao o texto some perto da parede)
       ctx.globalAlpha=Math.min(1,f.t*1.4);
       ctx.fillStyle=f.col;fText(f);
       ctx.globalAlpha=1;
     }
     ctx.restore();
+    ctx.textAlign='center';ctx.font='bold 9px "Courier New",monospace';
+    for(const f of floaters){
+      if(!f.say)continue;
+      ctx.globalAlpha=Math.min(1,f.t*1.4);
+      ctx.fillStyle=f.col;fText(f);
+      ctx.globalAlpha=1;
+    }
     // Screen overlays (flash, joystick, minimap) — shared with outdoor path
     ctx.setTransform(1,0,0,1,0,0);
     ctx.globalCompositeOperation='multiply';ctx.fillStyle='rgb(255,238,214)';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over';drawVignette(true);

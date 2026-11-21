@@ -59,7 +59,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 11-pesca-update | 262 | 40 | 66 | 897 | 63 | 2 | 3 | 5 | 20 | 66 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 57 | 36 | 29 | 739 | 12 | 1 | 6 | 5 | 11 | 46 | 42 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |  |  |
 | 13-render-personagens | 327 | 40 | 22 | 252 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 658 | 13 | 16 | 324 | 17 |  | 10 | 8 | 23 | 7 | 5 | 1 | 155 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  |
+| 14-arquitetura-luz-ambiente | 663 | 13 | 16 | 324 | 17 |  | 10 | 8 | 23 | 8 | 6 | 1 | 155 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  |
 | 15-missoes-ui-controles | 178 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 10 | 21 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |
 | 16-orientacao | 2 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
@@ -90,7 +90,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | MP | let | 04-estado:19 | 24 | 707 |
 | selectedMap | let | 04-estado:3 | 22 | 224 |
 | beep | funcao | 02-audio:42 | 20 | 139 |
-| ctx | const | 01-base:27 | 19 | 1095 |
+| ctx | const | 01-base:27 | 19 | 1100 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 19 | 64 |
 | rnd | const | 01-base:16 | 18 | 435 |
 | T | let | 04-estado:14 | 18 | 128 |

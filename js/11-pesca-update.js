@@ -1299,7 +1299,7 @@ function itemColor(name){   // cor do item: a cor mais presente no desenho dele 
   }
   return _icol[name]=out;
 }
-function sayLines(msg){   // devolve as linhas do aviso: [{t:texto,b:negrito}]. Ganhos de item: nome em negrito e a quantidade embaixo ("+3"); o resto, texto curto em bloco de ate 3 linhas de 16 letras
+function sayLines(msg){   // devolve as linhas do aviso: [{t:texto,b:negrito}]. Ganhos de item: nome em negrito e a quantidade embaixo ("+3"); o resto, texto curto em bloco de ate 3 linhas de 18 letras
   let m;
   if((m=/^(?:Pegou|Achou): (.+?)(?: \(\+(\d+) (munição|flechas)\))?$/.exec(msg)))return [L_(m[1],1,1),L_(m[2]?'+'+m[2]+' '+m[3]:'+1')];
   if((m=/^\+(\d+) (munição|flechas)$/.exec(msg)))return [L_(m[2]==='flechas'?'Flechas':'Munição',1,1),L_('+'+m[1])];
@@ -1311,7 +1311,7 @@ function sayLines(msg){   // devolve as linhas do aviso: [{t:texto,b:negrito}]. 
   if((m=/^Fabricou: (.+?)(?: x(\d+))?(?: \(\+(\d+) flechas\))?$/.exec(msg)))return [L_(m[1],1,1),L_(m[3]?'+'+m[3]+' flechas':'Fabricou'+(m[2]?' x'+m[2]:''))];
   for(const [re,to] of SAY_SHORT)msg=msg.replace(re,to);
   const out=[];
-  for(const part of msg.split('\n')){let cur='';for(const w of part.split(' ')){if(cur&&(cur+' '+w).length>16){out.push(L_(cur,1));cur=w;}else cur=cur?cur+' '+w:w;}if(cur)out.push(L_(cur,1));}
+  for(const part of msg.split('\n')){let cur='';for(const w of part.split(' ')){if(cur&&(cur+' '+w).length>18){out.push(L_(cur,1));cur=w;}else cur=cur?cur+' '+w:w;}if(cur)out.push(L_(cur,1));}
   if(out.length>3)out.length=3;
   return out;
 }
@@ -1328,7 +1328,7 @@ function say(msg,add){   // add: junta as linhas ao aviso que acabou de subir (e
 function fText(f){   // desenha um floater; os avisos do jogador (say) saem em bloco, a ultima linha na posicao do floater (negrito na cor do aviso; a linha de baixo, normal e mais clara)
   if(!f.lines){ctx.fillText(f.txt,f.x,f.y);return;}
   const n=f.lines.length,col=ctx.fillStyle;
-  for(let i=0;i<n;i++){const l=f.lines[i];ctx.font=(l.b?'bold ':'')+'9px "Courier New",monospace';ctx.fillStyle=l.b?(l.i&&itemColor(l.t)||col):'#fff1c0';ctx.fillText(l.t,f.x,f.y-(n-1-i)*9);}
+  for(let i=0;i<n;i++){const l=f.lines[i];ctx.font=(l.b?'bold ':'')+'7px "Courier New",monospace';ctx.fillStyle=l.b?(l.i&&itemColor(l.t)||col):'#fff1c0';ctx.fillText(l.t,f.x,f.y-(n-1-i)*8);}
   ctx.font='bold 9px "Courier New",monospace';ctx.fillStyle=col;
 }
 function toast(msg){
