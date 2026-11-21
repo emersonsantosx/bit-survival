@@ -95,6 +95,20 @@ const OPCIONAIS = ['tn', 'rn', 'tents', 'chests', 'rl', 'ice', 'plots', 'fr', 'g
       }
       ok(ruins.length === 0, map + ': cada campo opcional ausente, um por vez, ainda carrega' + (ruins.length ? ' (falham: ' + ruins.join(', ') + ')' : ''));
     }
+    // 9) save feito com o dia antigo (480 s, sem o campo ds): hora do dia e crescimento das plantas ficam no mesmo ponto
+    r = await pg.evaluate(() => {
+      const o = window.__tenta(d => { delete d.ds; d.T = 300; d.plots = [[7, 9, 'carrot', 240, 120]]; });
+      o.T = T; o.hora = (START_HOUR + T / DAY_SECONDS * 24) % 24; o.k = DAY_SECONDS / 480;
+      const p = plotsPack().find(q => q[0] === 7 && q[1] === 9); o.g = p && p[3]; o.w = p && p[4]; o.grow = DAY_SECONDS;
+      const v = { T: 100, ds: 480, fr: [[1, 2, 240], [3, 4, 0]], rl: [[0, 0, 480, 1], [0, 1, -1, 2]], plots: [] }; saveDayScale(v); o.v = v;
+      const w = { T: 100, ds: DAY_SECONDS, fr: [[1, 2, 240]] }; saveDayScale(w); o.w2 = w;
+      return o;
+    });
+    ok(r.state === 'play', map + ': save com o dia antigo carrega');
+    ok(Math.abs(r.T - 300 * r.k) < 1 && Math.abs(r.hora - 0) < .01, map + ': a hora do dia nao muda (T ' + r.T + ', hora ' + r.hora.toFixed(2) + ')');
+    ok(Math.abs(r.g - Math.min(r.grow, 240 * r.k)) < 1.5 && Math.abs(r.w - 120 * r.k) < 1.5, map + ': a planta continua no mesmo estagio (g ' + r.g + ', umidade ' + r.w + ')');
+    ok(r.v.fr[0][2] === Math.round(240 * r.k) && r.v.fr[1][2] === 0 && r.v.rl[0][2] === Math.round(480 * r.k) && r.v.rl[1][2] === -1 && r.v.rl[0][3] === 1, map + ': frutas e loot tambem sao reescalados (-1 e 0 ficam como estao)');
+    ok(r.w2.T === 100 && r.w2.fr[0][2] === 240, map + ': save que ja tem o tamanho de dia atual nao muda');
     ok(errs.length === 0, map + ': sem erros de JS nem falha de carregamento' + (errs.length ? ' -> ' + errs[0] : ''));
     await pg.context().close();
   }

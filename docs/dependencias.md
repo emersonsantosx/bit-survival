@@ -17,12 +17,12 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 07-loot-mapa | 63 | 31 | 32 | 0 | 13 | 10 |
 | 08-cidade-vilas-marcos | 48 | 23 | 24 | 1 | 11 | 17 |
 | 09-milharal-geracao | 64 | 36 | 28 | 0 | 13 | 9 |
-| 10-jogo-saves | 116 | 83 | 33 | 0 | 14 | 15 |
+| 10-jogo-saves | 117 | 83 | 34 | 0 | 14 | 15 |
 | 11-pesca-update | 36 | 11 | 25 | 0 | 14 | 18 |
 | 12-crafting-multiplayer | 69 | 25 | 44 | 0 | 14 | 21 |
 | 13-render-personagens | 105 | 51 | 54 | 0 | 13 | 19 |
 | 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 14 | 0 |
-| 15-missoes-ui-controles | 89 | 20 | 69 | 0 | 10 | 13 |
+| 15-missoes-ui-controles | 88 | 20 | 68 | 0 | 10 | 13 |
 | 16-orientacao | 0 | 0 | 0 | 0 | 3 | 0 |
 | 17-arte-menu | 0 | 0 | 0 | 0 | 0 | 0 |
 | 18-plantacao | 0 | 0 | 0 | 0 | 12 | 0 |
@@ -37,7 +37,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 27-variedade-decoracao | 0 | 0 | 0 | 0 | 1 | 0 |
 | 28-modo-desktop | 0 | 0 | 0 | 0 | 7 | 0 |
 | 29-sala-multiplayer | 4 | 2 | 2 | 0 | 5 | 2 |
-| 30-desempenho | 8 | 3 | 5 | 0 | 4 | 2 |
+| 30-desempenho | 11 | 3 | 8 | 0 | 4 | 2 |
 | 31-rastro-sangue | 0 | 0 | 0 | 0 | 4 | 0 |
 | 32-passageiro | 0 | 0 | 0 | 0 | 9 | 0 |
 | 33-dano-visual | 0 | 0 | 0 | 0 | 4 | 0 |
@@ -55,7 +55,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 07-loot-mapa | 135 | 3 | 30 | 128 | 3 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 08-cidade-vilas-marcos | 135 | 3 | 17 | 136 | 21 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 09-milharal-geracao | 206 | 10 | 87 | 284 | 40 |  | 1 | 35 | . | 3 | 3 | 8 | 126 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |
-| 10-jogo-saves | 90 | 50 | 57 | 700 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 17 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |
+| 10-jogo-saves | 90 | 50 | 60 | 700 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 17 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |
 | 11-pesca-update | 255 | 40 | 55 | 894 | 63 | 2 | 3 | 5 | 20 | 62 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 57 | 36 | 29 | 739 | 12 | 1 | 6 | 5 | 11 | 46 | 42 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |  |  |
 | 13-render-personagens | 327 | 40 | 22 | 252 | 13 | 22 | 2 | 2 |  | 4 | 8 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |
@@ -75,7 +75,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 27-variedade-decoracao | 6 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |
 | 28-modo-desktop | 45 | 2 |  | 41 |  |  | 2 |  |  | 7 | 2 |  |  |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |
 | 29-sala-multiplayer | 15 | 5 |  | 37 |  |  |  |  |  |  |  | 10 |  |  | 6 |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |
-| 30-desempenho | 4 |  | 10 | 1 |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |
+| 30-desempenho | 4 |  | 14 | 3 |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |
 | 31-rastro-sangue | 4 |  |  | 16 | 3 |  |  |  |  |  |  |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |
 | 32-passageiro | 8 | 4 |  | 40 |  |  | 1 | 1 |  | 4 | 6 | 7 | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |
 | 33-dano-visual | 1 |  |  | 5 |  |  |  |  |  |  |  | 1 | 16 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |
@@ -88,15 +88,15 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 |---|---|---|---:|---:|
 | P | let | 04-estado:14 | 24 | 2046 |
 | MP | let | 04-estado:19 | 24 | 707 |
-| selectedMap | let | 04-estado:3 | 22 | 222 |
+| selectedMap | let | 04-estado:3 | 22 | 224 |
 | beep | funcao | 02-audio:42 | 20 | 139 |
 | ctx | const | 01-base:27 | 19 | 1090 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 19 | 64 |
 | rnd | const | 01-base:16 | 18 | 435 |
 | toast | funcao | 11-pesca-update:1278 | 18 | 209 |
 | T | let | 04-estado:14 | 18 | 128 |
-| WW | let | 03-dados:2 | 18 | 101 |
-| WH | let | 03-dados:2 | 18 | 90 |
+| WW | let | 03-dados:2 | 18 | 103 |
+| WH | let | 03-dados:2 | 18 | 92 |
 | clamp | const | 01-base:4 | 17 | 99 |
 | parts | let | 04-estado:10 | 17 | 76 |
 | R | funcao | 13-render-personagens:2 | 16 | 1208 |
@@ -137,13 +137,13 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | decorations | let | 04-estado:10 | 7 | 39 |
 | shake | let | 04-estado:14 | 7 | 35 |
 | KBM | let | 01-base:44 | 7 | 32 |
+| DAY_SECONDS | const | 03-dados:8 | 7 | 30 |
 | day | let | 04-estado:14 | 7 | 26 |
 | countInv | funcao | 04-estado:282 | 7 | 24 |
 | pick | const | 01-base:18 | 7 | 22 |
 | pushOut | funcao | 05-geometria:405 | 7 | 14 |
 | removeInv | funcao | 04-estado:287 | 7 | 11 |
 | plane | let | 04-estado:13 | 6 | 62 |
-| DAY_SECONDS | const | 03-dados:8 | 6 | 27 |
 | touchGas | let | 04-estado:18 | 6 | 19 |
 | touchSteer | let | 04-estado:18 | 6 | 19 |
 
@@ -160,13 +160,13 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **07-loot-mapa** (32): LOOT_RESPAWN, PING_LIFE, pingAdd, pingBadge, pingCandidate, pingCol, ALLY_COLS, wpUpdate, WP_COL, wpDist, wpPick, bigTimer, bigPrevState, bigMapTap, drawPingsMini, RG_CELL, RG_FRAC, RG_TREE_S, RG_ROCK_S, RG_BT, RG_BR, RG_SET_T, RG_SET_R, rgKey, rgCount, ...
 - **08-cidade-vilas-marcos** (24): bldDims, bldDims0, bldSize, cityPickType, cityFillBlock, cityRubble, cityPark, cityHouseFence, bldSizeRural, ruralPickType, genTown, ruralCarFree, SLED_COLS, BUGGY_COLS, ATV_COLS, prints, tracks, LM_SIDE_D, LM_SIDE_S, chestLoot, lmCurse, TRACK_W, updateTracks, drawTracks
 - **09-milharal-geracao** (28): CORNT, genField, YT, _stalkCache, worldFlavor, MM_K, buildMinimap, bigBase, ANIMAL_PREY, BIRD_MAP, BIRD_FLOCK, birds, birdsReady, flockT, birdChirpT, birdSeq, BKEYS, BST, birdAnchors, birdOK, birdSound, newBird, initBirds, birdTakeoff, updateBirdsGuest, ...
-- **10-jogo-saves** (33): SAVE_KEY, SAVE_PREFIX, SAVE_VER, slotKey, autoSlot, packObj, canSave, saveWorldOk, iceLoad, doorsLoad, normalizeLoadout, GUEST_SKIP, guestKey, guestForget, FRUIT_FOOD, eatLock, SEED_OF, seedGain, giveSeedFor, applyUse, consumeOne, putAwayHold, closeTool, chooseWeapon, dropWeaponFromArsenal, ...
+- **10-jogo-saves** (34): SAVE_KEY, SAVE_PREFIX, SAVE_VER, slotKey, autoSlot, packObj, canSave, saveWorldOk, saveDayScale, iceLoad, doorsLoad, normalizeLoadout, GUEST_SKIP, guestKey, guestForget, FRUIT_FOOD, eatLock, SEED_OF, seedGain, giveSeedFor, applyUse, consumeOne, putAwayHold, closeTool, chooseWeapon, ...
 - **11-pesca-update** (25): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, BURN_R, BURN_T, BURN_DPS, burnTick, updateP, updateZ, CHAINSAW_LEN, CHAINSAW_R, chainsawHit, CAM_FAR, camSpeedZoom
 - **12-crafting-multiplayer** (44): canCraft, craft, STRUCT_EVT, LOCAL_GRACE, handleEvt, loadPeerJS, makeRoomCode, hostRetryTimer, hostOpenPeer, hostSignalRetry, RECONN_MAX_MS, showReconnectUI, updateReconnectUI, hideReconnectUI, mpReconnectFail, mpGuestReconnectAttempt, hostResumeGuest, guestResumed, hostBuildWorld, MAP_NOME, hostSync, hostBroadcastLobby, hostFreeId, hostUniqueName, hostRefuse, ...
 - **13-render-personagens** (54): skinLook, snowOutfit, _shc, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, RSP, rockKind, rockSprite, TSP, treeSprite, treeShadow, treeShadow0, TREE_ALTS, treeAlt, SNOWTOP, drawDecoration0, ...
-- **15-missoes-ui-controles** (69): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACH_MAPS, ACHD, achSave, achChime, achCheck, achSet, achMeta, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, achRow, renderAch, bindSlider, bindToggle, bindSliderResize, ...
+- **15-missoes-ui-controles** (68): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACH_MAPS, ACHD, achSave, achChime, achCheck, achSet, achMeta, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, achRow, renderAch, bindSlider, bindToggle, bindSliderResize, ...
 - **29-sala-multiplayer** (2): LOB_COL, lobbyLeave
-- **30-desempenho** (5): GC_SZ, GC_M, GC_MAX, GC, layerDraw
+- **30-desempenho** (8): GC_SZ, GC_M, GC_MAX, GC, layerBlock, layerDraw, layerWarm, groundPaint
 
 ## Possivelmente mortas (revisar antes de apagar: podem ser chamadas por onclick no HTML ou pelos testes)
 

@@ -454,15 +454,20 @@ const SUN={dx:0,dy:.4,len:.5,a:.3,e:1,h:12,fs:'rgba(8,10,28,.3)',f:0,ax:0,by:.05
 function updateSun(){
   const h=(START_HOUR+T/DAY_SECONDS*24)%24;SUN.h=h;
   if(P&&P.inside){SUN.e=.6;SUN.dx=0;SUN.dy=.3;SUN.len=.35;SUN.a=.28;SUN.fs='rgba(8,10,28,.28)';SUN.f=1;SUN.ax=0;SUN.by=.035;return;}
-  const st=(h-5.5)/14;let e,dx,a0;
-  if(st>0&&st<1){e=Math.sin(Math.PI*st);dx=-Math.cos(Math.PI*st);a0=.32;}
-  else{const mt=Math.min(1,Math.max(0,((h-19.5+24)%24)/10));e=Math.sin(Math.PI*mt);dx=-Math.cos(Math.PI*mt);a0=.16;}
-  const wf=weather==='rain'?.5:weather==='snow'?.65:weather==='sand'?.6:1; // céu fechado: sombra suave
-  SUN.e=e;SUN.dx=dx;SUN.dy=.4;SUN.len=Math.min(2.5,.32+(1-e)*2.1);
-  SUN.a=a0*Math.min(1,.4+e*1.4)*wf;
+  // arco unico e uniforme: o angulo do sol gira sempre na mesma velocidade (dia: 5h30 a 19h30, lua: 19h30 a 5h30)
+  const st=(h-5.5)/14;let th,a0;
+  if(st>0&&st<1){th=Math.PI*st;a0=.32;}
+  else{th=Math.PI*Math.min(1,Math.max(0,((h-19.5+24)%24)/10));a0=.16;}
+  const e=Math.sin(th),co=-Math.cos(th);
+  const M=.33+.97*(1-e);   // tamanho da sombra: longa no horizonte (1.3 da altura) e curta, mas nunca um ponto, ao meio-dia (0.33)
+  const wf=weather==='rain'?.5:weather==='snow'?.65:weather==='sand'?.6:1; // ceu fechado: sombra suave
+  SUN.e=e;SUN.dx=co;SUN.len=M/.55;
+  SUN.dy=(.12+.78*e)*1.6667;   // a parte da sombra que cai para a frente cresce com o sol alto
+  const u=Math.min(1,e/.3),fade=u*u*(3-2*u);   // a sombra some suave no horizonte: a troca de lado (sol para lua) acontece invisivel
+  SUN.a=a0*fade*wf;
   SUN.fs='rgba(8,10,28,'+SUN.a.toFixed(3)+')';
   SUN.f=1;   // sombras que seguem a forma em qualquer hora (dia, noite e dentro de casa); 0 volta para as elipses simples
-  SUN.ax=dx*SUN.len*.55;SUN.by=SUN.dy*SUN.len*.33;
+  SUN.ax=SUN.dx*SUN.len*.55;SUN.by=SUN.dy*SUN.len*.33;
 }
 function shadow(x,y,rx,ry){
   const k=SUN.len;
@@ -1233,7 +1238,7 @@ function groundTileDraw(q,tx,ty){
 window.groundTileDraw=groundTileDraw;   // o arquivo 30 monta os blocos de chao com esta mesma conta
 function render(){
   if(!P)return;
-  SH_BUD=6;
+  SH_BUD=12;
   const sk=shake>0&&CFG.shake,sx=sk?Math.round(rnd(-shake,shake)):0,sy=sk?Math.round(rnd(-shake,shake)):0;   // CONFIGURACOES: tremor de tela
   ctx.setTransform(1,0,0,1,0,0);
   ctx.fillStyle='#070a07';ctx.fillRect(0,0,W,H);

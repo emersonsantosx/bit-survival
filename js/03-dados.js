@@ -5,7 +5,7 @@ function setWorldSize(){
   WSC=(typeof window!=='undefined'&&window.__S)||WORLD_S[selectedMap]||1;
   WW=WH=Math.round(3400*WSC/50)*50;WAREA=(WW/3400)*(WH/3400);
 }
-const DAY_SECONDS=480, START_HOUR=9, UPD=700;
+const DAY_SECONDS=600, START_HOUR=9, UPD=700;
 const MAX_SLOTS=6, PACK_SLOTS=12;   // sem mochila: 6 itens diferentes; com mochila: 12
 function invCap(){return P&&P.pack?PACK_SLOTS:MAX_SLOTS;}
 
