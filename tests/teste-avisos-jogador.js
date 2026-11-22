@@ -22,6 +22,13 @@ const fs = require('fs');
     CanvasRenderingContext2D.prototype.fillText = function (t) { if (/Pistola|munição/.test(t)) desenhou++; return FT.apply(this, arguments); };
     for (let i = 0; i < 6; i++) { update(1 / 60); render(); }
     o.desenhou = desenhou;
+    // neon: contorno escuro + brilho (shadowBlur) na cor do aviso + miolo claro, e o brilho e desligado no fim (nao vaza para o resto do quadro)
+    { const ST = CanvasRenderingContext2D.prototype.strokeText; let strokes = 0, blurMax = 0; const cores = new Set(), miolo = [];
+      CanvasRenderingContext2D.prototype.strokeText = function (t) { if (/Pistola|munição/.test(t)) strokes++; return ST.apply(this, arguments); };
+      CanvasRenderingContext2D.prototype.fillText = function (t) { if (/Pistola|munição/.test(t)) { blurMax = Math.max(blurMax, this.shadowBlur); if (this.shadowBlur) cores.add(this.shadowColor); else miolo.push(this.fillStyle); } return FT.apply(this, arguments); };
+      floaters.length = 0; say('Pegou: Pistola (+12 munição)'); render();
+      CanvasRenderingContext2D.prototype.strokeText = ST; CanvasRenderingContext2D.prototype.fillText = FT;
+      o.neon = { strokes, blurMax, brilhos: cores.size, miolo: miolo.length, sobra: ctx.shadowBlur }; }
     // some sozinho
     for (let i = 0; i < 200; i++) update(1 / 60); o.sumiu = !floaters.some(f => f.say); say('Comeu'); say('Pegou: Sementes de milho', 1); o.junto = floaters.find(f => f.say).lines.map(l => l.t).join('|');
     // 2) aviso do jogo continua no toast
@@ -58,6 +65,8 @@ const fs = require('fs');
   ok(T_(r.fru) === 'Maçã*|+3|1 no chão (inventário cheio)' && T_(r.cac) === 'Carne crua*|Caçou' && T_(r.pla) === 'Milho*|Plantou', 'colheita, caca e plantio: item em negrito colorido');
   ok(r.junto === 'Comeu|Sementes de milho|+1', 'semente ganha ao comer entra junto com o aviso de comer (' + r.junto + ')');
   ok(r.foraDoPredio > 10, 'dentro de casa o aviso aparece inteiro, tambem na parte preta fora do predio (' + r.foraDoPredio + ' pixels fora do predio)');
+  ok(r.neon.strokes >= 2 && r.neon.blurMax >= 6 && r.neon.brilhos >= 1 && r.neon.miolo >= 2, 'avisos do jogador em neon: contorno escuro, brilho colorido e miolo claro (' + JSON.stringify(r.neon) + ')');
+  ok(r.neon.sobra === 0, 'o brilho do neon nao vaza para o resto do desenho');
   ok(r.fontePx <= 7, 'fonte dos avisos do jogador menor (' + r.fontePx + ' px)');
   ok(r.sumiu, 'o texto some sozinho');
   ok(/Chuva/.test(r.toastTexto), 'aviso do jogo (clima) continua no topo');
