@@ -20,7 +20,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 10-jogo-saves | 117 | 83 | 34 | 0 | 14 | 15 |
 | 11-pesca-update | 48 | 14 | 34 | 0 | 14 | 18 |
 | 12-crafting-multiplayer | 69 | 25 | 44 | 0 | 14 | 21 |
-| 13-render-personagens | 105 | 51 | 54 | 0 | 13 | 19 |
+| 13-render-personagens | 110 | 52 | 58 | 0 | 13 | 19 |
 | 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 15 | 0 |
 | 15-missoes-ui-controles | 88 | 20 | 68 | 0 | 10 | 13 |
 | 16-orientacao | 0 | 0 | 0 | 0 | 3 | 0 |
@@ -60,7 +60,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 11-pesca-update | 273 | 41 | 67 | 911 | 63 | 2 | 3 | 5 | 20 | 66 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 58 | 36 | 29 | 741 | 12 | 1 | 6 | 5 | 11 | 46 | 42 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |  |  |  |
 | 13-render-personagens | 326 | 39 | 22 | 251 | 13 | 22 | 2 | 2 |  | 4 | 9 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 663 | 13 | 16 | 325 | 17 |  | 10 | 8 | 23 | 8 | 6 | 1 | 155 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  | 2 |
+| 14-arquitetura-luz-ambiente | 663 | 13 | 16 | 325 | 17 |  | 10 | 8 | 23 | 8 | 6 | 1 | 162 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  | 2 |
 | 15-missoes-ui-controles | 178 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 10 | 21 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |
 | 16-orientacao | 2 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
@@ -78,7 +78,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 29-sala-multiplayer | 15 | 5 |  | 37 |  |  |  |  |  |  |  | 10 |  |  | 6 |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |
 | 30-desempenho | 4 |  | 14 | 3 |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |
 | 31-rastro-sangue | 4 |  |  | 16 | 3 |  |  |  |  |  |  |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |
-| 32-passageiro | 8 | 4 |  | 40 |  |  | 1 | 1 |  | 4 | 6 | 7 | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |
+| 32-passageiro | 8 | 4 |  | 40 |  |  | 1 | 1 |  | 4 | 6 | 7 | 12 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |
 | 33-dano-visual | 1 |  |  | 5 |  |  |  |  |  |  |  | 1 | 16 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |
 | 34-caminhos-naturais |  |  | 4 | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |
 
@@ -165,7 +165,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **10-jogo-saves** (34): SAVE_KEY, SAVE_PREFIX, SAVE_VER, slotKey, autoSlot, packObj, canSave, saveWorldOk, saveDayScale, iceLoad, doorsLoad, normalizeLoadout, GUEST_SKIP, guestKey, guestForget, FRUIT_FOOD, eatLock, SEED_OF, seedGain, giveSeedFor, applyUse, consumeOne, putAwayHold, closeTool, chooseWeapon, ...
 - **11-pesca-update** (34): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, BURN_R, BURN_T, BURN_DPS, burnTick, updateP, updateZ, CHAINSAW_LEN, CHAINSAW_R, chainsawHit, CAM_FAR, camSpeedZoom, ...
 - **12-crafting-multiplayer** (44): canCraft, craft, STRUCT_EVT, LOCAL_GRACE, handleEvt, loadPeerJS, makeRoomCode, hostRetryTimer, hostOpenPeer, hostSignalRetry, RECONN_MAX_MS, showReconnectUI, updateReconnectUI, hideReconnectUI, mpReconnectFail, mpGuestReconnectAttempt, hostResumeGuest, guestResumed, hostBuildWorld, MAP_NOME, hostSync, hostBroadcastLobby, hostFreeId, hostUniqueName, hostRefuse, ...
-- **13-render-personagens** (54): skinLook, snowOutfit, _shc, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, RSP, rockKind, rockSprite, TSP, treeSprite, treeShadow, treeShadow0, TREE_ALTS, treeAlt, SNOWTOP, drawDecoration0, ...
+- **13-render-personagens** (58): skinLook, snowOutfit, _shc, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, drawHeld, armLine, TWO_HAND, humanDraw, RSP, rockKind, rockSprite, TSP, treeSprite, treeShadow, treeShadow0, TREE_ALTS, treeAlt, SNOWTOP, drawDecoration0, ...
 - **15-missoes-ui-controles** (68): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACH_MAPS, ACHD, achSave, achChime, achCheck, achSet, achMeta, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, achRow, renderAch, bindSlider, bindToggle, bindSliderResize, ...
 - **29-sala-multiplayer** (2): LOB_COL, lobbyLeave
 - **30-desempenho** (8): GC_SZ, GC_M, GC_MAX, GC, layerBlock, layerDraw, layerWarm, groundPaint

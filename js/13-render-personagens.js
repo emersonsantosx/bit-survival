@@ -1271,32 +1271,56 @@ function drawCityRoads(vx0,vy0,vx1,vy1,pen){
     for(let k=3;k<q.h-3;k+=6){ pen(q.x-11,q.y+k,8,3,'#cfcfcf'); pen(q.x+q.w+3,q.y+k,8,3,'#cfcfcf'); }
   }
 }
+/* LUZ NOS VEICULOS: o sol fica a noroeste (como nas arvores e pedras), o veiculo gira e a luz nao.
+   Os realces foram desenhados no lado -Y do veiculo e giravam junto (com o carro virado para oeste o brilho do teto caia no lado sul).
+   VLY diz de que lado do veiculo a luz chega (+1 = lado -Y, -1 = lado +Y) e RL espelha o realce para esse lado.
+   vehRim acende a borda do corpo virada para noroeste e escurece a virada para sudeste, na proporcao em que cada borda encara a luz. */
+let VLY=1;
+function vehLightEdges(face){   // luz recebida por cada borda do corpo, de -1 (sombra) a 1 (luz): [-Y, +Y, +X (frente), -X (traseira)]
+  const c=Math.cos(face||0),s=Math.sin(face||0),k=Math.SQRT1_2;
+  const ny=k*(c-s),nx=-k*(c+s);   // luz vem de (-k,-k): produto com a normal da borda -Y (s,-c) e da borda +X (c,s)
+  return [ny,-ny,nx,-nx];
+}
+function vehBodyBox(K,L,W){   // b: corpo; n: bico da frente (quando e mais estreito que o corpo)
+  if(K==='sled')return{b:[-L/2+4,-W/2+2,L-8,W-4],n:[L/2-13,-W/2+3,11,W-6]};
+  if(K==='atv')return{b:[-L/2+4,-W/2+3,L-8,W-6],n:[L/2-11,-W/2+4,10,W-8]};
+  if(K==='buggy')return{b:[-L/2+3,-W/2+3,L-6,W-6],n:[L/2-13,-W/2+4,12,W-8]};
+  return{b:[-L/2,-W/2,L,W],n:null};
+}
+function vehRim(K,L,W,face){
+  const e=vehLightEdges(face),bx=vehBodyBox(K,L,W),b=bx.b,n=bx.n||b;
+  VLY=e[0]>=0?1:-1;
+  const rim=(a,x,y,w,h)=>{if(a>.2)R(x,y,w,h,'rgba(255,255,255,'+(.34*a).toFixed(2)+')');else if(a<-.2)R(x,y,w,h,'rgba(0,0,0,'+(.3*-a).toFixed(2)+')');};
+  rim(e[0],b[0],b[1],b[2],1);rim(e[1],b[0],b[1]+b[3]-1,b[2],1);      // laterais
+  rim(e[2],n[0]+n[2]-1,n[1],1,n[3]);rim(e[3],b[0],b[1],1,b[3]);      // frente e traseira
+}
+const RL=(x,y,w,h,c)=>R(x,VLY>0?y:-y-h,w,h,c);   // R com o realce espelhado para o lado da luz
 function drawOpenVeh(K,v,L,W){
   const c=v.col;
   if(K==='sled'){
     R(-L/2,-W/2+3,13,W-6,'#1c1c20');for(let x=-L/2+1;x<-L/2+13;x+=3)R(x,-W/2+3,1,W-6,'#3a3a40'); // esteira
     R(L/2-12,-W/2-1,13,3,'#dfe8ee');R(L/2-12,W/2-2,13,3,'#dfe8ee');R(L/2+1,-W/2-2,2,2,'#dfe8ee');R(L/2+1,W/2,2,2,'#dfe8ee'); // esquis
-    R(-L/2+4,-W/2+2,L-8,W-4,c);R(L/2-13,-W/2+3,11,W-6,c);
-    R(L/2-12,-W/2+4,9,2,'rgba(255,255,255,.28)');R(-L/2+5,-W/2+3,L-12,1,'rgba(255,255,255,.2)');
-    R(-L/2+6,-3,8,6,'#25252a');R(-L/2+7,-2,6,1,'#3a3a42');                     // banco
+    R(-L/2+4,-W/2+2,L-8,W-4,c);R(L/2-13,-W/2+3,11,W-6,c);vehRim('sled',L,W,v.face);
+    RL(L/2-12,-W/2+4,9,2,'rgba(255,255,255,.28)');RL(-L/2+5,-W/2+3,L-12,1,'rgba(255,255,255,.2)');
+    R(-L/2+6,-3,8,6,'#25252a');RL(-L/2+7,-2,6,1,'#3a3a42');                    // banco
     R(L/2-15,-W/2+1,2,W-2,'#2a2a2e');R(L/2-16,-W/2,2,2,'#2a2a2e');R(L/2-16,W/2-2,2,2,'#2a2a2e'); // guidão
     R(L/2-12,-3,2,6,'rgba(170,215,240,.75)');                                 // para-brisa
     R(L/2-1,-3,2,6,'#f0e8a0');R(L/2-1,-1,1,2,'#fff8d0');R(-L/2,-3,1,6,'#c02828');
   }else if(K==='atv'){
     const wl=(x,y)=>{R(x,y,7,5,'#111');R(x+1,y+1,5,3,'#2e2e32');R(x+2,y,1,5,'#1a1a1a');R(x+4,y,1,5,'#1a1a1a');};
     wl(-L/2+1,-W/2-2);wl(L/2-9,-W/2-2);wl(-L/2+1,W/2-3);wl(L/2-9,W/2-3);        // pneus de trilha
-    R(-L/2+4,-W/2+3,L-8,W-6,c);R(L/2-11,-W/2+4,10,W-8,c);
-    R(L/2-10,-W/2+5,8,1,'rgba(255,255,255,.3)');
-    R(-L/2+5,-3,9,6,'#2a2218');R(-L/2+6,-2,7,1,'#4a3a28');                       // banco
+    R(-L/2+4,-W/2+3,L-8,W-6,c);R(L/2-11,-W/2+4,10,W-8,c);vehRim('atv',L,W,v.face);
+    RL(L/2-10,-W/2+5,8,1,'rgba(255,255,255,.3)');
+    R(-L/2+5,-3,9,6,'#2a2218');RL(-L/2+6,-2,7,1,'#4a3a28');                      // banco
     R(-L/2+1,-W/2+4,5,W-8,'#3a3a3e');R(-L/2+2,-W/2+5,3,W-10,'#5a5a60');           // bagageiro traseiro
     R(L/2-12,-W/2+1,2,W-2,'#222');R(L/2-13,-W/2,2,2,'#222');R(L/2-13,W/2-2,2,2,'#222'); // guidão
     R(L/2-1,-3,2,6,'#f0e8a0');R(-L/2,-4,1,3,'#c02828');R(-L/2,1,1,3,'#c02828');
   }else{
     const wl=(x,y)=>{R(x,y,8,6,'#111');R(x+2,y+1,4,4,'#3a3a3e');R(x+3,y+2,2,2,'#6a6a70');};
     wl(-L/2+1,-W/2-3);wl(L/2-10,-W/2-3);wl(-L/2+1,W/2-3);wl(L/2-10,W/2-3);       // rodas grandes
-    R(-L/2+3,-W/2+3,L-6,W-6,c);R(L/2-13,-W/2+4,12,W-8,c);
-    R(L/2-12,-1,11,2,'rgba(255,255,255,.55)');R(-L/2+4,-W/2+3,L-8,1,'rgba(255,255,255,.2)');
-    R(-L/2+2,-5,9,10,'#4a4a4e');R(-L/2+3,-4,7,2,'#6a6a70');R(-L/2-1,-W/2+6,3,2,'#2a2a2a'); // motor e escapamento
+    R(-L/2+3,-W/2+3,L-6,W-6,c);R(L/2-13,-W/2+4,12,W-8,c);vehRim('buggy',L,W,v.face);
+    R(L/2-12,-1,11,2,'rgba(255,255,255,.55)');
+    R(-L/2+2,-5,9,10,'#4a4a4e');RL(-L/2+3,-4,7,2,'#6a6a70');R(-L/2-1,-W/2+6,3,2,'#2a2a2a'); // motor e escapamento
     R(-3,-W/2+4,6,5,'#3a2a1a');R(-3,W/2-9,6,5,'#3a2a1a');                      // bancos
     R(-6,-W/2+2,1,W-4,'#26262a');R(6,-W/2+2,1,W-4,'#26262a');R(-6,-W/2+2,13,1,'#26262a');R(-6,W/2-3,13,1,'#26262a'); // gaiola de proteção
     R(9,-W/2+4,2,W-8,'rgba(170,215,240,.6)');
@@ -1321,7 +1345,7 @@ function drawRider(K,lk,L,W,pass){   // pass: passageiro (js/32): atrás do moto
   if(lk.pack)R(cx-4,cy-3,2,6,'#3a3a2a');
   armLine(cx,cy-3,hbx,cy-hy,sh,lk.glove||lk.skin,lk.slv);armLine(cx,cy+3,hbx,cy+hy,sh,lk.glove||lk.skin,lk.slv);
   R(hbx-1,cy-hy-1,2,2,lk.glove||lk.skin);R(hbx-1,cy+hy-1,2,2,lk.glove||lk.skin);
-  R(cx-2,cy-4,5,8,sh);R(cx-2,cy-4,5,1,Sh(sh,.15));R(cx-2,cy+3,5,1,Sh(sh,-.2));      // tronco e ombros
+  R(cx-2,cy-4,5,8,sh);R(cx-2,VLY>0?cy-4:cy+3,5,1,Sh(sh,.15));R(cx-2,VLY>0?cy+3:cy-4,5,1,Sh(sh,-.2));      // tronco e ombros (ombro de luz do lado do sol)
   R(cx-1,cy-3,3,6,lk.hair);R(cx+2,cy-3,2,6,lk.skin);                                 // cabeça: cabelo atrás, rosto na frente
   if(lk.female)R(cx-3,cy-2,2,4,lk.hair);
 }
@@ -1336,9 +1360,9 @@ function drawVehicle(v){
   const VK=vehKind(v);
   if(VK!=='car'){drawOpenVeh(VK,v,L,W);}else{
   // --- Corpo principal ---
-  R(-L/2,-W/2,L,W,v.col);
-  // Brilho no teto
-  R(-L/2+3,-W/2+1,L-6,2,'rgba(255,255,255,.12)');
+  R(-L/2,-W/2,L,W,v.col);vehRim('car',L,W,v.face);
+  // Brilho no teto (do lado da luz, que nao gira com o carro)
+  RL(-L/2+3,-W/2+1,L-6,2,'rgba(255,255,255,.12)');
 
   // --- Capô / frente (mais estreito visualmente) ---
   R(L/2-9,-W/2+2,8,W-4,v.col);
@@ -1356,7 +1380,7 @@ function drawVehicle(v){
 
   // --- Para-brisa (vidro mais perto da frente) ---
   R(2,-W/2+3,8,W-6,'#6a90a8');
-  R(3,-W/2+4,6,2,'rgba(255,255,255,.25)');
+  RL(3,-W/2+4,6,2,'rgba(255,255,255,.25)');
   // Divisor do para-brisa
   R(5,-W/2+3,1,W-6,'rgba(0,0,0,.2)');
 
@@ -1364,7 +1388,7 @@ function drawVehicle(v){
   R(-6,-W/2+2,10,W-4,'rgba(0,0,0,.1)');
   // Janela lateral (vidro mais escuro)
   R(-4,-W/2+3,6,W-6,'#4a7088');
-  R(-3,-W/2+4,4,2,'rgba(255,255,255,.15)');
+  RL(-3,-W/2+4,4,2,'rgba(255,255,255,.15)');
 
   // --- Traseira / porta-malas ---
   R(-L/2,-W/2+2,7,W-4,'rgba(0,0,0,.15)');

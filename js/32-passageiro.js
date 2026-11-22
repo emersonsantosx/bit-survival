@@ -95,7 +95,7 @@ window.vehPassLook=function(v){
 /* carro fechado (cidade): cabeça e ombros de cada ocupante aparecem pelo vidro; motorista à esquerda, passageiro à direita */
 function carSeat(sx,sy,lk){
   const sh=(lk.os==='tank'||lk.os==='bare')?lk.skin:lk.shirt;
-  R(sx-4,sy-3,3,6,sh);R(sx-4,sy-3,3,1,Sh(sh,.15));      // ombros
+  R(sx-4,sy-3,3,6,sh);R(sx-4,VLY>0?sy-3:sy+2,3,1,Sh(sh,.15));      // ombros (o realce fica do lado do sol: VLY, js/13)
   R(sx-2,sy-2,3,4,lk.hair);R(sx+1,sy-2,2,4,lk.skin);      // cabeça: cabelo atrás, rosto na frente
   if(lk.female)R(sx-3,sy-2,1,4,lk.hair);
 }
