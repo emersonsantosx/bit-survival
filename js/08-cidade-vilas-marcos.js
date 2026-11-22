@@ -275,6 +275,8 @@ function genTown(cx,cy,mil){
     y=roadY+RD+BACK;
   }
   roads.push({x:ox-47,y:Math.round(hubs[0]-RD/2),w:RD,h:Math.round(hubs[hubs.length-1]-hubs[0]+RD),vert:true});
+  for(const hy of hubs) roadLineAdd([[ox-30,hy],[ox+W+44-RD/2,hy]],RD,.35);   // linha central de cada rua (arquivo 34); a ponta redonda fecha onde o retangulo acaba
+  roadLineAdd([[ox-30,hubs[0]],[ox-30,hubs[hubs.length-1]]],RD,.35);
   return {x:cx,y:cy,mil:mil,hubx:ox-30,huby:Math.round(hubs[0])};
 }
 function genRural(){
@@ -302,24 +304,24 @@ function genRural(){
   const H=(x1,x2,y)=>({x:Math.round(Math.min(x1,x2)-HW/2),y:Math.round(y-HW/2),w:Math.round(Math.abs(x2-x1)+HW),h:HW,vert:false});
   const V=(x,y1,y2)=>({x:Math.round(x-HW/2),y:Math.round(Math.min(y1,y2)-HW/2),w:HW,h:Math.round(Math.abs(y2-y1)+HW),vert:true});
   const routes=(A,B)=>{
-    const out=[
-      [H(A.hubx,B.hubx,A.huby),V(B.hubx,A.huby,B.huby)],
-      [V(A.hubx,A.huby,B.huby),H(A.hubx,B.hubx,B.huby)]
+    const out=[   // cada trajeto leva a sua linha central (pts), usada so no desenho (arquivo 34)
+      Object.assign([H(A.hubx,B.hubx,A.huby),V(B.hubx,A.huby,B.huby)],{pts:[[A.hubx,A.huby],[B.hubx,A.huby],[B.hubx,B.huby]]}),
+      Object.assign([V(A.hubx,A.huby,B.huby),H(A.hubx,B.hubx,B.huby)],{pts:[[A.hubx,A.huby],[A.hubx,B.huby],[B.hubx,B.huby]]})
     ];
     for(const f of [.5,.3,.7,.15,.85]){      // H-V-H
       const mx=A.hubx+(B.hubx-A.hubx)*f;
-      out.push([H(A.hubx,mx,A.huby),V(mx,A.huby,B.huby),H(mx,B.hubx,B.huby)]);
+      out.push(Object.assign([H(A.hubx,mx,A.huby),V(mx,A.huby,B.huby),H(mx,B.hubx,B.huby)],{pts:[[A.hubx,A.huby],[mx,A.huby],[mx,B.huby],[B.hubx,B.huby]]}));
     }
     const mid=(A.huby+B.huby)/2, lo=Math.min(A.huby,B.huby), hi=Math.max(A.huby,B.huby);
     for(const my of [mid,mid-120,mid+120,mid-250,mid+250,lo-130,hi+130]){   // V-H-V
       if(my<80||my>WH-80) continue;
-      out.push([V(A.hubx,A.huby,my),H(A.hubx,B.hubx,my),V(B.hubx,my,B.huby)]);
+      out.push(Object.assign([V(A.hubx,A.huby,my),H(A.hubx,B.hubx,my),V(B.hubx,my,B.huby)],{pts:[[A.hubx,A.huby],[A.hubx,my],[B.hubx,my],[B.hubx,B.huby]]}));
     }
     return out;
   };
   const tryLink=(A,B)=>{
     const ok=routes(A,B).find(o=>!o.some(hit));
-    if(ok){ for(const r of ok) roads.push(r); return true; }
+    if(ok){ for(const r of ok) roads.push(r); roadLineAdd(ok.pts,HW,1); return true; }
     return false;
   };
   // 1) cada vila liga à mais próxima já ligada; se não houver trajeto livre, tenta as outras por distância

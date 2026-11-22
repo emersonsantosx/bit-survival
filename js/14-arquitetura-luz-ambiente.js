@@ -1234,6 +1234,7 @@ function groundTileDraw(q,tx,ty){
     else if(v<48){ q(px+2,py+2,12,1,'#4a4a50'); q(px+2,py+8,12,1,'#4a4a50'); }
     else if(v<52) q(px+5,py+5,6,6,'#3a3a40');
   }
+  if(selectedMap!=='city'&&window.roadTileDraw)roadTileDraw(q,tx,ty);   // caminhos naturais por cima do chao (arquivo 34)
 }
 window.groundTileDraw=groundTileDraw;   // o arquivo 30 monta os blocos de chao com esta mesma conta
 function render(){
@@ -1369,7 +1370,7 @@ function render(){
     if(l.cx+lr>vx0&&l.cx-lr<vx1&&l.cy+lr>vy0&&l.cy-lr<vy1) drawLake(l);
   }
   if(selectedMap==='city'){ cityRoadsChunksDraw(vx0,vy0,vx1,vy1); drawOrla(vx0,vy0,vx1,vy1); }
-  else for(const r of roads){
+  else if(!RM.a) for(const r of roads){   // sem mascara (nao deveria acontecer): retangulos lisos como antes
     if(r.x>vx1||r.x+r.w<vx0||r.y>vy1||r.y+r.h<vy0)continue;
     const roadCol=selectedMap==='snow'?'#98a4b0':selectedMap==='desert'?'#8c7c5c':selectedMap==='city'?'#3a3a40':'#7a6a4a';
     R(r.x,r.y,r.w,r.h,roadCol);
