@@ -862,7 +862,12 @@ function drawTree(t){
   treeShadow(x,y,s);
   const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
   const behind=P&&!P.inside&&P.y<y-3&&P.y>y-s.top&&Math.abs(P.x-x)<s.half;   // jogador atrás da copa
-  if(behind)ctx.globalAlpha=.5;
+  /* a copa fica translucida (50%) quando o jogador esta atras dela; a troca e suave (cerca de 0,15 s) em vez de saltar de 100% para 50% num quadro,
+     o que parecia um clarao ao andar perto de arvore escura sobre areia clara (arvore seca do deserto) */
+  const nw=performance.now(),tg=behind?.5:1,gap=t._fn===undefined?1e9:nw-t._fn;
+  if(t._fa===undefined||gap>300)t._fa=tg;else{const df=tg-t._fa,st=gap*.0033;t._fa=Math.abs(df)<=st?tg:t._fa+Math.sign(df)*st;}
+  t._fn=nw;
+  if(t._fa<.999)ctx.globalAlpha=t._fa;
   ctx.drawImage(s.cv,x-s.ox+(t._hit!==undefined?hitWobble(t,1.5):0),y-s.oy);
   ctx.globalAlpha=1;ctx.imageSmoothingEnabled=sm;
   if(t.hp<4){const st=dmgStage(t.hp,4);if(st)treeDmgFx(t,st);}   // cortes no tronco conforme o dano das armas
