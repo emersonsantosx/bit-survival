@@ -32,9 +32,43 @@ function addIceHole(l,x,y,remote){
   for(let i=0;i<16;i++)parts.push({x:x+rnd(-10,10),y:y+rnd(-6,6),vx:rnd(-50,50),vy:rnd(-70,-20),t:.7,c:i%3?'#e8f6ff':'#5aa8d8'});
   if(!remote&&MP.active)sendEvt('iceBreak',{l:lakes.indexOf(l),x:Math.round(x),y:Math.round(y)});
 }
+/* Peso dos veiculos no gelo (cada mapa tem o seu: moto de neve na Neve): todos pesam mais que uma pessoa a pe, carro e buggy mais que quadriciclo e moto de neve. Parado em cima do gelo o veiculo acumula tensao
+   mais rapido que o jogador a pe (a tensao e a mesma por celula de 26 px: pessoa e veiculo na mesma celula somam); andando devagar pesa quase igual,
+   em velocidade o peso "passa" mais depressa por cada celula. Ao quebrar abre dois buracos (frente e traseira) para o corpo todo ficar na agua, e o
+   veiculo perde a velocidade. Conta o veiculo que eu dirijo (ou sou passageiro) e, parado sem ninguem, so quem e dono do mundo (anfitriao ou jogo solo),
+   para os buracos nao nascerem duplicados no multiplayer. */
+const ICE_VW={car:3.4,buggy:2.8,atv:2.3,sled:2.4};
+function iceVehicles(dt){
+  for(const v of vehicles){
+    if(v.destroyed||v.dying)continue;
+    const mine=P&&P.inVehicle===v;
+    if(!mine&&(MP.active&&!MP.isHost))continue;
+    if(!mine&&(v.driverId||v.passId))continue;   // ocupado por outro jogador: quem dirige conta
+    for(const l of lakes){
+      if(!l.frozen||l.fountain||!iceSolid(l,v.x,v.y))continue;
+      const q=iceOf(l),dn=Math.min(1,Math.hypot((v.x-q.x)/q.rx,(v.y-q.y)/q.ry));
+      const rate=(1+dn*.9)*(ICE_VW[vehKind(v)]||2)*(Math.abs(v.spd||0)>60?.6:1);
+      if(!l._st)l._st=new Map();
+      const cx=Math.floor(v.x/26),cy=Math.floor(v.y/26),k=cx*100003+cy;
+      let o=l._st.get(k);if(!o){o={s:0,x:cx*26+13,y:cy*26+13,a:0};l._st.set(k,o);}
+      o.s+=dt*rate+dt*.12;
+      const near=P&&Math.hypot(P.x-v.x,P.y-v.y)<260;
+      if(o.s>4&&o.a<1){o.a=1;if(near)beep(1500,.05,'square',.035,-900);if(near)beep(700,.12,'sawtooth',.02,-300);}
+      if(o.s>7&&o.a<2){o.a=2;if(near){shake=Math.max(shake,2);beep(900,.05,'square',.06,-700);beep(380,.2,'sawtooth',.05,-250);}if(mine)toast('O gelo está rachando! Saia daí');}
+      if(o.s>=11){
+        const c=Math.cos(v.face||0),sn=Math.sin(v.face||0),h=Math.max(8,(v.w||36)*.28);
+        v.spd=0;if(near)shake=Math.max(shake,6);
+        addIceHole(l,v.x+c*h,v.y+sn*h,false);addIceHole(l,v.x-c*h,v.y-sn*h,false);
+        if(mine)toast('O gelo quebrou sob o veículo!');
+      }
+      break;
+    }
+  }
+}
 function iceTick(dt){
   if(selectedMap!=='snow'||!P)return;
   for(const l of lakes){const st=l._st;if(!st||!st.size)continue;for(const [k,o] of st){o.s-=dt*.12;if(o.s<=0)st.delete(k);}}
+  iceVehicles(dt);
   if(P.dead||P.inVehicle)return;
   for(const l of lakes){
     if(!l.frozen||l.fountain||!iceSolid(l,P.x,P.y))continue;

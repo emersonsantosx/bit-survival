@@ -12,7 +12,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 02-audio | 68 | 32 | 35 | 1 | 5 | 22 |
 | 03-dados | 51 | 40 | 11 | 0 | 2 | 23 |
 | 04-estado | 89 | 83 | 6 | 0 | 6 | 29 |
-| 05-geometria | 57 | 43 | 14 | 0 | 11 | 19 |
+| 05-geometria | 59 | 43 | 16 | 0 | 11 | 19 |
 | 06-interiores-portas | 40 | 18 | 22 | 0 | 8 | 6 |
 | 07-loot-mapa | 63 | 31 | 32 | 0 | 13 | 10 |
 | 08-cidade-vilas-marcos | 48 | 23 | 24 | 1 | 12 | 17 |
@@ -51,7 +51,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 02-audio | 25 | . |  | 40 | 4 |  |  | 2 | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 03-dados | 1 |  | . | 22 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 04-estado | 25 | 1 | 3 | . |  |  |  |  |  | 3 |  | 2 |  |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 05-geometria | 118 | 7 | 27 | 147 | . | 6 |  | 5 | 9 |  | 2 | 1 | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 2 |
+| 05-geometria | 118 | 11 | 27 | 160 | . | 6 |  | 6 | 9 |  | 4 | 1 | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 2 |
 | 06-interiores-portas | 42 | 11 | 7 | 36 | 1 | . |  |  |  |  |  | 1 | 30 |  |  |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |  |
 | 07-loot-mapa | 135 | 3 | 30 | 128 | 3 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 08-cidade-vilas-marcos | 135 | 3 | 17 | 136 | 21 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 3 |
@@ -88,27 +88,27 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 24 | 2048 |
-| MP | let | 04-estado:19 | 24 | 707 |
+| P | let | 04-estado:14 | 24 | 2053 |
+| MP | let | 04-estado:19 | 24 | 709 |
 | selectedMap | let | 04-estado:3 | 23 | 230 |
-| beep | funcao | 02-audio:42 | 20 | 139 |
+| beep | funcao | 02-audio:42 | 20 | 143 |
 | ctx | const | 01-base:27 | 19 | 1112 |
 | WW | let | 03-dados:2 | 19 | 105 |
 | WH | let | 03-dados:2 | 19 | 94 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 19 | 64 |
 | rnd | const | 01-base:16 | 18 | 433 |
 | T | let | 04-estado:14 | 18 | 129 |
-| toast | funcao | 11-pesca-update:1367 | 18 | 120 |
+| toast | funcao | 11-pesca-update:1367 | 18 | 122 |
 | clamp | const | 01-base:4 | 17 | 101 |
 | parts | let | 04-estado:10 | 17 | 76 |
 | R | funcao | 13-render-personagens:2 | 16 | 1208 |
 | items | let | 04-estado:10 | 15 | 64 |
 | blds | let | 04-estado:10 | 15 | 60 |
-| solidPoint | funcao | 05-geometria:327 | 15 | 35 |
-| pointInLake | funcao | 05-geometria:113 | 14 | 48 |
+| solidPoint | funcao | 05-geometria:361 | 15 | 35 |
+| pointInLake | funcao | 05-geometria:147 | 14 | 48 |
 | weather | let | 04-estado:6 | 13 | 92 |
 | trees | let | 04-estado:10 | 12 | 54 |
-| bldAt | funcao | 05-geometria:598 | 12 | 31 |
+| bldAt | funcao | 05-geometria:632 | 12 | 31 |
 | state | let | 04-estado:2 | 11 | 106 |
 | remotePlayers | let | 04-estado:11 | 11 | 102 |
 | ITEMS | const | 03-dados:167 | 11 | 70 |
@@ -120,9 +120,9 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |
 | rint | const | 01-base:17 | 9 | 70 |
 | animals | let | 04-estado:10 | 9 | 38 |
-| ORLA | let | 05-geometria:125 | 9 | 38 |
-| rebuildSolidGrid | funcao | 05-geometria:374 | 9 | 35 |
-| lakes | let | 04-estado:10 | 9 | 31 |
+| ORLA | let | 05-geometria:159 | 9 | 38 |
+| rebuildSolidGrid | funcao | 05-geometria:408 | 9 | 35 |
+| lakes | let | 04-estado:10 | 9 | 32 |
 | addItem | funcao | 04-estado:271 | 9 | 20 |
 | $ | const | 01-base:2 | 8 | 183 |
 | H | let | 01-base:48 | 8 | 103 |
@@ -130,21 +130,21 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | rocks | let | 04-estado:10 | 8 | 49 |
 | atkHeld | let | 04-estado:16 | 8 | 18 |
 | sprintHeld | let | 04-estado:16 | 8 | 16 |
-| vehKind | funcao | 08-cidade-vilas-marcos:355 | 8 | 15 |
+| vehKind | funcao | 08-cidade-vilas-marcos:355 | 8 | 16 |
 | track | funcao | 15-missoes-ui-controles:60 | 8 | 13 |
 | Z | let | 01-base:48 | 7 | 118 |
 | CFG | const | 01-base:126 | 7 | 78 |
 | aud | funcao | 02-audio:11 | 7 | 58 |
 | joy | const | 04-estado:203 | 7 | 58 |
-| vehicles | let | 04-estado:10 | 7 | 51 |
+| vehicles | let | 04-estado:10 | 7 | 52 |
 | decorations | let | 04-estado:10 | 7 | 39 |
-| shake | let | 04-estado:14 | 7 | 35 |
+| shake | let | 04-estado:14 | 7 | 39 |
 | KBM | let | 01-base:44 | 7 | 32 |
 | DAY_SECONDS | const | 03-dados:8 | 7 | 30 |
 | day | let | 04-estado:14 | 7 | 26 |
 | countInv | funcao | 04-estado:282 | 7 | 24 |
 | pick | const | 01-base:18 | 7 | 22 |
-| pushOut | funcao | 05-geometria:405 | 7 | 14 |
+| pushOut | funcao | 05-geometria:439 | 7 | 14 |
 | removeInv | funcao | 04-estado:287 | 7 | 11 |
 | plane | let | 04-estado:13 | 6 | 62 |
 | touchGas | let | 04-estado:18 | 6 | 19 |
@@ -157,7 +157,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **02-audio** (35): muted, gAtk, ambientSrc, ambientGain, rainNoise, ACT, sndBusy, _sndT, sndThrottle, stepNoise, VOICE_BOOST, voice, ZVB, creatureGain, AVB, musicWanted, musicOn, musicGain, musicTimer, musicNext, musicStepN, musicVerb, MUSIC_BASE, MUSIC_STEP, MUSIC_CACHE, ...
 - **03-dados** (11): pxLines, pxRot, PXURL, PXCV, hydratePx, FISH_TPL, fishGrid, FISH_POOL, WX_BASE, SEED_POOL, ZUNLOCK
 - **04-estado** (6): MP_HOST_ALL, chatLog, chatUnread, chatTime, chatAddHistory, chatShowEmpty
-- **05-geometria** (14): iceOf, orlaHit, _PAVE, _SANDP, orlaPatterns, TERR, SPG_C, spgSync, WG_C, WG, wallGrid, SOLID_GRID, wallBlockerAt, obbHitsCircle
+- **05-geometria** (16): iceOf, ICE_VW, iceVehicles, orlaHit, _PAVE, _SANDP, orlaPatterns, TERR, SPG_C, spgSync, WG_C, WG, wallGrid, SOLID_GRID, wallBlockerAt, obbHitsCircle
 - **06-interiores-portas** (22): FURN, ROOMFURN, BLD_ROOMS, ROOM_FLOOR, rectsHit, intConnected, intUnreached, DOOR_BREAK, doorHearable, doorSound, SLEEPERS, KEEPF, rectGap, organizeFurn, intBlocked, bldSpawnPoint, roomSpawnPoint, FLOOT, furnLootTable, SEED_BONUS, bonusSpot, FLASH_BONUS
 - **07-loot-mapa** (32): LOOT_RESPAWN, PING_LIFE, pingAdd, pingBadge, pingCandidate, pingCol, ALLY_COLS, wpUpdate, WP_COL, wpDist, wpPick, bigTimer, bigPrevState, bigMapTap, drawPingsMini, RG_CELL, RG_FRAC, RG_TREE_S, RG_ROCK_S, RG_BT, RG_BR, RG_SET_T, RG_SET_R, rgKey, rgCount, ...
 - **08-cidade-vilas-marcos** (24): bldDims, bldDims0, bldSize, cityPickType, cityFillBlock, cityRubble, cityPark, cityHouseFence, bldSizeRural, ruralPickType, genTown, ruralCarFree, SLED_COLS, BUGGY_COLS, ATV_COLS, prints, tracks, LM_SIDE_D, LM_SIDE_S, chestLoot, lmCurse, TRACK_W, updateTracks, drawTracks
