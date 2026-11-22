@@ -1324,10 +1324,35 @@ function say(msg,add){   // add: junta as linhas ao aviso que acabou de subir (e
   if(old){const ls=old.lines.concat(lines).slice(-4);floaters.push({x:old.x,y:old.y,txt:ls.map(l=>l.t).join(' '),lines:ls,col:old.col,t:Math.min(2.4,Math.max(old.t,1.1+all.length*.04)),vy:-14,say:1});return;}
   floaters.push({x:P.x,y:P.y-24,txt:all,lines,col,t:Math.min(2.2,1.1+all.length*.04),vy:-14,say:1});
 }
-function fText(f){   // desenha um floater; os avisos do jogador (say) saem em bloco, a ultima linha na posicao do floater (negrito na cor do aviso; a linha de baixo, normal e mais clara)
+const _neon={};
+function neonCore(c){   // miolo do neon: a cor do aviso clareada na direcao do branco (o brilho em volta leva a cor cheia)
+  if(c in _neon)return _neon[c];
+  let R=255,G=241,B=192,m;
+  if((m=/^rgb\((\d+),(\d+),(\d+)\)$/.exec(c))){R=+m[1];G=+m[2];B=+m[3];}
+  else if(/^#[0-9a-f]{6}$/i.test(c)){R=parseInt(c.slice(1,3),16);G=parseInt(c.slice(3,5),16);B=parseInt(c.slice(5,7),16);}
+  return _neon[c]='rgb('+((R+(255-R)*.4)|0)+','+((G+(255-G)*.4)|0)+','+((B+(255-B)*.4)|0)+')';
+}
+const _neonG={};
+function neonGlow(c){   // cor do brilho: a do aviso com mais saturacao (cinza continua cinza claro)
+  if(c in _neonG)return _neonG[c];
+  let R=255,G=233,B=160,m;
+  if((m=/^rgb\((\d+),(\d+),(\d+)\)$/.exec(c))){R=+m[1];G=+m[2];B=+m[3];}
+  else if(/^#[0-9a-f]{6}$/i.test(c)){R=parseInt(c.slice(1,3),16);G=parseInt(c.slice(3,5),16);B=parseInt(c.slice(5,7),16);}
+  const mu=(R+G+B)/3,f=v=>Math.max(0,Math.min(255,(mu+(v-mu)*1.6)|0));
+  return _neonG[c]='rgb('+f(R)+','+f(G)+','+f(B)+')';
+}
+function fText(f){   // desenha um floater; os avisos do jogador (say) saem em bloco, a ultima linha na posicao do floater, em neon: contorno escuro (le em qualquer chao, ate na areia), brilho na cor do aviso e miolo claro. Negrito = nome; a linha de baixo, normal
   if(!f.lines){ctx.fillText(f.txt,f.x,f.y);return;}
   const n=f.lines.length,col=ctx.fillStyle;
-  for(let i=0;i<n;i++){const l=f.lines[i];ctx.font=(l.b?'bold ':'')+'7px "Courier New",monospace';ctx.fillStyle=l.b?(l.i&&itemColor(l.t)||col):'#fff1c0';ctx.fillText(l.t,f.x,f.y-(n-1-i)*8);}
+  ctx.lineJoin='round';
+  for(let i=0;i<n;i++){
+    const l=f.lines[i],y=f.y-(n-1-i)*8,base=l.b?(l.i&&itemColor(l.t)||col):'#ffe9a0',glow=neonGlow(base);
+    ctx.font=(l.b?'bold ':'')+'7px "Courier New",monospace';
+    ctx.lineWidth=2.6;ctx.strokeStyle='rgba(12,8,26,.92)';ctx.strokeText(l.t,f.x,y);
+    ctx.shadowColor=glow;ctx.shadowBlur=l.b?9:7;ctx.fillStyle=glow;ctx.fillText(l.t,f.x,y);ctx.fillText(l.t,f.x,y);   // brilho (duas passadas: mais forte)
+    ctx.shadowBlur=0;ctx.fillStyle=neonCore(base);ctx.fillText(l.t,f.x,y);                    // miolo claro
+  }
+  ctx.shadowColor='transparent';ctx.lineWidth=1;
   ctx.font='bold 9px "Courier New",monospace';ctx.fillStyle=col;
 }
 /* Passa `sec` segundos de clima de uma vez (ao dormir a noite pula horas): sorteia o clima nas mesmas rodadas de sempre,
