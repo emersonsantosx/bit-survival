@@ -298,7 +298,7 @@ function vehTerr(v,tr){   // terreno visto por ESTE veiculo
 function carTopAt(x,y){const wf=(weather==='rain'||weather==='sand')?.92:1;const t=P&&P.inVehicle?vehSpec(P.inVehicle).top:CAR_TOP;return t*terrainFor(x,y).spd*wf;}
 function terrainFor(x,y){
   if(pointInLake(x,y)) return TERR.water;
-  if(onCityRoad(x,y,0)) return selectedMap==='snow'?TERR.icy:TERR.road;
+  if(selectedMap==='city'||!RM.a?onCityRoad(x,y,0):roadMaskAt(x,y)) return selectedMap==='snow'?TERR.icy:TERR.road;   // mapas naturais: o caminho desenhado (arquivo 34)
   if(onSand(x,y)) return TERR.sand;
   return selectedMap==='city'?TERR.lot:(selectedMap==='desert'?TERR.sand:(selectedMap==='snow'?TERR.snow:TERR.grass));
 }

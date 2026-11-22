@@ -212,12 +212,12 @@ function genWorld(seed) {
   if(window.layerCachesFlush)layerCachesFlush();   // blocos prontos de chao/ruas (js/30) eram do mundo anterior
   solidGrid=null;SPG=null;FIELD=null;LM=null;chestList=[];   // grades de colisão do mundo anterior não podem vazar para a geração (senão o mesmo seed gera mundos diferentes)
   try {
-  cityGardens=[];cityYards=[];cityPaths=[];cityDecor=[];fenceCityClear();ghLoad([]);
+  roadReset();cityGardens=[];cityYards=[];cityPaths=[];cityDecor=[];fenceCityClear();ghLoad([]);
   trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];tents=[];spits=[];decorations=[];animals=[];if(window.stashReset)stashReset();if(window.bloodReset)bloodReset();if(window.wellReset)wellReset();if(window.logReset)logReset();
   cityInter=[];cityCrash=null;lampList=[];ORLA=null;
   plane=null;
 
-  if(selectedMap==='city') genCity(); else genRural();
+  if(selectedMap==='city') genCity(); else {genRural();roadMaskBuild();}
   // Um único lago isolado — Floresta e Neve; no Deserto é um oásis menor (seed-determinístico = sync no multiplayer)
   lakes=[];
   const lakeN=Math.max(1,Math.round(WAREA*(selectedMap==='desert'?.45:.5)))+FL.lakes;     // mundo maior: vários lagos/oásis
@@ -464,7 +464,11 @@ function paintMapBase(g,s){
     g.strokeStyle='#f4f4ee';g.lineWidth=1;for(const q of cityYards)g.strokeRect(Math.floor((q.x+6)*s)+.5,Math.floor((q.y+6)*s)+.5,Math.max(2,Math.ceil((q.w-12)*s))-1,Math.max(2,Math.ceil((q.h-12)*s))-1);
   }
   g.fillStyle=C.road;
-  for(const r of roads)g.fillRect(r.x*s,r.y*s,Math.max(1,r.w*s),Math.max(1,r.h*s));
+  if(M!=='city'&&roadLines.length){   // caminhos naturais: tracos com ponta e juncao redondas, como no chao
+    g.strokeStyle=C.road;g.lineCap='round';g.lineJoin='round';
+    for(const L of roadLines){g.lineWidth=Math.max(1.5,L.w*s);g.beginPath();L.pts.forEach((p,i)=>i?g.lineTo(p[0]*s,p[1]*s):g.moveTo(p[0]*s,p[1]*s));g.stroke();}
+    g.lineCap='butt';
+  }else for(const r of roads)g.fillRect(r.x*s,r.y*s,Math.max(1,r.w*s),Math.max(1,r.h*s));
   if(FIELD){g.fillStyle='#d9b84a';g.fillRect(FIELD.x*s,FIELD.y*s,Math.max(2,FIELD.w*s),Math.max(2,FIELD.h*s));}
   if(LM){g.fillStyle=LM.kind==='temple'?'#f0c830':'#9fe4ff';g.fillRect(LM.cx*s-2,LM.cy*s-2,5,5);g.fillStyle='#000';g.fillRect(LM.cx*s-1,LM.cy*s-1,3,3);g.fillStyle=LM.kind==='temple'?'#f0c830':'#9fe4ff';g.fillRect(LM.cx*s-.5,LM.cy*s-.5,1.5,1.5);}
   g.fillStyle=C.lake;g.strokeStyle=C.edge;g.lineWidth=1.2;g.lineJoin='round';
