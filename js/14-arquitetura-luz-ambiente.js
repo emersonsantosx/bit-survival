@@ -913,15 +913,19 @@ function genAmbientProps(seed){
 function drawAmbProp(d){
   const x=d.x,y=d.y;
   if(d.type==='wreck'){
-    shadow(x,y+4,16,5);
+    /* carcaça vista de cima (frente para a direita, como os carros): a sombra segue o sol e a luz vem de noroeste */
+    shadowCar({x:x,y:y,face:0},30,16);
     const big=d.seed>.5;
-    R(x-14,y-5,28,11,'#6a3a24');R(x-14,y-5,28,2,'#8a5236');R(x-14,y+4,28,2,'#4a2616');
-    R(x-6,y-9,13,5,'#5a3020');R(x-5,y-8,11,3,'#1a1410');
-    R(x+8,y-4,6,8,'#3a2a22');R(x+9,y-3,4,6,'#1a1410');
-    R(x-12,y+5,5,3,'#2a2a2a');R(x+6,y+5,5,3,'#2a2a2a');
-    if(big){R(x-14,y-5,6,11,'#7a4a30');R(x-16,y+1,3,2,'#9a9a9a');R(x-13,y-3,4,3,'#2a1a10');}
-    R(x-2,y-2,5,2,'#8a4a2a');R(x+3,y-5,2,1,'#c07040');
-    R(x-14,y+6,10,2,'#d8c08a');R(x+4,y+6,12,2,'#e0c890');
+    R(x-11,y-10,6,3,'#2a2a2a');R(x+7,y+7,6,3,'#2a2a2a');                                    // as rodas que sobraram espiam pelas bordas
+    R(x-14,y-7,28,14,'#4a2616');R(x-13,y-6,26,12,'#6a3a24');                                // contorno e lataria
+    R(x-8,y-6,12,12,'#5a3020');R(x-7,y-5,10,10,'#7a4a30');                                  // cabine: teto amassado
+    R(x+2,y-5,3,10,'#1a1410');R(x-9,y-4,2,8,'#1a1410');                                     // para-brisa e vidro traseiro sem vidro
+    R(x+6,y-5,7,10,'#3a2a22');R(x+7,y-4,5,8,'#1a1410');R(x+8,y-3,3,3,'#5a5a5e');            // capô aberto, motor à mostra
+    if(big){R(x-13,y-6,5,12,'#7a4a30');R(x-12,y-3,3,3,'#2a1a10');R(x-16,y+2,3,2,'#9a9a9a');}   // porta-malas arrancado e para-choque no chão
+    R(x-2,y-2,5,2,'#8a4a2a');R(x+3,y-5,2,1,'#c07040');                                      // ferrugem
+    R(x-13,y-6,26,1,'#8a5236');R(x-13,y-6,1,12,'#8a5236');R(x-7,y-5,10,1,'#9a6040');        // luz: bordas norte e oeste claras
+    R(x-13,y+5,26,1,'#3a1c0e');R(x+12,y-6,1,12,'#3a1c0e');                                  // sombra própria: bordas sul e leste escuras
+    R(x-15,y+6,10,2,'#d8c08a');R(x+4,y+6,12,2,'#e0c890');                                   // areia acumulada por cima
   }else if(d.type==='billboard'){
     shadow(x,y+2,17,3);
     const AD=[['HOTEL','#1c2a5a','#ffd24a'],['PIZZA','#7a1c1c','#ffe8b0'],['BANCO','#1c4a2c','#e8f0c0'],['CAFE','#4a2a1c','#ffd8a0']][d.ad|0];
