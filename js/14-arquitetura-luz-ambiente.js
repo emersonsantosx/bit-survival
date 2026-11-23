@@ -532,6 +532,33 @@ function boxShadowPath(x,y,w,h,H){
 }
 function boxShadow(x,y,w,h,H){ctx.fillStyle=SUN.fs;ctx.beginPath();boxShadowPath(x,y,w,h,H);ctx.fill();}
 window.boxShadow=boxShadow;window.boxShadowPath=boxShadowPath;
+/* sombra de planta e de poste: L = lista de [x, y, altura, largura do talo, largura da copa], com os pes em (x,y).
+   Tudo num caminho so e um preenchimento so (muitos pes de milho juntos nao escurecem em dobro). De noite (sem sol) fica so uma mancha redonda no pe.
+   Os pedacos tem o mesmo sentido de giro (talo virado para o sol), senao a uniao deixaria buracos. k encurta a sombra de quem e fino e folhudo. */
+function groundShadowBatch(L,k){
+  if(!L.length)return;
+  const f=SUN.f,ga=ctx.globalAlpha;ctx.fillStyle=SUN.fs;
+  if(f<.99){
+    ctx.globalAlpha=ga*(1-f);ctx.beginPath();
+    for(const s of L){const r=Math.max(s[3],s[4])*.6+1.5;ctx.moveTo(s[0]+r,s[1]+1);ctx.ellipse(s[0],s[1]+1,r,r*.45,0,0,6.283);}
+    ctx.fill();
+  }
+  if(f>=.02){
+    ctx.globalAlpha=ga*f;ctx.beginPath();
+    for(const s of L){
+      const x=s[0],gy=s[1]+1,h=s[2]*k,vx=SUN.ax*h,vy=SUN.by*h,bw=s[3]/2,cw=s[4]/2;
+      if(bw>0){
+        if(vy>=0){ctx.moveTo(x-bw,gy);ctx.lineTo(x+bw,gy);ctx.lineTo(x+bw+vx,gy+vy);ctx.lineTo(x-bw+vx,gy+vy);}
+        else{ctx.moveTo(x-bw,gy);ctx.lineTo(x-bw+vx,gy+vy);ctx.lineTo(x+bw+vx,gy+vy);ctx.lineTo(x+bw,gy);}
+        ctx.closePath();
+      }
+      if(cw>0){const ex=x+vx*.9,ey=gy+vy*.9;ctx.moveTo(ex+cw,ey);ctx.ellipse(ex,ey,cw,cw*.5+.5,0,0,6.283);}
+    }
+    ctx.fill();
+  }
+  ctx.globalAlpha=ga;
+}
+window.groundShadowBatch=groundShadowBatch;
 /* cor do dia (multiplicação): amanhecer rosado, manhã dourada, dia limpo, entardecer laranja, crepúsculo roxo */
 const GK=[[3.5,[255,255,255]],[4.5,[190,140,185]],[5.5,[240,160,135]],[6.3,[255,190,145]],[7.2,[255,225,185]],[8.8,[255,244,224]],[10.5,[255,255,255]],[15,[255,255,255]],[16.5,[255,238,205]],[17.7,[255,214,158]],[18.7,[255,184,124]],[19.5,[236,140,122]],[20.3,[190,120,150]],[21.2,[150,125,178]],[21.9,[255,255,255]]];
 const MAPG={forest:[250,255,240],desert:[255,247,226],snow:[236,243,255],city:[245,247,252]};
@@ -1478,6 +1505,7 @@ function render(){
   }
   drawGreenhouses(vx0,vx1,vy0,vy1);drawPlots(vx0,vx1,vy0,vy1);drawFloors(vx0,vx1,vy0,vy1);if(window.drawBloodDrops)drawBloodDrops(vx0,vx1,vy0,vy1,true);drawBeds(vx0,vx1,vy0,vy1);
   const fv=fencesInView(vx0,vx1,vy0,vy1);drawFenceShadows(fv);drawRoofShadows(vx0,vx1,vy0,vy1);   // sombras de cerca, parede e telhado: no chao, antes de tudo que fica de pe
+  drawPlantShadows(vx0,vx1,vy0,vy1);drawCornShadows(vx0,vx1,vy0,vy1);   // sombras das culturas e do milharal (pes, cerca e fardos)
   for(const it of items){
     if(it.x<vx0||it.x>vx1||it.y<vy0||it.y>vy1||itemIndoor(it))continue;
     drawItem(it,it===nearIt);
