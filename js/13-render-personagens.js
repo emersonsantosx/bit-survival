@@ -879,46 +879,69 @@ function drawDecoration(d){
   const st=SNOWTOP[d.type];if(st&&snowAcc()>.06)snowCap(d.x+st[0],d.y+st[1],st[2],st[3]);
   if(d.hp!==undefined)decorDmgFx(d);
 }
+/* sombras das decoracoes altas: antes cada uma tinha uma elipse perto do pe (so um pouco deslocada), igual para um poste de 26 px e para uma estatua de 41 px.
+   Agora a sombra tem o tamanho da peca e segue o sol, como a das arvores. POLO = [altura, largura do talo, largura da copa/ponta, proporcao da copa, encurtamento];
+   CAIXA = [x, y, largura, profundidade, altura] relativos ao pe (a caixa usa a mesma sombra do bau, do poco e das paredes). Baixas (arbusto, pedra, toco) seguem com shadow(). */
+const DECO_POLO={lamp:[26,2,10,.4,.85],flag:[34,2,14,.3,.85],sign:[18,2,16,.25,.9],statue:[41,8,8,.5,.8],pillar:[30,10,0,.5,.8],mailbox:[14,2,8,.4,.9],hydrant:[12,6,0,.5,.9],cone:[12,4,0,.5,.9],
+  snowman:[22,8,6,.5,.8],cactus_tall:[24,5,16,.3,.8],cactus_bg:[18,6,18,.3,.8],cactus_sm:[9,3,6,.4,.9],pine_sm:[17,2,10,.5,.8],crystal:[14,4,6,.5,.9],palmorla:[64,5,36,.3,.7],umbrella:[30,2,42,.4,.75]};
+const DECO_CAIXA={ruinwall:[-6,-3,12,4,8],trash:[-4,-3,8,4,12],kiosk:[-24,-4,48,6,32],lifeguard:[-12,-4,24,6,34],dumpster:[-9,-3,18,5,16],crate:[-6,-3,12,5,10],bench:[-9,-3,18,4,6],barrier:[-8,-3,16,4,6]};
+function decoShadow(d){
+  const a=DECO_POLO[d.type];
+  if(a){const h=d.type==='pillar'&&d.seed<.3?14:d.type==='ruinwall'?5:a[0];groundShadowBatch([[d.x,d.y+1,h,a[1],a[2],a[3]]],a[4]);return;}
+  const c=DECO_CAIXA[d.type];
+  if(c){const h=d.type==='ruinwall'?(d.seed<.4?5:10):c[4];boxShadow(d.x+c[0],d.y+c[1],c[2],c[3],h);}
+}
 function drawDecoration0(d){
   const x=d.x,y=d.y;
   if(d.type==='wreck'||d.type==='billboard'){drawAmbProp(d);return;}
+  decoShadow(d);
   switch(d.type){
     case'ruinwall':{
-      shadow(x,y+2,7,3);const h=d.seed<.4?5:10;
+      const h=d.seed<.4?5:10;
       R(x-6,y-h,12,h+1,'#a88c5c');R(x-6,y-h,12,3,'#c4a874');R(x-2,y-h+4,1,Math.max(1,h-5),'#7a6240');
       if(d.seed>.8)R(x+2,y-h-3,4,3,'#a88c5c');
       break;}
     case'pillar':{
-      shadow(x,y+3,8,3);const br=d.seed<.3,h=br?14:30;
+      const br=d.seed<.3,h=br?14:30;
       R(x-5,y-h,10,h,'#b8996a');R(x-5,y-h,3,h,'#cdb080');R(x+2,y-h,3,h,'#9a7e52');
       R(x-7,y-h-2,14,4,'#d0b080');R(x-7,y-3,14,4,'#a08458');
       if(br)R(x+4,y-3,6,3,'#b8996a');
       break;}
     case'statue':{
-      shadow(x,y+3,8,3);
       R(x-6,y-3,12,4,'#3a3a42');R(x-5,y-26,10,24,'#2a2a30');R(x-5,y-26,10,2,'#3a3a44');
       R(x-4,y-35,8,9,'#2a2a30');R(x-4,y-41,2,6,'#2a2a30');R(x+2,y-41,2,6,'#2a2a30');R(x-1,y-30,6,3,'#3a3a44');
       R(x-5,y-24,10,2,'#d8b040');R(x+1,y-33,2,1,'#e8c040');
+      R(x-5,y-26,1,24,'#44444c');R(x+4,y-26,1,24,'#1c1c22');R(x-4,y-35,1,9,'#44444c');R(x+3,y-35,1,9,'#1c1c22');   // luz a noroeste
       break;}
     case'chest':{
-      shadow(x,y+2,9,3);
+      /* bau de mapa visto de cima (antes era de frente, com tampa, corpo e fecho): tampa 14x9 com so 3 px de frente; luz a noroeste; sombra do sol */
       const col=d.kind==='gold'?['#8a5a1a','#f0c830','#5a3a10']:d.kind==='ice'?['#5a7a98','#c8e4f4','#3a5a78']:['#8a6a3a','#c0a060','#5a4426'];
+      const x0=x-7,y0=y-9;
+      boxShadow(x0,y0+3,14,9,5);
+      R(x0-1,y0-1,16,14,'#2a1c10');                                      // contorno
       if(d.open){
-        R(x-7,y-8,14,8,col[0]);R(x-7,y-8,14,2,col[1]);R(x-6,y-6,12,4,'#1a1008');
-        R(x-7,y-17,14,5,col[0]);R(x-7,y-17,14,1,col[1]);R(x-7,y-13,14,1,col[2]);
+        R(x0,y0-4,14,3,col[0]);R(x0,y0-4,14,1,col[1]);                   // tampa levantada, vista por tras
+        R(x0,y0-1,14,10,col[2]);R(x0+1,y0,12,8,'#1a1008');               // borda e fundo escuro
+        R(x0+2,y0+2,4,2,'#3a2a14');R(x0+8,y0+4,3,2,'#3a2a14');           // sombra do que ha dentro
+        R(x0,y0-1,14,1,col[1]);R(x0,y0-1,1,10,col[1]);                   // luz: bordas norte e oeste
+        R(x0,y0+9,14,3,col[0]);R(x0,y0+11,14,1,col[2]);                  // frente
       }else{
-        R(x-7,y-8,14,8,col[0]);R(x-7,y-13,14,5,col[0]);R(x-7,y-13,14,1,col[1]);R(x-7,y-8,14,1,col[2]);
-        R(x-7,y-13,2,13,col[1]);R(x+5,y-13,2,13,col[1]);R(x-1,y-9,3,4,'#ffd84a');R(x,y-8,1,2,'#503010');
-        if(d.main&&((T*1.2)%2.4)<.3)R(x+3+Math.round(Math.sin(T*9)),y-15,2,2,'#fff');
+        R(x0,y0,14,9,col[0]);R(x0+13,y0+1,1,8,col[2]);                   // tampa; borda leste na sombra
+        R(x0+2,y0,2,12,col[1]);R(x0+10,y0,2,12,col[1]);                  // cintas
+        R(x0,y0,14,1,col[1]);R(x0,y0,1,9,col[1]);                        // luz: bordas norte e oeste da tampa
+        R(x0,y0+9,14,3,col[2]);R(x0,y0+9,14,1,col[0]);                   // frente voltada para o sul
+        R(x-1,y0+9,3,3,'#ffd84a');R(x,y0+10,1,1,'#503010');              // fecho
+        if(d.main&&((T*1.2)%2.4)<.3)R(x+3+Math.round(Math.sin(T*9)),y0-3,2,2,'#fff');
       }
       break;}
     case'oldtent':{
-      shadow(x,y+2,18,4);
-      ctx.fillStyle='#6a7a58';ctx.beginPath();ctx.moveTo(x-17,y+1);ctx.lineTo(x,y-20);ctx.lineTo(x+17,y+1);ctx.closePath();ctx.fill();
-      ctx.fillStyle='#4a5a3c';ctx.beginPath();ctx.moveTo(x+2,y+1);ctx.lineTo(x,y-20);ctx.lineTo(x+17,y+1);ctx.closePath();ctx.fill();
-      ctx.fillStyle='#eef4f8';ctx.beginPath();ctx.moveTo(x-9,y-9);ctx.lineTo(x,y-20);ctx.lineTo(x+9,y-9);ctx.lineTo(x+4,y-11);ctx.lineTo(x,y-9);ctx.lineTo(x-4,y-11);ctx.closePath();ctx.fill();
-      ctx.fillStyle='#1c2218';ctx.beginPath();ctx.moveTo(x-5,y+1);ctx.lineTo(x,y-9);ctx.lineTo(x+4,y+1);ctx.closePath();ctx.fill();
-      R(x-17,y,34,2,'#eef4f8');
+      /* barraca velha vista de cima (antes um triangulo de frente): aba de tras virada para o sol, aba da frente na sombra, neve na cumeeira e entrada escura */
+      boxShadow(x-17,y-13,34,13,12);
+      for(let r=0;r<16;r++){const half=14+Math.round(r*.2),ry=y-15+r,back=r<8;R(x-half,ry,half*2,1,back?(r%4===3?'#6c7c5a':'#7a8a68'):(r%4===1?'#3e4e32':'#4a5a3c'));R(x-half,ry,1,1,back?'#94a482':'#6c7c5a');R(x+half-1,ry,1,1,'#2e3c26');}
+      R(x-14,y-15,28,1,'#94a482');R(x-15,y+1,32,1,'#2a3820');
+      R(x-12,y-9,24,2,'#eef4f8');R(x-9,y-11,8,2,'#eef4f8');R(x+3,y-8,7,1,'#d4e0e8');R(x-12,y-9,1,1,'#fff');   // neve sobre a cumeeira
+      for(let r=0;r<7;r++){const dh=Math.round(1.5+r*.7);R(x-dh,y-6+r,dh*2,1,'#1c2218');}                     // entrada
+      R(x-16,y-1,2,3,'#5a4a34');R(x+15,y-1,2,3,'#5a4a34');
       break;}
     case'sled':
       shadow(x,y+2,11,3);R(x-11,y-1,22,1,'#3a2a1a');R(x-10,y-4,20,3,'#6a4a2a');R(x-6,y-9,12,5,'#8a6a3a');R(x-6,y-9,12,1,'#a98a5a');R(x-6,y-9,12,2,'#eef4f8');
@@ -928,7 +951,7 @@ function drawDecoration0(d){
       ctx.fillStyle='rgba(200,235,255,.38)';ctx.fillRect(x-6,y-16,12,18);R(x-5,y-15,2,16,'rgba(255,255,255,.35)');
       break;
     case'flag':
-      R(x,y-32,2,34,'#6a4a2a');R(x+2,y-32,12+Math.round(Math.sin(T*3)*1.5),7,'#a83a3a');R(x+2,y-32,12,1,'#c85a5a');R(x+2,y-26,8,1,'#7a2a2a');
+      R(x,y-32,2,34,'#6a4a2a');R(x,y-32,1,34,'#8a6a3a');R(x+2,y-32,12+Math.round(Math.sin(T*3)*1.5),7,'#a83a3a');R(x+2,y-32,12,1,'#c85a5a');R(x+2,y-26,8,1,'#7a2a2a');
       break;
     case'bush':
       shadow(x,y+2,6,3);
@@ -972,7 +995,6 @@ function drawDecoration0(d){
       R(x-4,y-4,3,2,'#3a7a3a');R(x+2,y-5,3,2,'#3a7a3a');
       break;
     case'cactus_bg':
-      shadow(x,y+2,8,3);
       R(x-3,y-16,6,18,'#3a7a3a');R(x-3,y-16,6,3,'#4a9a4a');
       R(x-9,y-10,6,3,'#3a7a3a');R(x-9,y-12,3,5,'#3a7a3a');
       R(x+3,y-13,6,3,'#3a7a3a');R(x+6,y-15,3,5,'#3a7a3a');
@@ -1004,14 +1026,12 @@ function drawDecoration0(d){
       R(x-3,y-4,2,2,'rgba(255,255,255,.6)');
       break;
     case'snowman':
-      shadow(x,y+3,6,3);
       R(x-5,y-10,10,10,'#f0f4f8');R(x-4,y-18,8,8,'#f0f4f8');
       R(x-3,y-16,1,1,'#333');R(x+1,y-16,1,1,'#333');
       R(x-3,y-13,6,1,'#c05020');
       R(x-6,y-19,12,2,'#333');R(x-2,y-22,4,3,'#333');
       break;
     case'pine_sm':
-      shadow(x,y+2,7,3);
       R(x-1,y-6,2,4,'#4a3a1a');
       R(x-5,y-10,10,5,'#1a5a2a');R(x-4,y-14,8,5,'#1a5a2a');R(x-2,y-17,4,4,'#1a5a2a');
       break;
@@ -1027,23 +1047,19 @@ function drawDecoration0(d){
       R(x-7,y-3,14,4,'#f0f4f8');R(x-5,y-6,10,3,'#f8fcff');
       break;
     case'trash':
-      shadow(x,y+2,5,3);
       R(x-4,y-10,8,10,'#4a5a4a');R(x-4,y-12,8,2,'#5a6a5a');
       R(x-2,y-8,1,6,'#3a4a3a');R(x+1,y-8,1,6,'#3a4a3a');
       break;
     case'bench':
-      shadow(x,y+2,10,3);
       R(x-9,y-3,18,4,'#7a5a3a');R(x-9,y-6,18,2,'#8a6a4a');
       R(x-8,y-3,2,4,'#4a3a2a');R(x+6,y-3,2,4,'#4a3a2a');
       break;
     case'lamp':
-      shadow(x,y+2,3,3);
-      R(x-1,y-22,3,22,'#3a3a3a');
-      R(x-4,y-26,10,5,'#4a4a4a');
+      R(x-1,y-22,3,22,'#3a3a3a');R(x-1,y-22,1,22,'#5a5a5a');
+      R(x-4,y-26,10,5,'#4a4a4a');R(x-4,y-26,10,1,'#6a6a6a');R(x+5,y-26,1,5,'#2a2a2a');
       R(x-2,y-22,5,2,dark>.2?'#fff0b0':'#6a6a62'); // lâmpada
       break;
     case'palmorla':{
-      shadow(x+8,y+2,18,4);
       const ln=d.seed<.5?-1:1,sw=Math.sin(T*1.2+d.seed*9)*1.5;
       for(let i=0;i<13;i++){const q=i/12;R(x+ln*Math.sin(q*1.5)*9-2.5,y-i*4.6-4,5-(q>.75?1:0),5,i%2?'#85653f':'#9a7a52');}
       const cx=x+ln*Math.sin(1.5)*9+sw,cy=y-60;
@@ -1055,7 +1071,7 @@ function drawDecoration0(d){
       break;}
     case'umbrella':{
       const cols=['#e04a3a','#f0c030','#2a8fd0','#ef7fb0','#3aa860'],c=cols[Math.floor(d.seed*5)%5];
-      shadow(x+5,y+3,18,4);R(x-1,y-30,2,32,'#e8e4d8');
+      R(x-1,y-30,2,32,'#e8e4d8');
       for(let r=0;r<9;r++){const w=Math.round(21*Math.sqrt(1-(r/9)*(r/9)));for(let k=-w;k<w;k+=4)R(x+k,y-30-r,Math.min(4,w-k),1,(((k+48)/4)|0)%2?c:'#f4f1e8');}
       R(x-21,y-30,42,1,'rgba(0,0,0,.22)');
       break;}
@@ -1064,13 +1080,11 @@ function drawDecoration0(d){
       R(x-9,y-3,18,8,c);R(x-9,y-1,18,1,'#f4f1e8');R(x-9,y+2,18,1,'#f4f1e8');
       break;}
     case'kiosk':{
-      shadow(x,y+3,28,5);
       R(x-24,y-26,48,26,'#f2e9d2');R(x-24,y-4,48,4,'#d9cfb4');R(x-18,y-24,36,10,'#37526b');R(x-20,y-14,40,3,'#8a6a44');
       for(let i=0;i<12;i++)R(x-27+i*4.5,y-35,5,9,i%2?'#f4f1e8':'#e2503c');
       R(x-12,y-43,24,7,'#2a8fd0');R(x-9,y-41,18,1,'#f4f1e8');
       break;}
     case'lifeguard':{
-      shadow(x,y+3,16,4);
       R(x-10,y-16,3,16,'#8a6a44');R(x+7,y-16,3,16,'#8a6a44');R(x-12,y-19,24,3,'#a8845a');
       R(x-9,y-36,18,17,'#e8e0cf');R(x-6,y-32,12,6,'#37526b');R(x-12,y-40,24,4,'#e2503c');
       R(x+9,y-52,1,14,'#444');R(x+10,y-52,8+Math.round(Math.sin(T*4)*1),5,'#e2503c');
@@ -1081,12 +1095,17 @@ function drawDecoration0(d){
       R(x-3,y-9+by,6,3,'#e2503c');R(x-3,y-6+by,6,3,'#f4f1e8');R(x-3,y-3+by,6,3,'#e2503c');
       break;}
     case'boat':{
-      const bo=Math.round(Math.sin(T*1.5+d.seed*9)*1.5);
-      ctx.fillStyle='rgba(0,30,50,.25)';ctx.beginPath();ctx.ellipse(x,y+3,26,5,0,0,6.283);ctx.fill();
-      ctx.fillStyle=d.seed<.5?'#8a3a2a':'#2a5a8a';ctx.beginPath();ctx.ellipse(x,y-3+bo,24,8,0,0,3.1416);ctx.fill();
-      R(x-24,y-5+bo,48,3,'#d8c9a8');R(x-6,y-16+bo,14,11,'#e8e0cf');R(x-4,y-14+bo,10,4,'#37526b');R(x-8,y-18+bo,18,3,'#8a6a44');
-      R(x+14,y-30+bo,2,26,'#6a5236');
-      ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(x,y+1,28,5+Math.sin(T*2)*.6,0,0,6.283);ctx.stroke();
+      /* barco visto de cima (antes um casco de lado, meia elipse): casco fino com a proa para o leste, convés, cabine com so 3 px de frente, mastro e a sombra do sol na agua */
+      const bo=Math.round(Math.sin(T*1.5+d.seed*9)*1.5),cy=y-1+bo,hc=d.seed<.5?['#8a3a2a','#b05a44','#5a2218']:['#2a5a8a','#4a82b4','#183a5a'];
+      const hull=(ins,col)=>{ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x-24+ins,cy-8+ins);ctx.quadraticCurveTo(x+12,cy-10+ins,x+26-ins,cy);ctx.quadraticCurveTo(x+12,cy+10-ins,x-24+ins,cy+8-ins);ctx.closePath();ctx.fill();};
+      ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(x,y+1,29,10+Math.sin(T*2)*.6,0,0,6.283);ctx.stroke();   // marolinha
+      boxShadow(x-24,cy-6,48,13,8);
+      groundShadowBatch([[x+15,cy+1,18,1,6,.3]],.8);   // sombra do mastro
+      hull(0,hc[2]);hull(1,hc[0]);hull(3,'#d8c9a8');                      // casco, borda e convés
+      ctx.strokeStyle=hc[1];ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-23,cy-7);ctx.quadraticCurveTo(x+12,cy-9,x+24,cy-1);ctx.stroke();   // luz: borda norte do casco
+      R(x-8,cy-8,14,10,'#e8e0cf');R(x-8,cy-8,14,1,'#fff');R(x-8,cy-8,1,10,'#fff');R(x+5,cy-7,1,9,'#b8b09c');   // teto da cabine
+      R(x-8,cy+2,14,3,'#37526b');R(x-8,cy+4,14,1,'#26394a');                                                    // frente da cabine (janelas)
+      R(x+14,cy-1,2,2,'#6a5236');R(x+14,cy-18,1,17,'#6a5236');R(x+14,cy-18,6+Math.round(Math.sin(T*3)*1),3,'#e2503c');   // mastro com bandeirinha
       break;}
     case'searock':{
       shadow(x,y+2,12,3);
@@ -1094,25 +1113,21 @@ function drawDecoration0(d){
       R(x-12,y-1,24,2,'rgba(255,255,255,.65)');
       break;}
     case'sign':
-      shadow(x,y+2,3,3);
-      R(x-1,y-14,2,12,'#5a5a5a');
-      R(x-8,y-18,16,8,'#c05030');R(x-7,y-17,14,2,'#e8e8e8');R(x-6,y-13,10,1,'#e8e8e8');
+      R(x-1,y-14,2,12,'#5a5a5a');R(x-1,y-14,1,12,'#7a7a7a');
+      R(x-8,y-18,16,8,'#c05030');R(x-8,y-18,16,1,'#e07050');R(x+7,y-18,1,8,'#8a3a20');R(x-7,y-17,14,2,'#e8e8e8');R(x-6,y-13,10,1,'#e8e8e8');
       break;
     case'papers':
       R(x-4,y-2,8,3,'#f0f0e0');R(x-2,y-4,6,3,'#e0e0d0');R(x+1,y-1,4,2,'#f8f8e8');
       break;
     case'crate':
-      shadow(x,y+2,7,3);
       R(x-6,y-10,12,10,'#8a6a3a');R(x-6,y-10,12,2,'#9a7a4a');
       R(x-6,y-6,12,1,'#5a4a2a');R(x-6,y-2,12,2,'#5a4a2a');
       break;
     case'hydrant':
-      shadow(x,y+2,4,2);
       R(x-3,y-10,6,10,'#c03030');R(x-4,y-12,8,3,'#e04040');
       R(x-3,y-4,1,3,'#8a2020');R(x+2,y-4,1,3,'#8a2020');
       break;
     case'cone':
-      shadow(x,y+2,4,2);
       R(x-2,y-12,4,12,'#e08a20');R(x-3,y-3,6,3,'#c07018');
       R(x-2,y-8,4,1,'#fff');R(x-1,y-5,2,1,'#fff');
       break;
@@ -1142,7 +1157,6 @@ function drawDecoration0(d){
       break;
     // --- new desert ---
     case'cactus_tall':
-      shadow(x,y+2,5,3);
       R(x-2,y-22,5,24,'#3a7a3a');R(x-2,y-22,5,3,'#4a9a4a');
       R(x-8,y-14,6,3,'#3a7a3a');R(x-8,y-18,3,7,'#3a7a3a');
       R(x+3,y-16,6,3,'#3a7a3a');R(x+6,y-20,3,7,'#3a7a3a');
@@ -1164,7 +1178,6 @@ function drawDecoration0(d){
       break;
     // --- new snow ---
     case'crystal':
-      shadow(x,y+2,4,2);
       R(x-2,y-10,4,10,'#a0d8f0');R(x-3,y-12,6,3,'#c0e8f8');R(x-1,y-14,2,3,'#e0f4ff');
       R(x-4,y-6,2,5,'#90c8e0');R(x+2,y-7,2,6,'#90c8e0');
       break;
@@ -1176,14 +1189,8 @@ function drawDecoration0(d){
     case'ski':
       R(x-8,y-2,16,2,'#c0d0e0');R(x-7,y-4,3,3,'#a0b0c0');R(x+4,y-4,3,3,'#a0b0c0');
       break;
-    case'flag':
-      shadow(x,y+2,2,2);
-      R(x-1,y-20,2,20,'#5a5a5a');
-      R(x+1,y-20,10,6,'#c03030');R(x+1,y-18,8,2,'#e8e8e8');
-      break;
     // --- new city ---
     case'dumpster':
-      shadow(x,y+2,10,4);
       R(x-9,y-14,18,14,'#3a5a3a');R(x-9,y-16,18,3,'#4a6a4a');
       R(x-7,y-12,6,8,'#2a4a2a');R(x+1,y-12,6,8,'#2a4a2a');
       R(x-9,y-2,18,2,'#2a3a2a');
@@ -1193,12 +1200,10 @@ function drawDecoration0(d){
       R(x-5,y-7,3,2,'#e040a0');R(x-1,y-6,4,2,'#40c0e0');R(x+3,y-5,3,2,'#e0e040');
       break;
     case'barrier':
-      shadow(x,y+2,8,3);
       R(x-8,y-6,16,4,'#c05020');R(x-8,y-6,16,1,'#e8e8e8');R(x-8,y-3,16,1,'#e8e8e8');
       R(x-7,y-2,2,3,'#5a5a5a');R(x+5,y-2,2,3,'#5a5a5a');
       break;
     case'mailbox':
-      shadow(x,y+2,4,2);
       R(x-1,y-8,2,8,'#4a4a4a');R(x-4,y-14,8,7,'#3060a0');R(x-4,y-15,8,2,'#4080c0');
       R(x-2,y-12,4,2,'#1a3a60');
       break;
