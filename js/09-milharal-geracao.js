@@ -125,13 +125,33 @@ function stalkSprite(v,ear){
   const k=v+'_'+ear;if(_stalkCache[k])return _stalkCache[k];
   const c=document.createElement('canvas');c.width=16;c.height=32;const g=c.getContext('2d');
   const Q=(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect(x,y,w,h);};
-  Q(5,29,6,2,'rgba(0,0,0,.25)');
   Q(7,6,2,24,'#3f6e2a');Q(7,6,1,24,'#58903a');
   const o=v?1:0;
   Q(2-o,14,5,2,'#4f8a33');Q(1-o,15,2,2,'#4f8a33');Q(9+o,18,6,2,'#4f8a33');Q(13+o,19,2,2,'#3f6e2a');Q(3,22,4,2,'#3f6e2a');Q(9,11,5,2,'#58903a');Q(1,26,6,2,'#4f8a33');
   Q(6,0,1,6,'#c8a850');Q(8,1,1,5,'#c8a850');Q(7,0,2,3,'#d8b860');
   if(ear){Q(9,15,4,9,'#8ab04a');Q(10,13,2,3,'#e8c040');Q(10,16,2,7,'#e8c040');}
   return _stalkCache[k]=c;
+}
+/* sombras do milharal: pes de milho, postes da cerca e fardos. Antes cada pe tinha uma sombra parada pintada no proprio sprite (igual de manha e de tarde). */
+function drawCornShadows(vx0,vx1,vy0,vy1){
+  const F=FIELD;if(!F||F.x>vx1||F.x+F.w<vx0||F.y>vy1||F.y+F.h<vy0)return;
+  const L=[];
+  for(const c of F.stalks)if(c[0]>vx0-10&&c[0]<vx1+40&&c[1]>vy0-40&&c[1]<vy1+4)L.push([c[0],c[1],c[3]?28:26,2,8]);   // talo fino e folhas (copa de 8 px) na ponta da sombra
+  const post=(x,y)=>{if(x>vx0-10&&x<vx1+40&&y>vy0-20&&y<vy1+4)L.push([x,y+1,9,3,0]);};
+  const gap=16;
+  for(const ey of [F.y,F.y+F.h]){
+    for(let x=F.x;x<=F.x+F.w;x+=15){if(Math.abs(x-F.cx)>gap)post(x,ey);}
+    post(F.cx-gap,ey);post(F.cx+gap,ey);
+  }
+  for(const ex of [F.x,F.x+F.w]){
+    for(let y=F.y;y<=F.y+F.h;y+=15){if(Math.abs(y-F.cy)>gap)post(ex,y);}
+    post(ex,F.cy-gap);post(ex,F.cy+gap);
+  }
+  groundShadowBatch(L,.5);
+  const f=SUN.f;if(f<.02)return;
+  const ga=ctx.globalAlpha;ctx.globalAlpha=ga*f;ctx.fillStyle=SUN.fs;ctx.beginPath();
+  for(const b of F.bales)if(b[0]>vx0-30&&b[0]<vx1+30&&b[1]>vy0-20&&b[1]<vy1+20)boxShadowPath(b[0]-6,b[1]-3,13,7,8);   // fardos de feno
+  ctx.fill();ctx.globalAlpha=ga;
 }
 function drawStalk(c){
   const sp=stalkSprite(c[2],c[3]);

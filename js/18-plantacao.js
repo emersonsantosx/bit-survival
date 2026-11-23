@@ -234,6 +234,21 @@ function drawPlant(p){
   ctx.drawImage(sp,0,32-hh,16,hh,x+4-8+sw,y-hh+1,16,hh);
   if(!ok)ctx.filter=f0||'none';
 }
+/* sombras das culturas: no chao, em lote (um caminho so), seguindo o sol. Por fase [altura, largura do talo, largura da copa] (iguais ao tamanho do desenho). */
+const SHD={
+  potato:[[0,0,0],[5,0,6],[8,0,8],[9,0,8]],tomato:[[0,0,0],[6,0,6],[12,1,8],[12,1,8]],carrot:[[0,0,0],[5,0,4],[9,0,6],[10,0,7]],
+  berry:[[0,0,0],[5,0,6],[7,0,10],[8,0,10]],apple:[[0,0,0],[10,2,6],[19,3,12],[20,4,14]],date:[[0,0,0],[8,2,6],[16,2,10],[20,3,16]],
+  cactus:[[0,0,0],[5,3,3],[10,3,5],[14,3,8]],melon:[[0,0,0],[3,0,8],[4,0,10],[8,0,9]],corn:[[0,0,0],[10,3,5],[20,3,7],[32,3,9]]
+};
+function drawPlantShadows(vx0,vx1,vy0,vy1){
+  const L=[];
+  for(const p of plotsInView(vx0,vx1,vy0,vy1)){
+    if(!p.c)continue;const st=stage(p);if(st<1)continue;
+    const d=(SHD[p.c]||SHD.corn)[st];if(!d[0])continue;
+    L.push([p.cx*CELL+8,p.cy*CELL+CELL-1,d[0],d[1],d[2]]);
+  }
+  groundShadowBatch(L,.6);
+}
 /* estufa: piso de tabuas, moldura de madeira e vidro claro (desenhada junto do chao arado) */
 function drawGreenhouses(vx0,vx1,vy0,vy1){
   for(const g of ghs){
@@ -382,6 +397,6 @@ const plotAria={ARAR:'Arar a terra',PLANTAR:'Plantar semente',REGAR:'Regar',COLH
 window.ghPack=ghPack;window.ghLoad=ghLoad;window.ghRemote=ghRemote;window.ghSpot=ghSpot;window.ghBuild=ghBuild;window.drawGreenhouses=drawGreenhouses;window.drawGreenhouseFrame=drawGreenhouseFrame;window.ghList=()=>ghs;window.plotList=()=>plots;
 window.GREENHOUSE_OK=()=>selectedMap==='snow';   // estufa so onde nao da para arar ao ar livre
 window.plantTick=plantTick;window.hoeTill=hoeTill;window.ghostFor=ghostFor;window.soilBad=soilBad;window.frontCell=frontCell;function plotsRemark(){for(const p of plots)mark(p);}
-window.plotsRemark=plotsRemark;window.plotCands=plotCands;window.isSeedItem=t=>!!SEED2CROP[t];window.heldSeed=heldSeed;window.plotNeedsSeed=plotNeedsSeed;window.plotDo=plotDo;window.drawPlots=drawPlots;window.plotsInView=plotsInView;window.drawPlant=drawPlant;
+window.plotsRemark=plotsRemark;window.plotCands=plotCands;window.isSeedItem=t=>!!SEED2CROP[t];window.heldSeed=heldSeed;window.plotNeedsSeed=plotNeedsSeed;window.plotDo=plotDo;window.drawPlots=drawPlots;window.plotsInView=plotsInView;window.drawPlant=drawPlant;window.drawPlantShadows=drawPlantShadows;
 window.gardensGen=gardensGen;window.plotsPack=plotsPack;window.plotsLoad=plotsLoad;window.plotRemote=plotRemote;window.plotsApplySnapshot=plotsApplySnapshot;window.plotAria=plotAria;
 })();

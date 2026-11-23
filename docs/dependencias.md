@@ -16,7 +16,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 06-interiores-portas | 40 | 18 | 22 | 0 | 8 | 6 |
 | 07-loot-mapa | 63 | 31 | 32 | 0 | 13 | 10 |
 | 08-cidade-vilas-marcos | 48 | 23 | 24 | 1 | 12 | 17 |
-| 09-milharal-geracao | 64 | 36 | 28 | 0 | 14 | 9 |
+| 09-milharal-geracao | 65 | 37 | 28 | 0 | 14 | 9 |
 | 10-jogo-saves | 117 | 83 | 34 | 0 | 14 | 15 |
 | 11-pesca-update | 48 | 14 | 34 | 0 | 14 | 18 |
 | 12-crafting-multiplayer | 69 | 25 | 44 | 0 | 14 | 21 |
@@ -55,12 +55,12 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 06-interiores-portas | 42 | 11 | 7 | 36 | 1 | . |  |  |  |  |  | 1 | 30 |  |  |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |  |
 | 07-loot-mapa | 135 | 3 | 30 | 128 | 3 | 9 | . | 14 | 21 | 2 | 5 | 1 | 5 |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 08-cidade-vilas-marcos | 135 | 3 | 17 | 136 | 21 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 3 |
-| 09-milharal-geracao | 206 | 10 | 87 | 285 | 40 |  | 1 | 35 | . | 2 | 3 | 8 | 125 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  | 4 |
+| 09-milharal-geracao | 212 | 10 | 87 | 285 | 40 |  | 1 | 35 | . | 2 | 3 | 8 | 125 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  | 4 |
 | 10-jogo-saves | 90 | 50 | 60 | 702 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 17 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |  |
 | 11-pesca-update | 273 | 41 | 67 | 911 | 63 | 2 | 3 | 5 | 20 | 66 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 58 | 36 | 29 | 741 | 12 | 1 | 6 | 5 | 11 | 46 | 42 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |  |  |  |
 | 13-render-personagens | 327 | 39 | 22 | 251 | 13 | 22 | 2 | 2 |  | 4 | 9 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 669 | 13 | 16 | 325 | 17 |  | 10 | 8 | 23 | 8 | 6 | 1 | 162 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  | 2 |
+| 14-arquitetura-luz-ambiente | 691 | 13 | 16 | 325 | 17 |  | 10 | 8 | 24 | 8 | 6 | 1 | 162 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  | 2 |
 | 15-missoes-ui-controles | 178 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 10 | 21 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |
 | 16-orientacao | 2 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
@@ -92,7 +92,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | MP | let | 04-estado:19 | 24 | 709 |
 | selectedMap | let | 04-estado:3 | 23 | 230 |
 | beep | funcao | 02-audio:42 | 20 | 143 |
-| ctx | const | 01-base:27 | 19 | 1125 |
+| ctx | const | 01-base:27 | 19 | 1153 |
 | WW | let | 03-dados:2 | 19 | 105 |
 | WH | let | 03-dados:2 | 19 | 94 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 19 | 64 |
