@@ -522,6 +522,16 @@ function bldShadow(b){
   const hp=hullPts([[x,y],[x+w,y],[x+w,y+h],[x,y+h],[x+tx,y+ty],[x+w+tx,y+ty],[x+w+tx,y+h+ty],[x+tx,y+h+ty]]);
   ctx.fillStyle=SUN.fs;ctx.beginPath();ctx.moveTo(hp[0][0],hp[0][1]);for(let i=1;i<hp.length;i++)ctx.lineTo(hp[i][0],hp[i][1]);ctx.closePath();ctx.fill();
 }
+/* sombra de uma caixa fixa (cerca, parede, telhado, bau, poco...): base retangular (x,y,w,h) no chao e topo H px acima, deslocado na direcao do sol
+   (mesma inclinacao do bldShadow). Quem desenha varias pecas juntas (cerca e parede em fila, telhado) junta tudo num caminho so com boxShadowPath
+   e preenche uma vez: assim o escuro nao soma onde as sombras de pecas vizinhas se encostam. */
+function boxShadowPath(x,y,w,h,H){
+  const tx=SUN.dx*H*SUN.len*.55,ty=SUN.dy*H*SUN.len*.45;
+  const hp=hullPts([[x,y],[x+w,y],[x+w,y+h],[x,y+h],[x+tx,y+ty],[x+w+tx,y+ty],[x+w+tx,y+h+ty],[x+tx,y+h+ty]]);
+  ctx.moveTo(hp[0][0],hp[0][1]);for(let i=1;i<hp.length;i++)ctx.lineTo(hp[i][0],hp[i][1]);ctx.closePath();
+}
+function boxShadow(x,y,w,h,H){ctx.fillStyle=SUN.fs;ctx.beginPath();boxShadowPath(x,y,w,h,H);ctx.fill();}
+window.boxShadow=boxShadow;window.boxShadowPath=boxShadowPath;
 /* cor do dia (multiplicação): amanhecer rosado, manhã dourada, dia limpo, entardecer laranja, crepúsculo roxo */
 const GK=[[3.5,[255,255,255]],[4.5,[190,140,185]],[5.5,[240,160,135]],[6.3,[255,190,145]],[7.2,[255,225,185]],[8.8,[255,244,224]],[10.5,[255,255,255]],[15,[255,255,255]],[16.5,[255,238,205]],[17.7,[255,214,158]],[18.7,[255,184,124]],[19.5,[236,140,122]],[20.3,[190,120,150]],[21.2,[150,125,178]],[21.9,[255,255,255]]];
 const MAPG={forest:[250,255,240],desert:[255,247,226],snow:[236,243,255],city:[245,247,252]};
@@ -1467,6 +1477,7 @@ function render(){
     if(d<nd){nd=d;nearIt=it;}
   }
   drawGreenhouses(vx0,vx1,vy0,vy1);drawPlots(vx0,vx1,vy0,vy1);drawFloors(vx0,vx1,vy0,vy1);if(window.drawBloodDrops)drawBloodDrops(vx0,vx1,vy0,vy1,true);drawBeds(vx0,vx1,vy0,vy1);
+  const fv=fencesInView(vx0,vx1,vy0,vy1);drawFenceShadows(fv);drawRoofShadows(vx0,vx1,vy0,vy1);   // sombras de cerca, parede e telhado: no chao, antes de tudo que fica de pe
   for(const it of items){
     if(it.x<vx0||it.x>vx1||it.y<vy0||it.y>vy1||itemIndoor(it))continue;
     drawItem(it,it===nearIt);
@@ -1483,7 +1494,7 @@ function render(){
   for(const r of rocks)if(r.x>vx0&&r.x<vx1&&r.y>vy0&&r.y<vy1+24)list.push({y:r.y,k:3,o:r});
   for(const c of campfires)if(c.x>vx0&&c.x<vx1&&c.y>vy0&&c.y<vy1)list.push({y:c.y,k:4,o:c});
   for(const p of plotsInView(vx0,vx1,vy0,vy1))if(p.c)list.push({y:p.cy*16+15,k:13,o:p});
-  for(const f of fencesInView(vx0,vx1,vy0,vy1))list.push({y:fenceDepth(f),k:15,o:f});
+  for(const f of fv)list.push({y:fenceDepth(f),k:15,o:f});
   if(P&&FENCE_ICON[P.tool])list.push({y:1e9,k:16,o:null});   // fantasma da cerca por cima de tudo
   for(const t of tents)if(t.x>vx0-30&&t.x<vx1+30&&t.y>vy0&&t.y<vy1+30)list.push({y:t.y,k:9,o:t});
   if(window.stashList)for(const s of stashList())if(s.x>vx0-20&&s.x<vx1+20&&s.y>vy0&&s.y<vy1+20)list.push({y:stashDepth(s),k:17,o:s});

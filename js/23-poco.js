@@ -131,23 +131,28 @@ function wellsGen(){   // chamada no fim da geracao do mundo
 }
 function wellReset(){wells=[];cands=[];}
 
-/* ---------- desenho: aro de pedra, dois postes, telhadinho, corda e balde ---------- */
+/* ---------- desenho: aro de pedra visto de cima (com a agua a mostra), dois postes, telhadinho, corda e balde ----------
+   O aro era uma parede de frente; agora e uma elipse vista de cima, como o chafariz. A luz vem de noroeste e a sombra segue o sol. */
 function drawWell(w){
-  const x=Math.round(w.x),y=Math.round(w.y),ice=frozen(w);
-  ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+3,12,4,0,0,6.283);ctx.fill();
-  R2(x-10,y-8,20,11,'#3a3d44');                                        // contorno
-  R2(x-9,y-7,18,9,'#9aa0a8');R2(x-9,y-7,18,2,'#c4cad2');                // pedra clara
-  R2(x-9,y-1,18,3,'#6a7280');
-  for(const [bx,by] of [[-6,-5],[0,-5],[5,-5],[-3,-2],[3,-2],[-8,-2]])R2(x+bx,y+by,1,2,'#6a7280');   // juntas das pedras
-  R2(x-6,y-8,12,3,ice?'#dff3ff':'#2a6a9a');R2(x-5,y-8,5,1,ice?'#ffffff':'#5aa8d8');                   // agua (ou gelo)
-  R2(x-9,y-22,2,15,'#5a3a24');R2(x+7,y-22,2,15,'#5a3a24');R2(x-9,y-22,1,15,'#8a5a2a');R2(x+7,y-22,1,15,'#8a5a2a');   // postes
-  R2(x-12,y-27,24,5,'#8a2a20');R2(x-12,y-27,24,1,'#c8482e');R2(x-12,y-23,24,1,'#5a1a14');             // telhado
-  R2(x-9,y-22,18,2,'#6a4428');                                                                          // viga
+  const x=Math.round(w.x),y=Math.round(w.y),ice=frozen(w),cy=y-2;
+  boxShadow(x-11,y-5,22,8,20);                                           // poco e telhadinho (20 px): a sombra cai para longe do sol
+  const E=(rx,ry,col)=>{ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(x,cy,rx,ry,0,0,6.283);ctx.fill();};
+  const A=(rx,ry,a0,a1,col)=>{ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(x,cy,rx,ry,0,a0*Math.PI,a1*Math.PI);ctx.stroke();};
+  E(10.5,7,'#3a3d44');E(9.5,6,'#9aa0a8');                                // contorno e aro de pedra
+  A(8.6,5.2,.9,1.6,'#c4cad2');A(8.6,5.2,-.15,.6,'#5a6270');              // luz: arco claro a noroeste, escuro a sudeste
+  for(let k=0;k<8;k++){const a=k*.785+.39;R2(Math.round(x+Math.cos(a)*7.9),Math.round(cy+Math.sin(a)*4.9),1,1,'#6a7280');}   // juntas das pedras
+  E(6.6,4.3,'#5a6270');                                                  // parede interna do poco
+  E(6,3.7,ice?'#dff3ff':'#2a6a9a');                                      // agua (ou gelo)
+  A(5.3,3,.9,1.6,ice?'#b4d4e8':'#1e4e78');                               // a parede de noroeste escurece a agua
+  R2(x+1,cy+1,3,1,ice?'#ffffff':'#5aa8d8');R2(x-3,cy,1,1,ice?'#ffffff':'#5aa8d8');   // brilho na agua
+  R2(x-10,y-22,2,19,'#5a3a24');R2(x+8,y-22,2,19,'#5a3a24');R2(x-10,y-22,1,19,'#8a5a2a');R2(x+8,y-22,1,19,'#8a5a2a');   // postes (esquerda clara)
+  R2(x-9,y-22,18,2,'#6a4428');R2(x-9,y-22,18,1,'#8a5a2a');               // viga
+  R2(x-12,y-27,24,5,'#8a2a20');R2(x-12,y-27,24,1,'#c8482e');R2(x-12,y-27,1,5,'#c8482e');R2(x-12,y-23,24,1,'#5a1a14');R2(x+11,y-27,1,5,'#5a1a14');   // telhado: norte e oeste claros, sul e leste escuros
   const sw=Math.round(Math.sin(T*2+x)*1);
-  R2(x,y-20,1,8,'#c8b080');                                                                              // corda
-  R2(x-2+sw,y-12,5,4,'#8a5a2a');R2(x-2+sw,y-12,5,1,'#c8924e');R2(x-2+sw,y-10,5,1,'#5a3a24');            // balde
+  R2(x,y-20,1,10,'#c8b080');                                             // corda
+  R2(x-2+sw,y-10,5,4,'#8a5a2a');R2(x-2+sw,y-10,5,1,'#c8924e');R2(x-2+sw,y-8,5,1,'#5a3a24');            // balde
   if(snowAcc()>.06)snowCap(x-12,y-24,24,3);   // neve acumulada no telhadinho
-  if(ice){R2(x-9,y-7,1,1,'#fff');R2(x+8,y-7,1,1,'#fff');R2(x-11,y-27,1,1,'#fff');R2(x+10,y-27,2,1,'#e8f6ff');}   // geada
+  if(ice){R2(x-8,cy-4,1,1,'#fff');R2(x+7,cy-4,1,1,'#fff');R2(x-11,y-27,1,1,'#fff');R2(x+10,y-27,2,1,'#e8f6ff');}   // geada
 }
 function wellDepth(w){return w.y+2;}
 

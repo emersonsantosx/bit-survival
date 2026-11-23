@@ -123,7 +123,7 @@ function drawFloors(vx0,vx1,vy0,vy1){
     for(let j=0;j<4;j++){const off=((j+v)%3)*5+2;R(x+off,y+j*4,1,4,'rgba(0,0,0,.2)');}                             // emendas
     R(x+2,y+1,1,1,FLd);R(x+CELL-3,y+CELL-3,1,1,FLd);
     if(!floors.has(key(f.x,f.y-1)))R(x,y,CELL,1,FLl);if(!floors.has(key(f.x,f.y+1)))R(x,y+CELL-1,CELL,1,FLd);
-    if(!floors.has(key(f.x-1,f.y)))R(x,y,1,CELL,'rgba(0,0,0,.28)');if(!floors.has(key(f.x+1,f.y)))R(x+CELL-1,y,1,CELL,'rgba(0,0,0,.28)');
+    if(!floors.has(key(f.x-1,f.y)))R(x,y,1,CELL,FLl);if(!floors.has(key(f.x+1,f.y)))R(x+CELL-1,y,1,CELL,'rgba(0,0,0,.28)');   // luz a noroeste: bordas norte e oeste claras, sul e leste escuras
   }
 }
 /* cama: o mesmo desenho e tamanho (27x15) das camas das casas, dentro dos 2 quadrados que ela ocupa */
@@ -170,9 +170,20 @@ function drawRoofs(vx0,vx1,vy0,vy1){
     const N=roofs.has(key(r.x,r.y-1)),S=roofs.has(key(r.x,r.y+1)),W=roofs.has(key(r.x-1,r.y)),E=roofs.has(key(r.x+1,r.y));
     if(!N)R(x,y,CELL,1,SHl);
     if(!S){R(x,y+CELL-2,CELL,2,SHd);R(x,y+CELL,CELL,2,'rgba(0,0,0,.28)');}          // beiral com sombra
-    if(!W)R(x,y,1,CELL,SHd);if(!E)R(x+CELL-1,y,1,CELL,SHd);
+    if(!W)R(x,y,1,CELL,SHl);if(!E)R(x+CELL-1,y,1,CELL,SHd);   // oeste claro (luz a noroeste), leste escuro
     ctx.globalAlpha=1;
   }
+}
+/* sombra do telhado no chao: cada quadrado fica ROOF_H px acima da base. Tudo num caminho so (sem escurecer em dobro entre quadrados vizinhos) */
+function drawRoofShadows(vx0,vx1,vy0,vy1){
+  if(!roofs.size)return;
+  let any=false;
+  for(const r of roofs.values()){
+    const x=r.x*CELL,y=r.y*CELL;if(x+CELL<vx0-24||x>vx1+24||y+CELL<vy0-24||y>vy1+24)continue;
+    if(!any){ctx.fillStyle=SUN.fs;ctx.beginPath();any=true;}
+    boxShadowPath(x,y,CELL,CELL,ROOF_H);
+  }
+  if(any)ctx.fill();
 }
 function drawCellGhost(){
   if(!P||P.dead||P.inVehicle||P.inside||P.sleeping||!isCT(P.tool))return;
@@ -228,7 +239,7 @@ function cellApplySnapshot(d,mode){
   }
 }
 
-window.cellBuild=cellBuild;window.cellIntent=cellIntent;window.drawCellGhost=drawCellGhost;window.drawFloors=drawFloors;window.drawRoofs=drawRoofs;
+window.cellBuild=cellBuild;window.cellIntent=cellIntent;window.drawCellGhost=drawCellGhost;window.drawFloors=drawFloors;window.drawRoofs=drawRoofs;window.drawRoofShadows=drawRoofShadows;
 window.cellPack=cellPack;window.cellLoad=cellLoad;window.cellRemote=cellRemote;window.cellApplySnapshot=cellApplySnapshot;window.roofRecalc=roofRecalc;
 window.drawBeds=drawBeds;window.bedCovered=bedCovered;window.bedList=()=>[...beds.values()];window.floorAt=(cx,cy)=>floors.has(key(cx,cy));window.bedAt=(cx,cy)=>!!bedAtCell(cx,cy);window.floorList=()=>[...floors.values()];window.roofAt=(cx,cy)=>roofs.has(key(cx,cy));window.roofList=()=>[...roofs.values()];
 })();

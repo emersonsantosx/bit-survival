@@ -243,9 +243,10 @@ function drawGreenhouses(vx0,vx1,vy0,vy1){
   }
 }
 function drawGreenhouseFrame(g){   // moldura e vidro, na profundidade da borda de baixo
+  const ga=ctx.globalAlpha;ctx.globalAlpha=ga*.55;boxShadow(g.x,g.y-2,GH,GH,9);ctx.globalAlpha=ga;   // sombra fraca de vidro, segue o sol
   ctx.fillStyle='rgba(190,235,250,.16)';ctx.fillRect(g.x,g.y,GH,GH);
-  R(g.x,g.y,GH,2,'#e8e0c8');R(g.x,g.y+GH-2,GH,2,'#e8e0c8');R(g.x,g.y,2,GH,'#e8e0c8');R(g.x+GH-2,g.y,2,GH,'#e8e0c8');
-  for(const c of [[g.x,g.y],[g.x+GH-3,g.y],[g.x,g.y+GH-3],[g.x+GH-3,g.y+GH-3]]){R(c[0],c[1]-6,3,9,'#8a6a44');R(c[0],c[1]-6,3,1,'#c9a54a');}
+  R(g.x,g.y,GH,2,'#f4eedc');R(g.x,g.y+GH-2,GH,2,'#b8b098');R(g.x,g.y,2,GH,'#f4eedc');R(g.x+GH-2,g.y,2,GH,'#b8b098');   // norte e oeste claros, sul e leste na sombra
+  for(const c of [[g.x,g.y],[g.x+GH-3,g.y],[g.x,g.y+GH-3],[g.x+GH-3,g.y+GH-3]]){R(c[0],c[1]-6,3,9,'#8a6a44');R(c[0],c[1]-6,3,1,'#c9a54a');R(c[0],c[1]-5,1,8,'#a88358');}
   R(g.x+2,g.y+2,GH-4,1,'rgba(255,255,255,.35)');
 }
 

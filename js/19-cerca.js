@@ -284,6 +284,26 @@ function fenceSprite(f){
   FENCE_SPR.set(k,c);
   return c;
 }
+/* sombra no chao de cercas, portinhas e paredes (sol em arco: boxShadowPath, js/14). Uma por peca, todas no mesmo caminho e preenchidas
+   de uma vez, para o escuro nao somar nas emendas. Ate agora a parede so tinha uma tira fixa de 1 px e a cerca baixa nao tinha sombra. */
+function drawFenceShadows(fv){
+  if(!fv.length)return;
+  ctx.fillStyle=SUN.fs;ctx.beginPath();
+  for(const f of fv){
+    const x=f.x*CELL,y=f.y*CELL;
+    if(f.g>=2){   // parede e porta: 14 px de altura
+      if(f.d==='h'){
+        const x0=x-(isWallAt(f.x-1,f.y,'h')?0:3),x1=x+CELL+(isWallAt(f.x+1,f.y,'h')?0:3);
+        if(f.g===3&&f.o){boxShadowPath(x0,y-3,3,3,WH_);boxShadowPath(x1-3,y-3,3,3,WH_);}   // porta aberta: so os batentes
+        else boxShadowPath(x0,y-3,x1-x0,3,WH_);
+      }else boxShadowPath(x-3,y,6,CELL,WH_);
+    }else if(f.d==='h'){   // cerca baixa (8 px) e portinha
+      if(f.g&&f.o){boxShadowPath(x+1,y-1,2,2,8);boxShadowPath(x+CELL-3,y-1,2,2,8);}
+      else boxShadowPath(x,y-1,CELL,2,f.g?8:7);
+    }else boxShadowPath(x-1,y+2,3,CELL-2,f.g?8:7);
+  }
+  ctx.fill();
+}
 function drawFence(f){
   if(f.g>=2||!(CELL===16))drawFence0(f,R);
   else{const k=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;ctx.drawImage(fenceSprite(f),f.x*CELL-FENCE_OX,f.y*CELL-FENCE_OY);ctx.imageSmoothingEnabled=k;}
@@ -491,7 +511,7 @@ function fenceApplySnapshot(a,mode){   // mode 2: tambem tira as pecas que o anf
   if(mode===2){remoteOp=true;try{for(const f of fences.slice())if(!f.s&&!have.has(fkey(f.x,f.y,f.d)))dropPiece(f);}finally{remoteOp=false;}}
 }
 
-window.drawFence0=drawFence0;window.fenceSnow=fenceSnow;window.cellWalled=cellWalled;window.cellWallDirs=cellWallDirs;window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
+window.drawFenceShadows=drawFenceShadows;window.drawFence0=drawFence0;window.fenceSnow=fenceSnow;window.cellWalled=cellWalled;window.cellWallDirs=cellWallDirs;window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
 window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;
 window.HP_F=HP_F;window.BREAK=BREAK;window.fbOf=fbOf;window.WH_=WH_;window.fenceAt=fenceAt;   // usados pelo dano visual (arquivo 33)
 })();
