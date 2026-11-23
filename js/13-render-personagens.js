@@ -1216,7 +1216,7 @@ function drawCampfire(c){
   // Pedras em círculo
   for(let i=0;i<6;i++){
     const a=i*1.05, rx=Math.cos(a)*7, ry=Math.sin(a)*4;
-    R(x+rx-2,y+ry-1,4,3,'#6a6a70');R(x+rx-1,y+ry-2,2,2,'#8a8a90');
+    R(x+rx-2,y+ry-1,4,3,'#6a6a70');R(x+rx-1,y+ry-2,2,2,'#8a8a90');R(x+rx-2,y+ry-1,1,1,'#a4a4aa');R(x+rx+1,y+ry+1,1,1,'#4a4a50');   // luz noroeste, sombra sudeste
   }
   // Lenha cruzada
   R(x-7,y-2,14,3,'#5a3a1c');R(x-2,y-5,3,8,'#6a4a28');R(x+1,y-4,3,7,'#4a2a14');
@@ -1763,16 +1763,19 @@ function drawSleeper(x,y,sl,look){
   ctx.restore();
 }
 function drawTent(t){
+  /* barraca vista de cima (antes era um triangulo de frente): aba de tras virada para o sol (clara), aba da frente na sombra,
+     cumeeira no meio e a entrada aberta na frente. A sombra segue o sol. Os dormentes continuam sendo desenhados por cima. */
   const x=Math.round(t.x),y=Math.round(t.y);
-  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x,y+3,26,6,0,0,6.283);ctx.fill();
+  boxShadow(x-22,y-12,44,10,13);
   for(let r=0;r<22;r++){
-    const half=3+Math.round(r*.95),edge=r%7===6;
-    R(x-half,y-24+r,half,1,edge?'#4a6a3c':'#6d8f56');R(x,y-24+r,half,1,edge?'#33502c':'#4d7040');
+    const half=19+Math.round(r*.14),ry=y-24+r,back=r<11;
+    R(x-half,ry,half*2,1,back?((r%4===3)?'#6d8f56':'#7fa266'):((r%4===1)?'#3f6034':'#4d7040'));       // aba de tras clara, da frente escura
+    R(x-half,ry,1,1,back?'#9cbd80':'#6d8f56');R(x+half-1,ry,1,1,'#33502c');                           // borda oeste clara, leste escura
   }
-  R(x-1,y-26,2,3,'#a9c48a');
-  for(let r=8;r<22;r++){const dh=Math.round(1+(r-8)*.9);R(x-dh,y-24+r,dh*2,1,'#14181a');}          // entrada
+  R(x-21,y-24,42,1,'#9cbd80');R(x-21,y-13,42,1,'#a9c48a');R(x-21,y-2,44,1,'#2d4426');                 // borda norte clara, cumeeira, borda sul escura
+  for(let r=0;r<9;r++){const dh=Math.round(2+r*.8);R(x-dh,y-11+r,dh*2,1,'#14181a');}                  // entrada
   R(x-8,y-9,6,6,'#8a3a3a');R(x-8,y-9,6,2,'#d6d2c4');R(x+2,y-9,6,6,'#3a5a8a');R(x+2,y-9,6,2,'#d6d2c4');  // dois sacos de dormir
-  R(x-25,y-1,2,3,'#5a3a24');R(x+23,y-1,2,3,'#5a3a24');
+  R(x-25,y-1,2,3,'#5a3a24');R(x+23,y-1,2,3,'#5a3a24');R(x-25,y-14,2,3,'#7a5a34');R(x+23,y-14,2,3,'#4a3220');   // estacas e pontas do mastro
   if(P.sleeping&&P.sleeping.ref===t)drawSleeper(P.x,P.y,P.sleeping,myLook());
   for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.sl&&rp.sl.tent&&rp.alive!==false&&Math.hypot(rp.x-t.x,rp.y-t.y)<40)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));}
 }
@@ -1944,7 +1947,6 @@ function lakeShorePath(l, scale, c, sx, ox, oy){
 function drawFountain(l){
   const cx=Math.round(l.cx),cy=Math.round(l.cy),r=l.r;
   const E=(rx,ry,col)=>{ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,6.283);ctx.fill();};
-  ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(cx+2,cy+3,r*1.38,r*1.3*.92,0,0,6.283);ctx.fill();
   E(r*1.32,r*1.32*.92,'#8a8c90');           // calçada de pedra
   E(r*1.22,r*1.22*.92,'#6b6e74');
   E(r*1.1,r*1.1*.92,'#b4b6ba');             // borda do tanque
@@ -1953,6 +1955,9 @@ function drawFountain(l){
   ctx.strokeStyle='rgba(200,240,255,.35)';ctx.lineWidth=1;
   for(let k=0;k<2;k++){ctx.beginPath();ctx.ellipse(cx,cy,r*(.5+.2*k)+Math.sin(T*2+k)*1.5,r*(.5+.2*k)*.92,0,0,6.283);ctx.stroke();}
   for(let i=0;i<8;i++){const a=i*.785;R(cx+Math.cos(a)*r*1.16-1,cy+Math.sin(a)*r*1.16*.92-1,3,2,'#9a9ca0');}  // tijolos da borda
+  ctx.lineWidth=1.5;ctx.strokeStyle='#d6d8dc';ctx.beginPath();ctx.ellipse(cx,cy,r*1.06,r*1.06*.92,0,.9*Math.PI,1.6*Math.PI);ctx.stroke();   // luz: borda clara a noroeste
+  ctx.strokeStyle='#7a7c82';ctx.beginPath();ctx.ellipse(cx,cy,r*1.06,r*1.06*.92,0,-.15*Math.PI,.6*Math.PI);ctx.stroke();   // e escura a sudeste
+  boxShadow(cx-5,cy-3,10,6,18);   // so o pedestal faz sombra, e ela cai sobre a agua e a calcada (que sao rasas)
   R(cx-5,cy-3,10,6,'#8e9096');R(cx-3,cy-9,6,8,'#a8aaae');R(cx-2,cy-12,4,4,'#c4c6ca');  // pedestal em camadas
   for(let j=0;j<5;j++){                                                                // jatos de água
     const t=(T*1.6+j*.2)%1,a=(j-2)*.45;

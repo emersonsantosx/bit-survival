@@ -168,7 +168,7 @@ function drawCornFlat(vx0,vx1,vy0,vy1){
 }
 function drawScarecrow(F){
   const x=F.sx,y=F.sy,sw=SCW.on?Math.round(Math.sin(T*1.3)):0;
-  R(x-6,y+1,13,2,'rgba(0,0,0,.3)');
+  shadowBody(x,y,36,5);   // sombra do poste e da travessa segue o sol
   R(x-1,y-34,3,36,'#4a3220');R(x-15,y-26,31,3,'#4a3220');           // poste e travessa de madeira escura
   if(!SCW.on){R(x-12,y-24,2,2,'#b89c48');R(x+9,y-23,3,2,'#b89c48');R(x-5,y,2,1,'#b89c48');R(x+3,y+1,3,1,'#b89c48');return;}
   const tw=Math.round(Math.sin(T*2.1+x)*1),pulse=.55+.45*Math.sin(T*5);

@@ -209,28 +209,26 @@ function closeStash(){
 }
 function stashIsOpen(){return !!open;}
 
-/* ---------- desenho: bau de madeira com cintas de ferro, tampa e fecho (virado para um dos 4 lados) ---------- */
+/* ---------- desenho: bau de madeira visto de cima, com cintas de ferro, tampa e fecho (virado para um dos 4 lados) ----------
+   Antes era um bau de frente (tampa, corpo e pes). Agora aparece a tampa vista de cima e so 3 px da frente; luz a noroeste e sombra do sol. */
 function drawStash(s){
-  const x=Math.round(s.x),y=Math.round(s.y),o=cleanO(s.o);
-  ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y+3,o>=2?9:10,3.5,0,0,6.283);ctx.fill();
-  if(o>=2){   // de lado: mais estreito, com o fecho no lado que olha para o jogador
-    R2(x-7,y-11,14,13,'#4a2e1a');                       // contorno
-    R2(x-6,y-10,12,5,'#b07a3e');R2(x-6,y-10,12,1,'#d6a468');          // tampa
-    R2(x-6,y-5,12,6,'#8a5a2a');R2(x-6,y-5,12,1,'#5a3a24');            // corpo
-    R2(x-4,y-10,2,11,'#6a7280');R2(x+2,y-10,2,11,'#6a7280');R2(x-4,y-10,2,1,'#c0c8d4');R2(x+2,y-10,2,1,'#c0c8d4');   // cintas
-    const lx=o===2?x-7:x+5;R2(lx,y-8,2,4,'#ffd84a');R2(lx+(o===2?0:1),y-7,1,2,'#8a5a2a');   // fecho na ponta virada para o jogador
-    R2(x-7,y,3,2,'#4a2e1a');R2(x+4,y,3,2,'#4a2e1a');
-  }else{      // de frente (0) ou de costas (1)
-    R2(x-8,y-11,16,13,'#4a2e1a');                       // contorno
-    R2(x-7,y-10,14,5,'#b07a3e');R2(x-7,y-10,14,1,'#d6a468');          // tampa
-    R2(x-7,y-5,14,6,'#8a5a2a');R2(x-7,y-5,14,1,'#5a3a24');            // corpo
-    R2(x-5,y-10,2,11,'#6a7280');R2(x+3,y-10,2,11,'#6a7280');R2(x-5,y-10,2,1,'#c0c8d4');R2(x+3,y-10,2,1,'#c0c8d4');   // cintas de ferro
-    if(o===0){R2(x-2,y-7,4,4,'#ffd84a');R2(x-1,y-6,2,2,'#8a5a2a');}            // fecho
-    else{R2(x-3,y-6,2,2,'#3a3a44');R2(x+1,y-6,2,2,'#3a3a44');}                 // dobradicas (costas)
-    R2(x-8,y,3,2,'#4a2e1a');R2(x+5,y,3,2,'#4a2e1a');                            // pes
-  }
-  if(snowAcc()>.06)snowCap(o>=2?x-7:x-8,y-9,o>=2?14:16,3);   // neve acumulada na tampa
-  if(s.s&&s.s.length){R2(x-6,y-11,2,1,'#d33');}                      // marca discreta: tem coisa dentro
+  const x=Math.round(s.x),y=Math.round(s.y),o=cleanO(s.o),side=o>=2;
+  const w=side?10:14,h=side?12:9,x0=x-(w>>1),y0=y-h;                    // de lado o bau gira 90 graus: tampa mais comprida na vertical
+  boxShadow(x0,y0+3,w,h,5);                                              // a tampa fica 3 px acima da base na vista inclinada
+  R2(x0-1,y0-1,w+2,h+5,'#4a2e1a');                                       // contorno (tampa e frente)
+  R2(x0,y0,w,h,'#b07a3e');                                               // tampa
+  if(side)for(let k=3;k<w-1;k+=3)R2(x0+k,y0+1,1,h-2,'#9a6a34');else for(let k=3;k<h-1;k+=3)R2(x0+1,y0+k,w-2,1,'#9a6a34');   // tabuas da tampa
+  R2(x0+w-1,y0+1,1,h-1,'#8a5a2a');                                       // borda leste da tampa, na sombra
+  R2(x0,y0,w,1,'#d6a468');R2(x0,y0,1,h,'#d6a468');                       // luz: bordas norte e oeste da tampa
+  R2(x0,y0+h,w,3,'#7a4e24');R2(x0,y0+h+2,w,1,'#5a3a24');                 // frente do bau: face baixa, voltada para o sul (sombra)
+  if(side){R2(x0,y0+2,w,2,'#6a7280');R2(x0,y0+h-4,w,2,'#6a7280');R2(x0,y0+2,w,1,'#c0c8d4');R2(x0,y0+h-4,w,1,'#c0c8d4');}   // cintas de ferro (tampa)
+  else{R2(x0+2,y0,2,h+3,'#6a7280');R2(x0+w-4,y0,2,h+3,'#6a7280');R2(x0+2,y0,2,1,'#c0c8d4');R2(x0+w-4,y0,2,1,'#c0c8d4');R2(x0+2,y0,1,h,'#c0c8d4');}
+  if(o===0){R2(x-2,y0+h-1,4,4,'#ffd84a');R2(x-1,y0+h+1,2,1,'#8a5a2a');}  // fecho na frente
+  else if(o===1){R2(x-6,y0+h,2,2,'#3a3a44');R2(x+4,y0+h,2,2,'#3a3a44');} // dobradicas (costas)
+  else if(o===2){R2(x0-2,y0+4,2,4,'#ffd84a');R2(x0-1,y0+5,1,2,'#8a5a2a');}   // fecho na ponta oeste
+  else{R2(x0+w,y0+4,2,4,'#ffd84a');R2(x0+w,y0+5,1,2,'#8a5a2a');}              // fecho na ponta leste
+  if(snowAcc()>.06)snowCap(x0,y0,w,3);   // neve acumulada na tampa
+  if(s.s&&s.s.length){R2(x0,y0-2,2,1,'#d33');}                           // marca discreta: tem coisa dentro
 }
 function stashDepth(s){return s.y;}
 
