@@ -532,7 +532,7 @@ function boxShadowPath(x,y,w,h,H){
 }
 function boxShadow(x,y,w,h,H){ctx.fillStyle=SUN.fs;ctx.beginPath();boxShadowPath(x,y,w,h,H);ctx.fill();}
 window.boxShadow=boxShadow;window.boxShadowPath=boxShadowPath;
-/* sombra de planta e de poste: L = lista de [x, y, altura, largura do talo, largura da copa], com os pes em (x,y).
+/* sombra de planta e de poste: L = lista de [x, y, altura, largura do talo, largura da copa, proporcao da copa (opcional, 0.5)], com os pes em (x,y).
    Tudo num caminho so e um preenchimento so (muitos pes de milho juntos nao escurecem em dobro). De noite (sem sol) fica so uma mancha redonda no pe.
    Os pedacos tem o mesmo sentido de giro (talo virado para o sol), senao a uniao deixaria buracos. k encurta a sombra de quem e fino e folhudo. */
 function groundShadowBatch(L,k){
@@ -552,7 +552,7 @@ function groundShadowBatch(L,k){
         else{ctx.moveTo(x-bw,gy);ctx.lineTo(x-bw+vx,gy+vy);ctx.lineTo(x+bw+vx,gy+vy);ctx.lineTo(x+bw,gy);}
         ctx.closePath();
       }
-      if(cw>0){const ex=x+vx*.9,ey=gy+vy*.9;ctx.moveTo(ex+cw,ey);ctx.ellipse(ex,ey,cw,cw*.5+.5,0,0,6.283);}
+      if(cw>0){const ex=x+vx*.9,ey=gy+vy*.9;ctx.moveTo(ex+cw,ey);ctx.ellipse(ex,ey,cw,cw*(s[5]||.5)+.5,0,0,6.283);}
     }
     ctx.fill();
   }
