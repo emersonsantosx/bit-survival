@@ -104,8 +104,8 @@ PXG.seed=['........','..NNNN..','.NNnnNN.','.NYYYYN.','.NYGYYN.','.NYYGYN.','..N
   PXG.seed_corn=stamp([[GRAIN,0,0],[GRAIN,5,1],[GRAIN,2,4],[GRAIN,6,5]],{});   // grãos amarelos
   PXG.seed_potato=['..........','...G.G....','..kGkG....','.kNnNNk...','kNnNNnNk..','kNNNnNNk..','.kNNNNk...','..kkkk....'];   // batata-semente com brotos
 })();
-PXG.katana=['............W.', '...........SW.', '..........SW..', '.........SW...', '........SW....', '.......SW.....', '......SW......', '.....YY.......', '...KsssK......', '....KKK.......', '...Kc.........', '..cK..........', '.KK...........', '.K............'];   // katana 14x14: lamina reta em diagonal, fio unico, ponta fina, habaki dourado, tsuba e cabo com tsukamaki preto
-PXG.katana_h=['.......................', '........K..............', '........KK.............', 'KKcKcKcKsYYSSSSSSSSSS..', 'KcKcKcKcsYYWWWWWWWWWWS.', '........KK.............', '........K..............', '.......................'];   // katana na mao (na horizontal, ponta para a direita): lamina reta; so o jogo desenha, nao aparece em menu
+PXG.katana=['............W.', '...........WS.', '..........WS..', '.........WS...', '........WS....', '.......WS.....', '......WS......', '.....YY.......', '...KsssK......', '....KKK.......', '...Kc.........', '..cK..........', '.KK...........', '.K............'];   // katana 14x14: lamina reta em diagonal, fio unico, ponta fina, habaki dourado, tsuba e cabo com tsukamaki preto
+PXG.katana_h=['.......................', '........K..............', '........KK.............', 'KKcKcKcKsYYWWWWWWWWWW..', 'KcKcKcKcsYYSSSSSSSSSSS.', '........KK.............', '........K..............', '.......................'];   // katana na mao (na horizontal, ponta para a direita): lamina reta; so o jogo desenha, nao aparece em menu
 PXG.spear=pxLines(11,11,[['l',0,10,4,6,'N',1],['r',4,5,2,1,'R'],['r',4,3,2,1,'W'],['r',5,4,2,1,'S'],['r',6,5,2,1,'s'],['r',5,2,2,1,'W'],['r',6,3,2,1,'S'],['r',7,4,2,1,'s'],['r',6,1,2,1,'W'],['r',7,2,2,1,'S'],['r',8,3,2,1,'s'],['r',8,1,2,1,'S'],['r',9,0,2,1,'S']]);
 PXG.arrows=pxLines(11,11,[['l',1,9,9,1,'n',0],['l',8,0,10,2,'S',1],['r',9,0,2,3,'S'],['l',0,10,2,8,'W',1],['l',0,8,2,6,'W',0]]);
 PXG.rod=pxLines(11,11,[['l',0,10,8,3,'N',0],['r',3,9,2,2,'s'],['r',9,2,1,1,'W']]);
@@ -146,6 +146,21 @@ function pxCanvas(name){
   const cv=document.createElement('canvas');cv.width=w;cv.height=h;const c=cv.getContext('2d');
   for(let y=0;y<h;y++)for(let x=0;x<g[y].length;x++){const ch=g[y][x];if(ch!=='.'&&PXPAL[ch]){c.fillStyle=PXPAL[ch];c.fillRect(x,y,1,1);}}
   return PXCV[name]=cv;
+}
+/* icone para o mundo (itens no chao): a mesma arte com a luz do jogo por cima, noroeste claro e sudeste escuro. Os icones do inventario foram desenhados
+   com a luz cada um de um jeito (o machado, por exemplo, tinha o brilho a leste); no mundo a luz e sempre a mesma. Guardado em cache. */
+const PXLIT={};
+function pxLight(g,x0,y0,x1,y1){   // sobrepoe luz/sombra nos pixels ja desenhados (source-atop), do canto noroeste (x0,y0) ao sudeste (x1,y1)
+  const gr=g.createLinearGradient(x0,y0,x1,y1);
+  gr.addColorStop(0,'rgba(255,248,230,.30)');gr.addColorStop(.5,'rgba(255,248,230,0)');gr.addColorStop(.5,'rgba(10,12,30,0)');gr.addColorStop(1,'rgba(10,12,30,.34)');
+  g.save();g.globalCompositeOperation='source-atop';g.fillStyle=gr;g.fillRect(Math.min(x0,x1)-64,Math.min(y0,y1)-64,Math.abs(x1-x0)+128,Math.abs(y1-y0)+128);g.restore();
+}
+function pxCanvasLit(name){
+  if(PXLIT[name])return PXLIT[name];
+  const cv=pxCanvas(name);if(!cv)return null;
+  const c=document.createElement('canvas');c.width=cv.width;c.height=cv.height;const g=c.getContext('2d');
+  g.drawImage(cv,0,0);pxLight(g,0,0,cv.width,cv.height);
+  return PXLIT[name]=c;
 }
 /* html de uma imagem pixel; s = tamanho em px de CSS de cada pixel do ícone */
 function pxIcon(name,s){

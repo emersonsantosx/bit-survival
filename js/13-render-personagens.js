@@ -410,16 +410,26 @@ function swingAngle(o,face){
   const d=(o.swing/.18-.5)*2.2;
   return meleeLeft(o.wpn,face)?face-d:face+d;
 }
+/* a arma gira com a mira, mas a luz nao: ela e desenhada num quadro auxiliar (o mesmo zoom do jogo), a luz do jogo entra por cima no espaco da tela
+   (noroeste claro, sudeste escuro) e so entao o quadro vai para a cena. Antes o brilho pintado no icone girava junto com a arma. */
+let _heldCv=null,_heldG=null,_heldZ=0;
 function drawHeld(wpn,hx,hy,a,left){
   const H=HELD[wpn];if(!H)return false;
   const cv=pxCanvas(H.ic||WEAPON_ICON[wpn]||wpn);if(!cv)return false;
-  ctx.save();ctx.translate(hx,hy);
-  if(left){ctx.scale(-1,1);ctx.rotate(Math.PI-a+(H.rot||0));}
-  else ctx.rotate(a+(H.rot||0));
-  if(H.gun&&Math.cos(a)<0)ctx.scale(1,-1);
-  const sc=H.s||1;ctx.scale(sc,sc);ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(cv,(H.off||0)/sc-H.ax,-H.ay);
-  ctx.restore();return true;
+  const N=Math.ceil(64*Z);
+  if(!_heldCv||_heldZ!==Z){_heldCv=document.createElement('canvas');_heldCv.width=_heldCv.height=N;_heldG=_heldCv.getContext('2d');_heldZ=Z;}
+  const g=_heldG;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,N,N);g.setTransform(Z,0,0,Z,0,0);g.imageSmoothingEnabled=false;
+  g.save();g.translate(32,32);
+  if(left){g.scale(-1,1);g.rotate(Math.PI-a+(H.rot||0));}
+  else g.rotate(a+(H.rot||0));
+  if(H.gun&&Math.cos(a)<0)g.scale(1,-1);
+  const sc=H.s||1;g.scale(sc,sc);
+  g.drawImage(cv,(H.off||0)/sc-H.ax,-H.ay);
+  g.restore();
+  const d=Math.max(5,Math.hypot(cv.width,cv.height)*sc*.5),e=d*.7071;
+  pxLight(g,32-e,32-e,32+e,32+e);
+  ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(_heldCv,hx-32,hy-32,N/Z,N/Z);ctx.restore();
+  return true;
 }
 /* braço = um traço reto de 2 px (sem cotovelo): manga na primeira metade, pele na segunda; coordenadas = centros do ombro e da mão */
 function armLine(sx,sy,ex,ey,sleeve,skin,fr){
@@ -2067,8 +2077,8 @@ function drawLake(l){
 }
 function drawItem(it,near){
   const x=Math.round(it.x),y=Math.round(it.y),b=Math.round(Math.sin(T*3+it.x));
-  shadow(x,y,4,2);
-  const _ic=ITEMS[it.t]&&ITEMS[it.t].e?pxCanvas(ITEMS[it.t].e):null;
+  const _ic=ITEMS[it.t]&&ITEMS[it.t].e?pxCanvasLit(ITEMS[it.t].e):null;
+  { const w=_ic?Math.min(_ic.width,14):8;boxShadow(x-(w>>1),y-1,w,2,4); }   // sombra do sol com o tamanho do icone (antes: elipse fixa de 8x4)
   if(_ic){ctx.imageSmoothingEnabled=false;ctx.drawImage(_ic,x-(_ic.width>>1),y-_ic.height+1+b);}
   else switch(it.t){
     case'food':R(x-3,y-6+b,6,6,'#c9772b');R(x-3,y-6+b,6,2,'#e8e8e8');break;
