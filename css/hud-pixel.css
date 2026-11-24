@@ -105,6 +105,11 @@ body.kbm #inv .slot[data-key]::after{left:calc(1*var(--tu));top:calc(1*var(--tu)
   margin-left:calc(-3.5*var(--hu));background:var(--hs-ponta) 0 0/100% 100% no-repeat;image-rendering:pixelated;image-rendering:crisp-edges;
 }
 
+/* ---------- barras de status (vida, fome, sede, energia, temperatura): mesma linguagem, sem translucido nem contorno branco ---------- */
+#bars .bar{box-sizing:border-box;height:calc(6*var(--tu));background:#14171c;border:var(--tu) solid #3f4652;border-radius:0;box-shadow:0 var(--tu) 0 #0c0e12}
+#bars .bar b{box-shadow:inset 0 var(--tu) 0 rgba(255,255,255,.28),inset 0 calc(-1*var(--tu)) 0 rgba(0,0,0,.22)}   /* brilho de 1 pixel no alto e sombra embaixo: da volume sem gradiente */
+#stc{background:repeating-linear-gradient(45deg,#0c0e12 0 var(--tu),#2e343e var(--tu) calc(2*var(--tu)))}   /* energia perdida (limite): listras na paleta das telas */
+
 /* ---------- aviso de estado (SANGRANDO etc.): mesma placa dos avisos ---------- */
 #stat{
   --sp:var(--hs-night-2u);--spd:var(--hs-night-2d);
