@@ -6,13 +6,12 @@ Nada para baixar e nada para desenhar em JavaScript: a HUD continua funcionando 
 
 Uso: python3 tools/gerar-sprites-hud.py   (so biblioteca padrao do Python)
 
-Linguagem visual (a mesma para TODOS os componentes da HUD):
-- moldura em camadas: contorno marrom-escuro (nunca preto) -> bisel claro em cima/esquerda e escuro embaixo/direita -> faixa de cor ->
-  miolo (poco) verde-musgo escuro onde ficam os icones;
-- cantos recortados em degrau (1 ou 2 pixels), nada de circulo;
-- rebites claros nos cantos das molduras largas (acabamento artesanal);
-- variantes por funcao: wood (neutro), moss (interagir), blood (atacar), gold (selecionado/ativo), grey (indisponivel), night (placa de aviso de estado);
-- 'u' = em repouso, 'd' = pressionado (bisel invertido, cores mais escuras).
+Linguagem visual (a MESMA do menu, das configuracoes, do crafting, do inventario e do arsenal: .islot e .screen em css/estilo.css):
+- moldura plana e quadrada: borda de 2 pixels da arte numa cor so (sem bisel, sem contorno marrom), miolo liso; a sombra dura embaixo vem do CSS (hud-pixel.css);
+- paleta das telas: painel #1f242c, borda #3f4652, musgo #8DA568, ambar #C79A54, vermelho #C0634A, sombra #0c0e12;
+- variantes por funcao: wood (neutro, o .islot), moss (interagir), blood (atacar, com um filete interno mais escuro para dar peso), gold (item na mao ou ativo, o .islot.held), grey (indisponivel, o .islot.lock), night (placa de aviso de estado);
+- molduras de 3 e 4 pixels so aumentam o recuo do miolo (mesma borda de 2 pixels), para o tamanho dos botoes nao mudar;
+- 'u' = em repouso, 'd' = pressionado (miolo mais escuro; o conteudo desce 1 pixel pelo CSS).
 O tamanho da moldura em tela e sempre (borda x --hu), onde --hu e o pixel da HUD ajustado ao pixel fisico da tela (ver applyUiScale em js/01-base.js).
 """
 import base64
@@ -20,15 +19,15 @@ import os
 import struct
 import zlib
 
-INK = '#1f140c'
+EDGE = '#3f4652'
 VARIANTES = {
-    #            bisel claro  faixa       bisel escuro  miolo
-    'wood':  dict(hi='#cf9a5e', band='#8a5a2a', lo='#4a2e16', well='#46573a'),
-    'moss':  dict(hi='#c3da92', band='#628442', lo='#33472a', well='#46573a'),
-    'blood': dict(hi='#f59a76', band='#b5301f', lo='#661810', well='#5a2a20'),
-    'gold':  dict(hi='#ffe066', band='#e3ad32', lo='#b8741a', well='#5a5a30'),
-    'grey':  dict(hi='#a9a28c', band='#6e695a', lo='#3d3a31', well='#30352a'),
-    'night': dict(hi='#b88a58', band='#7a5230', lo='#3f2813', well='#2b2018'),   # placas de aviso de estado (miolo escuro para o texto colorido)
+    #            borda       miolo       filete interno (so atacar)
+    'wood':  dict(edge=EDGE,      well='#1f242c'),
+    'moss':  dict(edge='#8DA568', well='#232b22'),
+    'blood': dict(edge='#C0634A', well='#3a211d', rim='#7a3b2e'),
+    'gold':  dict(edge='#C79A54', well='#2b2820'),
+    'grey':  dict(edge='#2e343e', well='#14171c'),
+    'night': dict(edge=EDGE,      well='#171A20'),   # placas de aviso de estado (miolo escuro para o texto colorido)
 }
 # (largura da borda em pixels da arte, recorte do canto em pixels)
 TAMANHOS = {2: 1, 3: 2, 4: 3}
@@ -44,80 +43,30 @@ def escurece(h, f):
     return '#%02x%02x%02x' % (int(r * f), int(g * f), int(b * f))
 
 
-def mistura(a, b):
-    ra, rb = hex_rgb(a), hex_rgb(b)
-    return '#%02x%02x%02x' % tuple((x + y) // 2 for x, y in zip(ra, rb))
-
-
 def paleta(v, pressionado):
     p = dict(VARIANTES[v])
     if pressionado:
-        # bisel invertido (o botao afundou) e cores um pouco mais escuras
-        p['hi'], p['lo'] = escurece(p['lo'], 1.0), p['hi']
-        p['hi'] = escurece(p['hi'], .8)
-        p['lo'] = escurece(p['lo'], .75)
-        p['band'] = escurece(p['band'], .78)
-        p['well'] = escurece(p['well'], .82)
+        p['well'] = escurece(p['well'], .72)
+        if 'rim' in p:
+            p['rim'] = escurece(p['rim'], .8)
     return p
 
 
 def moldura(b, v, pressionado):
-    """Devolve (S, pixels[y][x]) com cor '#rrggbb' ou None (transparente). S = 2*b + 2."""
+    """Devolve (S, pixels[y][x]) com cor '#rrggbb'. S = 2*b + 2. Quadrada, borda de 2 pixels, miolo liso."""
     S = 2 * b + 2
-    r = TAMANHOS[b]
     p = paleta(v, pressionado)
-    dentro = [[not (x + y < r or (S - 1 - x) + y < r or x + (S - 1 - y) < r or (S - 1 - x) + (S - 1 - y) < r) for x in range(S)] for y in range(S)]
-
-    def prof(x, y):
-        # profundidade = passos (4 vizinhos) ate sair da forma
-        if not dentro[y][x]:
-            return 0
-        d = 1
-        fila = [(x, y)]
-        visto = {(x, y)}
-        while d < 8:
-            prox = []
-            for (cx, cy) in fila:
-                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                    nx, ny = cx + dx, cy + dy
-                    if not (0 <= nx < S and 0 <= ny < S) or not dentro[ny][nx]:
-                        return d
-                    if (nx, ny) not in visto:
-                        visto.add((nx, ny))
-                        prox.append((nx, ny))
-            fila = prox
-            d += 1
-        return d
-
     out = [[None] * S for _ in range(S)]
     for y in range(S):
         for x in range(S):
-            if not dentro[y][x]:
-                continue
-            d = prof(x, y)
-            dt, dl, db, dr = y, x, S - 1 - y, S - 1 - x
-            m = min(dt, dl, db, dr)
-            claro = (m == dt or m == dl) and not (m == db or m == dr)
-            escuro = (m == db or m == dr) and not (m == dt or m == dl)
-            if d == 1:
-                cor = INK
-            elif d == 2:
-                cor = p['hi'] if claro else p['lo'] if escuro else mistura(p['hi'], p['lo'])
-            elif d <= b and not (b == 4 and d == 4):
-                cor = p['band']
-            elif b == 4 and d == 4:
-                # sombra interna (inverso do bisel) em volta do miolo: da profundidade a moldura larga
-                cor = p['lo'] if claro else p['hi'] if escuro else mistura(p['hi'], p['lo'])
-                cor = mistura(cor, p['band'])
+            m = min(x, y, S - 1 - x, S - 1 - y)
+            if m < 2:
+                cor = p['edge']
+            elif m == 2 and b >= 3 and 'rim' in p:
+                cor = p['rim']
             else:
                 cor = p['well']
             out[y][x] = cor
-    if b >= 3:
-        # rebites: um pixel claro em cada canto da faixa
-        o = 2 if b == 3 else 2
-        for (x, y) in ((o, o), (S - 1 - o, o), (o, S - 1 - o), (S - 1 - o, S - 1 - o)):
-            if out[y][x] == p['band']:
-                out[y][x] = p['hi'] if not pressionado else mistura(p['hi'], p['band'])
     return S, out
 
 
@@ -143,7 +92,7 @@ def uri(w, h, px):
 
 def ponta():
     """Ponta (triangulo para baixo) do rotulo da arma: aponta para o botao de trocar arma. 7x4."""
-    I, F = INK, VARIANTES['wood']['well']
+    I, F = EDGE, VARIANTES['wood']['well']
     g = ['IIIIIII', '.IFFFI.', '..IFI..', '...I...']
     cor = {'I': I, 'F': F, '.': None}
     return 7, 4, [[cor[c] for c in r] for r in g]

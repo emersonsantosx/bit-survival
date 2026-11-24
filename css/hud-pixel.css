@@ -2,14 +2,15 @@
    Carregado DEPOIS de estilo.css; cada regra aqui so troca fundo, moldura, fonte e estados.
    Sistema unico (para tudo parecer da mesma familia):
    - UM pixel de arte: --hu (frame) e --tu (texto). Sao ajustados ao pixel fisico da tela em applyUiScale (js/01-base.js).
-   - Moldura: sprite 9-slice gerado por tools/gerar-sprites-hud.py (contorno marrom-escuro, bisel, faixa de cor, miolo musgo, cantos em degrau).
-   - Cor por funcao (faixa da moldura): madeira = neutro, musgo = interagir, sangue = atacar, ouro = selecionado/ativo, cinza = indisponivel.
+   - Mesma linguagem do menu, configuracoes, crafting, inventario e arsenal (css/estilo.css): painel plano #1f242c, borda quadrada #3f4652, sombra dura #0c0e12 embaixo, musgo e ambar.
+   - Moldura: sprite 9-slice gerado por tools/gerar-sprites-hud.py (plana, quadrada, borda de 2 pixels da arte).
+   - Cor por funcao (borda da moldura): cinza-azulado = neutro, musgo = interagir, vermelho = atacar, ambar = na mao/ativo, cinza escuro = indisponivel.
    - Estados: repouso (sprite 'u'), pressionado (sprite 'd' + conteudo 1 pixel abaixo), selecionado/ativo (ouro), indisponivel (cinza).
    - Texto: fonte BitHUD 5x7 (tools/gerar-fonte-hud.py), sempre em caixa alta, numeros com largura fixa.
    - Linhas de texto: line-height par (8 ou 10 x --tu) para a letra cair exatamente na grade de pixels. */
 :root{
   --hu:calc(2px*var(--ui,1));--tu:calc(1.5px*var(--ui,1));
-  --h-ink:#1f140c;--h-cream:#f6efd8;--h-gold:#ffd84a;--h-amber:#e3ad32;--h-red:#ff7a66;
+  --h-ink:#0c0e12;--h-cream:#E8E0CC;--h-gold:#C79A54;--h-amber:#C79A54;--h-red:#d9785c;   /* mesmas cores das telas (--c-deep, --c-cream, --c-amber) */
   --f-hud:"BitHUD","Courier New",monospace;
   --h-out:var(--tu) 0 0 var(--h-ink),calc(-1*var(--tu)) 0 0 var(--h-ink),0 var(--tu) 0 var(--h-ink),0 calc(-1*var(--tu)) 0 var(--h-ink),var(--tu) var(--tu) 0 var(--h-ink),calc(-1*var(--tu)) var(--tu) 0 var(--h-ink),var(--tu) calc(-1*var(--tu)) 0 var(--h-ink),calc(-1*var(--tu)) calc(-1*var(--tu)) 0 var(--h-ink);
 }
@@ -35,7 +36,7 @@
 #hud #pickx button.btn{border-width:calc(2*var(--hu));border-image-slice:2 fill;border-image-width:calc(2*var(--hu))}
 
 /* sombra no chao: um pixel de arte abaixo, dura (sem desfoque), segue o recorte em degrau da moldura */
-#inv .slot,#top .tbtns .sm,.btn,.veh-btn,#bpack,#bchat,#toast,#wpn,#twn,#stat{filter:drop-shadow(0 var(--hu) 0 rgba(10,16,6,.45))}
+#inv .slot,#top .tbtns .sm,.btn,.veh-btn,#bpack,#bchat,#toast,#wpn,#twn,#stat{filter:drop-shadow(0 var(--hu) 0 #0c0e12)}
 #inv .slot:active,#top .tbtns .sm:active,.btn:active,.btn.on,#atk:active,#atk.on,.veh-btn:active,#bpack:active,#bchat:active{filter:none}
 
 /* pressionado: sprite afundado e o conteudo desce 1 pixel (.on = classe que o jogo poe enquanto o dedo esta no botao) */
