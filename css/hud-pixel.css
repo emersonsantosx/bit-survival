@@ -1,0 +1,131 @@
+/* ===== HUD PIXEL ART (Bit Survival): so aparencia. Posicoes, tamanhos, IDs e eventos continuam nos arquivos originais =====
+   Carregado DEPOIS de estilo.css; cada regra aqui so troca fundo, moldura, fonte e estados.
+   Sistema unico (para tudo parecer da mesma familia):
+   - UM pixel de arte: --hu (frame) e --tu (texto). Sao ajustados ao pixel fisico da tela em applyUiScale (js/01-base.js).
+   - Moldura: sprite 9-slice gerado por tools/gerar-sprites-hud.py (contorno marrom-escuro, bisel, faixa de cor, miolo musgo, cantos em degrau).
+   - Cor por funcao (faixa da moldura): madeira = neutro, musgo = interagir, sangue = atacar, ouro = selecionado/ativo, cinza = indisponivel.
+   - Estados: repouso (sprite 'u'), pressionado (sprite 'd' + conteudo 1 pixel abaixo), selecionado/ativo (ouro), indisponivel (cinza).
+   - Texto: fonte BitHUD 5x7 (tools/gerar-fonte-hud.py), sempre em caixa alta, numeros com largura fixa.
+   - Linhas de texto: line-height par (8 ou 10 x --tu) para a letra cair exatamente na grade de pixels. */
+:root{
+  --hu:calc(2px*var(--ui,1));--tu:calc(1.5px*var(--ui,1));
+  --h-ink:#1f140c;--h-cream:#f6efd8;--h-gold:#ffd84a;--h-amber:#e3ad32;--h-red:#ff7a66;
+  --f-hud:"BitHUD","Courier New",monospace;
+  --h-out:var(--tu) 0 0 var(--h-ink),calc(-1*var(--tu)) 0 0 var(--h-ink),0 var(--tu) 0 var(--h-ink),0 calc(-1*var(--tu)) 0 var(--h-ink),var(--tu) var(--tu) 0 var(--h-ink),calc(-1*var(--tu)) var(--tu) 0 var(--h-ink),var(--tu) calc(-1*var(--tu)) 0 var(--h-ink),calc(-1*var(--tu)) calc(-1*var(--tu)) 0 var(--h-ink);
+}
+
+/* ---------- moldura fina (2 pixels): botoes do inventario, canto superior, placas de texto, etiquetas ---------- */
+#inv .slot,#top .tbtns .sm,#hud #pickx button.btn,#bchat,#swap .swc,#toast,#wpn,#twn,#stat{
+  --b:2;--sp:var(--hs-wood-2u);--spd:var(--hs-wood-2d);
+}
+/* ---------- moldura media (3 pixels): botoes de acao, mochila, veiculo ---------- */
+.btn,.veh-btn,#bpack{--b:3;--sp:var(--hs-wood-3u);--spd:var(--hs-wood-3d)}
+/* ---------- moldura larga (4 pixels): atacar ---------- */
+#atk{--b:4;--sp:var(--hs-blood-4u);--spd:var(--hs-blood-4d)}
+#pick{--sp:var(--hs-moss-3u);--spd:var(--hs-moss-3d)}
+#v-exit{--sp:var(--hs-blood-3u);--spd:var(--hs-blood-3d)}
+
+#inv .slot,#top .tbtns .sm,#hud #pickx button.btn,#bchat,#swap .swc,#toast,#wpn,#twn,#stat,
+.btn,.veh-btn,#bpack,#atk{
+  border-style:solid;border-color:transparent;border-radius:0;background:transparent;box-shadow:none;
+  border-width:calc(var(--b)*var(--hu));
+  border-image-source:var(--sp);border-image-slice:var(--b) fill;border-image-width:calc(var(--b)*var(--hu));border-image-repeat:stretch;
+  image-rendering:pixelated;image-rendering:crisp-edges;
+}
+#hud #pickx button.btn{border-width:calc(2*var(--hu));border-image-slice:2 fill;border-image-width:calc(2*var(--hu))}
+
+/* sombra no chao: um pixel de arte abaixo, dura (sem desfoque), segue o recorte em degrau da moldura */
+#inv .slot,#top .tbtns .sm,.btn,.veh-btn,#bpack,#bchat,#toast,#wpn,#twn,#stat{filter:drop-shadow(0 var(--hu) 0 rgba(10,16,6,.45))}
+#inv .slot:active,#top .tbtns .sm:active,.btn:active,.btn.on,#atk:active,#atk.on,.veh-btn:active,#bpack:active,#bchat:active{filter:none}
+
+/* pressionado: sprite afundado e o conteudo desce 1 pixel (.on = classe que o jogo poe enquanto o dedo esta no botao) */
+#inv .slot:active,#top .tbtns .sm:active,#hud #pickx button.btn:active,#bchat:active,.btn:active,.btn.on,#atk:active,#atk.on,.veh-btn:active,#bpack:active{
+  border-image-source:var(--spd);background:transparent;
+}
+#inv .slot:active>*,#top .tbtns .sm:active>*,#hud #pickx button.btn:active>*,#bchat:active>*,.btn:active>*,.btn.on>*,.veh-btn:active>*,#bpack:active>*{transform:translateY(var(--hu))}
+#bpack:active{transform:none;box-shadow:none}
+
+/* ---------- estados de cor ---------- */
+#inv .slot.held{--sp:var(--hs-gold-2u);--spd:var(--hs-gold-2d);transform:translateX(calc(2*var(--hu)));box-shadow:none}   /* o item na mao sai um passo da fileira */
+#pick.hot{--sp:var(--hs-gold-3u);--spd:var(--hs-gold-3d);box-shadow:none;color:inherit}   /* tem algo para interagir */
+#tools.act,.veh-btn.on{--sp:var(--hs-gold-3u);--spd:var(--hs-gold-3d);box-shadow:none;background:transparent;border-color:transparent;color:inherit}
+.btn.hot .pxi{filter:none}
+#top .tbtns #bflash.on{--sp:var(--hs-gold-2u);--spd:var(--hs-gold-2d);box-shadow:none;background:transparent;border-color:transparent}
+#bflash.on .pxi{filter:none}
+#bchat.has-new{--sp:var(--hs-gold-2u);--spd:var(--hs-gold-2d);box-shadow:none}
+#hud #pickx button.btn.no{--sp:var(--hs-grey-2u);--spd:var(--hs-grey-2d);opacity:1;box-shadow:none}
+#hud #pickx button.btn.no .pxi{opacity:.5}
+#hud #pickx button.btn{border-color:transparent;background:transparent;box-shadow:none}
+#hoe{border-color:transparent}
+#bpack.nopack{--sp:var(--hs-grey-3u);--spd:var(--hs-grey-3d)}
+#bpack.nopack [data-px]{opacity:.7}
+
+/* ---------- A. inventario (coluna da esquerda) ---------- */
+#inv .slot{font-family:var(--f-hud);color:var(--h-cream)}
+#inv .slot .count{right:calc(1*var(--tu));bottom:calc(1*var(--tu));font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);color:var(--h-cream);text-shadow:var(--h-out);letter-spacing:0}
+body.kbm #inv .slot[data-key]::after{left:calc(1*var(--tu));top:calc(1*var(--tu));border:0;border-radius:0;background:transparent;color:var(--h-gold);font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);padding:0;text-shadow:var(--h-out)}
+#bpack{width:calc(58px*var(--ui,1));font-family:var(--f-hud);color:var(--h-gold);gap:calc(2*var(--tu))}
+#bpack b{font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);color:var(--h-cream);text-shadow:var(--h-out)}
+#bpack.full b{color:var(--h-red)}
+
+/* ---------- B. acoes (direita) ---------- */
+/* as caixas de ATACAR e TROCAR ARMA se tocavam em 4x8 px (invisivel com botao redondo, visivel com moldura quadrada): trocar arma e a etiqueta sobem 10 px */
+#swap{bottom:calc(112px*var(--ui,1))}
+#wpn{bottom:calc(176px*var(--ui,1))}
+.btn{color:var(--h-cream);font-family:var(--f-hud)}
+#atk{color:var(--h-cream)}
+#swap .swc{
+  right:calc(-3*var(--hu));bottom:calc(-3*var(--hu));min-width:0;width:auto;height:auto;
+  padding:calc(2*var(--tu)) calc(3*var(--tu)) calc(3*var(--tu));
+  font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);color:var(--h-gold);letter-spacing:0;border-radius:0;
+}
+#swap .swc.low{color:var(--h-red);border-color:transparent}
+#swap .swm{opacity:.9}
+
+/* ---------- C. canto superior direito (pausa, construcao, lanterna) ---------- */
+#top .tbtns .sm{color:var(--h-cream)}
+
+/* ---------- D. avisos temporarios (topo) ---------- */
+#toast{
+  max-width:max(calc(160px*var(--ui,1)),min(60%,calc(100% - 2*200px*var(--ui,1))));   /* nao passa por cima das missoes: em tela estreita a mensagem quebra em duas linhas */
+  padding:calc(1*var(--tu)) calc(4*var(--tu)) calc(2*var(--tu));
+  font:calc(10*var(--tu))/calc(10*var(--tu)) var(--f-hud);color:var(--h-cream);letter-spacing:0;text-align:center;
+}
+#toast:not(.show){opacity:0}
+
+/* ---------- E. etiqueta da arma / ferramenta (acima do botao de ataque e do de construcao) ---------- */
+#wpn,#twn{
+  padding:calc(2*var(--tu)) calc(3*var(--tu)) calc(3*var(--tu));
+  font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);color:var(--h-cream);letter-spacing:0;white-space:nowrap;
+}
+#twn{color:var(--h-gold)}
+#wpn::after,#twn::after{
+  content:"";position:absolute;left:50%;top:calc(100% - var(--hu));width:calc(7*var(--hu));height:calc(4*var(--hu));
+  margin-left:calc(-3.5*var(--hu));background:var(--hs-ponta) 0 0/100% 100% no-repeat;image-rendering:pixelated;image-rendering:crisp-edges;
+}
+
+/* ---------- aviso de estado (SANGRANDO etc.): mesma placa dos avisos ---------- */
+#stat{
+  --sp:var(--hs-night-2u);--spd:var(--hs-night-2d);
+  margin-top:calc(2*var(--hu));padding:calc(1*var(--tu)) calc(3*var(--tu)) calc(2*var(--tu));
+  font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);letter-spacing:0;font-weight:400;
+  color:var(--h-red);
+}
+#stat.s-hp{color:#ff7a66;border-color:transparent}
+#stat.s-food{color:#ffa94d;border-color:transparent}
+#stat.s-water{color:#74c0ff;border-color:transparent}
+#stat.s-stam{color:#ffe566;border-color:transparent}
+#stat.s-cold{color:#a8dcff;border-color:transparent}
+#stat.s-sick{color:#b5e04a;border-color:transparent}
+#stat.s-hot{color:#ff6a50;border-color:transparent}
+
+/* ---------- veiculo: mesma linguagem ---------- */
+.veh-btn{color:var(--h-cream)}
+#v-exit{font-family:var(--f-hud)}
+
+/* ---------- chat (botao): mesma linguagem ---------- */
+#bchat{color:var(--h-cream)}
+#bchat[data-n]::after{border-radius:0;background:var(--h-gold);color:var(--h-ink);font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);box-shadow:0 0 0 var(--tu) var(--h-ink);min-width:calc(8*var(--tu));height:calc(8*var(--tu));padding:0 var(--tu);top:calc(-3*var(--hu));right:calc(-3*var(--hu))}
+
+/* ---------- teclado e mouse: etiqueta da tecla ---------- */
+body.kbm [data-key]::after{border-radius:0;border:var(--tu) solid var(--h-ink);background:var(--h-gold);color:var(--h-ink);font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);padding:0 var(--tu)}
