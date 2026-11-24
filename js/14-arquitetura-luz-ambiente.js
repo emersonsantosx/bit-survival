@@ -1430,7 +1430,7 @@ function render(){
   // Sangue no chao (manchas e respingos) fica ABAIXO dos veiculos; so itens e entidades aparecem por cima
   for(const d of decals){
     if(d.x<vx0||d.x>vx1||d.y<vy0||d.y>vy1)continue;
-    ctx.globalAlpha=Math.max(0,Math.min(1,d.l/12));R(d.x-6,d.y-2,12,6,'#5a1010');
+    if(window.drawBloodDecal)drawBloodDecal(d);else{ctx.globalAlpha=Math.max(0,Math.min(1,d.l/12));R(d.x-6,d.y-2,12,6,'#5a1010');}   // poça ou nuvem na água (arquivo 31)
   }
   ctx.globalAlpha=1;
   if(window.drawBloodDrops)drawBloodDrops(vx0,vx1,vy0,vy1,false);   // gotas do jogador sangrando, fora de prédios (arquivo 31)

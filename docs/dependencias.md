@@ -77,7 +77,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 28-modo-desktop | 45 | 2 |  | 41 |  |  | 2 |  |  | 7 | 2 |  |  |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |
 | 29-sala-multiplayer | 15 | 5 |  | 37 |  |  |  |  |  |  |  | 10 |  |  | 6 |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |
 | 30-desempenho | 4 |  | 14 | 3 |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |
-| 31-rastro-sangue | 4 |  |  | 16 | 3 |  |  |  |  |  |  |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |
+| 31-rastro-sangue | 7 |  |  | 17 | 5 |  |  |  |  |  |  |  | 13 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |
 | 32-passageiro | 8 | 4 |  | 40 |  |  | 1 | 1 |  | 4 | 6 | 7 | 12 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |
 | 33-dano-visual | 1 |  |  | 5 |  |  |  |  |  |  |  | 1 | 16 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |
 | 34-caminhos-naturais |  |  | 4 | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |
@@ -92,7 +92,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | MP | let | 04-estado:19 | 24 | 709 |
 | selectedMap | let | 04-estado:3 | 23 | 230 |
 | beep | funcao | 02-audio:42 | 20 | 143 |
-| ctx | const | 01-base:27 | 19 | 1121 |
+| ctx | const | 01-base:27 | 19 | 1124 |
 | WW | let | 03-dados:2 | 19 | 105 |
 | WH | let | 03-dados:2 | 19 | 94 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 19 | 64 |
@@ -101,11 +101,11 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | toast | funcao | 11-pesca-update:1367 | 18 | 122 |
 | clamp | const | 01-base:4 | 17 | 101 |
 | parts | let | 04-estado:10 | 17 | 76 |
-| R | funcao | 13-render-personagens:2 | 16 | 1245 |
+| R | funcao | 13-render-personagens:2 | 16 | 1247 |
 | items | let | 04-estado:10 | 15 | 64 |
 | blds | let | 04-estado:10 | 15 | 60 |
 | solidPoint | funcao | 05-geometria:361 | 15 | 35 |
-| pointInLake | funcao | 05-geometria:147 | 14 | 48 |
+| pointInLake | funcao | 05-geometria:147 | 14 | 50 |
 | weather | let | 04-estado:6 | 13 | 92 |
 | trees | let | 04-estado:10 | 12 | 54 |
 | bldAt | funcao | 05-geometria:632 | 12 | 31 |

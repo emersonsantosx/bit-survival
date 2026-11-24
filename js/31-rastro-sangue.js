@@ -71,4 +71,62 @@ window.drawBleedMark=function(rp){
   R(x+1,y,1,1,'#ff3a3a');R(x,y+1,3,2,'#ff3a3a');R(x+1,y+3,1,1,'#ff3a3a');R(x+1,y+1,1,1,'#ffc0c0');
   ctx.globalAlpha=1;
 };
+/* MANCHAS DE SANGUE DE ZUMBI/ANIMAL (decals: {x,y,l}, l = vida restante em segundos, DECAL_LIFE no começo)
+   No chão: poça em pixel art, uma de 6 formas (redonda, com lóbulo, respingo, arrastada, pequena, grande), espelhada ou não, sorteada só pela posição
+   (nada além de x,y,l vai para o save e a rede, e todas as telas desenham a mesma poça). Nasce vermelho vivo com brilho e vai secando até marrom.
+   Na água (lago, oásis, mar): vira uma nuvem vermelha que se espalha, dilui e some mais cedo, recortada pelo contorno da água (pointInLake).
+   Só enfeita: não usa o sorteio da semente do mundo (hash da posição). */
+const BL_FORMAS=[
+  ['...aabbbaa...','..abbbbbbba..','.abbcbbbbbba.','abbbcbbbbbbba','.abbbbbbbbba.','..abbbbbbba..','...aabbbaa...'],
+  ['..aabba......','.abbbbbaaa...','abbcbbbbbbaa.','abbbbbbbbbbba','.abbbbbbbbba.','..aabbbbbaa..','....aabba....'],
+  ['.a.....a......','...aabba..a...','..abbbbbaa....','.abbcbbbbba..a','..abbbbba.....','.a.aabba......','......a...a...'],
+  ['..aabbbaa..........','.abbbcbbbbaaabba...','abbbbbbbbbbbbbbba..','.aabbbbbbbaabbaa...','...aaabbbaa.aa.....'],
+  ['.aabba..','abbcbba.','abbbbbba','.abbbba.','..aaaa..'],
+  ['....aaabbbaaa....','..aabbbbbbbbbaa..','.abbbbcbbbbbbba..','abbbbcbbbbbbbbbba','abbbbbbbbbbbbbbba','.abbbbbbbbbbbba.a','..aabbbbbbbbaa...','....aaabbbaaa..a.','.a...............']
+];
+const BL_RUNS=BL_FORMAS.map(f=>{const w=Math.max(...f.map(r=>r.length)),runs=[];
+  f.forEach((r,y)=>{let x=0;while(x<r.length){const ch=r[x];if(ch==='.'){x++;continue;}let e=x;while(e<r.length&&r[e]===ch)e++;runs.push([x,y,e-x,ch]);x=e;}});
+  return {w,h:f.length,runs};});
+const BL_PAL=(()=>{   // 16 passos de cor, do sangue fresco (0) ao seco (15)
+  const A=[[106,15,15],[156,28,28],[210,74,74]],B=[[51,9,10],[78,15,16],[94,22,22]],hex=v=>'#'+v.map(n=>('0'+Math.round(n).toString(16)).slice(-2)).join('');
+  return Array.from({length:16},(_,i)=>{const t=i/15,m=k=>A[k].map((n,j)=>n+(B[k][j]-n)*t);return {a:hex(m(0)),b:hex(m(1)),c:hex(m(2))};});})();
+function blHash(x,y){let h=(Math.round(x)*73856093^Math.round(y)*19349663)>>>0;h^=h>>>13;h=Math.imul(h,0x5bd1e995)>>>0;h^=h>>>15;return h>>>0;}
+window.bloodDecalShape=function(d){const h=blHash(d.x,d.y);return {f:h%BL_FORMAS.length,fx:(h>>>8)&1,fy:(h>>>9)&1};};   // forma sorteada pela posição (também usada nos testes)
+function blWaterMask(d){   // quais pixels da vizinhança estão dentro da água (calculado uma vez por mancha)
+  const R0=14,H0=Math.floor(R0*.7),m=[];for(let dy=-H0;dy<=H0;dy++)for(let dx=-R0;dx<=R0;dx++)m.push(pointInLake(d.x+dx,d.y+dy)?1:0);
+  return m;
+}
+function blDrawGround(d,age){
+  const sh=window.bloodDecalShape(d),F=BL_RUNS[sh.f],pal=BL_PAL[Math.min(15,Math.floor(age/2))];
+  const ox=Math.round(d.x-F.w/2),oy=Math.round(d.y+1-F.h/2);
+  for(const [x,y,w,ch] of F.runs){
+    const rx=sh.fx?F.w-x-w:x,ry=sh.fy?F.h-1-y:y;
+    R(ox+rx,oy+ry,w,1,ch==='a'?pal.a:ch==='c'?(age<22?pal.c:pal.b):pal.b);
+  }
+}
+function blDrawWater(d,age,alpha){
+  if(d.wm===undefined)d.wm=blWaterMask(d);
+  const h=blHash(d.x,d.y),R0=14,W=R0*2+1,rad=Math.min(12.5,2.5+age*1.1),dil=1-.45*Math.min(1,age/22);
+  const rows=Math.floor(R0*.7)*2+1;
+  for(let pass=0;pass<2;pass++){
+    ctx.globalAlpha=alpha*dil*(pass?.5:.32);
+    const rr=pass?rad*.55:rad,col=pass?'#8c1818':'#b83a3a';
+    for(let iy=0;iy<rows;iy++){
+      const dy=iy-Math.floor(R0*.7);let run=-1;
+      for(let ix=0;ix<=W;ix++){
+        let on=false;
+        if(ix<W){const dx=ix-R0,nz=blHash(d.x*3+dx,d.y*7+dy+h)%100/100,lim=rr*(.78+.42*nz);on=d.wm[iy*W+ix]&&(dx*dx+(dy*1.35)*(dy*1.35))<lim*lim;}
+        if(on&&run<0)run=ix;
+        if(!on&&run>=0){R(d.x-R0+run,d.y+dy,ix-run,1,col);run=-1;}
+      }
+    }
+  }
+}
+window.drawBloodDecal=function(d){
+  const age=DECAL_LIFE-d.l;
+  if(d.w===undefined){let n=0;for(const [ox,oy] of [[0,0],[-5,0],[5,0],[0,-3],[0,3]])if(pointInLake(d.x+ox,d.y+oy))n++;d.w=n>=3;}   // na agua se a maioria dos 5 pontos da mancha esta dentro do lago (beira: vence o lado maior)
+  if(d.w){const a=Math.max(0,Math.min(1,(d.l-18)/14));if(a>0)blDrawWater(d,age,a);}
+  else{ctx.globalAlpha=Math.max(0,Math.min(1,d.l/12));blDrawGround(d,age);}
+  ctx.globalAlpha=1;
+};
 })();
