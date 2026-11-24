@@ -70,9 +70,19 @@ body.kbm #inv .slot[data-key]::after{left:calc(1*var(--tu));top:calc(1*var(--tu)
 #bpack.full b{color:var(--h-red)}
 
 /* ---------- B. acoes (direita) ---------- */
-/* as caixas de ATACAR e TROCAR ARMA se tocavam em 4x8 px (invisivel com botao redondo, visivel com moldura quadrada): trocar arma e a etiqueta sobem 10 px */
-#swap{bottom:calc(112px*var(--ui,1))}
-#wpn{bottom:calc(176px*var(--ui,1))}
+/* Alinhamentos da area de acao (tudo medido a partir do botao de ATACAR, que fica a 16 px da direita e a 22 px de baixo):
+   - CORRER tem a borda direita alinhada com a de ATACAR (16 px);
+   - PEGAR, ENXADA, ferramentas e os icones extras de item tem a base alinhada com a de ATACAR (22 px);
+   - TROCAR ARMA fica na mesma coluna do botao de PEGAR (centros iguais, 150 px) e a base volta a 112 px. A etiqueta da arma, centrada sobre ele, tem a borda esquerda a 92 px da borda da tela
+     no maior nome de arma, e o botao de CORRER termina em 80 px: folga de 12 px. Acima do botao de ATACAR (topo em 110 px). O unico nome longo ("Vara de Pesca") quebra em duas linhas.
+   - Em telas baixas (altura ate 350) o CORRER continua a 28 px da borda: la a lanterna do canto superior ja encostava nele e mais perto da borda pioraria. */
+#run{right:calc(16px*var(--ui,1))}
+:where(html.land.hle350) #run{right:calc(28px*var(--ui,1))}
+#pick,#hoe{bottom:calc(22px*var(--ui,1))}
+#tools{bottom:calc(92px*var(--ui,1))}
+#pickx{bottom:calc(22px*var(--ui,1))}
+#swap{right:calc(121px*var(--ui,1));bottom:calc(112px*var(--ui,1))}
+#wpn{right:calc(150px*var(--ui,1));bottom:calc(176px*var(--ui,1))}   /* o centro da etiqueta (translateX(50%)) cai no centro do botao: 121 + 58/2 = 150 */
 .btn{color:var(--h-cream);font-family:var(--f-hud)}
 #atk{color:var(--h-cream)}
 #swap .swc{
@@ -99,6 +109,7 @@ body.kbm #inv .slot[data-key]::after{left:calc(1*var(--tu));top:calc(1*var(--tu)
   padding:calc(2*var(--tu)) calc(3*var(--tu)) calc(3*var(--tu));
   font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);color:var(--h-cream);letter-spacing:0;white-space:nowrap;
 }
+#wpn{max-width:calc(78*var(--tu));white-space:normal;text-align:center;line-height:calc(10*var(--tu))}
 #twn{color:var(--h-gold)}
 #wpn::after,#twn::after{
   content:"";position:absolute;left:50%;top:calc(100% - var(--hu));width:calc(7*var(--hu));height:calc(4*var(--hu));

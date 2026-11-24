@@ -123,7 +123,7 @@ body.nomap #mm{display:none!important}
 /* arma na mão: o próprio botão de trocar mostra o ícone da arma e a munição; o nome aparece só um instante ao trocar */
 #wpn{position:absolute;right:calc(129px*var(--ui,1));bottom:calc(166px*var(--ui,1));transform:translateX(50%);font-size:calc(11px*var(--ui,1));font-weight:bold;background:rgba(0,0,0,.6);padding:calc(3px*var(--ui,1)) calc(8px*var(--ui,1));border:1px solid rgba(255,255,255,.35);border-radius:calc(8px*var(--ui,1));white-space:nowrap;pointer-events:none;opacity:0}
 #wpn.chg{animation:wpnshow 1.8s ease-out}
-@keyframes wpnshow{0%{opacity:1;transform:translateX(50%) translateY(calc(4px*var(--ui,1)))}12%{transform:translateX(50%) translateY(0)}70%{opacity:1;transform:translateX(50%)}100%{opacity:0;transform:translateX(50%)}}
+@keyframes wpnshow{0%{opacity:1;transform:translateX(var(--wx,50%)) translateY(calc(4px*var(--ui,1)))}12%{transform:translateX(var(--wx,50%)) translateY(0)}70%{opacity:1;transform:translateX(var(--wx,50%))}100%{opacity:0;transform:translateX(var(--wx,50%))}}
 #swap{padding:0}
 #swap .swc{position:absolute;right:-2px;bottom:calc(-3px*var(--ui,1));min-width:calc(18px*var(--ui,1));padding:0 calc(3px*var(--ui,1));text-align:center;font:bold calc(13px*var(--ui,1))/calc(16px*var(--ui,1)) "Courier New",monospace;color:#ffd84a;background:rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.55);border-radius:calc(9px*var(--ui,1));pointer-events:none}
 #swap .swc.low{color:#ff6a5a;border-color:#ff6a5a}
