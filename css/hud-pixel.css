@@ -70,12 +70,11 @@ body.kbm #inv .slot[data-key]::after{left:calc(1*var(--tu));top:calc(1*var(--tu)
 #bpack.full b{color:var(--h-red)}
 
 /* ---------- B. acoes (direita) ---------- */
-/* TROCAR ARMA sobe para ficar na mesma linha do botao de CORRER (topos alinhados em 186 px da borda de baixo): assim a etiqueta da arma, centrada sobre o botao, fica
-   acima do topo do de correr e nao esbarra nele, e a ponta aponta exatamente para o centro. As caixas de ATACAR e TROCAR ARMA tambem deixam de se tocar. */
-#swap{bottom:calc(128px*var(--ui,1))}
-#wpn{bottom:calc(192px*var(--ui,1))}
-:where(html.land.hle350) #swap{bottom:calc(114px*var(--ui,1))}   /* nessa altura o botao de correr e menor (56 px, topo em 172) */
-:where(html.land.hle350) #wpn{bottom:calc(178px*var(--ui,1))}
+/* TROCAR ARMA fica na coluna do botao de PEGAR (acima dele), 25 px mais a esquerda que antes, e volta para a altura original (base a 112 px). A etiqueta da arma, centrada
+   sobre ele, tem a borda esquerda a 95 px da borda da tela (so passa do botao de CORRER, que termina em 92 px) no maior nome de arma, e acima do botao de ATACAR (topo em 110 px).
+   O unico nome longo ("Vara de Pesca") quebra em duas linhas em vez de alargar a etiqueta. As caixas de ATACAR e TROCAR ARMA tambem deixam de se tocar. */
+#swap{right:calc(125px*var(--ui,1));bottom:calc(112px*var(--ui,1))}
+#wpn{right:calc(154px*var(--ui,1));bottom:calc(176px*var(--ui,1))}   /* o centro da etiqueta (translateX(50%)) cai no centro do botao: 125 + 58/2 = 154 */
 .btn{color:var(--h-cream);font-family:var(--f-hud)}
 #atk{color:var(--h-cream)}
 #swap .swc{
@@ -102,6 +101,7 @@ body.kbm #inv .slot[data-key]::after{left:calc(1*var(--tu));top:calc(1*var(--tu)
   padding:calc(2*var(--tu)) calc(3*var(--tu)) calc(3*var(--tu));
   font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);color:var(--h-cream);letter-spacing:0;white-space:nowrap;
 }
+#wpn{max-width:calc(78*var(--tu));white-space:normal;text-align:center;line-height:calc(10*var(--tu))}
 #twn{color:var(--h-gold)}
 #wpn::after,#twn::after{
   content:"";position:absolute;left:50%;top:calc(100% - var(--hu));width:calc(7*var(--hu));height:calc(4*var(--hu));
