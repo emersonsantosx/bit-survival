@@ -27,9 +27,12 @@ O workflow `.github/workflows/build.yml` compila o APK de debug (Cordova) a cada
 | Pasta ou arquivo | O que tem |
 |---|---|
 | `index.html` | A página e os botões da HUD |
-| `css/estilo.css` | Todo o visual |
+| `css/estilo.css` | Todo o visual (posições, tamanhos e telas) |
+| `css/hud-pixel.css` | Aparência pixel art da HUD (molduras, cores, fonte, estados). Só visual: carrega depois do `estilo.css` e não mexe em função |
+| `css/sprites-hud.css`, `css/fonte-hud.css` | **Gerados**: molduras 9-slice e fonte pixel BitHUD embutidas (funcionam offline) |
 | `js/01-base.js` ... `js/34-caminhos-naturais.js` | O jogo, em scripts clássicos carregados na ordem do número. Alguns pontos de partida: `12-crafting-multiplayer.js` (rede), `29-sala-multiplayer.js` (tela da sala), `28-modo-desktop.js` (teclado e mouse), `30-desempenho.js` (blocos prontos de chão e ruas), `31-rastro-sangue.js` (gotas de sangue de quem está sangrando, também dos aliados no multiplayer), `32-passageiro.js` (até 2 jogadores por veículo: motorista e passageiro), `34-caminhos-naturais.js` (ruas e estradas da floresta, deserto e neve: máscara orgânica com dobras em arco, serpenteio e borda irregular, sobre o mesmo esqueleto de `roads`) |
 | `tests/` | Testes automáticos (Playwright) |
+| `tools/gerar-sprites-hud.py`, `tools/gerar-fonte-hud.py` | Geram `css/sprites-hud.css` e `css/fonte-hud.css` (paleta e desenho das molduras ficam no topo do gerador; rodar de novo depois de mudar) |
 | `tools/dependencias.js` | Gera `docs/dependencias.md`, o mapa de quem usa o quê entre os arquivos `js/` |
 | `config.xml`, `icon.png`, `.github/workflows/build.yml` | Geração do APK (Cordova) |
 

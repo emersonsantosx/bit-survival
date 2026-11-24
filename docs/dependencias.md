@@ -133,7 +133,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | vehKind | funcao | 08-cidade-vilas-marcos:355 | 8 | 16 |
 | track | funcao | 15-missoes-ui-controles:60 | 8 | 13 |
 | Z | let | 01-base:48 | 7 | 125 |
-| CFG | const | 01-base:126 | 7 | 78 |
+| CFG | const | 01-base:128 | 7 | 78 |
 | aud | funcao | 02-audio:11 | 7 | 58 |
 | joy | const | 04-estado:203 | 7 | 58 |
 | vehicles | let | 04-estado:10 | 7 | 52 |
