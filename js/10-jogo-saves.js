@@ -516,7 +516,7 @@ function buildWeaponWheel(){
   const root=$('weapon-wheel'),ring=$('weapon-wheel-ring');if(!root||!ring||!P)return;
   ring.querySelectorAll('.weapon-option,#weapon-wheel-hint').forEach(e=>e.remove());
   const list=weaponList();
-  const title=$('weapon-wheel-title');if(title)title.innerHTML='ARSENAL · '+list.length+' ARMAS<br><span style="color:#aaa;font-size:calc(10px*var(--ui,1))">toque = equipar · segure 2s = dropar</span>';
+  const title=$('weapon-wheel-title');if(title)title.innerHTML='ARSENAL · '+list.length+' ARMAS<span class="ww-sub">toque = equipar · segure 2s = dropar</span>';
   list.forEach(key=>{
     const w=WEAPONS[key];if(!w)return;
     const btn=document.createElement('button');btn.type='button';
