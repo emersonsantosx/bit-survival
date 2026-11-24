@@ -70,12 +70,12 @@ body.kbm #inv .slot[data-key]::after{left:calc(1*var(--tu));top:calc(1*var(--tu)
 #bpack.full b{color:var(--h-red)}
 
 /* ---------- B. acoes (direita) ---------- */
-/* as caixas de ATACAR e TROCAR ARMA se tocavam em 4x8 px (invisivel com botao redondo, visivel com moldura quadrada): trocar arma e a etiqueta sobem 10 px */
-#swap{bottom:calc(112px*var(--ui,1))}
-/* a etiqueta da arma esbarrava no botao de CORRER (ela era centrada sobre o de trocar arma e as laterais passavam de 92 px da borda): agora a borda direita dela fica ancorada
-   a 98 px da borda da tela (so a esquerda do botao de correr) e a ponta continua apontando para o centro do botao de trocar arma (129 px da borda) */
-#wpn{bottom:calc(176px*var(--ui,1));right:calc(98px*var(--ui,1));--wx:0px;transform:none;min-width:calc(48px*var(--ui,1));text-align:center}
-#wpn::after{left:auto;right:calc(31px*var(--ui,1) - 3.5*var(--hu));margin-left:0}
+/* TROCAR ARMA sobe para ficar na mesma linha do botao de CORRER (topos alinhados em 186 px da borda de baixo): assim a etiqueta da arma, centrada sobre o botao, fica
+   acima do topo do de correr e nao esbarra nele, e a ponta aponta exatamente para o centro. As caixas de ATACAR e TROCAR ARMA tambem deixam de se tocar. */
+#swap{bottom:calc(128px*var(--ui,1))}
+#wpn{bottom:calc(192px*var(--ui,1))}
+:where(html.land.hle350) #swap{bottom:calc(114px*var(--ui,1))}   /* nessa altura o botao de correr e menor (56 px, topo em 172) */
+:where(html.land.hle350) #wpn{bottom:calc(178px*var(--ui,1))}
 .btn{color:var(--h-cream);font-family:var(--f-hud)}
 #atk{color:var(--h-cream)}
 #swap .swc{
