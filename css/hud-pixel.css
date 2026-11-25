@@ -193,3 +193,5 @@ body.kbm [data-key]::after{border-radius:0;border:var(--tu) solid var(--h-ink);b
 .chat-bubble.me .cn{color:var(--h-gold)}              /* o seu nome em ambar */
 .chat-bubble.sys{color:#a9a493;font-style:normal}     /* avisos do sistema em cinza */
 #bmwrap{position:relative;line-height:0}
+#chat-msgs{transform:translateY(var(--tdn,0px));transition:transform .2s ease-out}   /* desce quando o aviso (#toast) aparece e sobe quando ele some; --tdn vem de toast() em js/11 */
+.chat-bubble{pointer-events:auto;cursor:pointer}   /* o balao recebe o toque (abre o chat); #chat-msgs continua deixando passar o toque nos espacos vazios */
