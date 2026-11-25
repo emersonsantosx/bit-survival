@@ -778,6 +778,9 @@ window.addEventListener('keydown',e=>{
 });
 on('bchat','pointerup',e=>{e.preventDefault();e.stopPropagation();aud(); if(chatOpen) closeChat(); else openChat();});
 on('bchat','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
+// tocar num balao de mensagem (aviso rapido no topo) abre o chat, como o botao de chat; o resto da area continua deixando o toque passar para o jogo
+on('chat-msgs','pointerdown',e=>{if(e.target.closest&&e.target.closest('.chat-bubble')){e.preventDefault();e.stopPropagation();}});
+on('chat-msgs','pointerup',e=>{if(!(e.target.closest&&e.target.closest('.chat-bubble')))return;e.preventDefault();e.stopPropagation();aud();if(!chatOpen)openChat();});
 on('chat-send','click',e=>{e.preventDefault();sendChatMessage();});
 on('chat-close','click',e=>{e.preventDefault();closeChat();});
 on('chat-input','input',updateChatCount);
