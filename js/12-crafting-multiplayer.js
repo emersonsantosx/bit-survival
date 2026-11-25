@@ -722,7 +722,7 @@ function hostCheckStale(){
 /* ===== convidado: conexao com o host ===== */
 function guestRoomClosed(msg){
   try{if(MP.peer)MP.peer.destroy();}catch(e){}
-  MP.peer=null;MP.conn=null;MP.active=false;MP.isHost=false;MP.connected=false;MP.roomCode='';
+  MP.peer=null;MP.conn=null;MP.active=false;MP.isHost=false;MP.connected=false;MP.roomCode='';MP.lobbyOn=false;
   mpResetReconnect();
   if(state==='menu'){showScreen('mpjoinscreen');setStatus('joinStatus',msg,true);}
 }
