@@ -81,14 +81,18 @@ body.kbm #inv .slot[data-key]::after{left:calc(1*var(--tu));top:calc(1*var(--tu)
 #pick,#hoe{bottom:calc(22px*var(--ui,1))}
 #tools{bottom:calc(92px*var(--ui,1))}
 #pickx{bottom:calc(22px*var(--ui,1))}
-#swap{right:calc(121px*var(--ui,1));bottom:calc(112px*var(--ui,1))}
-#wpn{right:calc(150px*var(--ui,1));bottom:calc(176px*var(--ui,1))}   /* o centro da etiqueta (translateX(50%)) cai no centro do botao: 121 + 58/2 = 150 */
+#swap{right:calc(100px*var(--ui,1));bottom:calc(128px*var(--ui,1))}   /* sobe e vai pra direita: topo alinhado ao do correr (186), 20 de folga ate o correr e 32 ate a caixa de ferramentas */
+#wpn{right:calc(129px*var(--ui,1));bottom:calc(192px*var(--ui,1))}   /* o centro da etiqueta (translateX(50%)) cai no centro do botao: 100 + 58/2 = 129 */
+:where(html.land.hle380) #swap{bottom:calc(122px*var(--ui,1))}   /* telas baixas: etiqueta nao encosta nos botoes do topo */
+:where(html.land.hle380) #wpn{bottom:calc(186px*var(--ui,1))}
+:where(html.land.hle350) #swap{right:calc(104px*var(--ui,1));bottom:calc(114px*var(--ui,1))}
+:where(html.land.hle350) #wpn{right:calc(133px*var(--ui,1));bottom:calc(178px*var(--ui,1))}
 .btn{color:var(--h-cream);font-family:var(--f-hud)}
 #atk{color:var(--h-cream)}
 #swap .swc{
   right:calc(-3*var(--hu));bottom:calc(-3*var(--hu));min-width:0;width:auto;height:auto;
-  padding:calc(2*var(--tu)) calc(3*var(--tu)) calc(3*var(--tu));
-  font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);color:var(--h-gold);letter-spacing:0;border-radius:0;
+  padding:calc(2*var(--su)) calc(3*var(--su)) calc(3*var(--su));
+  font:calc(10*var(--su))/calc(8*var(--su)) var(--f-hud);color:var(--h-gold);letter-spacing:0;border-radius:0;
 }
 #swap .swc.low{color:var(--h-red);border-color:transparent}
 #swap .swm{opacity:.9}
@@ -106,10 +110,10 @@ body.kbm #inv .slot[data-key]::after{left:calc(1*var(--tu));top:calc(1*var(--tu)
 
 /* ---------- E. etiqueta da arma / ferramenta (acima do botao de ataque e do de construcao) ---------- */
 #wpn,#twn{
-  padding:calc(2*var(--tu)) calc(3*var(--tu)) calc(3*var(--tu));
-  font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);color:var(--h-cream);letter-spacing:0;white-space:nowrap;
+  padding:calc(2*var(--su)) calc(3*var(--su)) calc(3*var(--su));
+  font:calc(10*var(--su))/calc(8*var(--su)) var(--f-hud);color:var(--h-cream);letter-spacing:0;white-space:nowrap;
 }
-#wpn{max-width:calc(78*var(--tu));white-space:normal;text-align:center;line-height:calc(10*var(--tu))}
+#wpn{max-width:calc(96*var(--su));white-space:normal;text-align:center;line-height:calc(10*var(--su))}
 #twn{color:var(--h-gold)}
 #wpn::after,#twn::after{
   content:"";position:absolute;left:50%;top:calc(100% - var(--hu));width:calc(7*var(--hu));height:calc(4*var(--hu));
