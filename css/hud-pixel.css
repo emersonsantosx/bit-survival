@@ -103,8 +103,8 @@ body.kbm #inv .slot[data-key]::after{left:calc(1*var(--tu));top:calc(1*var(--tu)
 /* ---------- D. avisos temporarios (topo) ---------- */
 #toast{
   max-width:max(calc(160px*var(--ui,1)),min(60%,calc(100% - 2*200px*var(--ui,1))));   /* nao passa por cima das missoes: em tela estreita a mensagem quebra em duas linhas */
-  padding:calc(1*var(--tu)) calc(4*var(--tu)) calc(2*var(--tu));
-  font:calc(10*var(--tu))/calc(10*var(--tu)) var(--f-hud);color:var(--h-cream);letter-spacing:0;text-align:center;
+  padding:calc(1*var(--su)) calc(4*var(--su)) calc(2*var(--su));
+  font:calc(10*var(--su))/calc(10*var(--su)) var(--f-hud);color:var(--h-cream);letter-spacing:0;text-align:center;   /* --su: texto ~20% menor que o --tu, igual ao das etiquetas de arma */
 }
 #toast:not(.show){opacity:0}
 
