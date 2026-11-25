@@ -72,7 +72,7 @@ function applyUiScale(){
     el.className=keep.concat(uiClasses(iw,ih,UIS)).join(' ');
     el.style.setProperty('--ui',String(UIS));
     {const dpr=window.devicePixelRatio||1;   // pixel da HUD pixel art (css/hud-pixel.css): sempre um numero inteiro de pixels fisicos, para as molduras e o texto ficarem nitidos
-      el.style.setProperty('--hu',(Math.max(1,Math.round(2*UIS*dpr))/dpr)+'px');el.style.setProperty('--tu',(Math.max(1,Math.round(1.5*UIS*dpr))/dpr)+'px');}
+      el.style.setProperty('--hu',(Math.max(1,Math.round(2*UIS*dpr))/dpr)+'px');el.style.setProperty('--tu',(Math.max(1,Math.round(1.5*UIS*dpr))/dpr)+'px');el.style.setProperty('--su',(Math.max(1,Math.round(1.2*UIS*dpr))/dpr)+'px');}
   }catch(e){}
 }
 
