@@ -150,3 +150,24 @@ body.kbm #inv .slot[data-key]::after{left:calc(1*var(--tu));top:calc(1*var(--tu)
 
 /* ---------- teclado e mouse: etiqueta da tecla ---------- */
 body.kbm [data-key]::after{border-radius:0;border:var(--tu) solid var(--h-ink);background:var(--h-gold);color:var(--h-ink);font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);padding:0 var(--tu)}
+
+/* ---------- E. mapa grande: zoom (+ e -), centralizar em voce e fechar ---------- */
+#bmz button,#bmx{
+  --b:2;--sp:var(--hs-wood-2u);--spd:var(--hs-wood-2d);
+  border-style:solid;border-color:transparent;border-radius:0;background:transparent;box-shadow:none;
+  border-width:calc(2*var(--hu));
+  border-image-source:var(--sp);border-image-slice:2 fill;border-image-width:calc(2*var(--hu));border-image-repeat:stretch;
+  image-rendering:pixelated;image-rendering:crisp-edges;
+  filter:drop-shadow(0 var(--hu) 0 #0c0e12);
+  width:calc(34px*var(--ui,1));height:calc(34px*var(--ui,1));padding:0;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--h-cream);font:calc(20*var(--tu))/1 var(--f-hud);letter-spacing:0;
+  --pu:calc(2*var(--tu));
+}
+#bmx{right:calc(-6px*var(--ui,1));top:calc(-6px*var(--ui,1))}
+#bmz #bmctr{--sp:var(--hs-moss-2u);--spd:var(--hs-moss-2d);position:relative;font-size:0}   /* musgo = acao de interagir; o alvo e desenhado em pixel (a fonte nao tem esse simbolo) */
+#bmz #bmctr::before{content:"";position:absolute;left:calc(50% - 2.5*var(--pu) + var(--pu));top:calc(50% - 2.5*var(--pu));width:var(--pu);height:var(--pu);background:var(--h-cream);box-shadow:calc(1*var(--pu)) calc(0*var(--pu)) 0 var(--h-cream),calc(2*var(--pu)) calc(0*var(--pu)) 0 var(--h-cream),calc(-1*var(--pu)) calc(1*var(--pu)) 0 var(--h-cream),calc(3*var(--pu)) calc(1*var(--pu)) 0 var(--h-cream),calc(-1*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(1*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(3*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(-1*var(--pu)) calc(3*var(--pu)) 0 var(--h-cream),calc(3*var(--pu)) calc(3*var(--pu)) 0 var(--h-cream),calc(0*var(--pu)) calc(4*var(--pu)) 0 var(--h-cream),calc(1*var(--pu)) calc(4*var(--pu)) 0 var(--h-cream),calc(2*var(--pu)) calc(4*var(--pu)) 0 var(--h-cream)}
+#bmz button:active,#bmx:active{border-image-source:var(--spd);filter:none}
+#bmz button:active::before{transform:translateY(var(--hu))}
+#bmz button:active,#bmx:active{padding-top:var(--hu)}
+#bmc{border:calc(2*var(--hu)) solid #3f4652;border-radius:0}
