@@ -64,8 +64,12 @@ function lobbyLeave(){
   setTimeout(()=>{try{if(peer)peer.destroy();}catch(e){}},wasHost?250:120);   // tempo de a mensagem sair antes de fechar
   MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;MP.isHost=false;MP.roomCode='';
   mpResetReconnect();
-  if(wasHost){showScreen('mphostscreen');const w=$('hostCodeWrap');if(w)w.classList.add('hide');setStatus('hostStatus','');lockHostWorlds(false);renderHostWorlds();}
-  else {showScreen('mpjoinscreen');setStatus('joinStatus','');}
+  // sair da sala (fechar como host ou sair como convidado) volta ao menu MULTIPLAYER (criar sala / entrar em sala / voltar), nunca direto
+  // para o formulario de uma das duas; os formularios sao reiniciados ao abrir (btnMPHost / btnMPJoin)
+  if(wasHost){const w=$('hostCodeWrap');if(w)w.classList.add('hide');setStatus('hostStatus','');lockHostWorlds(false);}
+  else setStatus('joinStatus','');
+  MP.lobbyOn=false;
+  showScreen('mpscreen');
 }
 on('btnLobLeave','click',()=>{aud();lobbyLeave();});
 on('btnLobReady','click',()=>{
