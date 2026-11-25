@@ -10,11 +10,14 @@ const { chromium } = require('playwright');
     const pg = await (await b.newContext({ viewport: { width: w, height: h } })).newPage(); const errs = [];
     pg.on('pageerror', e => errs.push(e.message)); await pg.goto('file://' + file); await pg.waitForTimeout(300);
     await pg.evaluate(() => { localStorage.clear(); selectedMap = 'forest'; pendingSlot = 1; showScreen(null); newGame(); document.getElementById('hud').classList.remove('hide'); state = 'play'; updateHud(true); });
-    await pg.evaluate(() => { document.getElementById("toast").classList.remove("show"); const c = document.getElementById("chat-msgs"); c && c.style.setProperty("--tdn", "0px"); }); await pg.waitForTimeout(350);   // tira o aviso inicial do jogo
+    // os avisos automaticos do jogo (conquista, clima...) chegam em horas imprevisiveis e, em maquina lenta, bagunçavam a medida:
+    // aqui so o aviso que o teste dispara aparece
+    await pg.evaluate(() => { const real = window.toast; window.__toastReal = real; window.toast = function (m) { if (window.__liberaToast) return real(m); }; document.getElementById('toast').classList.remove('show'); const c = document.getElementById('chat-msgs'); c && c.style.setProperty('--tdn', '0px'); });
+    await pg.waitForTimeout(450);
     const box = () => pg.evaluate(() => { const c = document.getElementById('chat-msgs').getBoundingClientRect(), t = document.getElementById('toast').getBoundingClientRect(); return { chatTop: Math.round(c.top), toastBottom: Math.round(t.bottom), tshow: document.getElementById('toast').classList.contains('show') }; });
     await pg.evaluate(() => pushChatBubble('Amada', 'Oi, tudo bem?', false, false)); await pg.waitForTimeout(300);
     const base = await box();
-    await pg.evaluate(() => toast('Chuva: fogueiras apagam e stamina cai mais')); await pg.waitForTimeout(450);
+    await pg.evaluate(() => { window.__liberaToast = true; toast('Chuva: fogueiras apagam e stamina cai mais'); window.__liberaToast = false; }); await pg.waitForTimeout(450);
     const com = await box();
     ok(com.tshow && com.chatTop >= com.toastBottom + 2, w + 'x' + h + ': com o aviso na tela o balao fica abaixo dele (' + base.chatTop + ' -> ' + com.chatTop + ', aviso termina em ' + com.toastBottom + ')');
     await pg.evaluate(() => pushChatBubble('Voce', 'Ja vou', true, false)); await pg.waitForTimeout(300);
