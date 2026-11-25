@@ -106,11 +106,14 @@ function tickFishing(dt){
     else if(mg.pr<=0)fishEnd(false);
   }
 }
-function drawFishLine(px,py,face,fx,fy,left,bite){
+function drawFishLine(px,py,face,fx,fy,left,bite,sit){
   const bob=Math.sin(T*4)*0.8,dip=(left<1&&Math.sin(T*28)>0)?2:0;
-  // ponta real da vara na mao (mesma geometria de drawHeld: mao, rotacao a+45 graus, escala 1.3, ponta a (8,-7) do cabo)
-  const hxx=Math.round(Math.cos(face)*6),hyy=Math.round(Math.sin(face)*4)-5,rang=face+Math.PI/4,sc=HELD.fishingrod.s,vx=8*sc,vy=-7*sc;
-  const tx=Math.round(px)+hxx+vx*Math.cos(rang)-vy*Math.sin(rang),ty=Math.round(py)+hyy+vx*Math.sin(rang)+vy*Math.cos(rang);
+  // ponta real da vara na mao: mesma geometria de human() + drawHeld() (js/13): mao em (cos*5, -6+sin*3), vara girada a+45 graus,
+  // espelhada quando olha para a esquerda (meleeLeft), escala 1.3, ponta a (8,-7) do cabo; sentado, o corpo todo desce 3 px (o.sit)
+  const hxx=Math.round(Math.cos(face)*5),hyy=-6+Math.round(Math.sin(face)*3),sc=HELD.fishingrod.s,vx=8*sc,vy=-7*sc;
+  const esq=Math.cos(face)<0,rang=esq?Math.PI-face+Math.PI/4:face+Math.PI/4;
+  const ox=vx*Math.cos(rang)-vy*Math.sin(rang),oy=vx*Math.sin(rang)+vy*Math.cos(rang);
+  const tx=Math.round(px)+hxx+(esq?-ox:ox),ty=Math.round(py)+hyy+oy+(sit?3:0);
   ctx.strokeStyle='rgba(235,235,235,.75)';ctx.lineWidth=.6;
   ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(fx,fy-1+bob+dip);ctx.stroke();
   ctx.strokeStyle='rgba(190,230,250,.5)';ctx.lineWidth=.7;
@@ -164,12 +167,12 @@ function drawFishMini(){
   ctx.restore();
 }
 function drawFishing(){
-  if(P&&P.fish&&!P.dead){const f=P.fish;drawFishLine(P.x,P.y,P.face,f.x,f.y,f.ph===0?f.wait-f.t:0,f.ph===1);}
+  if(P&&P.fish&&!P.dead){const f=P.fish;drawFishLine(P.x,P.y,P.face,f.x,f.y,f.ph===0?f.wait-f.t:0,f.ph===1,!!P.sitting);}
   // Linha de pesca do outro jogador
   for(const id in remotePlayers){
     const rp=remotePlayers[id];
     if(!rp||rp.alive===false||rp.fx==null||!Number.isFinite(rp.x))continue;
-    drawFishLine(rp.x,rp.y,rp.face||0,rp.fx,rp.fy,rp.fl||0);
+    drawFishLine(rp.x,rp.y,rp.face||0,rp.fx,rp.fy,rp.fl||0,false,!!rp.st);
   }
 }
 /* Sem munição: equipa a arma branca de maior dano do arsenal (ou as mãos).
