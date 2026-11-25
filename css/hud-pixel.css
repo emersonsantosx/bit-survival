@@ -171,3 +171,17 @@ body.kbm [data-key]::after{border-radius:0;border:var(--tu) solid var(--h-ink);b
 #bmz button:active::before{transform:translateY(var(--hu))}
 #bmz button:active,#bmx:active{padding-top:var(--hu)}
 #bmc{border:calc(2*var(--hu)) solid #3f4652;border-radius:0}
+
+/* ---------- F. balao rapido das mensagens do multiplayer (no topo, some sozinho; o chat aberto nao muda) ---------- */
+.chat-bubble{
+  --b:2;border-style:solid;border-color:transparent;border-radius:0;background:transparent;box-shadow:none;
+  border-width:calc(2*var(--hu));
+  border-image-source:var(--hs-wood-2u);border-image-slice:2 fill;border-image-width:calc(2*var(--hu));border-image-repeat:stretch;
+  image-rendering:pixelated;image-rendering:crisp-edges;
+  filter:drop-shadow(0 var(--hu) 0 #0c0e12);
+  padding:calc(1*var(--su)) calc(3*var(--su)) calc(2*var(--su));
+  font:calc(10*var(--su))/calc(12*var(--su)) var(--f-hud);color:var(--h-cream);letter-spacing:0;overflow-wrap:anywhere;
+}
+.chat-bubble .cn{color:#8DA568;font-weight:normal}     /* nome do parceiro em musgo */
+.chat-bubble.me .cn{color:var(--h-gold)}              /* o seu nome em ambar */
+.chat-bubble.sys{color:#a9a493;font-style:normal}     /* avisos do sistema em cinza */
