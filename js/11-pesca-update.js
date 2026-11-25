@@ -1370,7 +1370,9 @@ function weatherAdvance(sec){
 function toast(msg){
   const el=$('toast');if(!el)return;
   el.textContent=msg;el.classList.add('show');
-  clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),3000);
+  // os baloes de mensagem do multiplayer (#chat-msgs) descem para baixo do aviso enquanto ele esta na tela e voltam ao lugar quando ele some
+  const cm=$('chat-msgs');if(cm)cm.style.setProperty('--tdn',(el.offsetHeight+4*(window.UIS||1))+'px');
+  clearTimeout(tt);tt=setTimeout(()=>{el.classList.remove('show');if(cm)cm.style.setProperty('--tdn','0px');},3000);
 }
 function updateHud(force){
   if(!P)return;
