@@ -152,24 +152,31 @@ body.kbm #inv .slot[data-key]::after{left:calc(1*var(--tu));top:calc(1*var(--tu)
 body.kbm [data-key]::after{border-radius:0;border:var(--tu) solid var(--h-ink);background:var(--h-gold);color:var(--h-ink);font:calc(10*var(--tu))/calc(8*var(--tu)) var(--f-hud);padding:0 var(--tu)}
 
 /* ---------- E. mapa grande: zoom (+ e -), centralizar em voce e fechar ---------- */
+/* Tamanho = 2 molduras + 9 pixels de arte (--pu = 2 pixels de texto): o desenho de 5 pixels fica EXATO no centro (2 de folga de cada lado), sem depender da fonte. */
 #bmz button,#bmx{
-  --b:2;--sp:var(--hs-wood-2u);--spd:var(--hs-wood-2d);
+  --b:2;--sp:var(--hs-wood-2u);--spd:var(--hs-wood-2d);--pu:calc(2*var(--tu));
+  position:absolute;box-sizing:border-box;margin:0;padding:0;
   border-style:solid;border-color:transparent;border-radius:0;background:transparent;box-shadow:none;
   border-width:calc(2*var(--hu));
   border-image-source:var(--sp);border-image-slice:2 fill;border-image-width:calc(2*var(--hu));border-image-repeat:stretch;
   image-rendering:pixelated;image-rendering:crisp-edges;
   filter:drop-shadow(0 var(--hu) 0 #0c0e12);
-  width:calc(34px*var(--ui,1));height:calc(34px*var(--ui,1));padding:0;
-  display:flex;align-items:center;justify-content:center;
-  color:var(--h-cream);font:calc(20*var(--tu))/1 var(--f-hud);letter-spacing:0;
-  --pu:calc(2*var(--tu));
+  width:calc(4*var(--hu) + 9*var(--pu));height:calc(4*var(--hu) + 9*var(--pu));
+  font-size:0;color:transparent;
 }
-#bmx{right:calc(-6px*var(--ui,1));top:calc(-6px*var(--ui,1))}
-#bmz #bmctr{--sp:var(--hs-moss-2u);--spd:var(--hs-moss-2d);position:relative;font-size:0}   /* musgo = acao de interagir; o alvo e desenhado em pixel (a fonte nao tem esse simbolo) */
-#bmz #bmctr::before{content:"";position:absolute;left:calc(50% - 2.5*var(--pu) + var(--pu));top:calc(50% - 2.5*var(--pu));width:var(--pu);height:var(--pu);background:var(--h-cream);box-shadow:calc(1*var(--pu)) calc(0*var(--pu)) 0 var(--h-cream),calc(2*var(--pu)) calc(0*var(--pu)) 0 var(--h-cream),calc(-1*var(--pu)) calc(1*var(--pu)) 0 var(--h-cream),calc(3*var(--pu)) calc(1*var(--pu)) 0 var(--h-cream),calc(-1*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(1*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(3*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(-1*var(--pu)) calc(3*var(--pu)) 0 var(--h-cream),calc(3*var(--pu)) calc(3*var(--pu)) 0 var(--h-cream),calc(0*var(--pu)) calc(4*var(--pu)) 0 var(--h-cream),calc(1*var(--pu)) calc(4*var(--pu)) 0 var(--h-cream),calc(2*var(--pu)) calc(4*var(--pu)) 0 var(--h-cream)}
+#bmz{position:absolute;left:0;top:0;display:block;width:0;height:0}   /* a caixa dos botoes de zoom so serve de ancora: cada botao fica dentro do canto do mapa */
+#bmz button{right:calc(100% + 5px*var(--ui,1))}   /* FORA do mapa, na lateral esquerda, perto do canto: nada cobre o mapa */
+#bmzin{top:0}
+#bmzout{top:calc(4*var(--hu) + 9*var(--pu) + 4px*var(--ui,1))}
+#bmctr{top:calc(2*(4*var(--hu) + 9*var(--pu) + 4px*var(--ui,1)))}
+#bmx{left:calc(100% + 5px*var(--ui,1));right:auto;top:0}   /* fechar: lateral direita, no mesmo alinhamento */
+#bmz #bmctr{--sp:var(--hs-moss-2u);--spd:var(--hs-moss-2d)}   /* musgo = acao de interagir */
+#bmzin::before{content:"";position:absolute;left:calc(4*var(--pu));top:calc(2*var(--pu));width:var(--pu);height:var(--pu);background:var(--h-cream);box-shadow:calc(0*var(--pu)) calc(1*var(--pu)) 0 var(--h-cream),calc(-2*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(-1*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(0*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(1*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(2*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(0*var(--pu)) calc(3*var(--pu)) 0 var(--h-cream),calc(0*var(--pu)) calc(4*var(--pu)) 0 var(--h-cream)}
+#bmzout::before{content:"";position:absolute;left:calc(2*var(--pu));top:calc(4*var(--pu));width:var(--pu);height:var(--pu);background:var(--h-cream);box-shadow:calc(1*var(--pu)) calc(0*var(--pu)) 0 var(--h-cream),calc(2*var(--pu)) calc(0*var(--pu)) 0 var(--h-cream),calc(3*var(--pu)) calc(0*var(--pu)) 0 var(--h-cream),calc(4*var(--pu)) calc(0*var(--pu)) 0 var(--h-cream)}
+#bmctr::before{content:"";position:absolute;left:calc(3*var(--pu));top:calc(2*var(--pu));width:var(--pu);height:var(--pu);background:var(--h-cream);box-shadow:calc(1*var(--pu)) calc(0*var(--pu)) 0 var(--h-cream),calc(2*var(--pu)) calc(0*var(--pu)) 0 var(--h-cream),calc(-1*var(--pu)) calc(1*var(--pu)) 0 var(--h-cream),calc(3*var(--pu)) calc(1*var(--pu)) 0 var(--h-cream),calc(-1*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(1*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(3*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(-1*var(--pu)) calc(3*var(--pu)) 0 var(--h-cream),calc(3*var(--pu)) calc(3*var(--pu)) 0 var(--h-cream),calc(0*var(--pu)) calc(4*var(--pu)) 0 var(--h-cream),calc(1*var(--pu)) calc(4*var(--pu)) 0 var(--h-cream),calc(2*var(--pu)) calc(4*var(--pu)) 0 var(--h-cream)}
+#bmx::before{content:"";position:absolute;left:calc(2*var(--pu));top:calc(2*var(--pu));width:var(--pu);height:var(--pu);background:var(--h-cream);box-shadow:calc(4*var(--pu)) calc(0*var(--pu)) 0 var(--h-cream),calc(1*var(--pu)) calc(1*var(--pu)) 0 var(--h-cream),calc(3*var(--pu)) calc(1*var(--pu)) 0 var(--h-cream),calc(2*var(--pu)) calc(2*var(--pu)) 0 var(--h-cream),calc(1*var(--pu)) calc(3*var(--pu)) 0 var(--h-cream),calc(3*var(--pu)) calc(3*var(--pu)) 0 var(--h-cream),calc(0*var(--pu)) calc(4*var(--pu)) 0 var(--h-cream),calc(4*var(--pu)) calc(4*var(--pu)) 0 var(--h-cream)}
 #bmz button:active,#bmx:active{border-image-source:var(--spd);filter:none}
-#bmz button:active::before{transform:translateY(var(--hu))}
-#bmz button:active,#bmx:active{padding-top:var(--hu)}
+#bmz button:active::before,#bmx:active::before{transform:translateY(var(--hu))}
 #bmc{border:calc(2*var(--hu)) solid #3f4652;border-radius:0}
 
 /* ---------- F. balao rapido das mensagens do multiplayer (no topo, some sozinho; o chat aberto nao muda) ---------- */
@@ -185,3 +192,4 @@ body.kbm [data-key]::after{border-radius:0;border:var(--tu) solid var(--h-ink);b
 .chat-bubble .cn{color:#8DA568;font-weight:normal}     /* nome do parceiro em musgo */
 .chat-bubble.me .cn{color:var(--h-gold)}              /* o seu nome em ambar */
 .chat-bubble.sys{color:#a9a493;font-style:normal}     /* avisos do sistema em cinza */
+#bmwrap{position:relative;line-height:0}
