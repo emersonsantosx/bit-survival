@@ -5,8 +5,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  testes:
+  # Os testes rodam em 2 maquinas ao mesmo tempo (fatias 1/2 e 2/2 da lista, equilibradas por tests/pesos.json).
+  fatia:
+    name: testes (fatia ${{ matrix.fatia }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false      # uma fatia falhar nao cancela a outra: mostra todas as falhas de uma vez
+      matrix:
+        fatia: ['1/2', '2/2']
     steps:
       - name: Baixar codigo do repositorio
         uses: actions/checkout@v4
@@ -31,5 +37,18 @@ jobs:
           done
           exit 1
 
-      - name: Rodar testes
+      - name: Rodar testes (fatia ${{ matrix.fatia }})
+        env:
+          TESTES_FATIA: ${{ matrix.fatia }}
         run: npm test
+
+  # Resultado unico com o nome de antes ("testes"): e esse nome que a protecao da branch main espera.
+  testes:
+    needs: fatia
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conferir as fatias
+        run: |
+          echo "Resultado das fatias: ${{ needs.fatia.result }}"
+          test "${{ needs.fatia.result }}" = "success"

@@ -9,6 +9,8 @@ const { chromium } = require('playwright');
   const pg = await (await b.newContext({ viewport: { width: 878, height: 405 }, hasTouch: true })).newPage(); const errs = [];
   pg.on('pageerror', e => errs.push(e.message)); await pg.goto('file://' + file); await pg.waitForTimeout(300);
   await pg.evaluate(() => { localStorage.clear(); selectedMap = 'forest'; pendingSlot = 1; showScreen(null); newGame(); document.getElementById('hud').classList.remove('hide'); state = 'play'; updateHud(true); MP.active = true; });
+  // sem avisos automaticos do jogo mexendo nos baloes durante a medida
+  await pg.evaluate(() => { window.toast = function () {}; document.getElementById('toast').classList.remove('show'); const c = document.getElementById('chat-msgs'); c && c.style.setProperty('--tdn', '0px'); });
   await pg.waitForTimeout(500);
   await pg.evaluate(() => pushChatBubble('Amada', 'Oi, tudo bem?', false, false)); await pg.waitForTimeout(400);
   const r = await pg.evaluate(() => { const e = document.querySelector('#chat-msgs .chat-bubble').getBoundingClientRect(), c = document.getElementById('chat-msgs').getBoundingClientRect(); return { bx: e.left + e.width / 2, by: e.top + e.height / 2, vx: c.left + 8, vy: c.bottom - 4 }; });
