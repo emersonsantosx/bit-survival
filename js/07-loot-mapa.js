@@ -175,7 +175,7 @@ function bigMapOpen(){
   el.classList.toggle('mp',!!MP.active);
   const bh=$('bmhint');if(bh)bh.textContent=MP.active?'Toque para marcar um ponto, ou no aliado para segui-lo. Arraste para mover, pinça ou +/- para zoom. Toque fora para fechar':'Toque para marcar um ponto. Arraste para mover, pinça ou +/- para zoom. Toque fora para fechar';
   el.classList.remove('hide');
-  const css=Math.max(200,Math.min(innerWidth-20,innerHeight-70,760)),dpr=Math.min(2,window.devicePixelRatio||1),px=Math.round(css*dpr);
+  const side=2*(44*(window.UIS||1)),css=Math.max(200,Math.min(innerWidth-side,innerHeight-70,760))   /* reserva a faixa dos botoes (zoom de um lado, fechar do outro) */,dpr=Math.min(2,window.devicePixelRatio||1),px=Math.round(css*dpr);
   const c=$('bmc');c.style.width=css+'px';c.style.height=css+'px';c.width=px;c.height=px;
   bigV.z=1;bigV.cx=WW/2;bigV.cy=WH/2;
   bigMapDraw();
