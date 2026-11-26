@@ -141,7 +141,8 @@ function drawFishMini(){
   if(!f||f.ph!==2||!f.mg||P.dead)return;
   const mg=f.mg;
   const th=Math.round(clamp(H*.56,104,190)),tw=26;
-  const x=Math.round(W/2-clamp(W*.2,110,170)-tw-14),y=Math.round(H/2-th/2-4);   // à esquerda do jogador: longe dos botões de ação
+  const psx=(P.x-camX)*Z,psy=(P.y-camY)*Z;   // o jogador nem sempre fica no centro da tela (a camera trava na borda do mundo)
+  const x=Math.round(clamp(psx-clamp(W*.2,110,170)-tw-14,12,W-tw-30)),y=Math.round(clamp(psy-th/2-4,26,Math.max(26,H-th-26)));   // à esquerda do jogador: longe dos botões de ação
   ctx.save();ctx.imageSmoothingEnabled=false;
   ctx.fillStyle='rgba(12,14,18,.88)';ctx.fillRect(x-8,y-22,tw+34,th+44);
   ctx.strokeStyle='#E8E0CC';ctx.lineWidth=2;ctx.strokeRect(x-7,y-21,tw+32,th+42);

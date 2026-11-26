@@ -57,10 +57,10 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 08-cidade-vilas-marcos | 135 | 3 | 17 | 136 | 21 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 3 |
 | 09-milharal-geracao | 212 | 10 | 87 | 285 | 40 |  | 1 | 35 | . | 2 | 3 | 8 | 125 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  | 4 |
 | 10-jogo-saves | 90 | 50 | 60 | 702 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 17 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |  |
-| 11-pesca-update | 274 | 41 | 67 | 912 | 63 | 2 | 3 | 5 | 20 | 66 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |  |
+| 11-pesca-update | 280 | 41 | 67 | 914 | 63 | 2 | 3 | 5 | 20 | 66 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |  |
 | 12-crafting-multiplayer | 62 | 36 | 29 | 746 | 12 | 1 | 6 | 5 | 11 | 46 | 42 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |  |  |  |
 | 13-render-personagens | 302 | 39 | 23 | 252 | 13 | 22 | 2 | 2 |  | 4 | 9 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |  |
-| 14-arquitetura-luz-ambiente | 691 | 13 | 16 | 325 | 17 |  | 10 | 8 | 24 | 8 | 6 | 1 | 162 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  | 2 |
+| 14-arquitetura-luz-ambiente | 697 | 13 | 18 | 325 | 17 |  | 10 | 8 | 24 | 8 | 6 | 1 | 162 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  | 2 |
 | 15-missoes-ui-controles | 181 | 61 | 21 | 255 |  |  | 17 |  |  | 68 | 10 | 24 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |
 | 16-orientacao | 2 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
@@ -88,18 +88,18 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 24 | 2054 |
+| P | let | 04-estado:14 | 24 | 2056 |
 | MP | let | 04-estado:19 | 24 | 713 |
 | selectedMap | let | 04-estado:3 | 23 | 230 |
 | beep | funcao | 02-audio:42 | 20 | 143 |
 | ctx | const | 01-base:27 | 19 | 1124 |
-| WW | let | 03-dados:2 | 19 | 105 |
-| WH | let | 03-dados:2 | 19 | 94 |
+| WW | let | 03-dados:2 | 19 | 106 |
+| WH | let | 03-dados:2 | 19 | 95 |
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 19 | 64 |
 | rnd | const | 01-base:16 | 18 | 433 |
 | T | let | 04-estado:14 | 18 | 130 |
-| toast | funcao | 11-pesca-update:1370 | 18 | 122 |
-| clamp | const | 01-base:4 | 17 | 101 |
+| toast | funcao | 11-pesca-update:1371 | 18 | 122 |
+| clamp | const | 01-base:4 | 17 | 105 |
 | parts | let | 04-estado:10 | 17 | 76 |
 | R | funcao | 13-render-personagens:2 | 16 | 1247 |
 | items | let | 04-estado:10 | 15 | 64 |
@@ -114,7 +114,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | ITEMS | const | 03-dados:182 | 11 | 70 |
 | zombies | let | 04-estado:10 | 11 | 58 |
 | campfires | let | 04-estado:10 | 11 | 41 |
-| say | funcao | 11-pesca-update:1320 | 10 | 92 |
+| say | funcao | 11-pesca-update:1321 | 10 | 92 |
 | dark | let | 04-estado:14 | 10 | 62 |
 | tents | let | 04-estado:10 | 10 | 23 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |
@@ -125,14 +125,14 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | lakes | let | 04-estado:10 | 9 | 32 |
 | addItem | funcao | 04-estado:271 | 9 | 20 |
 | $ | const | 01-base:2 | 8 | 188 |
-| H | let | 01-base:48 | 8 | 103 |
-| W | let | 01-base:48 | 8 | 98 |
+| H | let | 01-base:48 | 8 | 104 |
+| W | let | 01-base:48 | 8 | 99 |
 | rocks | let | 04-estado:10 | 8 | 49 |
 | atkHeld | let | 04-estado:16 | 8 | 18 |
 | sprintHeld | let | 04-estado:16 | 8 | 16 |
 | vehKind | funcao | 08-cidade-vilas-marcos:355 | 8 | 16 |
 | track | funcao | 15-missoes-ui-controles:60 | 8 | 13 |
-| Z | let | 01-base:48 | 7 | 125 |
+| Z | let | 01-base:48 | 7 | 129 |
 | CFG | const | 01-base:128 | 7 | 78 |
 | aud | funcao | 02-audio:11 | 7 | 59 |
 | joy | const | 04-estado:203 | 7 | 58 |

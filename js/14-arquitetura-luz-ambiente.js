@@ -1278,6 +1278,13 @@ function groundTileDraw(q,tx,ty){
   if(selectedMap!=='city'&&window.roadTileDraw)roadTileDraw(q,tx,ty);   // caminhos naturais por cima do chao (arquivo 34)
 }
 window.groundTileDraw=groundTileDraw;   // o arquivo 30 monta os blocos de chao com esta mesma conta
+/* Câmera ao ar livre: centrada no jogador, mas travada nas bordas do mundo (nunca mostra o preto de fora). Perto da borda o personagem sai do centro da tela.
+   ox,oy: deslocamento do mundo na tela, em pixels da tela (já inteiros); o limite usa o zoom do quadro (Z), então vale também no zoom de veículo. */
+function camOrigin(){
+  const ox0=Math.round(-(P.x-W/(2*Z))*Z),oy0=Math.round(-(P.y-H/(2*Z))*Z);
+  return{ox:clamp(ox0,Math.min(0,Math.ceil(W-WW*Z)),0),oy:clamp(oy0,Math.min(0,Math.ceil(H-WH*Z)),0)};
+}
+window.camOrigin=camOrigin;
 function render(){
   if(!P)return;
   SH_BUD=12;
@@ -1358,7 +1365,7 @@ function render(){
     mmMarkers();
     return;
   }
-  const ox=Math.round(-(P.x-W/(2*Z))*Z),oy=Math.round(-(P.y-H/(2*Z))*Z);
+  const co=camOrigin(),ox=co.ox,oy=co.oy;
   camX=-ox/Z;camY=-oy/Z;
   ctx.setTransform(Z,0,0,Z,ox+sx,oy+sy);
   const vx0=camX-24,vy0=camY-24,vx1=camX+W/Z+24,vy1=camY+H/Z+24;

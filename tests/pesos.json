@@ -39,5 +39,6 @@
  "teste-chuva-neve.js": 4,
  "teste-botao-conflitos.js": 4,
  "teste-multiplayer-visual.js": 4,
- "teste-multiplayer-entrada.js": 3
+ "teste-multiplayer-entrada.js": 3,
+ "teste-camera-borda.js": 4
 }
