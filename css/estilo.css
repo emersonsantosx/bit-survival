@@ -207,25 +207,35 @@ body.nomap #mm{display:none!important}
 #bchat[data-n]::after{content:attr(data-n);position:absolute;top:calc(-6px*var(--ui,1));right:calc(-6px*var(--ui,1));min-width:calc(16px*var(--ui,1));height:calc(16px*var(--ui,1));padding:0 calc(3px*var(--ui,1));box-sizing:border-box;border-radius:calc(8px*var(--ui,1));background:#ffd84a;color:#171A20;font:bold calc(10px*var(--ui,1))/calc(16px*var(--ui,1)) "Courier New",monospace;text-align:center}
 #bchat{position:fixed}
 body.chatopen #chat-msgs{display:none}
-/* Aba de chat: histórico + campo de texto. A posição e a altura seguem a área REALMENTE visível (com o teclado aberto) */
-#chat-panel{position:fixed;top:0;right:0;width:min(calc(420px*var(--ui,1)),100vw);height:100%;display:none;flex-direction:column;box-sizing:border-box;background:#171A20;border-left:calc(3px*var(--ui,1)) solid #8DA568;color:#E8E0CC;pointer-events:auto;z-index:12;font-family:"Courier New",monospace;touch-action:manipulation;padding-right:env(safe-area-inset-right,0px)}
+/* Aba de chat: histórico + campo de texto. A posição e a altura seguem a área REALMENTE visível (com o teclado aberto).
+   Visual igual ao das telas (inventário, crafting, arsenal): painel plano #1f242c, borda quadrada de 3 px, sombra dura embaixo, fonte pixel nos títulos e nomes.
+   O painel fica fora de .screen, então carrega os mesmos tokens de cor aqui. */
+#chat-panel{position:fixed;top:0;right:0;width:min(calc(420px*var(--ui,1)),100vw);height:100%;display:none;flex-direction:column;box-sizing:border-box;
+  --c-bg:#171A20;--c-panel:#1f242c;--c-cream:#E8E0CC;--c-moss:#8DA568;--c-amber:#C79A54;--c-line:#2e343e;--c-edge:#3f4652;--c-deep:#0c0e12;--c-red:#C0634A;--c-dim:#a9a493;--f-px:"Press Start 2P","Courier New",monospace;
+  background:var(--c-bg);border-left:calc(3px*var(--ui,1)) solid var(--c-edge);box-shadow:calc(-3px*var(--ui,1)) 0 0 var(--c-deep);color:var(--c-cream);pointer-events:auto;z-index:12;font-family:"Courier New",monospace;touch-action:manipulation;padding-right:env(safe-area-inset-right,0px)}
 #chat-panel.open{display:flex}
-.chat-head{display:flex;align-items:center;gap:calc(8px*var(--ui,1));padding:calc(6px*var(--ui,1)) calc(8px*var(--ui,1));border-bottom:2px solid #2e343e;flex:0 0 auto}
-.chat-head .ct{flex:1;font:bold calc(12px*var(--ui,1)) "Courier New",monospace;letter-spacing:2px;color:#8DA568}
-.chat-head .cc{font:calc(10px*var(--ui,1)) "Courier New",monospace;color:#a9a493}
-#chat-hist{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:calc(6px*var(--ui,1)) calc(8px*var(--ui,1));display:flex;flex-direction:column;gap:calc(4px*var(--ui,1))}
-#chat-hist .empty{margin:auto;color:#a9a493;font-size:calc(11px*var(--ui,1));text-align:center}
-.cm{max-width:88%;padding:calc(4px*var(--ui,1)) calc(8px*var(--ui,1));border:1px solid #3f4652;background:#1f242c;font-size:calc(12px*var(--ui,1));line-height:1.3;word-wrap:break-word;overflow-wrap:anywhere}
-.cm .cn{display:block;font-size:calc(10px*var(--ui,1));font-weight:bold;color:#C79A54;margin-bottom:1px}
-.cm .ctm{color:#7d7a6c;font-weight:normal;margin-left:calc(6px*var(--ui,1))}
-.cm.me{align-self:flex-end;background:#25301f;border-color:#8DA568}
-.cm.me .cn{color:#8DA568}
-.cm.sys{align-self:center;max-width:100%;border:0;background:transparent;color:#a9a493;font-style:italic;font-size:calc(11px*var(--ui,1))}
-.chat-row{display:flex;gap:calc(6px*var(--ui,1));padding:calc(6px*var(--ui,1)) calc(8px*var(--ui,1)) calc(calc(6px*var(--ui,1)) + env(safe-area-inset-bottom,0px));border-top:2px solid #2e343e;flex:0 0 auto}
-#chat-input{flex:1;min-width:0;background:#0c0e12;border:2px solid #3f4652;border-radius:0;color:#E8E0CC;font:calc(16px*var(--ui,1)) "Courier New",monospace;padding:calc(8px*var(--ui,1)) calc(10px*var(--ui,1));outline:none}
-#chat-input:focus{border-color:#8DA568}
-#chat-send,#chat-close{background:#8DA568;border:2px solid #8DA568;color:#171A20;border-radius:0;font:bold calc(12px*var(--ui,1)) "Courier New",monospace;padding:0 calc(12px*var(--ui,1));min-height:calc(40px*var(--ui,1));white-space:nowrap}
-#chat-close{background:#171A20;border-color:#8a8672;color:#E8E0CC;min-height:calc(30px*var(--ui,1));min-width:calc(34px*var(--ui,1));padding:0 calc(8px*var(--ui,1))}
+.chat-head{display:flex;align-items:center;gap:calc(8px*var(--ui,1));padding:calc(8px*var(--ui,1)) calc(8px*var(--ui,1)) calc(8px*var(--ui,1)) calc(12px*var(--ui,1));background:var(--c-panel);border-bottom:calc(3px*var(--ui,1)) solid var(--c-edge);flex:0 0 auto}
+.chat-head .ct{flex:1;font:calc(10px*var(--ui,1))/1.4 var(--f-px);letter-spacing:1px;color:var(--c-moss);text-shadow:2px 2px 0 var(--c-deep)}
+.chat-head .cc{font:calc(7px*var(--ui,1))/1.4 var(--f-px);color:var(--c-dim)}
+#chat-hist{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:calc(10px*var(--ui,1)) calc(10px*var(--ui,1)) calc(8px*var(--ui,1));display:flex;flex-direction:column;gap:calc(8px*var(--ui,1));scrollbar-width:thin;scrollbar-color:var(--c-edge) var(--c-deep)}
+#chat-hist::-webkit-scrollbar{width:calc(8px*var(--ui,1))}
+#chat-hist::-webkit-scrollbar-track{background:var(--c-deep)}
+#chat-hist::-webkit-scrollbar-thumb{background:var(--c-edge)}
+#chat-hist .empty{margin:auto;color:var(--c-dim);font-size:calc(11px*var(--ui,1));line-height:1.5;text-align:center}
+.cm{max-width:88%;padding:calc(6px*var(--ui,1)) calc(9px*var(--ui,1)) calc(7px*var(--ui,1));border:calc(2px*var(--ui,1)) solid var(--c-edge);border-radius:0;background:var(--c-panel);box-shadow:0 calc(2px*var(--ui,1)) 0 var(--c-deep);color:var(--c-cream);font-size:calc(12px*var(--ui,1));line-height:1.35;word-wrap:break-word;overflow-wrap:anywhere}
+.cm .cn{display:block;font:calc(7px*var(--ui,1))/1.4 var(--f-px);letter-spacing:0;color:var(--c-amber);margin-bottom:calc(4px*var(--ui,1))}
+.cm .ctm{color:var(--c-dim);margin-left:calc(8px*var(--ui,1))}
+.cm.me{align-self:flex-end;background:#20271d;border-color:var(--c-moss)}
+.cm.me .cn{color:var(--c-moss)}
+.cm.sys{align-self:center;max-width:100%;border:0;background:transparent;box-shadow:none;padding:calc(2px*var(--ui,1)) 0;color:var(--c-dim);font:calc(7px*var(--ui,1))/1.6 var(--f-px);text-align:center}
+.chat-row{display:flex;gap:calc(8px*var(--ui,1));align-items:stretch;padding:calc(8px*var(--ui,1)) calc(10px*var(--ui,1)) calc(calc(8px*var(--ui,1)) + env(safe-area-inset-bottom,0px));background:var(--c-panel);border-top:calc(3px*var(--ui,1)) solid var(--c-edge);flex:0 0 auto}
+#chat-input{flex:1;min-width:0;background:var(--c-deep);border:calc(3px*var(--ui,1)) solid var(--c-edge);border-radius:0;color:var(--c-cream);font:calc(16px*var(--ui,1)) "Courier New",monospace;padding:calc(8px*var(--ui,1)) calc(10px*var(--ui,1));outline:none}
+#chat-input::placeholder{color:#5a5648}
+#chat-input:focus{border-color:var(--c-moss)}
+#chat-send{background:var(--c-moss);border:calc(3px*var(--ui,1)) solid var(--c-moss);color:var(--c-bg);border-radius:0;font:calc(9px*var(--ui,1))/1.4 var(--f-px);letter-spacing:1px;padding:0 calc(12px*var(--ui,1));min-height:calc(44px*var(--ui,1));white-space:nowrap;box-shadow:0 calc(3px*var(--ui,1)) 0 var(--c-deep);cursor:pointer}
+#chat-send:active{transform:translateY(calc(3px*var(--ui,1)));box-shadow:none}
+#chat-close{background:var(--c-bg);border:calc(3px*var(--ui,1)) solid #8a8672;color:var(--c-cream);border-radius:0;padding:0 calc(8px*var(--ui,1));min-height:calc(34px*var(--ui,1));min-width:calc(38px*var(--ui,1));white-space:nowrap;box-shadow:0 calc(3px*var(--ui,1)) 0 var(--c-deep);cursor:pointer}
+#chat-close:active{transform:translateY(calc(3px*var(--ui,1)));box-shadow:none}
 .veh-btn.on{background:rgba(255,255,255,.4);border-color:#ffd84a;color:#ffd84a}
 #v-up{right:calc(20px*var(--ui,1));bottom:calc(110px*var(--ui,1));width:calc(72px*var(--ui,1));height:calc(72px*var(--ui,1))}
 #v-down{right:calc(20px*var(--ui,1));bottom:calc(24px*var(--ui,1));width:calc(72px*var(--ui,1));height:calc(72px*var(--ui,1))}
@@ -640,24 +650,31 @@ body.kbm #pauseKeys{display:block}
 #keysscr .kr b{color:var(--c-amber);text-align:right;white-space:nowrap}
 @media (max-width:700px){#keysscr .keyrows{grid-template-columns:1fr}}
 
+/* menu MULTIPLAYER (criar / entrar / voltar): coluna estreita centrada como o menu principal, em vez de botões esticados na largura toda */
+#mpscreen .card{max-width:calc(440px*var(--ui,1));align-items:center;justify-content:center}
+#mpscreen .menu-btns{width:100%;gap:calc(12px*var(--ui,1))}
+#mpscreen .menu-btn{white-space:nowrap}
+
 /* ===== sala do multiplayer (lobby): ate 4 jogadores, pronto e iniciar ===== */
 .lob-code{display:flex;align-items:center;justify-content:center;gap:calc(10px*var(--ui,1));flex-wrap:wrap;margin:calc(4px*var(--ui,1)) 0}
 .lob-code .room-code{margin:0}
 .lob-code #btnLobCopy{width:auto;min-width:0;min-height:calc(38px*var(--ui,1));padding:calc(8px*var(--ui,1)) calc(14px*var(--ui,1));font-size:calc(10px*var(--ui,1))}
 .lob-players{display:grid;grid-template-columns:1fr 1fr;gap:calc(6px*var(--ui,1));margin:calc(8px*var(--ui,1)) auto;width:100%;max-width:calc(560px*var(--ui,1))}
-.lob-slot{display:flex;align-items:center;gap:calc(8px*var(--ui,1));min-width:0;padding:calc(8px*var(--ui,1)) calc(10px*var(--ui,1));background:var(--c-deep,#14110c);border:calc(2px*var(--ui,1)) solid var(--c-edge,#4a4636);text-align:left;font:calc(10px*var(--ui,1))/1.3 "Courier New",monospace;color:#cfc8b2}
-.lob-slot.empty{opacity:.55;border-style:dashed;justify-content:center;font-size:calc(9px*var(--ui,1))}
-.lob-slot.me{border-color:var(--c-amber,#ffd84a)}
-.lob-slot.rdy{border-color:var(--c-moss,#8fb070)}
-.lob-slot .dot{flex:0 0 calc(12px*var(--ui,1));height:calc(12px*var(--ui,1));background:#888}
-.lob-slot .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--c-cream,#f0e8cc);font-weight:bold}
-.lob-slot .tag{flex:0 0 auto;font-size:calc(8px*var(--ui,1));padding:calc(2px*var(--ui,1)) calc(5px*var(--ui,1));border:1px solid currentColor;white-space:nowrap}
-.lob-slot .tag.ok{color:var(--c-moss,#8fb070)}
-.lob-slot .tag.wait{color:#c9a85a}
-.lob-slot .tag.host{color:#ff8080}
-.lob-slot .kick{flex:0 0 auto;min-width:calc(28px*var(--ui,1));min-height:calc(28px*var(--ui,1));background:transparent;border:1px solid #a05050;color:#e07060;font:bold calc(11px*var(--ui,1)) "Courier New",monospace;cursor:pointer}
+.lob-slot{display:flex;align-items:center;gap:calc(8px*var(--ui,1));min-width:0;padding:calc(9px*var(--ui,1)) calc(10px*var(--ui,1));background:var(--c-panel);border:calc(3px*var(--ui,1)) solid var(--c-edge);border-radius:0;box-shadow:0 calc(3px*var(--ui,1)) 0 var(--c-deep);text-align:left;font:calc(8px*var(--ui,1))/1.4 var(--f-px);color:var(--c-cream)}
+.lob-slot.empty{background:transparent;border-style:dashed;border-color:var(--c-line);box-shadow:none;justify-content:center;color:var(--c-dim);font-size:calc(7px*var(--ui,1))}
+.lob-slot.rdy{background:#20271d;border-color:var(--c-moss)}   /* pronto (e o host): mesmo estado "pode" do crafting */
+.lob-slot.me{border-color:var(--c-amber)}   /* você: âmbar, sempre por último para valer também quando está pronto */
+.lob-slot .dot{flex:0 0 calc(14px*var(--ui,1));height:calc(14px*var(--ui,1));box-sizing:border-box;background:#888;border:calc(2px*var(--ui,1)) solid var(--c-deep)}
+.lob-slot .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--c-cream);font-weight:normal}
+.lob-slot .tag{flex:0 0 auto;font:calc(7px*var(--ui,1))/1 var(--f-px);padding:calc(4px*var(--ui,1)) calc(5px*var(--ui,1)) calc(3px*var(--ui,1));border:calc(2px*var(--ui,1)) solid currentColor;white-space:nowrap}
+.lob-slot .tag.ok{background:var(--c-moss);border-color:var(--c-moss);color:var(--c-bg)}
+.lob-slot .tag.wait{background:var(--c-bg);border-color:var(--c-edge);color:var(--c-dim)}
+.lob-slot .tag.host{background:var(--c-amber);border-color:var(--c-amber);color:var(--c-bg)}
+.lob-slot .kick{flex:0 0 auto;min-width:calc(30px*var(--ui,1));min-height:calc(30px*var(--ui,1));padding:0;background:var(--c-bg);border:calc(2px*var(--ui,1)) solid var(--c-red);border-radius:0;box-shadow:0 calc(2px*var(--ui,1)) 0 var(--c-deep);color:var(--c-red);font:calc(8px*var(--ui,1))/1 var(--f-px);cursor:pointer}
+.lob-slot .kick:active{transform:translateY(calc(2px*var(--ui,1)));box-shadow:none}
 .lob-btns{display:flex;gap:calc(8px*var(--ui,1));justify-content:center;flex-wrap:wrap;margin-top:calc(6px*var(--ui,1))}
-.lob-btns .go:disabled{opacity:.45;cursor:default}
+/* indisponível (INICIAR antes de todos prontos, PRONTO enquanto inicia): mesmo cinza dos botões bloqueados do crafting, sem sombra nem movimento */
+.screen .lob-btns .go:disabled:not(.danger):not(.sec),.screen .lob-btns .go:disabled:not(.danger):not(.sec):hover,.screen .lob-btns .go:disabled:not(.danger):not(.sec):active{background:var(--c-bg);border-color:var(--c-edge);color:#6b6858;box-shadow:none;transform:none;opacity:1;cursor:default}
 :where(html.land.hle520) #mplobby .card{overflow-y:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start;padding:calc(6px*var(--ui,1)) calc(8px*var(--ui,1))}
 :where(html.land.hle520) #mplobby .card h2{margin-bottom:calc(2px*var(--ui,1))}
 :where(html.land.hle520) #mplobby .lob-players{margin:calc(4px*var(--ui,1)) auto;gap:calc(4px*var(--ui,1))}

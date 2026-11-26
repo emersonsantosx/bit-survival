@@ -22,7 +22,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 12-crafting-multiplayer | 69 | 25 | 44 | 0 | 14 | 21 |
 | 13-render-personagens | 116 | 52 | 64 | 0 | 13 | 19 |
 | 14-arquitetura-luz-ambiente | 0 | 0 | 0 | 0 | 15 | 0 |
-| 15-missoes-ui-controles | 88 | 20 | 68 | 0 | 10 | 13 |
+| 15-missoes-ui-controles | 88 | 19 | 69 | 0 | 10 | 13 |
 | 16-orientacao | 0 | 0 | 0 | 0 | 3 | 0 |
 | 17-arte-menu | 0 | 0 | 0 | 0 | 0 | 0 |
 | 18-plantacao | 0 | 0 | 0 | 0 | 12 | 0 |
@@ -57,11 +57,11 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 08-cidade-vilas-marcos | 135 | 3 | 17 | 136 | 21 |  | 2 | . | 5 |  | 3 | 3 | 23 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 3 |
 | 09-milharal-geracao | 212 | 10 | 87 | 285 | 40 |  | 1 | 35 | . | 2 | 3 | 8 | 125 |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  | 4 |
 | 10-jogo-saves | 90 | 50 | 60 | 702 | 18 | 3 | 12 | 7 | 7 | . | 87 | 23 | 10 |  | 17 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |  |
-| 11-pesca-update | 273 | 41 | 67 | 911 | 63 | 2 | 3 | 5 | 20 | 66 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |  |
-| 12-crafting-multiplayer | 58 | 36 | 29 | 741 | 12 | 1 | 6 | 5 | 11 | 46 | 42 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |  |  |  |
+| 11-pesca-update | 274 | 41 | 67 | 912 | 63 | 2 | 3 | 5 | 20 | 66 | . | 14 | 16 |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |  |
+| 12-crafting-multiplayer | 58 | 36 | 29 | 742 | 12 | 1 | 6 | 5 | 11 | 46 | 42 | . | 18 |  | 11 |  |  |  |  |  |  |  |  |  |  |  |  |  | 4 |  |  |  |  |  |
 | 13-render-personagens | 302 | 39 | 23 | 252 | 13 | 22 | 2 | 2 |  | 4 | 9 | 2 | . |  | 1 |  |  |  |  |  |  |  |  |  |  | 2 |  |  |  |  |  |  |  |  |
 | 14-arquitetura-luz-ambiente | 691 | 13 | 16 | 325 | 17 |  | 10 | 8 | 24 | 8 | 6 | 1 | 162 | . |  |  |  |  |  |  |  |  |  |  |  | 5 |  |  |  | 2 |  |  |  | 2 |
-| 15-missoes-ui-controles | 178 | 60 | 21 | 253 |  |  | 17 |  |  | 68 | 10 | 21 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |
+| 15-missoes-ui-controles | 180 | 61 | 21 | 255 |  |  | 17 |  |  | 68 | 10 | 21 | 6 |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |
 | 16-orientacao | 2 |  |  | 5 |  |  |  |  |  |  |  |  |  |  | 2 | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 17-arte-menu |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 18-plantacao | 39 | 6 | 22 | 77 | 16 |  |  | 13 | 1 | 1 | 8 | 3 | 140 |  | 1 |  |  | . |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
@@ -75,7 +75,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | 26-clima-acabamento | 19 |  | 2 | 21 | 4 |  |  |  |  |  |  |  | 8 |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |  |
 | 27-variedade-decoracao | 6 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |  |
 | 28-modo-desktop | 45 | 2 |  | 41 |  |  | 2 |  |  | 7 | 2 |  |  |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |  |
-| 29-sala-multiplayer | 15 | 5 |  | 37 |  |  |  |  |  |  |  | 10 |  |  | 6 |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |
+| 29-sala-multiplayer | 15 | 5 |  | 38 |  |  |  |  |  |  |  | 10 |  |  | 4 |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |  |
 | 30-desempenho | 4 |  | 14 | 3 |  |  |  |  |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |  |
 | 31-rastro-sangue | 7 |  |  | 17 | 5 |  |  |  |  |  |  |  | 13 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |  |
 | 32-passageiro | 8 | 4 |  | 40 |  |  | 1 | 1 |  | 4 | 6 | 7 | 12 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | . |  |  |
@@ -88,8 +88,8 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 
 | Nome | Tipo | Definida em | Usada em N arquivos | Usos |
 |---|---|---|---:|---:|
-| P | let | 04-estado:14 | 24 | 2053 |
-| MP | let | 04-estado:19 | 24 | 709 |
+| P | let | 04-estado:14 | 24 | 2054 |
+| MP | let | 04-estado:19 | 24 | 711 |
 | selectedMap | let | 04-estado:3 | 23 | 230 |
 | beep | funcao | 02-audio:42 | 20 | 143 |
 | ctx | const | 01-base:27 | 19 | 1124 |
@@ -98,7 +98,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | sendEvt | funcao | 12-crafting-multiplayer:112 | 19 | 64 |
 | rnd | const | 01-base:16 | 18 | 433 |
 | T | let | 04-estado:14 | 18 | 130 |
-| toast | funcao | 11-pesca-update:1367 | 18 | 122 |
+| toast | funcao | 11-pesca-update:1370 | 18 | 122 |
 | clamp | const | 01-base:4 | 17 | 101 |
 | parts | let | 04-estado:10 | 17 | 76 |
 | R | funcao | 13-render-personagens:2 | 16 | 1247 |
@@ -114,7 +114,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | ITEMS | const | 03-dados:182 | 11 | 70 |
 | zombies | let | 04-estado:10 | 11 | 58 |
 | campfires | let | 04-estado:10 | 11 | 41 |
-| say | funcao | 11-pesca-update:1317 | 10 | 92 |
+| say | funcao | 11-pesca-update:1320 | 10 | 92 |
 | dark | let | 04-estado:14 | 10 | 62 |
 | tents | let | 04-estado:10 | 10 | 23 |
 | onCityRoad | funcao | 08-cidade-vilas-marcos:9 | 10 | 22 |
@@ -124,7 +124,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | rebuildSolidGrid | funcao | 05-geometria:408 | 9 | 35 |
 | lakes | let | 04-estado:10 | 9 | 32 |
 | addItem | funcao | 04-estado:271 | 9 | 20 |
-| $ | const | 01-base:2 | 8 | 183 |
+| $ | const | 01-base:2 | 8 | 184 |
 | H | let | 01-base:48 | 8 | 103 |
 | W | let | 01-base:48 | 8 | 98 |
 | rocks | let | 04-estado:10 | 8 | 49 |
@@ -134,7 +134,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 | track | funcao | 15-missoes-ui-controles:60 | 8 | 13 |
 | Z | let | 01-base:48 | 7 | 125 |
 | CFG | const | 01-base:128 | 7 | 78 |
-| aud | funcao | 02-audio:11 | 7 | 58 |
+| aud | funcao | 02-audio:11 | 7 | 59 |
 | joy | const | 04-estado:203 | 7 | 58 |
 | vehicles | let | 04-estado:10 | 7 | 52 |
 | decorations | let | 04-estado:10 | 7 | 39 |
@@ -166,7 +166,7 @@ Gerado por `node tools/dependencias.js`. So leitura: nada do jogo e alterado.
 - **11-pesca-update** (34): fishPop, reelHeld, rr, fishCastWait, fishPickSpecies, tryFish, fishStartReel, fishEnd, drawFishLine, autoSwitchMelee, meleeDmg, TEMP_MAP, envTemp, tempTick, BURN_R, BURN_T, BURN_DPS, burnTick, updateP, updateZ, CHAINSAW_LEN, CHAINSAW_R, chainsawHit, CAM_FAR, camSpeedZoom, ...
 - **12-crafting-multiplayer** (44): canCraft, craft, STRUCT_EVT, LOCAL_GRACE, handleEvt, loadPeerJS, makeRoomCode, hostRetryTimer, hostOpenPeer, hostSignalRetry, RECONN_MAX_MS, showReconnectUI, updateReconnectUI, hideReconnectUI, mpReconnectFail, mpGuestReconnectAttempt, hostResumeGuest, guestResumed, hostBuildWorld, MAP_NOME, hostSync, hostBroadcastLobby, hostFreeId, hostUniqueName, hostRefuse, ...
 - **13-render-personagens** (64): skinLook, snowOutfit, _shc, ZS_COMMON, ZSTYLE, ZEYE, zstyle, humanBody, meleeLeft, swingAngle, _heldCv, _heldG, _heldZ, drawHeld, armLine, TWO_HAND, humanDraw, RSP, rockKind, rockSprite, TSP, treeSprite, treeShadow, treeShadow0, TREE_ALTS, ...
-- **15-missoes-ui-controles** (68): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACH_MAPS, ACHD, achSave, achChime, achCheck, achSet, achMeta, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, achRow, renderAch, bindSlider, bindToggle, bindSliderResize, ...
+- **15-missoes-ui-controles** (69): MS_GROUPS, MS_DEF, msRng, MS, msDef, msRender, ACH, ACH_MAPS, ACHD, achSave, achChime, achCheck, achSet, achMeta, _statPx, _statPy, _statSaveT, fmtDur, renderStats, achTab, achRow, renderAch, renderHostWorlds, bindSlider, bindToggle, ...
 - **29-sala-multiplayer** (2): LOB_COL, lobbyLeave
 - **30-desempenho** (8): GC_SZ, GC_M, GC_MAX, GC, layerBlock, layerDraw, layerWarm, groundPaint
 - **34-caminhos-naturais** (9): RC, RW_A, roadWarp, rmHash, rmNoise, rmN1, roadDense, roadStamp, RPAL
