@@ -442,7 +442,7 @@ on('btnStart','click',()=>loadingRun(()=>startGame(),'GERANDO O MUNDO...'));
 
 on('btnMPBack','click',()=>showScreen('menu'));
 on('btnMPHost','click',()=>{aud();showScreen('mphostscreen');const w=$('hostCodeWrap');if(w)w.classList.add('hide');setStatus('hostStatus','');lockHostWorlds(false);renderHostWorlds();});
-on('btnMPJoin','click',()=>{aud();showScreen('mpjoinscreen');setStatus('joinStatus','');const i=$('joinCode');if(i)i.value='';});
+on('btnMPJoin','click',()=>{aud();showScreen('mpjoinscreen');setStatus('joinStatus','');const i=$('joinCode');if(i)i.value=lastRoomGet();joinHintSync();});   // reentrada rápida: código da última sala já preenchido
 
 on('btnHostCreate','click',()=>{aud();mpHostStart();if(MP.active&&MP.isHost){lockHostWorlds(true);MP._lobErr=false;lobbyShow();}});
 /* copia o codigo da sala (com plano B para WebView antigo); btn: botao que mostra COPIADO; say: onde avisar */
@@ -490,7 +490,7 @@ on('btnJoinConnect','click',()=>{
   aud();
   const inp=$('joinCode');if(!inp)return;
   const code=inp.value.trim().toUpperCase();
-  if(!/^[A-Z0-9]{6}$/.test(code)){setStatus('joinStatus','Código inválido (6 caracteres)',true);return;}
+  if(!/^[A-Z0-9]{6}$/.test(code)){setStatus('joinStatus','Código inválido. Ele tem 6 letras e números, igual ao que o host mostra.',true,true);return;}
   mpJoinStart(code);
 });
 on('btnJoinBack','click',()=>{
@@ -498,7 +498,8 @@ on('btnJoinBack','click',()=>{
   MP.peer=null;MP.conn=null;MP.active=false;MP.connected=false;MP.isHost=false;
   showScreen('mpscreen');
 });
-on('joinCode','input',e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);});
+on('joinCode','input',e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);e.target.classList.remove('bad');joinHintSync();});
+on('joinCode','focus',e=>{try{e.target.select();}catch(_){}});   // tocar no campo seleciona o código preenchido: digitar já troca
 on('joinCode','keydown',e=>{if(e.key==='Enter')$('btnJoinConnect').click();});
 on('hostName','input',e=>{e.target.value=e.target.value.slice(0,12);});
 on('joinName','input',e=>{e.target.value=e.target.value.slice(0,12);});
