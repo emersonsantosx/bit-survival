@@ -24,7 +24,8 @@ const pad=n=>(n<10?'0':'')+n;
 const fmt=s=>Math.floor(s/60)+':'+pad(Math.floor(s%60));
 
 /* ============ CANVAS + PERFORMANCE ============ */
-const cv=$('game'), ctx=cv.getContext('2d',{alpha:false,desynchronized:true});
+/* sem desynchronized: no modo de baixa latencia a tela podia mostrar o quadro pela metade (sem telhados e sem a noite), piscando no multiplayer */
+const cv=$('game'), ctx=cv.getContext('2d',{alpha:false});
 const lightC=document.createElement('canvas'), lctx=lightC.getContext('2d');
 // Sprites de luz pré-desenhados (1x): um "buraco" suave na escuridão e um brilho quente de fogo
 function makeLightSprite(stops){
