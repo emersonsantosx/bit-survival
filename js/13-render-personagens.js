@@ -131,7 +131,9 @@ function humanBody(R,o,face){
   const eL=ex>0?0:(ex<0?-3:-2),eR=ex>0?2:(ex<0?-1:1);
   const sbn=h=>{if(ex>=0)R(-3,-13,1,h,hair);if(ex<=0)R(2,-13,1,h,hair);}; // costeleta só do lado de trás do rosto
   const step=o.moving&&!o.sit?Math.sin(o.anim):0;
-  const l1=step>.3?-1:0,l2=step<-.3?-1:0;
+  /* Passada (so o jogador e os aliados; zumbis seguem como eram): a perna que passa sobe 1 px (2 ao correr) e, de lado, avanca 1 px (2 ao correr) em direcao a outra */
+  const l1=step>.3?(!z&&o.sprint?-2:-1):0,l2=step<-.3?(!z&&o.sprint?-2:-1):0;
+  const sw=(!z&&ex!==0)?(o.sprint?2:1):0,lx1=l1?sw:0,lx2=l2?-sw:0;
   const skin=o.skin,shirt=o.shirt,hair=S.hair||o.hair||'#222';
   const pants=S.pants||skin,boot=S.boot===null?skin:(S.boot||'#241c16');
   const os=S.os||'tee',hs=S.hs||'short';
@@ -144,11 +146,12 @@ function humanBody(R,o,face){
       Rm(-3,-2,8,3,th);Rm(-3,1,8,1,Sh(th,-.25));Rm(3,1,2,4,sh);Rm(3,4,4,2,boot);Rm(-2,-2,2,1,Sh(th,.15));
     }else if(fy<-.5){R(-4,-2,3,2,pants);R(1,-2,3,2,pants);R(-4,0,3,1,Sh(pants,-.3));R(1,0,3,1,Sh(pants,-.3));}
     else{R(-4,-2,3,3,th);R(1,-2,3,3,th);R(-4,1,3,1,Sh(th,-.25));R(1,1,3,1,Sh(th,-.25));R(-4,2,3,3,sh);R(1,2,3,3,sh);R(-4,4,3,2,boot);R(1,4,3,2,boot);}
-  }else if(S.shorts){R(-4,-2+l1,3,2,pants);R(1,-2+l2,3,2,pants);R(-4,0+l1,3,3,skin);R(1,0+l2,3,3,skin);}
-  else if(os==='dress'||os==='gown'){R(-4,-2+l1,3,5,skin);R(1,-2+l2,3,5,skin);}
-  else{R(-4,-2+l1,3,5,pants);R(1,-2+l2,3,5,pants);}
-  if(!o.sit){R(-4,1+l1,3,2,boot);R(1,1+l2,3,2,boot);}
+  }else if(S.shorts){R(-4+lx1,-2+l1,3,2,pants);R(1+lx2,-2+l2,3,2,pants);R(-4+lx1,0+l1,3,3,skin);R(1+lx2,0+l2,3,3,skin);}
+  else if(os==='dress'||os==='gown'){R(-4+lx1,-2+l1,3,5,skin);R(1+lx2,-2+l2,3,5,skin);}
+  else{R(-4+lx1,-2+l1,3,5,pants);R(1+lx2,-2+l2,3,5,pants);}
+  if(!o.sit){R(-4+lx1,1+l1,3,2,boot);R(1+lx2,1+l2,3,2,boot);}
   if(z&&kind===0&&S.os==='gown'){R(-4,-1+l1,3,1,'#e8e4d8');}                 // bandagem na perna do paciente
+  if(o.ub)ctx.translate(0,o.ub);   // balanco do corpo (tronco, cabeca e bracos; as pernas ficam): sobe ao passar a perna, desce ao respirar. So no jogo (o.ub vem de humanDraw)
   // mochila (de lado/frente aparece atrás; de costas cobre as costas)
   if(S.acc==='pack'&&!back){R(-5,-8,1,5,S.pack);R(4,-8,1,5,S.pack);}
   // mochila craftada/encontrada (P.pack): de lado fica atras do tronco, de frente so aparecem as bordas, de costas cobre as costas
@@ -443,6 +446,18 @@ function armLine(sx,sy,ex,ey,sleeve,skin,fr){
 }
 function punchHand(h,sw){if(sw>0&&!h._pon)h._ph=(h._ph|0)^1;h._pon=sw>0;return h._ph|0;} // alterna soco direito/esquerdo a cada golpe
 const TWO_HAND={pistol:1,rifle:1,shotgun:1,smg:1,bow:1,bat:1,axe:1,pickaxe:1,katana:1,spear:1,fishingrod:1,hoe:1,fence:1,gate:1,wall:1,door:1,floor:1,roof:1,mattress:1,log:1}; // armas de duas mãos
+/* Direcao so do DESENHO do corpo (jogador e aliados): gira aos poucos pelo caminho mais curto (passa pelas poses de frente/costas/lado em vez de saltar de uma vez).
+   e.face continua valendo na hora para mira, golpe e tiro; mao e arma tambem usam a direcao real. Guarda o estado em e._vf (campos com _ nao vao para o save). */
+const TURN_K=18;
+function lookFace(e){
+  const t=e.face||0,now=performance.now();
+  if(typeof e._vf!=='number'||!isFinite(e._vf)||now-(e._vt||0)>400){e._vf=t;e._vt=now;return t;}   // primeira vez ou volta de uma pausa: sem animar
+  const dt=Math.min(.05,Math.max(0,now-e._vt)/1000);e._vt=now;
+  let d=t-e._vf;d=Math.atan2(Math.sin(d),Math.cos(d));
+  if(Math.abs(d)<.04)e._vf=t;else e._vf+=d*(1-Math.exp(-dt*TURN_K));
+  return e._vf;
+}
+window.lookFace=lookFace;
 function human(x,y,face,o){
   humanDraw(x,y,face,o);
   let d=lakeDepth(x,y);
@@ -470,7 +485,12 @@ function humanDraw(x,y,face,o){
     ctx.restore();return;
   }
   shadowBody(0,0,17,4.2);
-  humanBody(R,o,face);
+  const bface=o.vface!==undefined?o.vface:face,bfx=Math.cos(bface);   // corpo na direcao suavizada; mao e arma seguem a direcao real
+  if(!o.zombie&&!o.sit&&!(WEAPONS[o.wpn]&&WEAPONS[o.wpn].rod)){     // vara na mao: sem balanco, a linha da pesca sai da ponta exata
+    if(o.moving)o.ub=Math.abs(Math.sin(o.anim))<.45?-1:0;           // andando: o corpo sobe 1 px quando as pernas se cruzam
+    else if(!(o.swing>0))o.ub=Math.sin(T*2.4+x*.05)>.55?1:0;        // parado: respira (afunda 1 px por um instante)
+  }
+  humanBody(R,o,bface);
   let hx=Math.round(fx*6),hy=Math.round(fy*4)-5;
   if(o.zombie){
     const px=Math.round(-fy*3),py=Math.round(fx*3);
@@ -504,9 +524,9 @@ function humanDraw(x,y,face,o){
     if(o.boss){R(hx-3,hy-3,7,2,'#ffe040');R(hx-3,hy-5,2,2,'#ffe040');R(hx+2,hy-5,2,2,'#ffe040');R(hx,hy-6,2,3,'#ffe040');}
   }else{
     {
-      const sl=(o.os==='tank'||o.os==='bare')?o.skin:o.shirt,sgn=fx>=-.15?1:-1,sv=Math.abs(fx)>.6;
+      const sl=(o.os==='tank'||o.os==='bare')?o.skin:o.shirt,sgn=bfx>=-.15?1:-1,sv=Math.abs(bfx)>.6;
       const gk=o.glove||o.skin;                                         // luvas: a mão usa a cor da luva
-      const two=TWO_HAND[o.wpn]&&!o.hold,st=o.moving?Math.round(Math.sin(o.anim)*1.5):0;
+      const two=TWO_HAND[o.wpn]&&!o.hold,ph=o.moving?Math.sin(o.anim):0,am=o.sprint?2.4:1.5;   // ph: fase da passada (o braco solto balanca ao contrario)
       const shR=sv?(fx>0?3:-3):4,shL=sv?shR:-4,sY=-8;                 // centros dos ombros
       const mS=sgn>0?shR:shL,oS=sgn>0?shL:shR;                        // ombro do braço principal / do outro
       if(two){
@@ -534,7 +554,10 @@ function humanDraw(x,y,face,o){
           if(ext>.85){R(hx-2,hy-2,4,4,o.skin);R(hx-1,hy-1,2,2,Sh(o.skin,-.15)); // impacto
             const ix=Math.round(hx+fx*4),iy=Math.round(hy+fy*3);R(ix-3,iy-1,1,1,'#fff');R(ix+2,iy-2,1,1,'#fff');R(ix,iy-3,1,1,'#ffe27a');R(ix+1,iy+2,1,1,'#ffe27a');}
         }else{
-        armLine(oS,sY,oS,-3+st,sl,gk,o.slv);R(oS-1,-4+st,2,2,gk);
+        let sx2=oS,sy2=-3;
+        if(o.moving){if(sv){sx2=oS+sgn*Math.round(-ph*am);sy2=-3-(ph<-.3?1:0);}else sy2=-3+Math.round(ph*am);}   // de lado balanca para frente e para tras; de frente e de costas sobe e desce
+        armLine(oS,sY,sx2,sy2,sl,gk,o.slv);R(sx2-1,sy2-1,2,2,gk);
+        if(o.moving&&!o.hold&&o.wpn==='fists'){if(sv)hx+=sgn*Math.round(ph*(o.sprint?1.6:1));else hy+=Math.round(-ph*(o.sprint?1.6:1));}   // sem arma: o braco da guarda tambem balanca (ao contrario do solto)
         armLine(mS,sY,hx,hy,sl,gk,o.slv);
         }
       }
