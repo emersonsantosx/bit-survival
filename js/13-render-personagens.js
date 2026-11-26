@@ -1390,9 +1390,11 @@ function drawRider(K,lk,L,W,pass){   // pass: passageiro (js/32): atrás do moto
 function drawVehicle(v){
   // Local axes after rotate(face): +X = frente (direção do movimento), +Y = lado
   const L=v.w||36, W=v.h||20; // L=comprimento, W=largura
-  shadowCar(v,L,W);
+  const wat=vehWaterState(v),sunk=wat?Math.min(1,wat.depth*3):0;   // na agua (js/35)
+  if(sunk<1){const ga=ctx.globalAlpha;ctx.globalAlpha=ga*(1-sunk);shadowCar(v,L,W);ctx.globalAlpha=ga;}   // dentro d'agua a sombra no chao some
+  if(wat)vehWaterUnder(v,wat);
   ctx.save();
-  ctx.translate(v.x,v.y);
+  ctx.translate(v.x,v.y+(wat&&!v.destroyed?Math.round(Math.sin(T*3.2+v.x*.05)*.7*sunk):0));   // boia de leve
   ctx.rotate(v.face||0);
 
   const VK=vehKind(v);
@@ -1451,6 +1453,7 @@ function drawVehicle(v){
   R(L/2-7,W/2-2,2,3,'#444');
 
   }
+  if(wat)vehWaterHull(v,wat);
   // Loot ainda no carro
   if(!v.looted){
     R(-2,-3,5,6,'#d9892b');
@@ -1472,6 +1475,7 @@ function drawVehicle(v){
     R(-2,-W/2-2,4,2,'#ff6020');
   }
   ctx.restore();
+  if(wat)vehWaterOver(wat);
   if(!v.destroyed)drawVehTags(v);   // nome dos aliados que estão dentro (js/32)
   // Barra de vida do carro (ao dirigir ou se já sofreu dano)
   if(!v.destroyed && (v.showHp>0 || (v.hp!==undefined && v.hp<(v.maxHp||100)) || v.dying)){
