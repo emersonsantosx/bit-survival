@@ -9,7 +9,8 @@ Saida: css/fonte-hud.css
 
 Regras da fonte:
 - cada pixel do desenho vira um quadrado de 100 unidades (em 1000 por em): font-size 10px = 1px por pixel;
-- letras minusculas usam o MESMO desenho das maiusculas (a HUD fala em caixa alta);
+- na BitHUD as minusculas usam o MESMO desenho das maiusculas (a HUD fala em caixa alta); a BitHUDChat, dos baloes do chat,
+  tem minusculas proprias para a mensagem aparecer como foi escrita;
 - acentos do portugues (ACENTOS) sao desenhados acima da letra, com uma linha de folga; o cedilha fica abaixo da linha de base;
 - caracteres que nao existem aqui caem na fonte seguinte da lista (Courier New).
 """
@@ -110,6 +111,77 @@ COMPOSTAS = {
 }
 CEDILHA = 'Ç'  # C com cauda embaixo
 
+# ---------------------------------------------------------------- minusculas (so na fonte BitHUDChat, dos baloes do chat)
+# 7 linhas ate a linha de base; as que descem (g j p q y) tem mais 2 linhas embaixo
+MINUSCULAS = {
+    'a': ['', '', '.###.', '....#', '.####', '#...#', '.####'],
+    'b': ['#....', '#....', '####.', '#...#', '#...#', '#...#', '####.'],
+    'c': ['', '', '.###', '#...', '#...', '#...', '.###'],
+    'd': ['....#', '....#', '.####', '#...#', '#...#', '#...#', '.####'],
+    'e': ['', '', '.###.', '#...#', '#####', '#....', '.###.'],
+    'f': ['..##', '.#..', '####', '.#..', '.#..', '.#..', '.#..'],
+    'g': ['', '', '.####', '#...#', '#...#', '#...#', '.####', '....#', '.###.'],
+    'h': ['#....', '#....', '####.', '#...#', '#...#', '#...#', '#...#'],
+    'i': ['#', '', '#', '#', '#', '#', '#'],
+    'j': ['..#', '', '..#', '..#', '..#', '..#', '..#', '..#', '##.'],
+    'k': ['#...', '#...', '#..#', '#.#.', '##..', '#.#.', '#..#'],
+    'l': ['#.', '#.', '#.', '#.', '#.', '#.', '.#'],
+    'm': ['', '', '##.#.', '#.#.#', '#.#.#', '#.#.#', '#.#.#'],
+    'n': ['', '', '####.', '#...#', '#...#', '#...#', '#...#'],
+    'o': ['', '', '.###.', '#...#', '#...#', '#...#', '.###.'],
+    'p': ['', '', '####.', '#...#', '#...#', '#...#', '####.', '#....', '#....'],
+    'q': ['', '', '.####', '#...#', '#...#', '#...#', '.####', '....#', '....#'],
+    'r': ['', '', '#.##', '##..', '#...', '#...', '#...'],
+    's': ['', '', '.####', '#....', '.###.', '....#', '####.'],
+    't': ['.#..', '.#..', '####', '.#..', '.#..', '.#..', '..##'],
+    'u': ['', '', '#...#', '#...#', '#...#', '#...#', '.####'],
+    'v': ['', '', '#...#', '#...#', '#...#', '.#.#.', '..#..'],
+    'w': ['', '', '#...#', '#.#.#', '#.#.#', '#.#.#', '.#.#.'],
+    'x': ['', '', '#...#', '.#.#.', '..#..', '.#.#.', '#...#'],
+    'y': ['', '', '#...#', '#...#', '#...#', '#...#', '.####', '....#', '.###.'],
+    'z': ['', '', '#####', '...#.', '..#..', '.#...', '#####'],
+}
+# acento das minusculas: 2 linhas, logo acima da altura do x, com uma linha de folga
+ACENTOS_MIN = {
+    'agudo': ['...#.', '..#..'], 'grave': ['.#...', '..#..'], 'circ': ['..#..', '.#.#.'],
+    'til': ['.##.#', '#.##.'], 'trema': ['.....', '.#.#.'],
+}
+
+
+def por_minusculas(glifos):
+    """Troca/acrescenta os desenhos das minusculas (inclusive acentuadas e cedilha) em uma copia de `glifos`."""
+    out = dict(glifos)
+    vazio = '.' * 5
+
+    def poe(ch, topo, rows9, w):
+        mat = list(topo) + list(rows9)
+        out[ch] = ([r.ljust(w, '.')[:w] for r in mat], w + 1)
+
+    def nove(rows):
+        return [r.ljust(5, '.') for r in rows] + [vazio] * (9 - len(rows))
+
+    for ch, rows in MINUSCULAS.items():
+        r9 = nove(rows)
+        usadas = [i for r in r9 for i, c in enumerate(r) if c == '#']
+        a, b = min(usadas), max(usadas)
+        poe(ch, [vazio] * ROWS_ACIMA, [r[a:b + 1] for r in r9], b - a + 1)
+    for maius, (base, ac) in COMPOSTAS.items():
+        ch, low = maius.lower(), base.lower()
+        r9 = nove(MINUSCULAS[low])
+        topo = [vazio] * ROWS_ACIMA
+        if low == 'i':                      # i acentuado perde o pingo e fica centralizado em 3 colunas
+            r9 = ['.....', '.....'] + ['..#..'] * 5 + [vazio] * 2
+        linhas = topo + r9
+        # o acento ocupa a ultima linha do topo e a primeira da letra; a segunda linha da letra fica de folga
+        linhas[ROWS_ACIMA - 1], linhas[ROWS_ACIMA] = ACENTOS_MIN[ac]
+        usadas = [i for r in linhas for i, c in enumerate(r) if c == '#']
+        a, b = min(usadas), max(usadas)
+        poe(ch, [r[a:b + 1] for r in linhas[:ROWS_ACIMA]], [r[a:b + 1] for r in linhas[ROWS_ACIMA:]], b - a + 1)
+    r9 = nove(MINUSCULAS['c'] + ['..#..', '.##..'])
+    poe('ç', [vazio] * ROWS_ACIMA, [r[:4] for r in r9], 4)
+    return out
+
+
 ROWS_ACIMA = 3   # duas de acento e uma de folga
 ROWS_ABAIXO = 2  # cedilha
 
@@ -183,14 +255,14 @@ def retangulos(mat):
     return rects
 
 
-def main():
-    glifos = montar()
+def gerar(familia, glifos):
+    """Monta o woff de uma familia. Letra sem desenho proprio em minuscula usa o da maiuscula."""
     ordem = ['.notdef'] + ['uni%04X' % ord(c) for c in glifos]
     cmap = {}
     for ch in glifos:
         cmap[ord(ch)] = 'uni%04X' % ord(ch)
         low = ch.lower()
-        if low != ch and ord(low) not in cmap:
+        if low != ch and low not in glifos and ord(low) not in cmap:
             cmap[ord(low)] = 'uni%04X' % ord(ch)   # minuscula usa o desenho da maiuscula
     # aliases tipograficos
     for src, dst in ALIAS.items():
@@ -222,22 +294,31 @@ def main():
     fb.setupGlyf(glyphs)
     fb.setupHorizontalMetrics(metrics)
     fb.setupHorizontalHeader(ascent=(ROWS_ACIMA + 7) * PX, descent=-ROWS_ABAIXO * PX)
-    fb.setupNameTable({'familyName': 'BitHUD', 'styleName': 'Regular',
-                       'uniqueFontIdentifier': 'BitHUD-Regular', 'fullName': 'BitHUD Regular', 'psName': 'BitHUD-Regular'})
+    fb.setupNameTable({'familyName': familia, 'styleName': 'Regular', 'uniqueFontIdentifier': familia + '-Regular',
+                       'fullName': familia + ' Regular', 'psName': familia + '-Regular'})
     fb.setupOS2(sTypoAscender=(ROWS_ACIMA + 7) * PX, sTypoDescender=-ROWS_ABAIXO * PX, sTypoLineGap=0,
                 usWinAscent=(ROWS_ACIMA + 7) * PX, usWinDescent=ROWS_ABAIXO * PX, sxHeight=7 * PX, sCapHeight=7 * PX)
     fb.setupPost()
     fb.font.flavor = 'woff'
     buf = io.BytesIO()
     fb.save(buf)
-    dados = buf.getvalue()
-    b64 = base64.b64encode(dados).decode('ascii')
+    return buf.getvalue()
+
+
+def main():
+    glifos = montar()
+    fontes = [('BitHUD', glifos), ('BitHUDChat', por_minusculas(glifos))]
     aqui = os.path.dirname(os.path.abspath(__file__))
     destino = os.path.join(aqui, '..', 'css', 'fonte-hud.css')
     with open(destino, 'w', encoding='utf-8') as f:
-        f.write('/* GERADO por tools/gerar-fonte-hud.py: nao editar a mao. Fonte pixel 5x7 da HUD (so maiusculas, 1 pixel = font-size/10). */\n')
-        f.write('@font-face{font-family:"BitHUD";font-style:normal;font-weight:400;font-display:block;src:url(data:font/woff;base64,' + b64 + ') format("woff")}\n')
-    print('fonte gerada: %d glifos, %d bytes (woff), css em %s' % (len(glifos), len(dados), os.path.normpath(destino)))
+        f.write('/* GERADO por tools/gerar-fonte-hud.py: nao editar a mao. Fontes pixel da HUD (1 pixel = font-size/10): '
+                'BitHUD so tem maiusculas; BitHUDChat (baloes do chat) tem tambem as minusculas. */\n')
+        for familia, g in fontes:
+            dados = gerar(familia, g)
+            b64 = base64.b64encode(dados).decode('ascii')
+            f.write('@font-face{font-family:"' + familia + '";font-style:normal;font-weight:400;font-display:block;src:url(data:font/woff;base64,' + b64 + ') format("woff")}\n')
+            print('%s: %d glifos, %d bytes (woff)' % (familia, len(g), len(dados)))
+    print('css em %s' % os.path.normpath(destino))
 
 
 if __name__ == '__main__':
