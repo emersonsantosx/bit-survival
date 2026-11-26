@@ -311,16 +311,40 @@ function loadPeerJS(cb){
   const s=document.createElement('script');
   s.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
   s.onload=()=>{MP.scriptLoaded=true;cb&&cb();};
-  s.onerror=()=>{alert('Não foi possível carregar PeerJS.');cb&&cb(new Error('peerjs'));};
+  s.onerror=()=>{cb&&cb(new Error('peerjs'));};   // quem chamou mostra o aviso na tela (nada de alert)
   document.head.appendChild(s);
 }
 function makeRoomCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<6;i++)s+=c[Math.floor(Math.random()*c.length)];return s;}
-function setStatus(id,msg,isErr){
+function setStatus(id,msg,isErr,codeBad){
   const e=$(id);if(e){e.textContent=msg;e.classList.toggle('err',!!isErr);}
+  if(id==='joinStatus')joinFormSync(msg,isErr,codeBad);
   // na sala, erros e avisos de rede aparecem na linha de status dela
   if(MP.lobbyOn&&(id==='hostStatus'||id==='joinStatus')&&(isErr||/Reconectando|Erro/.test(msg))){const l=$('lobStatus');if(l){l.textContent=msg;l.classList.toggle('err',!!isErr);}}
 }
 
+/* Tela ENTRAR EM SALA: enquanto conecta o botão fica bloqueado ("CONECTANDO...") e volta ao normal em qualquer erro; erro de código marca o campo em vermelho */
+function joinFormSync(msg,isErr,codeBad){
+  const b=$('btnJoinConnect'),i=$('joinCode');
+  const busy=!isErr&&/^(Carregando|Conectando|Conectado)/.test(msg||'');
+  if(b){b.disabled=busy;b.textContent=busy?'CONECTANDO...':'CONECTAR';}
+  if(i)i.classList.toggle('bad',!!(isErr&&codeBad));
+}
+/* Mensagem de erro do PeerJS para quem tenta entrar: o que houve + o que fazer */
+function joinErrMsg(type){
+  if(type==='peer-unavailable')return 'Sala não encontrada. Confira o código e peça ao host para manter a sala aberta.';
+  if(type==='network'||type==='server-error'||type==='socket-error'||type==='socket-closed')return 'Sem conexão com o servidor P2P. Verifique a internet e tente de novo.';
+  if(type==='webrtc')return 'Falha na conexão direta com o host. Tente trocar de rede (Wi-Fi ou 4G).';
+  return 'Não foi possível entrar ('+(type||'conexão')+'). Tente de novo.';
+}
+/* Reentrada rápida: o código da última sala em que entrou fica guardado e já vem preenchido em ENTRAR EM SALA (some se o host encerrar a sala) */
+function lastRoomGet(){try{return sanitizeRoomCode(localStorage.getItem('minisurv_last_room')||'');}catch(e){return '';}}
+function lastRoomSet(c){try{localStorage.setItem('minisurv_last_room',sanitizeRoomCode(c));}catch(e){}}
+function lastRoomForget(){try{localStorage.removeItem('minisurv_last_room');}catch(e){}}
+function joinHintSync(){
+  const i=$('joinCode'),h=$('joinHint');if(!h)return;
+  const last=lastRoomGet();
+  h.textContent=(i&&last&&i.value===last)?'Código da última sala preenchido. Toque no campo para trocar.':'';
+}
 function mpHostStart(){
   if(MP.peer){try{MP.peer.destroy();}catch(e){}}
   MP.peer=null; MP.conn=null; MP.connected=false; MP.myId=null;
@@ -413,11 +437,11 @@ function mpJoinStart(code){
   if(nameEl) nameEl.value=MP.playerName;
   try{localStorage.setItem('minisurv_name',MP.playerName);}catch(e){}
   const clean=sanitizeRoomCode(code);
-  if(clean.length<4){ setStatus('joinStatus','Código inválido',true); MP.active=false; return; }
+  if(clean.length<4){ setStatus('joinStatus','Código inválido. Ele tem 6 letras e números, igual ao que o host mostra.',true,true); MP.active=false; return; }
   MP.isHost=false;MP.active=true;MP.roomCode='MINISURV-'+clean;MP.spawn=null;MP.save=null;MP.slot=0;
   setStatus('joinStatus','Carregando motor P2P...');
   loadPeerJS(err=>{
-    if(err||typeof Peer==='undefined'){MP.active=false;MP.isHost=false;setStatus('joinStatus','Falha ao carregar P2P',true);return;}
+    if(err||typeof Peer==='undefined'){MP.active=false;MP.isHost=false;setStatus('joinStatus','Falha ao carregar o P2P. Confira a internet e tente de novo.',true);return;}
     const peerOpts={debug:1, config:PEER_ICE};
     try{MP.peer=new Peer(peerOpts);}
     catch(e){setStatus('joinStatus','Erro: '+e.message,true);return;}
@@ -431,7 +455,7 @@ function mpJoinStart(code){
       MP.conn=conn;
       conn._joinTimer=setTimeout(()=>{
         if(MP.connected||MP.conn!==conn)return;
-        setStatus('joinStatus','Tempo esgotado. Confira o código e se o Host ainda está na sala.',true);
+        setStatus('joinStatus','Tempo esgotado. Confira o código e se o host ainda está na sala.',true,true);
         try{conn.close();}catch(e){}
         try{if(MP.peer)MP.peer.destroy();}catch(e){}
         MP.peer=null;MP.conn=null;MP.active=false;MP.isHost=false;
@@ -441,11 +465,7 @@ function mpJoinStart(code){
     MP.peer.on('error',err=>{
       console.error('[PeerJS convidado]',err);
       if(MP.gameStarted)return; // em partida: o laço de reconexão cuida disso
-      let msg='Erro: '+((err&&err.type)||'conexão');
-      if(err.type==='peer-unavailable')msg='Sala não encontrada. Verifique o código.';
-      else if(err.type==='network'||err.type==='server-error'||err.type==='socket-error'||err.type==='socket-closed')msg='Sem conexão com o servidor P2P. Tente de novo.';
-      else if(err.type==='webrtc')msg='Falha de WebRTC. Tente trocar de rede (Wi-Fi/4G).';
-      setStatus('joinStatus',msg,true);
+      setStatus('joinStatus',joinErrMsg(err&&err.type),true,!!(err&&err.type==='peer-unavailable'));
       if(!MP.connected){ MP.active=false; MP.isHost=false; MP.conn=null; }
     });
   });
@@ -752,7 +772,7 @@ function setupConn(conn,isHostSide){
     MP.connected=false;
     if(MP.conn===conn) MP.conn=null;
     if(MP.active&&MP.gameStarted&&state!=='menu'){ mpConnectionLost(); return; } // em partida: espera/tenta reconectar
-    if(MP.active&&MP.lobbyOn){ guestRoomClosed('A sala foi encerrada.'); return; }
+    if(MP.active&&MP.lobbyOn){ lastRoomForget(); guestRoomClosed('A sala foi encerrada.'); return; }
     if(MP.active) setStatus('joinStatus','Conexão encerrada.',true);
   });
   conn.on('error',err=>console.error('[conn error]',err));
@@ -949,6 +969,7 @@ function handleNetData(data,isHostSide,conn){
 function guestRoomMsg(data){
   if(data.type==='welcome'){
     if(typeof data.id==='string'&&MP_IDS.indexOf(data.id)>0){ MP.netId=data.id; MP.slotIdx=MP_IDS.indexOf(data.id); }
+    if(MP.roomCode)lastRoomSet(MP.roomCode.replace(/^MINISURV-/,''));   // entrou: guarda o código para a próxima vez
     if(!data.ig&&state==='menu'&&!MP.gameStarted){ MP.lobbyOn=true; MP.players=[]; MP._lobErr=false; try{lobbyShow();}catch(e){} }
   } else if(data.type==='lobby'){
     if(!Array.isArray(data.players)) return;
@@ -965,8 +986,9 @@ function guestRoomMsg(data){
     }
     try{lobbyRender();}catch(e){}
   } else if(data.type==='full'){
-    guestRoomClosed(data.why==='iniciada'?'A partida já começou. Peça ao host para criar outra sala.':'Sala cheia (máximo de '+MP_MAX+' jogadores).');
+    guestRoomClosed(data.why==='iniciada'?'A partida já começou. Peça ao host para criar outra sala.':'Sala cheia (máximo de '+MP_MAX+' jogadores). Peça ao host para liberar uma vaga.');
   } else if(data.type==='kick'){
+    if(data.why!=='kick')lastRoomForget();
     guestRoomClosed(data.why==='kick'?'Você foi removido da sala pelo host.':'O host encerrou a sala.');
   }
 }
