@@ -6,7 +6,7 @@
    - Moldura: sprite 9-slice gerado por tools/gerar-sprites-hud.py (plana, quadrada, borda de 2 pixels da arte).
    - Cor por funcao (borda da moldura): cinza-azulado = neutro, musgo = interagir, vermelho = atacar, ambar = na mao/ativo, cinza escuro = indisponivel.
    - Estados: repouso (sprite 'u'), pressionado (sprite 'd' + conteudo 1 pixel abaixo), selecionado/ativo (ouro), indisponivel (cinza).
-   - Texto: fonte BitHUD 5x7 (tools/gerar-fonte-hud.py), sempre em caixa alta, numeros com largura fixa.
+   - Texto: fonte BitHUD 5x7 (tools/gerar-fonte-hud.py), em caixa alta (menos os baloes do chat, fonte BitHUDChat), numeros com largura fixa.
    - Linhas de texto: line-height par (8 ou 10 x --tu) para a letra cair exatamente na grade de pixels. */
 :root{
   --hu:calc(2px*var(--ui,1));--tu:calc(1.5px*var(--ui,1));
@@ -187,7 +187,7 @@ body.kbm [data-key]::after{border-radius:0;border:var(--tu) solid var(--h-ink);b
   image-rendering:pixelated;image-rendering:crisp-edges;
   filter:drop-shadow(0 var(--hu) 0 #0c0e12);
   padding:calc(1*var(--su)) calc(3*var(--su)) calc(2*var(--su));
-  font:calc(10*var(--su))/calc(12*var(--su)) var(--f-hud);color:var(--h-cream);letter-spacing:0;overflow-wrap:anywhere;
+  font:calc(10*var(--su))/calc(12*var(--su)) "BitHUDChat","Courier New",monospace;color:var(--h-cream);letter-spacing:0;overflow-wrap:anywhere;   /* BitHUDChat: o texto fica como foi escrito */
 }
 .chat-bubble .cn{color:#8DA568;font-weight:normal}     /* nome do parceiro em musgo */
 .chat-bubble.me .cn{color:var(--h-gold)}              /* o seu nome em ambar */
