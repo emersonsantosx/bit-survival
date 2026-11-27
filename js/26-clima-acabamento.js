@@ -4,6 +4,8 @@
      O reflexo da lanterna, dos faróis, das fogueiras e dos postes nas poças é desenhado em drawLighting (arquivo 14), usando a lista daqui.
    - Neve: acumula aos poucos sobre os objetos enquanto neva (cerca de 70 s) e derrete devagar depois (cerca de 150 s). No mapa da neve já vem cheia.
      Sprites prontos (copas de árvore, telhados, varandas) trocam de versão ao passar de 50%; os objetos simples crescem a capa de neve pixel a pixel.
+   - Cidade: asfalto e cimento nao formam poca. Na chuva a rua escurece (molhada), a agua corre pela sarjeta ate os bueiros e as gotas respingam no
+     chao; poca so na terra dos gramados (parques, lotes vazios e quintais).
    Nada aqui pinta a tela inteira. */
 (function(){
 const WX={wet:0,snow:0,k:-1};window.WX=WX;
@@ -30,19 +32,90 @@ function hash(ix,iy,n){let h=(Math.imul(ix,73856093)^Math.imul(iy,19349663)^Math
 function puddleOf(ix,iy){
   const key=(ix+512)*2048+iy+512;let p=PCELL.get(key);if(p!==undefined)return p;
   p=null;
-  if(selectedMap!=='snow'&&hash(ix,iy,1)<.34){
+  const city=selectedMap==='city';
+  if(selectedMap!=='snow'&&hash(ix,iy,1)<(city?.7:.34)){
     const x=ix*CELL+8+hash(ix,iy,2)*(CELL-16),y=iy*CELL+8+hash(ix,iy,3)*(CELL-16),rx=9+hash(ix,iy,4)*21,ry=rx*(.36+.14*hash(ix,iy,5));
     let ok=x>24&&y>24&&x<WW-24&&y<WH-24&&!pointInLake(x,y)&&!pointInLake(x-rx,y)&&!pointInLake(x+rx,y);
     if(ok)for(const q of[[0,0],[-rx,0],[rx,0],[0,-ry-4],[0,ry+2]])if(bldAt(x+q[0],y+q[1])){ok=false;break;}
+    if(ok&&city)for(const q of[[0,0],[-rx-2,0],[rx+2,0],[0,-ry-2],[0,ry+2],[-rx*.75,-ry*.75],[rx*.75,-ry*.75],[-rx*.75,ry*.75],[rx*.75,ry*.75]])   // cidade: a poca inteira tem de caber na grama
+      if(!inCityGarden(x+q[0],y+q[1])||onCityPath(x+q[0],y+q[1])||onCityRoad(x+q[0],y+q[1],8)){ok=false;break;}
     if(ok)p={x:x,y:y,rx:rx,ry:ry,ph:hash(ix,iy,6)};
   }
   if(PCELL.size>4000)PCELL.clear();
   PCELL.set(key,p);return p;
 }
+/* ---------- chuva na cidade: rua molhada, sarjeta, bueiros e respingos ---------- */
+const DRAIN=160;   // um bueiro a cada 160 px em cada lado da rua
+/* trechos da rua r fora dos cruzamentos, ao longo do eixo dela, cortados na area visivel */
+function curbSpans(r,a0,a1){
+  const v=r.vert,s=Math.max(a0,v?r.y:r.x),e=Math.min(a1,v?r.y+r.h:r.x+r.w);
+  if(e<=s)return [];
+  const cut=[];
+  for(const q of cityInter){
+    if(q.x+q.w<=r.x||q.x>=r.x+r.w||q.y+q.h<=r.y||q.y>=r.y+r.h)continue;
+    const c0=v?q.y:q.x,c1=c0+(v?q.h:q.w);if(c1>s&&c0<e)cut.push([c0,c1]);
+  }
+  cut.sort((a,b)=>a[0]-b[0]);
+  const out=[];let p=s;
+  for(const c of cut){if(c[0]>p)out.push([p,c[0]]);p=Math.max(p,c[1]);}
+  if(e>p)out.push([p,e]);
+  return out;
+}
+function cityRain(vx0,vy0,vx1,vy1){
+  const w=(P&&P.inside)?0:WX.wet,wet=w>=.04,rain=weather==='rain',sky=1-dark*.85;
+  const vr=roads.filter(r=>r.x-8<vx1&&r.x+r.w+8>vx0&&r.y-8<vy1&&r.y+r.h+8>vy0);
+  if(wet){   // asfalto e calcada escurecidos (um caminho so: os cruzamentos nao escurecem em dobro)
+    ctx.fillStyle='rgba(14,26,48,'+(.2*w).toFixed(3)+')';ctx.beginPath();
+    for(const r of vr){
+      const x=Math.max(vx0,r.x-(r.vert?8:0)),y=Math.max(vy0,r.y-(r.vert?0:8)),X=Math.min(vx1,r.x+r.w+(r.vert?8:0)),Y=Math.min(vy1,r.y+r.h+(r.vert?0:8));
+      if(X>x&&Y>y)ctx.rect(x,y,X-x,Y-y);
+    }
+    ctx.fill();
+  }
+  const gw=1+Math.round(2*w),water='rgba('+(dark>.5?'80,108,155':'138,172,208')+','+((.28+.32*sky)*w).toFixed(3)+')',foam='rgba(225,240,252,'+((.25+.4*sky)*w).toFixed(3)+')';
+  for(const r of vr){
+    const v=r.vert,a0=v?vy0:vx0,a1=v?vy1:vx1;
+    for(const sp of curbSpans(r,a0-DRAIN,a1+DRAIN))for(let side=0;side<2;side++){
+      const c=v?(side?r.x+r.w:r.x):(side?r.y+r.h:r.y),dir=side?-1:1;   // dir: para dentro da rua
+      const bar=(a,len,off,th,col)=>{const o=dir>0?c+off:c-off-th;if(v)R(o,a,th,len,col);else R(a,o,len,th,col);};
+      if(wet){   // agua encostada no meio-fio, correndo
+        const s=Math.max(sp[0],a0),e=Math.min(sp[1],a1);
+        if(e>s){
+          bar(s,e-s,0,gw,water);
+          const flow=rain?T*22:0;
+          for(let k=Math.floor((s-flow)/22)-1;;k++){
+            const j=Math.floor(hash(k,side+(v?2:0),11)*8),a=Math.round(k*22+j+flow);if(a>=e)break;
+            const m=Math.max(a,s),n=Math.min(a+5,e);if(n>m)bar(m,n-m,k&1?0:gw-1,1,foam);
+          }
+        }
+      }
+      for(let a=Math.floor(sp[0]/DRAIN)*DRAIN+DRAIN/2;a<sp[1];a+=DRAIN){   // bueiros (fora das faixas de pedestre)
+        if(a-7<sp[0]+14||a+7>sp[1]-14||a+20<a0||a-20>a1)continue;
+        bar(a-7,14,0,5,'#6a6d74');bar(a-6,12,1,3,'#17181c');
+        for(let i=-4;i<=4;i+=4)bar(a+i,1,1,3,'#55585f');
+        if(wet){
+          if(rain){const t=(T*2+hash(a,c,12))%1;bar(a-10+Math.round(t*4),2,1,1,foam);bar(a+8-Math.round(t*4),2,1,1,foam);}   // a agua entrando pelos dois lados
+          VP.push({x:v?c+dir*3:a,y:v?a:c+dir*3,rx:v?4:16,ry:v?12:4,s:1,curb:true});   // a luz reflete na agua da sarjeta
+        }
+      }
+    }
+  }
+  if(wet&&rain){   // respingos das gotas no chao: nascem e somem em lugares diferentes a cada volta
+    const G=26;
+    for(let ix=Math.floor(vx0/G);ix<=vx1/G;ix++)for(let iy=Math.floor(vy0/G);iy<=vy1/G;iy++){
+      const t=T*2.2+hash(ix,iy,13)*7,n=Math.floor(t),f=t-n;if(f>.4)continue;
+      const x=Math.round(ix*G+hash(ix+n*31,iy,14)*G),y=Math.round(iy*G+hash(ix,iy+n*37,15)*G);
+      const col='rgba(222,236,250,'+((.2+.4*sky)*w*(1-f*1.6)).toFixed(3)+')';
+      if(f<.14)R(x,y,1,1,col);else{const d=f<.27?2:3;R(x-d,y,2,1,col);R(x+d-1,y,2,1,col);R(x,y-1,1,1,col);}
+    }
+  }
+}
+
 let VP=[];
 window.wxPuddles=()=>VP;
 window.drawPuddles=function(vx0,vy0,vx1,vy1){
   VP=[];
+  if(selectedMap==='city')cityRain(vx0,vy0,vx1,vy1);
   const w=WX.wet;if(w<.04||(P&&P.inside)||selectedMap==='snow')return;
   const s=.3+.7*w,sky=1-dark*.85,rain=weather==='rain';
   const x0=Math.floor((vx0-30)/CELL),x1=Math.floor((vx1+30)/CELL),y0=Math.floor((vy0-30)/CELL),y1=Math.floor((vy1+30)/CELL);
