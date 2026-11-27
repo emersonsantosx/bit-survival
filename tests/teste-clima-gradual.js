@@ -1,5 +1,5 @@
 /* Clima gradual: chega aos poucos, fica e vai passando (gotas, flocos, areia, poças, efeitos no jogo), com o ponto atual no save e no
-   multiplayer; e os lagos sem ilhas. Uso: node tests/teste-clima-gradual.js [caminho/index.html]. Sai com codigo 1 se algo falhar. */
+   multiplayer; e a floresta sem ilhota no lago (nos outros mapas as ilhas continuam). Uso: node tests/teste-clima-gradual.js [caminho/index.html]. Sai com codigo 1 se algo falhar. */
 const path = require('path');
 const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'index.html'));
 const { chromium } = require('playwright');
@@ -24,7 +24,7 @@ const { chromium } = require('playwright');
       weather = tipo; weatherTimer = 25; wxF = .5; anda(20); o.fim5 = foto(); anda(6); o.limpo = weather === 'none' && wxAmt() === 0; o.avisoFim = $('toast').textContent;
       // ilhas: o desenho do lago nao muda com ou sem elas
       const l = lakes.find(q => !q.fountain);
-      if (l) { l.islands = [{ x: l.cx + 7, y: l.cy + 11, r: 18 }]; const e = ctx.ellipse; let n = 0; ctx.ellipse = function (x, y, ...q) { if (Math.abs(x - l.cx - 7) < 3 && Math.abs(y - l.cy - 11) < 3) n++; return e.call(this, x, y, ...q); }; drawLake(l); ctx.ellipse = e; o.ilha = n === 0; } else o.ilha = true;
+      if (l) { l.islands = [{ x: l.cx + 7, y: l.cy + 11, r: 18 }]; const e = ctx.ellipse; let n = 0; ctx.ellipse = function (x, y, ...q) { if (Math.abs(x - l.cx - 7) < 3 && Math.abs(y - l.cy - 11) < 3) n++; return e.call(this, x, y, ...q); }; drawLake(l); ctx.ellipse = e; o.ilha = mapa === 'forest' ? n === 0 : n > 0; } else o.ilha = mapa !== 'forest' && mapa !== 'snow';
       weatherRoll = R0;
       return o;
     }, [mapa, tipo]);
@@ -32,7 +32,7 @@ const { chromium } = require('playwright');
     ok(r.a3.n < r.a30.n && r.a30.n < r.a70.n, mapa + ': gotas, flocos ou areia aumentam junto (' + [r.a3.n, r.a30.n, r.a70.n].join(' > ') + ')');
     ok(r.fim25.f <= .5 && r.fim5.f <= .12 && r.limpo && /Clima limpo/.test(r.avisoFim), mapa + ': vai passando antes de limpar (' + r.fim25.f + ' > ' + r.fim5.f + ')');
     ok(r.save > 0 && r.save <= .5 && r.carrega === r.save, mapa + ': o save guarda o ponto do clima (' + r.save + ')');
-    ok(r.ilha, mapa + ': lago sem ilhas');
+    ok(r.ilha, mapa + (mapa === 'forest' ? ': lago sem ilhota' : ': ilhas do lago mantidas'));
   }
   const m = await pg.evaluate(() => { MP.active = true; MP.isHost = false; weather = 'none'; applySnapshot({ weather: 'rain', weatherTimer: 150, wk: 1, wf: .2 }); const a = wxF; applySnapshot({ weather: 'rain', weatherTimer: 140, wk: 1, wf: .35 }); return [a, wxF]; });
   ok(m[0] === .2 && m[1] === .35, 'convidado segue o ponto do clima do host (' + m.join(' > ') + ')');

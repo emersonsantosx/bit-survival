@@ -2054,6 +2054,17 @@ function drawLake(l){
   ctx.ellipse(cx-R0*0.2, cy-R0*0.25, R0*0.35, R0*0.12, -0.4, 0, 6.283);
   ctx.fill();
   lakeGlints(l);
+  // 6) Ilhas (menos na floresta, onde a ilhota parecia uma vitoria-regia)
+  if(l.islands&&selectedMap!=='forest')for(const isl of l.islands){
+    ctx.fillStyle=frozen?'#d8e4ee':'#4a6a38';
+    ctx.beginPath();ctx.ellipse(isl.x,isl.y,isl.r*1.1,isl.r*0.85,0.2,0,6.283);ctx.fill();
+    if(!frozen){
+      ctx.fillStyle='#5a8a48';ctx.beginPath();ctx.ellipse(isl.x-1,isl.y-1,isl.r*0.7,isl.r*0.55,0,0,6.283);ctx.fill();
+      R(isl.x-1,isl.y-isl.r-3,2,5,'#5a3d22');R(isl.x-4,isl.y-isl.r-7,8,4,'#2a6a2a');
+    } else {
+      ctx.fillStyle='#eef4f8';ctx.beginPath();ctx.ellipse(isl.x,isl.y-1,isl.r*0.5,isl.r*0.35,0,0,6.283);ctx.fill();
+    }
+  }
   // 7a) Oásis: juncos na borda
   if(!frozen && selectedMap==='desert'){
     for(let i=0;i<14;i++){
