@@ -20,7 +20,17 @@ Abra o `index.html` em qualquer navegador moderno. Não precisa de servidor. O m
 
 ## Como gerar o APK
 
-O workflow `.github/workflows/build.yml` compila o APK de debug (Cordova) a cada push na `main` e guarda o arquivo como artefato da execução (aba Actions). A etapa de compilação tenta de novo até 4 vezes porque o download das dependências às vezes falha por limite de requisições.
+O workflow `.github/workflows/build.yml` compila o APK de debug (Cordova) a cada push na `main` (e nas branches `ajuste/apk-...`, para testar antes do merge) e guarda o arquivo como artefato da execução (aba Actions). A etapa de compilação tenta de novo até 4 vezes porque o download das dependências às vezes falha por limite de requisições.
+
+O APK é o mesmo jogo do link, com ajustes que só existem nele (o link não carrega nada disso):
+
+- abre deitado (os dois lados) e em tela cheia, usando também a área da câmera, com a HUD afastada do recorte; a tela não apaga;
+- sem a tela "gire o celular" e sem o botão de tela cheia;
+- botão ou gesto de voltar fecha o que estiver aberto, pausa a partida e, no menu, pede um segundo toque para fechar o jogo;
+- ao minimizar, o progresso é salvo, a partida solo pausa e o som para (no multiplayer a partida continua);
+- o teclado não cobre o campo do chat nem os campos dos menus.
+
+Onde fica: `config.xml` (orientação e tela cheia), `android/app.js` (comportamento no app), `android/plugin-bit/` (parte nativa) e `tools/preparar-apk.js` (monta a pasta do app). Cada APK de debug é assinado com uma chave diferente: antes de instalar um novo, desinstale o anterior (o progresso salvo no app é apagado junto). Sem internet, a fonte das telas e o multiplayer ainda não funcionam.
 
 ## Estrutura
 
@@ -35,6 +45,7 @@ O workflow `.github/workflows/build.yml` compila o APK de debug (Cordova) a cada
 | `tools/gerar-sprites-hud.py`, `tools/gerar-fonte-hud.py` | Geram `css/sprites-hud.css` e `css/fonte-hud.css` (paleta e desenho das molduras ficam no topo do gerador; rodar de novo depois de mudar) |
 | `tools/dependencias.js` | Gera `docs/dependencias.md`, o mapa de quem usa o quê entre os arquivos `js/` |
 | `config.xml`, `icon.png`, `.github/workflows/build.yml` | Geração do APK (Cordova) |
+| `android/`, `tools/preparar-apk.js` | O que só existe no APK e a montagem da pasta do app (ver "Como gerar o APK") |
 
 Os arquivos `js/` compartilham funções globais; a ordem do número é a ordem de carregamento. Para ver as dependências: `node tools/dependencias.js`.
 

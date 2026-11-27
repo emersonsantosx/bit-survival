@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin id="cordova-plugin-bitapp" version="1.0.0" xmlns="http://apache.org/cordova/ns/plugins/1.0">
+    <name>BitApp</name>
+    <description>Ajustes de tela do app Android do Bit Survival</description>
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="BitApp">
+                <param name="android-package" value="com.bitsurvival.app.BitApp" />
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+        <source-file src="src/android/BitApp.java" target-dir="src/com/bitsurvival/app" />
+    </platform>
+</plugin>
