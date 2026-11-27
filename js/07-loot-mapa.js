@@ -15,7 +15,7 @@ function sendPing(it){
   if(now<pingCD){return false;}
   pingCD=now+1200;
   pingAdd('me',it.t,Math.round(it.x),Math.round(it.y),true);
-  sendEvt('ping',{t:it.t,x:Math.round(it.x),y:Math.round(it.y)});
+  sendEvt('ping',{id:myNetId(),t:it.t,x:Math.round(it.x),y:Math.round(it.y)});
   toast('Marcou: '+ITEMS[it.t].n);beep(880,.08,'sine',.05);
   return true;
 }
@@ -35,7 +35,7 @@ function drawPingBadge(){
   const x=(it.x-camX)*Z,y=Math.max(16*HU,(it.y-camY)*Z-31*Z+bob*HU);
   pingBadge={x,y,it};
   const mine=pings.find(q=>q.mine&&Math.abs(q.x-it.x)<3&&Math.abs(q.y-it.y)<3);
-  const col=mine?'#4aa3ff':'#ffd84a';
+  const col=mine?myColor():'#f0e6c8';   // marcado por voce: a sua cor da sala; botao livre: creme (nenhuma cor de jogador)
   ctx.save();ctx.translate(x,y);ctx.scale(HU,HU);   // tamanho fixo em px de referencia (HU compensa o canvas esticado e o aparelho)
   ctx.globalAlpha=.82;
   ctx.fillStyle='rgba(10,14,20,.78)';ctx.beginPath();ctx.arc(0,0,11,0,6.283);ctx.fill();
@@ -55,9 +55,10 @@ function allyHasFirearm(t){for(const id in remotePlayers){const rp=remotePlayers
 function recvPing(d){
   if(!d||typeof d.t!=='string'||!ITEMS[d.t]||!Number.isFinite(d.x)||!Number.isFinite(d.y))return;
   if(d.x<0||d.y<0||d.x>WW||d.y>WH)return;
-  const now=performance.now();if(now-(recvPing._l||0)<400)return;recvPing._l=now;
-  let nm='AMIGO';for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.name){nm=String(rp.name).toUpperCase().slice(0,12);break;}}
-  pingAdd('ally',d.t,d.x,d.y,false);
+  const id=(NET_OK_IDS.has(d.id)&&d.id!==myNetId())?d.id:'ally';
+  const now=performance.now(),L=recvPing._l||(recvPing._l={});if(now-(L[id]||-1e9)<400)return;L[id]=now;
+  const rp=remotePlayers[id],nm=rp&&rp.name?String(rp.name).toUpperCase().slice(0,12):'AMIGO';
+  pingAdd(id,d.t,d.x,d.y,false);
   toast(nm+' marcou: '+ITEMS[d.t].n);beep(990,.09,'sine',.06);setTimeout(()=>beep(1320,.09,'sine',.05),90);
 }
 function updatePings(){
@@ -65,7 +66,7 @@ function updatePings(){
   const now=performance.now();
   pings=pings.filter(q=>now-q.at<PING_LIFE&&(now-q.at<1800||items.some(it=>it.t===q.t&&Math.abs(it.x-q.x)<6&&Math.abs(it.y-q.y)<6)));
 }
-function pingCol(q){return q.mine?'#4aa3ff':'#ffd84a';}
+function pingCol(q){return q.mine?myColor():playerColor(q.from);}
 /* no mundo: anel no chão, seta e ícone do item acima dele (vale também por cima do telhado) */
 function drawPingsWorld(){
   if(!pings.length)return;
@@ -108,8 +109,20 @@ function drawPingsEdge(){
 /* ===== Aliado no multiplayer: ponto no minimapa, seta na borda da tela e mapa grande ===== */
 const ALLY_COLS={host:'#ff8080',g1:'#80ffa0',g2:'#80c8ff',g3:'#ffd870'};   // cada jogador da sala tem a sua cor
 const ALLY_COL=rp=>ALLY_COLS[rp.id]||(rp.isHost?'#ff8080':'#80ffa0');
+const playerColor=id=>ALLY_COLS[id]||'#80ffa0';
+const myColor=()=>MP.active?playerColor(myNetId()):'#4aa3ff';   // no solo continua o azul de sempre
+const wpColor=()=>MP.active?myColor():WP_COL;                    // o seu ponto marcado: a sua cor no multiplayer
+/* losango do ponto marcado no minimapa (com contorno escuro), preso na borda quando fica fora da janela */
+function mmMark(x,y,col){
+  for(const [w,h] of [[3,7],[5,5],[7,3]])mmDot(x,y,w,h,'#000',true);
+  for(const [w,h] of [[1,5],[3,3],[5,1]])mmDot(x,y,w,h,col,true);
+}
+/* o mesmo losango no mapa grande */
+function bmDiamond(g,x,y,u,col){
+  for(const [rx,ry,c] of [[5,7,'#000'],[3.8,5.5,col]]){g.fillStyle=c;g.beginPath();g.moveTo(x,y-ry*u);g.lineTo(x+rx*u,y);g.lineTo(x,y+ry*u);g.lineTo(x-rx*u,y);g.closePath();g.fill();}
+}
 function mmMarkers(){
-  mmDot(P.x,P.y,4,4,Math.floor(T*2)%2?'#ffffff':'#4aa3ff');
+  mmDot(P.x,P.y,4,4,Math.floor(T*2)%2?'#ffffff':myColor());
   for(const c of campfires)mmDot(c.x,c.y,2,2,'#ff8020');
   for(const t of tents)mmDot(t.x,t.y,3,2,'#8DA568');
   if(window.stashList)for(const s of stashList())mmDot(s.x,s.y,2,2,'#C79A54');
@@ -120,10 +133,12 @@ function mmMarkers(){
     mmDot(rp.x,rp.y,6,6,'#000',true);                       // contorno escuro: o aliado destaca em qualquer fundo
     mmDot(rp.x,rp.y,4,4,ALLY_COL(rp),true);
   }
-  if(WP){wpUpdate();if(WP)mmDot(WP.x,WP.y,5,5,Math.floor(T*3)%2?'#ffffff':WP_COL,true);}
+  if(MP.active)for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.wp)mmMark(rp.wp[0],rp.wp[1],ALLY_COL(rp));}   // pontos marcados pelos outros
+  if(WP){wpUpdate();if(WP)mmMark(WP.x,WP.y,Math.floor(T*3)%2?'#ffffff':wpColor());}
   drawPingsMini();
 }
-/* ===== Ponto marcado no mapa grande: um lugar qualquer ou o aliado (que passa a ser seguido). Fica só para quem marcou ===== */
+/* ===== Ponto marcado no mapa grande: um lugar qualquer ou o aliado (que passa a ser seguido). No multiplayer os outros recebem só o
+   símbolo do lugar marcado (vai no pacote do jogador, campo wp), sem linha, nome ou distância; seguir um aliado continua só de quem segue ===== */
 let WP=null;     // {x,y,label,follow:id|null}
 function wpUpdate(){
   if(!WP)return;
@@ -212,25 +227,25 @@ function bigMapDraw(){
     g.fillStyle='#000';g.fillText(nm,x+1,y-6*u+1);g.fillStyle=col;g.fillText(nm,x,y-6*u);
     leg.push({nm,col,d:Math.round(Math.hypot(rp.x-P.x,rp.y-P.y)/10)});
   }
+  if(MP.active)for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.wp)bmDiamond(g,rp.wp[0]*K,rp.wp[1]*K,u,ALLY_COL(rp));}
   if(WP)wpUpdate();
   if(WP){
     const wx=WP.x*K,wy=WP.y*K;
-    g.strokeStyle=WP_COL;g.lineWidth=Math.max(1,u*.8);g.setLineDash([4*u,3*u]);g.beginPath();g.moveTo(P.x*K,P.y*K);g.lineTo(wx,wy);g.stroke();g.setLineDash([]);
-    g.fillStyle='#000';g.beginPath();g.moveTo(wx,wy-7*u);g.lineTo(wx+5*u,wy);g.lineTo(wx,wy+7*u);g.lineTo(wx-5*u,wy);g.closePath();g.fill();
-    g.fillStyle=WP_COL;g.beginPath();g.moveTo(wx,wy-5.5*u);g.lineTo(wx+3.8*u,wy);g.lineTo(wx,wy+5.5*u);g.lineTo(wx-3.8*u,wy);g.closePath();g.fill();
-    g.fillStyle='#000';g.fillText(WP.label,wx+1,wy+13*u+1);g.fillStyle=WP_COL;g.fillText(WP.label,wx,wy+13*u);
+    g.strokeStyle=wpColor();g.lineWidth=Math.max(1,u*.8);g.setLineDash([4*u,3*u]);g.beginPath();g.moveTo(P.x*K,P.y*K);g.lineTo(wx,wy);g.stroke();g.setLineDash([]);
+    bmDiamond(g,wx,wy,u,wpColor());
+    g.fillStyle='#000';g.fillText(WP.label,wx+1,wy+13*u+1);g.fillStyle=wpColor();g.fillText(WP.label,wx,wy+13*u);
   }
   const px=P.x*K,py=P.y*K;
   g.save();g.translate(px,py);
-  g.fillStyle='rgba(74,163,255,.3)';g.beginPath();g.arc(0,0,(5+Math.sin(t/250)*1.5)*u,0,6.283);g.fill();
+  g.globalAlpha=.3;g.fillStyle=myColor();g.beginPath();g.arc(0,0,(5+Math.sin(t/250)*1.5)*u,0,6.283);g.fill();g.globalAlpha=1;
   g.rotate(P.face||0);g.fillStyle='#000';g.beginPath();g.moveTo(6.5*u,0);g.lineTo(-4.5*u,-4.2*u);g.lineTo(-4.5*u,4.2*u);g.closePath();g.fill();
-  g.fillStyle='#ffffff';g.beginPath();g.moveTo(5*u,0);g.lineTo(-3.4*u,-3.2*u);g.lineTo(-3.4*u,3.2*u);g.closePath();g.fill();
+  g.fillStyle=MP.active?myColor():'#ffffff';g.beginPath();g.moveTo(5*u,0);g.lineTo(-3.4*u,-3.2*u);g.lineTo(-3.4*u,3.2*u);g.closePath();g.fill();
   g.restore();
-  g.fillStyle='#000';g.fillText('VOCÊ',px+1,py-8*u+1);g.fillStyle='#fff';g.fillText('VOCÊ',px,py-8*u);
+  g.fillStyle='#000';g.fillText('VOCÊ',px+1,py-8*u+1);g.fillStyle=MP.active?myColor():'#fff';g.fillText('VOCÊ',px,py-8*u);
   g.setTransform(1,0,0,1,0,0);
   const lg=$('bmleg');
   if(lg){
-    const h='<span style="color:#fff">▲ VOCÊ</span>'+leg.map(l=>' &nbsp; <span style="color:'+l.col+'">● '+l.nm+' '+l.d+'m</span>').join('')+(WP?' &nbsp; <span style="color:'+WP_COL+'">◆ '+WP.label+' '+wpDist()+'m</span>':'')+' &nbsp; <span style="opacity:.6">zoom '+bigV.z.toFixed(1)+'x</span>';
+    const h='<span style="color:'+(MP.active?myColor():'#fff')+'">▲ VOCÊ</span>'+leg.map(l=>' &nbsp; <span style="color:'+l.col+'">● '+l.nm+' '+l.d+'m</span>').join('')+(WP?' &nbsp; <span style="color:'+wpColor()+'">◆ '+WP.label+' '+wpDist()+'m</span>':'')+' &nbsp; <span style="opacity:.6">zoom '+bigV.z.toFixed(1)+'x</span>';
     if(lg._h!==h){lg.innerHTML=h;lg._h=h;}
   }
 }

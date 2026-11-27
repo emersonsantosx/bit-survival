@@ -1,7 +1,7 @@
 /* ============ SALA DO MULTIPLAYER (lobby) ============
    Depois de criar ou entrar numa sala, todos caem nesta tela: lista dos ate 4 jogadores, codigo da sala, PRONTO para os convidados
    e INICIAR PARTIDA so para o host (libera quando ha ao menos 1 convidado e todos estao prontos). A rede esta em js/12 (host* / guestRoomMsg). */
-const LOB_COL={host:'#ff8080',g1:'#80ffa0',g2:'#80c8ff',g3:'#ffd870'};
+const LOB_COL=ALLY_COLS;   // as mesmas cores no lobby, nos nomes, no mapa, nos marcadores e no chat (js/07)
 function lobbyShow(){
   MP.lobbyOn=true;
   showScreen('mplobby');

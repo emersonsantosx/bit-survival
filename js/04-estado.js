@@ -91,7 +91,7 @@ function chatAddHistory(e){
   el.className='cm'+(e.me?' me':'')+(e.sys?' sys':'');
   if(e.sys) el.textContent=e.text;
   else {
-    const n=document.createElement('span'); n.className='cn'; n.textContent=e.me?'Você':(e.name||'?');
+    const n=document.createElement('span'); n.className='cn'; n.textContent=e.me?'Você':(e.name||'?'); if(e.col) n.style.color=e.col;
     const tm=document.createElement('span'); tm.className='ctm'; tm.textContent=chatTime(e.t);
     n.appendChild(tm); el.appendChild(n);
     el.appendChild(document.createTextNode(e.text));
@@ -109,9 +109,9 @@ function resetChatHistory(){
   const box=$('chat-hist'); if(box) box.innerHTML='';
   const b=$('bchat'); if(b){ b.removeAttribute('data-n'); b.classList.remove('has-new'); }
 }
-function pushChatBubble(name, text, me, sys){
+function pushChatBubble(name, text, me, sys, id){
   // Histórico completo (aba do chat)
-  const entry={name,text,me:!!me,sys:!!sys,t:Date.now()};
+  const entry={name,text,me:!!me,sys:!!sys,t:Date.now(),col:!sys&&NET_OK_IDS.has(id)?playerColor(id):''};   // nome na cor do jogador na sala
   chatLog.push(entry); if(chatLog.length>120) chatLog.shift();
   chatAddHistory(entry);
   if(!me&&!sys&&!chatOpen){
@@ -125,7 +125,7 @@ function pushChatBubble(name, text, me, sys){
   el.className='chat-bubble'+(me?' me':'')+(sys?' sys':'');
   if(sys) el.textContent=text;
   else {
-    const n=document.createElement('span'); n.className='cn'; n.textContent=(name||'?')+': ';
+    const n=document.createElement('span'); n.className='cn'; n.textContent=(name||'?')+': '; if(entry.col) n.style.color=entry.col;
     el.appendChild(n);
     el.appendChild(document.createTextNode(text));
   }
@@ -180,7 +180,7 @@ function sendChatMessage(){
   if(text.length>60) text=text.slice(0,60);
   const name=(MP.playerName||'Jogador').slice(0,12);
   const msg={type:'chat', name:name, text:text, id:myNetId(), t:Date.now()};
-  pushChatBubble(name, text, true, false);
+  pushChatBubble(name, text, true, false, myNetId());
   const trySend=()=>{
     try{ if(MP.conn&&MP.conn.open){ MP.conn.send(msg); return true; } }catch(e){ console.error('[chat send]',e); }
     return false;
@@ -195,7 +195,7 @@ function receiveChat(data){
   const text=String(data.text).trim().slice(0,60);
   if(!text) return;
   const name=(typeof data.name==='string'?data.name:'Amigo').slice(0,12);
-  pushChatBubble(name, text, false, false);
+  pushChatBubble(name, text, false, false, data.id);
   if(!chatOpen){ const b=$('bchat'); if(b) b.classList.add('has-new'); }
   try{ beep(620,.06,'sine',.04); }catch(e){}
 }
