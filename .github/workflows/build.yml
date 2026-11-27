@@ -44,14 +44,31 @@ jobs:
           # tela acesa, tela cheia com a area da camera e aviso de teclado (android/plugin-bit)
           cordova plugin add ../android/plugin-bit
 
+      - name: Usar o espelho do Maven Central
+        # o Maven Central responde 429 (muitos pedidos) para os servidores do GitHub: o espelho do Google vem antes e o endereco original fica de reserva
+        run: |
+          ESPELHO="https://maven-central.storage-download.googleapis.com/maven2/"
+          ARQUIVOS=$(grep -rlF --include='*.gradle' 'mavenCentral()' projeto/platforms/android)
+          sed -i "s|mavenCentral()|maven { url '$ESPELHO' }; mavenCentral()|g" $ARQUIVOS
+          grep -rnF --include='*.gradle' "$ESPELHO" projeto/platforms/android
+
+      - name: Guardar os downloads do Gradle
+        # depois da primeira compilacao que der certo, as seguintes quase nao baixam nada
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-android-13.0.0-v1
+
       - name: Compilar APK de Debug
-        # o Maven Central as vezes responde 429 (muitos pedidos) para os servidores do GitHub; tenta de novo ate 4 vezes, esperando mais a cada tentativa
+        # se um download falhar, tenta de novo ate 4 vezes, esperando mais a cada tentativa
         run: |
           cd projeto
           for i in 1 2 3 4; do
             cordova build android --debug && exit 0
-            echo "Tentativa $i falhou, esperando para tentar de novo..."
-            sleep $((i * 45))
+            echo "Tentativa $i falhou"
+            if [ $i -lt 4 ]; then echo "Esperando para tentar de novo..."; sleep $((i * 45)); fi
           done
           exit 1
 

@@ -20,7 +20,7 @@ Abra o `index.html` em qualquer navegador moderno. Não precisa de servidor. O m
 
 ## Como gerar o APK
 
-O workflow `.github/workflows/build.yml` compila o APK de debug (Cordova) a cada push na `main` (e nas branches `ajuste/apk-...`, para testar antes do merge) e guarda o arquivo como artefato da execução (aba Actions). A etapa de compilação tenta de novo até 4 vezes porque o download das dependências às vezes falha por limite de requisições.
+O workflow `.github/workflows/build.yml` compila o APK de debug (Cordova) a cada push na `main` (e nas branches `ajuste/apk-...`, para testar antes do merge) e guarda o arquivo como artefato da execução (aba Actions). As dependências vêm do espelho do Google para o Maven Central (o endereço original às vezes recusa os servidores do GitHub por excesso de pedidos), ficam guardadas entre compilações e, se um download falhar, a etapa tenta de novo até 4 vezes.
 
 O APK é o mesmo jogo do link, com ajustes que só existem nele (o link não carrega nada disso):
 
