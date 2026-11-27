@@ -777,7 +777,7 @@ window.addEventListener('keydown',e=>{
   if(e.code>='Digit1'&&e.code<='Digit6')useItem(+e.code.slice(5)-1);
   if(e.code==='KeyT'&&MP.active){ e.preventDefault(); openChat(); }
 });
-on('bchat','pointerup',e=>{e.preventDefault();e.stopPropagation();aud(); if(chatOpen) closeChat(); else openChat();});
+on('bchat','pointerup',e=>{e.preventDefault();e.stopPropagation();uiTap(); if(chatOpen) closeChat(); else openChat();});
 on('bchat','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
 // tocar num balao de mensagem (aviso rapido no topo) abre o chat, como o botao de chat; o resto da area continua deixando o toque passar para o jogo
 on('chat-msgs','pointerdown',e=>{if(e.target.closest&&e.target.closest('.chat-bubble')){e.preventDefault();e.stopPropagation();}});
@@ -917,7 +917,7 @@ on('quitmenu','click',e=>{
   quitToMenu();
 });
 // Use pointerup so the finger is already lifted when the pause menu appears (avoids accidental CONTINUAR)
-on('bpause','pointerup',e=>{e.preventDefault();e.stopPropagation();aud();pause();});
+on('bpause','pointerup',e=>{e.preventDefault();e.stopPropagation();uiTap();pause();});
 /* lanterna: liga e desliga (botao pequeno abaixo de pausa e fabricar, ou a tecla F) */
 function toggleFlash(){
   if(!P||!P.torch||P.dead||state!=='play')return;
@@ -935,12 +935,12 @@ on('bflash','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
 on('bflash','pointerup',e=>{e.preventDefault();e.stopPropagation();aud();toggleFlash();});
 on('bpause','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
 on('mm','pointerdown',e=>{e.preventDefault();e.stopPropagation();});
-on('mm','pointerup',e=>{e.preventDefault();e.stopPropagation();aud();bigMapOpen();});
-on('bigmap','pointerup',e=>{e.preventDefault();e.stopPropagation();const id=e.target&&e.target.id,cl=e.target&&e.target.classList;if(id==='bigmap'||id==='bmx'||(cl&&cl.contains('bmbox')))bigMapClose();});
+on('mm','pointerup',e=>{e.preventDefault();e.stopPropagation();uiTap();bigMapOpen();});
+on('bigmap','pointerup',e=>{e.preventDefault();e.stopPropagation();const id=e.target&&e.target.id,cl=e.target&&e.target.classList;if(id==='bigmap'||id==='bmx'||(cl&&cl.contains('bmbox'))){if(id==='bmx')uiTap();bigMapClose();}});
 on('bmzin','click',e=>{e.stopPropagation();bmZoomAt(1.6);});
 on('bmzout','click',e=>{e.stopPropagation();bmZoomAt(1/1.6);});
 on('bmctr','click',e=>{e.stopPropagation();if(P){bigV.cx=P.x;bigV.cy=P.y;bmGeom();bigMapDraw();}});
-on('bcraft','pointerdown',e=>{e.preventDefault();aud();openCraft();});
+on('bcraft','pointerdown',e=>{e.preventDefault();uiTap();openCraft();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play'&&!MP.active)pause();});
 {
   try{migrateSaves();refreshContinue();}catch(e){}
