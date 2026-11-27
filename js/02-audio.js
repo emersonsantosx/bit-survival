@@ -52,15 +52,35 @@ function beep(f,d,type,v,slide,cat){
     o.connect(g);g.connect(AOUT);o.start();o.stop(AC.currentTime+d);
   }catch(e){}
 }
-/* Som de toque da interface: grave, curto e suave */
+/* Som de toque da interface: um "toc" grave e encorpado.
+   O alto-falante do celular quase nao reproduz abaixo de uns 250 Hz (o toque antigo, de 150 e 75 Hz, sumia), entao o grave e percebido por um corpo
+   que comeca em 420 Hz e despenca para 190 Hz, com um estalinho curto no ataque; o subgrave fica de reforco para fones.
+   Sai direto no destino (sem o limitador geral), para o volume nao ser abaixado pelos outros sons. */
 function uiTap(){
   aud();
-  beep(150,.09,'sine',.16,-55,'sfx');
-  beep(75,.07,'triangle',.08,-20,'sfx');
+  const vol=volFor('sfx');if(!AC||vol<=0||!sndThrottle('ui',70))return;   // um toque por clique, mesmo se dois pontos do codigo pedirem
+  try{
+    const t=AC.currentTime+.005,out=AC.destination;
+    const tone=(type,f0,f1,fall,d,v)=>{
+      const o=AC.createOscillator(),g=AC.createGain();
+      o.type=type;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+fall);
+      gAtk(g.gain,v*vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+      o.connect(g);g.connect(out);o.start(t);o.stop(t+d+.02);
+    };
+    tone('triangle',420,190,.045,.12,.42);   // corpo: e o que se ouve no celular
+    tone('sine',190,85,.07,.14,.24);         // peso grave
+    tone('sine',840,380,.03,.05,.11);        // brilho curto que da definicao
+    const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();   // estalo do contato
+    s.buffer=nbuf;f.type='bandpass';f.frequency.value=1500;f.Q.value=1.1;
+    gAtk(g.gain,.22*vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+.018);
+    s.connect(f);f.connect(g);g.connect(out);s.start(t,.05);s.stop(t+.03);
+  }catch(e){}
 }
+/* todo botao de menu e de tela dentro do jogo da o toque; os controles de acao (atacar, pegar, correr, volante...) ficam sem */
+const UI_SEM_TOQUE='#atk,#pick,#tools,#hoe,#run,#swap,#bflash,.veh-btn,#pickx button';
 document.addEventListener('click',e=>{
-  const t=e.target&&e.target.closest?e.target.closest('.menu-btn,.go,.back,.map-opt,.cfg-seg button,.cfg-toggle,.craft-tab'):null;
-  if(t)uiTap();
+  const t=e.target&&e.target.closest?e.target.closest('button,.cfg-toggle'):null;
+  if(t&&!t.matches(UI_SEM_TOQUE))uiTap();
 },true);
 function boom(d,v,low,cat){
   if(!AC||!nbuf)return;

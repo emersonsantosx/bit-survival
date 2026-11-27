@@ -539,7 +539,7 @@ function buildWeaponWheel(){
       clearHold();
       if(dropped) return;
       // Toque curto = equipar
-      if(performance.now()-holdStarted<1800) chooseWeapon(key);
+      if(performance.now()-holdStarted<1800){ uiTap(); chooseWeapon(key); }
     });
     btn.addEventListener('pointerleave',()=>{ clearHold(); });
     btn.addEventListener('pointercancel',()=>{ clearHold(); });
