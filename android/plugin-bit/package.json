@@ -1,0 +1,6 @@
+{
+  "name": "cordova-plugin-bitapp",
+  "version": "1.0.0",
+  "description": "Ajustes de tela do app Android do Bit Survival",
+  "cordova": { "id": "cordova-plugin-bitapp", "platforms": ["android"] }
+}

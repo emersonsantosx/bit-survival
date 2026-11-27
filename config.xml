@@ -8,6 +8,14 @@
     <!-- Ícone principal do jogo -->
     <icon src="icon.png" />
 
+    <!-- Tela do app: deitado nos dois lados, tela cheia e fundo escuro na abertura (o resto fica em android/) -->
+    <preference name="Orientation" value="sensorLandscape" />
+    <preference name="Fullscreen" value="true" />
+    <preference name="BackgroundColor" value="#ff171a20" />
+    <preference name="AndroidWindowSplashScreenBackground" value="#171A20" />
+    <preference name="DisallowOverscroll" value="true" />
+    <preference name="DefaultVolumeStream" value="media" />
+
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
     <platform name="android">

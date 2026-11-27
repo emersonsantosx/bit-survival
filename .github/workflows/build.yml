@@ -2,7 +2,7 @@ name: Compilar APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, 'ajuste/apk-**' ]   # branches ajuste/apk-... tambem geram APK, para testar antes do merge
 
 jobs:
   build:
@@ -23,21 +23,22 @@ jobs:
           node-version: '18'
 
       - name: Instalar Cordova
-        run: npm install -g cordova
+        # versoes fixas: uma atualizacao do Cordova nao muda o app sem aviso
+        run: npm install -g cordova@12.0.0
 
       - name: Criar e preparar o projeto
         run: |
           cordova create projeto com.bitsurvival.game "Project: Bit Survival"
           cd projeto
           rm -rf www/*
-          # o jogo agora e dividido em index.html + css/ + js/: copia tudo para o app
-          cp ../index.html www/
-          cp -r ../css www/css
-          cp -r ../js www/js
+          # o mesmo jogo do link (index.html + css/ + js/) mais o que so existe no app (cordova.js e android/app.js)
+          node ../tools/preparar-apk.js www
           cp ../config.xml .
           # Copia o ícone para a raiz do projeto Cordova
           cp ../icon.png .
-          cordova platform add android
+          cordova platform add android@13.0.0
+          # tela acesa, tela cheia com a area da camera e aviso de teclado (android/plugin-bit)
+          cordova plugin add ../android/plugin-bit
 
       - name: Compilar APK de Debug
         # o Maven Central as vezes responde 429 (muitos pedidos) para os servidores do GitHub; tenta de novo ate 4 vezes, esperando mais a cada tentativa
@@ -49,6 +50,20 @@ jobs:
             sleep $((i * 45))
           done
           exit 1
+
+      - name: Conferir o APK
+        # falha aqui se o app sair sem a paisagem, sem o codigo de tela ou sem o arquivo do app
+        run: |
+          APK=projeto/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          AAPT=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2
+          "$AAPT" dump xmltree --file AndroidManifest.xml "$APK" > manifesto.txt
+          grep -i "screenOrientation" manifesto.txt
+          grep -iE "screenOrientation.*=(6|0x0*6)$" manifesto.txt || { echo "Paisagem (sensorLandscape) nao entrou no manifesto"; exit 1; }
+          unzip -l "$APK" > conteudo.txt
+          grep -E "assets/www/(js/apk\.js|cordova\.js)$" conteudo.txt
+          test "$(grep -cE "assets/www/(js/apk\.js|cordova\.js)$" conteudo.txt)" = "2"
+          grep -q 'name="BitApp"' projeto/platforms/android/app/src/main/res/xml/config.xml
+          for d in $(grep -oE "classes[0-9]*\.dex" conteudo.txt); do unzip -p "$APK" "$d"; done | grep -a -c "com/bitsurvival/app/BitApp"
 
       - name: Salvar APK gerado
         uses: actions/upload-artifact@v4
