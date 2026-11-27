@@ -26,6 +26,15 @@
   window.requestFullscreenLandscape=function(){};
   window.lockLandscape=function(){return Promise.resolve();};
 
+  /* o motor do multiplayer ja vem dentro do app; sem internet, avisa na hora em vez de ficar tentando conectar */
+  const carregarPeer=window.loadPeerJS;
+  window.loadPeerJS=function(cb){
+    if(navigator.onLine!==false)return carregarPeer(cb);
+    const id=MP.isHost?'hostStatus':'joinStatus';   // antes do cb, que zera MP.isHost
+    cb&&cb(new Error('offline'));
+    setStatus(id,'Sem internet. O multiplayer precisa de conexão.',true);
+  };
+
   /* ---------- botao / gesto de VOLTAR ---------- */
   const el=id=>document.getElementById(id);
   const visivel=id=>{const e=el(id);return !!e&&!e.classList.contains('hide');};

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<plugin id="cordova-plugin-bitapp" version="1.0.0" xmlns="http://apache.org/cordova/ns/plugins/1.0">
+<plugin id="cordova-plugin-bitapp" version="1.0.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
     <name>BitApp</name>
     <description>Ajustes de tela do app Android do Bit Survival</description>
     <platform name="android">
@@ -8,6 +8,10 @@
                 <param name="android-package" value="com.bitsurvival.app.BitApp" />
                 <param name="onload" value="true" />
             </feature>
+        </config-file>
+        <!-- deixa o jogo saber se ha internet (aviso do multiplayer); nao pede nada ao jogador -->
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
         </config-file>
         <source-file src="src/android/BitApp.java" target-dir="src/com/bitsurvival/app" />
     </platform>

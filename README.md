@@ -30,7 +30,13 @@ O APK é o mesmo jogo do link, com ajustes que só existem nele (o link não car
 - ao minimizar, o progresso é salvo, a partida solo pausa e o som para (no multiplayer a partida continua);
 - o teclado não cobre o campo do chat nem os campos dos menus.
 
-Onde fica: `config.xml` (orientação e tela cheia), `android/app.js` (comportamento no app), `android/plugin-bit/` (parte nativa) e `tools/preparar-apk.js` (monta a pasta do app). Cada APK de debug é assinado com uma chave diferente: antes de instalar um novo, desinstale o anterior (o progresso salvo no app é apagado junto). Sem internet, a fonte das telas e o multiplayer ainda não funcionam.
+Onde fica: `config.xml` (orientação e tela cheia), `android/app.js` (comportamento no app), `android/plugin-bit/` (parte nativa) e `tools/preparar-apk.js` (monta a pasta do app) e `tools/assinar-apk.sh` (assinatura). A fonte das telas e o PeerJS vão dentro do APK (o `build.yml` baixa pacotes npm de versão fixa), então o jogo abre e roda sem internet. O multiplayer continua precisando de internet, porque as salas são encontradas pelo servidor do PeerJS.
+
+### Assinatura e versão
+
+O APK é assinado sempre com a mesma chave, então um novo atualiza o instalado sem desinstalar e sem apagar o progresso. A chave fica só nos segredos do repositório (`ANDROID_KEYSTORE_BASE64` e `ANDROID_KEYSTORE_PASSWORD`, em Settings > Secrets and variables > Actions) e numa cópia guardada pelo dono; `android/assinatura.sha256` é a impressão pública dela, usada para conferir o APK. Sem os segredos, o artefato sai com `-chave-temporaria` no nome.
+
+Para lançar uma versão nova, mude `version` no `config.xml` e no `package.json` (o número nunca pode diminuir).
 
 ## Estrutura
 
@@ -45,7 +51,7 @@ Onde fica: `config.xml` (orientação e tela cheia), `android/app.js` (comportam
 | `tools/gerar-sprites-hud.py`, `tools/gerar-fonte-hud.py` | Geram `css/sprites-hud.css` e `css/fonte-hud.css` (paleta e desenho das molduras ficam no topo do gerador; rodar de novo depois de mudar) |
 | `tools/dependencias.js` | Gera `docs/dependencias.md`, o mapa de quem usa o quê entre os arquivos `js/` |
 | `config.xml`, `icon.png`, `.github/workflows/build.yml` | Geração do APK (Cordova) |
-| `android/`, `tools/preparar-apk.js` | O que só existe no APK e a montagem da pasta do app (ver "Como gerar o APK") |
+| `android/`, `tools/preparar-apk.js`, `tools/assinar-apk.sh` | O que só existe no APK e a montagem da pasta do app (ver "Como gerar o APK") |
 
 Os arquivos `js/` compartilham funções globais; a ordem do número é a ordem de carregamento. Para ver as dependências: `node tools/dependencias.js`.
 

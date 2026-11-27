@@ -1,1 +1,5 @@
 node_modules/
+# chaves de assinatura nunca vao para o repositorio
+*.p12
+*.jks
+*.keystore

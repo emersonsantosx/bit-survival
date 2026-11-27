@@ -1,6 +1,6 @@
 {
   "name": "bit-survival",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Bit Survival: jogo de sobrevivencia 2D em pixel art (HTML, CSS e JS puros)",
   "scripts": {

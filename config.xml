@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.bitsurvival.game" version="1.0.0" xmlns="http://www.w3.org/ns/widgets">
-    <name>Project: Bit Survival</name>
+<widget id="com.bitsurvival.game" version="1.0.1" xmlns="http://www.w3.org/ns/widgets">
+    <name>Bit Survival</name>
     <description>Um jogo de sobrevivencia zumbi em pixel art.</description>
     <author email="seu-email@example.com">Emerson</author>
     <content src="index.html" />
