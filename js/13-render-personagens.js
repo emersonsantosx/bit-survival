@@ -900,8 +900,15 @@ function drawTree(t){
   const nw=performance.now(),tg=behind?.5:1,gap=t._fn===undefined?1e9:nw-t._fn;
   if(t._fa===undefined||gap>300)t._fa=tg;else{const df=tg-t._fa,st=gap*.0033;t._fa=Math.abs(df)<=st?tg:t._fa+Math.sign(df)*st;}
   t._fn=nw;
+  ctx.imageSmoothingEnabled=sm;
+  drawTreeCrown(t,s);
+}
+/* so o desenho da arvore (sem a sombra), na opacidade atual; tambem usado para repor a copa por cima de um telhado vizinho */
+function drawTreeCrown(t,s){
+  s=s||treeSprite(t.k|0,Math.floor((t.seed||0)*4)&3,selectedMap!=='snow'&&WX.snow>=.5,treeAlt(t,t.k|0));
+  const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;
   if(t._fa<.999)ctx.globalAlpha=t._fa;
-  ctx.drawImage(s.cv,x-s.ox+(t._hit!==undefined?hitWobble(t,1.5):0),y-s.oy);
+  ctx.drawImage(s.cv,t.x-s.ox+(t._hit!==undefined?hitWobble(t,1.5):0),t.y-s.oy);
   ctx.globalAlpha=1;ctx.imageSmoothingEnabled=sm;
   if(t.hp<4){const st=dmgStage(t.hp,4);if(st)treeDmgFx(t,st);}   // cortes no tronco conforme o dano das armas
 }
