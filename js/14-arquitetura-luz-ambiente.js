@@ -296,6 +296,21 @@ function drawRoof(b){
   ctx.imageSmoothingEnabled=sm;
 }
 
+/* Árvore ao lado da casa (pé abaixo do topo do telhado, mas acima da base): a copa é redesenhada só dentro da área do telhado.
+   Assim a ponta não some e a ordem com personagens e bichos fora do telhado não muda. Árvores atrás da casa continuam cobertas. */
+function treesOverRoof(b,list){
+  if(P&&P.inside===b)return;
+  const x=b.x-3,y=b.y-6,w=b.w+6,h=b.h-7;
+  for(const e of list){
+    if(e.k!==0||e.y<=b.y||e.y>b.y+b.h)continue;
+    const t=e.o;
+    if(t.x+56<x||t.x-56>x+w||t.y<y||t.y-106>y+h)continue;   // sprite de 112x112 com o pé em (56,106)
+    ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();
+    drawTreeCrown(t);fruitOver(t);
+    ctx.restore();
+  }
+}
+
 /* ---- chão em volta do prédio: varanda, degraus e enfeites (desenhado antes de itens e veículos) ---- */
 function bldGroundBuild(b,snowNow){
   const L=b._look||(b._look=bldLook(b)),H=k=>bHash(b,k+200),r=mkRng(H(1));
@@ -1553,9 +1568,12 @@ function render(){
   if(OBS.on&&!P.inside)list.push({y:OBS.y,k:8,o:OBS});
   if(!P.inside)for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.ob&&rp.alive!==false&&!rp.inVehicle)list.push({y:rp.ob[1],k:8,o:{x:rp.ob[0],y:rp.ob[1],alpha:1,glitch:rp.ob[2]?.3:0}});}
   if(!P.inVehicle&&!(P.sleeping&&P.sleeping.tent))list.push({y:P.y,k:2,o:P});
+  /* o telhado entra na ordem de profundidade pela base da casa: o que está na frente dela (copa de árvore) passa por cima, o resto fica coberto */
+  for(const b of blds)if(vis(b)&&b.roofA>.02)list.push({y:b.y+b.h,k:20,o:b});
   list.sort((a,b)=>a.y-b.y);
   for(const e of list){
     if(e.k===0){drawTree(e.o);fruitOver(e.o);}
+    else if(e.k===20){drawRoof(e.o);bldTopFx(e.o);treesOverRoof(e.o,list);}
     else if(e.k===3)drawRock(e.o);
     else if(e.k===4)drawCampfire(e.o);
     else if(e.k===9)drawTent(e.o);
@@ -1590,7 +1608,6 @@ function render(){
       if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),vface:lookFace(P),sprint:P.sprint,moving:P.moving,sit:!!P.sitting,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
     }
   }
-  for(const b of blds)if(vis(b)&&b.roofA>.02){drawRoof(b);bldTopFx(b);}
   drawRoofs(vx0,vx1,vy0,vy1);
   drawIceFx();drawMirage(vx0,vx1,vy0,vy1);drawFog(vx0,vx1,vy0,vy1);
   drawPingsWorld();
