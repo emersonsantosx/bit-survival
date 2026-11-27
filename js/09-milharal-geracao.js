@@ -273,12 +273,12 @@ function genWorld(seed) {
         const dist=mainR*rnd(0.5,0.82);
         blobs.push({x:cx+Math.cos(ang)*dist, y:cy+Math.sin(ang)*dist, r:rnd(mainR*0.4,mainR*0.65)});
       }
+      /* ilhas e pads (as antigas vitorias-regias) nao sao mais desenhados; o sorteio fica para o mundo de cada semente continuar identico */
       const islands=[], islCount=selectedMap==='desert'?0:rint(1,3);
       for(let j=0;j<islCount;j++){
         const ang=rnd(0,6.283), dist=rnd(0,mainR*0.5);
         islands.push({x:cx+Math.cos(ang)*dist, y:cy+Math.sin(ang)*dist, r:rnd(10,20)});
       }
-      /* pads (as antigas vitorias-regias) nao sao mais desenhadas; o sorteio fica para o mundo de cada semente continuar identico */
       const pads=[], padCount=selectedMap==='forest'?rint(12,20):(selectedMap==='desert'?0:rint(4,8));
       for(let j=0;j<padCount;j++){
         const ang=rnd(0,6.283), dist=rnd(mainR*0.35,mainR*0.92);
@@ -402,7 +402,7 @@ function genWorld(seed) {
   }
 
   weather=pickWeather(_rng);
-  weatherTimer=rnd(120,240);weatherK=1;
+  weatherTimer=rnd(120,240);weatherK=1;wxF=weather==='none'?1:0;   // mundo novo que sorteou tempo ruim: ele ainda esta chegando
   weatherParticles=[];
   // Animais por mapa (passivos, caça = comida)
   plotsLoad([]);fruitReset();fenceLoad([]);cellLoad(null);animals=[];birds=[];birdsReady=false;flockT=rnd(15,40);

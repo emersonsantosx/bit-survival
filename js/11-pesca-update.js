@@ -10,7 +10,7 @@ function cancelFishing(msg){
 function fishCastWait(){
   const hod=(START_HOUR+T/DAY_SECONDS*24)%24;
   let w=rr(4,9);
-  if(weather==='rain')w*=.7;                                   // chuva agita os peixes
+  if(weather==='rain')w*=wxMix(.7);                                   // chuva agita os peixes
   if((hod>=5&&hod<8)||(hod>=17&&hod<20))w*=.8;                  // amanhecer e entardecer
   return w;
 }
@@ -403,7 +403,7 @@ function envTemp(){
   const m=TEMP_MAP[selectedMap]||TEMP_MAP.forest;
   const hod=(START_HOUR+T/DAY_SECONDS*24)%24;
   let tg=m.base+m.amp*Math.sin((hod-8)/24*6.2832);       // máximo ~14h, mínimo ~2h
-  if(weather==='rain') tg-=14; else if(weather==='snow') tg-=8+blizzK*14; else if(weather==='sand') tg+=8;
+  if(weather==='rain') tg-=14*wxAmt(); else if(weather==='snow') tg-=8*wxAmt()+blizzK*14; else if(weather==='sand') tg+=8*wxAmt();
   if(P.inVehicle&&vehKind(P.inVehicle)==='car') tg*=0.6;      // cabine do carro fechado (veiculos abertos nao isolam)
   else if(bldAt(P.x,P.y)) tg*=0.3;                           // abrigo isola do clima
   else if(shelterAt(P.x,P.y)===2) tg*=0.3;                   // casa construida e fechada (telhado + paredes + porta fechada) isola como um predio
@@ -438,7 +438,7 @@ function tempTick(dt){
   { // água do lago/oásis: ficar dentro vai molhando e esfriando aos poucos; fora, seca devagar
     const inW=!P.inVehicle&&pointInLake(P.x,P.y), snow=selectedMap==='snow';
     const sheltered=!!((P.inVehicle&&vehKind(P.inVehicle)==='car')||bldAt(P.x,P.y)||shelterAt(P.x,P.y)>0||nearTent(P.x,P.y,34));
-    const rainWet=!inW&&weather==='rain'&&!sheltered;                       // chuva molha quem esta ao relento
+    const rainWet=!inW&&weather==='rain'&&wxAmt()>.25&&!sheltered;                       // chuva molha quem esta ao relento
     let nearFire=!!hearthNear(P.x,P.y,70);for(const c of campfires){if(Math.hypot(c.x-P.x,c.y-P.y)<70){nearFire=true;break;}}
     const dry=(snow?55:30)/(nearFire?3:1);                                   // perto da fogueira seca bem mais rapido
     P.wet=clamp((P.wet||0)+(inW?dt/(snow?16:26):(rainWet?dt/(snow?60:90):-dt/dry)),0,1);
@@ -537,7 +537,7 @@ function updateP(dt){
       P.x=v.x;P.y=v.y;P.face=v.face;P.moving=false;
       return;
     }
-    const VS=vehSpec(v),wf=(weather==='rain'||weather==='sand')?.92:1; // chuva/areia pioram um pouco
+    const VS=vehSpec(v),wf=(weather==='rain'||weather==='sand')?wxMix(.92):1; // chuva/areia pioram um pouco
     const tr=vehTerr(v,terrainFor(v.x,v.y));
     if(KBM)kbVehicle();
     const maxSpd=VS.top*tr.spd*wf, maxRev=VS.rev*tr.spd*wf;
@@ -675,9 +675,9 @@ function updateP(dt){
   if(FIELD&&inCorn(P.x,P.y))sp*=.88; // abrir caminho entre os pés de milho
   if(P.hp<30)sp*=.85;
   // Clima com impacto: neve freia; chuva gasta mais stamina
-  if(weather==='snow') sp*=0.82*(1-.1*blizzK);
-  else if(weather==='rain') sp*=0.94;
-  else if(weather==='sand') sp*=0.9;
+  if(weather==='snow') sp*=wxMix(0.82)*(1-.1*blizzK);
+  else if(weather==='rain') sp*=wxMix(0.94);
+  else if(weather==='sand') sp*=wxMix(0.9);
   sp*=(P._tspd||1);                 // frio/calor extremos desaceleram
   if(P.moving){
     stepMove(P,mx*sp*dt,my*sp*dt,P.r);
@@ -689,13 +689,13 @@ function updateP(dt){
   }
   if(KBM){const ka=kbAim();if(ka!==null)P.face=ka;}   // computador: o personagem sempre olha para o mouse (anda de lado, de costas...)
   if(P.sprint){
-    const stamDrain=17*(weather==='rain'?1.35:weather==='snow'?1.2:weather==='sand'?1.15:1)*(P._tsd||1);
+    const stamDrain=17*wxMix(weather==='rain'?1.35:weather==='snow'?1.2:weather==='sand'?1.15:1)*(P._tsd||1);
     P.stam-=stamDrain*dt;if(P.stam<=0){P.stam=0;P.exhausted=true;}
     noiseT-=dt;
     if(noiseT<=0){makeNoise(P.x,P.y,70);noiseT=.6;}
   }else{
     // Recupera mais rápido parado (30/s) do que andando (20/s)
-    const stamRegen=(P.moving?20:30)*(weather==='snow'?0.8:1)*(P._tsr||1)*(P._sreg||1);
+    const stamRegen=(P.moving?20:30)*(weather==='snow'?wxMix(0.8):1)*(P._tsr||1)*(P._sreg||1);
     P.stam=Math.min(P._scap||100,P.stam+stamRegen*dt);
     if(P.exhausted&&P.stam>Math.min(20,(P._scap||100)-8))P.exhausted=false;
   }
@@ -918,18 +918,17 @@ function update(dt){
     const prev=weather,nx=weatherRoll(Math.random);
     weatherTimer=nx.dur;weather=nx.w;weatherK=nx.k;
     if(prev!==weather){
+      if(prev==='none')wxF=0;
       setRain(weather==='rain');
-      if(weather==='rain') toast((weatherK<.8?'Garoa':weatherK>1.2?'Chuva forte':'Chuva')+': fogueiras apagam e stamina cai mais');
-      else if(weather==='snow') toast('Neve: movimento e recuperação mais lentos');
-      else if(weather==='sand') toast('Tempestade de areia: visão e velocidade reduzidas');
-      else if(prev!=='none') toast('Clima limpo');
+      toast(weather==='none'?'Clima limpo':wxStartMsg());
     }
   }
+  wxStep(dt);
   if(weather!=='none'){
     const pf=perf();
     // Densidade por segundo: igual em 30, 60 ou 120 FPS
-    weatherAcc=Math.min(14,weatherAcc+pf.weatherSpawn*dt*60*(1+blizzK*2)*weatherK);
-    const wcap=pf.weatherCap*(1+(perfTotal()<2?blizzK*1.2:0));
+    weatherAcc=Math.min(14,weatherAcc+pf.weatherSpawn*dt*60*(1+blizzK*2)*weatherK*wxAmt());
+    const wcap=pf.weatherCap*(1+(perfTotal()<2?blizzK*1.2:0))*wxAmt();
     while(weatherAcc>=1){ weatherAcc-=1; if(weatherParticles.length>=wcap) continue;
       if(weather==='sand') weatherParticles.push({x:camX-20,y:camY+rnd(0,H/Z),vx:rnd(160,260),vy:rnd(-12,30),sz:rnd(1,2),t:rnd(.7,1.3)});
       else weatherParticles.push({
@@ -947,7 +946,7 @@ function update(dt){
   }
   // chuva: respingos no chao; frio: vapor da respiracao
   if(weather==='rain'){
-    const pfr=perf();splashAcc=Math.min(6,splashAcc+(pfr.weatherSpawn||.4)*dt*50);
+    const pfr=perf();splashAcc=Math.min(6,splashAcc+(pfr.weatherSpawn||.4)*dt*50*wxAmt());
     while(splashAcc>=1){splashAcc-=1;if(parts.length>=(pfr.partsCap||120))break;
       parts.push({x:camX+rnd(0,W/Z),y:camY+rnd(0,H/Z),vx:rnd(-14,14),vy:rnd(-42,-22),t:rnd(.14,.24),c:'rgba(170,200,230,.75)',g:1});}
   }
@@ -960,7 +959,7 @@ function update(dt){
   for(const v of vapor){v.t+=dt;v.x+=v.vx*dt;v.y-=10*dt;}
   vapor=vapor.filter(v=>v.t<.9);
   // Chuva apaga fogueiras gradualmente
-  if(weather==='rain' && campfires.length && (!MP.active||MP.isHost)){ // só o anfitrião apaga fogueiras (o convidado recebe o evento)
+  if(weather==='rain' && wxAmt()>.5 && campfires.length && (!MP.active||MP.isHost)){ // só o anfitrião apaga fogueiras (o convidado recebe o evento)
     for(let i=campfires.length-1;i>=0;i--){
       const c=campfires[i];
       c.wet=(c.wet||0)+dt;
@@ -977,7 +976,7 @@ function update(dt){
     }
   }
   const nightMix=clamp((dark-.12)/.75,0,1);
-  const weatherMix=weather==='rain'?.018:(weather==='snow'?.008:(weather==='sand'?.012:0));
+  const weatherMix=(weather==='rain'?.018:(weather==='snow'?.008:(weather==='sand'?.012:0)))*wxAmt();
   setAmbient(.018+nightMix*.075+weatherMix);
   updateP(dt);
   updateAnimals(dt);
@@ -998,7 +997,7 @@ function update(dt){
   if(atkHeld&&!P.dead&&!chatOpen&&(P.hold||!WEAPONS[P.weapon]?.rod))attack();
   eatTick(dt);
   // Chuva lava o sangue depressa; a neve e a areia vão cobrindo aos poucos
-  const decayK=weather==='rain'?3.2:(weather==='snow'?1.8:(weather==='sand'?1.6:1));
+  const decayK=wxMix(weather==='rain'?3.2:(weather==='snow'?1.8:(weather==='sand'?1.6:1)));
   for(let k=decals.length-1;k>=0;k--){decals[k].l-=dt*decayK;if(decals[k].l<=0)decals.splice(k,1);}
   if(window.bloodAge)bloodAge(dt,decayK);   // gotas de sangue do jogador (arquivo 31)
   if(!MP.active||MP.isHost){
@@ -1363,9 +1362,10 @@ function fText(f){   // desenha um floater; os avisos do jogador (say) saem em b
    entao a chuva nao some nem fica por causa do sono. So o host (ou o jogo solo) chama; o convidado recebe o clima pelo snapshot. */
 function weatherAdvance(sec){
   if(!(sec>0))return;
-  const prev=weather;let rem=sec;
-  while(rem>=weatherTimer){rem-=weatherTimer;const nx=weatherRoll(Math.random);weather=nx.w;weatherTimer=nx.dur;weatherK=nx.k;}
+  const prev=weather;let rem=sec,nova=0;
+  while(rem>=weatherTimer){rem-=weatherTimer;const nx=weatherRoll(Math.random);weather=nx.w;weatherTimer=nx.dur;weatherK=nx.k;nova=1;}
   weatherTimer-=rem;
+  if(nova){wxF=0;wxStep(rem);}else wxStep(sec);   // acorda com o clima no ponto em que ele estaria
   if(weather!==prev){setRain(weather==='rain');weatherParticles.length=0;}
 }
 function toast(msg){

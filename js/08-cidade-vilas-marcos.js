@@ -476,7 +476,8 @@ function lmCurse(c){
   const isD=c.kind==='gold';
   if(MP.active)sendEvt('curse',{d:isD?1:0});
   setTimeout(()=>{toast(isD?'A maldição do templo desperta! Tempestade e mortos-vivos':'Uma nevasca cai e algo se move no gelo!');},900);
-  weather=isD?'sand':'snow';setRain(false);weatherTimer=100;weatherParticles=[];
+  const wx=isD?'sand':'snow';wxF=weather===wx?Math.max(wxF,.5):.5;   // a tempestade da maldicao chega mais depressa que a natural
+  weather=wx;setRain(false);weatherTimer=100;weatherParticles=[];
   const kinds=isD?[0,0,1,5,6]:[0,0,2,1,5];
   kinds.forEach((k,i)=>{
     for(let t=0;t<40;t++){
@@ -509,7 +510,7 @@ function updateLM(dt){
   };
   if(!P.inVehicle&&!P.inside&&!P.dead&&!pointInLake(P.x,P.y))mark(P,false);
   for(const z of zombies){if(z.dead||Math.abs(z.x-P.x)>260||Math.abs(z.y-P.y)>200)continue;if(z.moving!==false)mark(z,true);}
-  const pdec=selectedMap==='snow'&&weather==='snow'?2.2+blizzK*3:1;   // nevando, a neve cobre as pegadas bem mais rápido
+  const pdec=selectedMap==='snow'&&weather==='snow'?wxMix(2.2+blizzK*3):1;   // nevando, a neve cobre as pegadas bem mais rápido
   for(let k=prints.length-1;k>=0;k--){prints[k].l-=dt*pdec;if(prints[k].l<=0)prints.splice(k,1);}
   updateTracks(dt);
 }
@@ -542,7 +543,7 @@ function updateTracks(dt){
       if(tracks.length>420)tracks.shift();
     }
   }
-  const dec=sn&&weather==='snow'?2.2+blizzK*3:1;
+  const dec=sn&&weather==='snow'?wxMix(2.2+blizzK*3):1;
   for(let k=tracks.length-1;k>=0;k--){tracks[k].l-=dt*dec;if(tracks[k].l<=0)tracks.splice(k,1);}
 }
 function drawTracks(vx0,vx1,vy0,vy1){
@@ -588,7 +589,7 @@ function drawLMFlat(vx0,vx1,vy0,vy1){
 }
 function drawAurora(){
   if(selectedMap!=='snow'||P.inside||dark<.3)return;
-  const a=Math.min(.5,(dark-.3)*1.4)*(weather==='snow'?.5:1);
+  const a=Math.min(.5,(dark-.3)*1.4)*(weather==='snow'?wxMix(.5):1);
   if(a<=.02)return;
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='lighter';
   const bands=[['rgba(60,255,150,','rgba(40,200,200,',.0,.16],['rgba(120,90,255,','rgba(60,220,200,',.07,.12],['rgba(60,255,190,','rgba(160,90,255,',.13,.1]];

@@ -252,7 +252,7 @@ function rfExtras(q,w,h,L,H,snowNow){
       case 'helipad':{if(w<80||h<64)break;p=spot(22,22,6,h-24);if(!p)break;q(p[0],p[1],22,22,'#3a3e44');q(p[0],p[1],22,1,'#e8e8e0');q(p[0],p[1]+21,22,1,'#e8e8e0');q(p[0],p[1],1,22,'#e8e8e0');q(p[0]+21,p[1],1,22,'#e8e8e0');q(p[0]+6,p[1]+5,2,12,'#e8e8e0');q(p[0]+14,p[1]+5,2,12,'#e8e8e0');q(p[0]+6,p[1]+10,10,2,'#e8e8e0');break;}
       case 'camo':{
         const r=mkRng(H(70)),cols=selectedMap==='desert'?['#a08850','#6a6a3a','#8a7040']:['#3e5030','#6a6a3a','#4a4030'];
-        for(let i=0;i<26;i++){q(4+r()*(w-24),4+r()*(h-14),10+r()*14,5+r()*7,cols[Math.floor(r()*cols.length)]);}
+        for(let i=0;i<26;i++){const x=4+r()*(w-24),y=4+r()*(h-14),pw=10+r()*14,ph=5+r()*7;q(x,y,Math.min(pw,w-Math.round(x)),Math.min(ph,h-Math.round(y)),cols[Math.floor(r()*cols.length)]);}   // as manchas param na borda do telhado
         break;}
       case 'sign':{const sc=['#c04030','#2f6aa0','#2a7a4a','#d0a030'][Math.floor(H(71)*4)],sw=Math.round(w*.5),sx=Math.round((w-sw)/2),sy=h-13;
         q(sx+1,sy+2,sw,7,'rgba(0,0,0,.25)');q(sx,sy,sw,7,'#e8e0d0');q(sx+1,sy+1,sw-2,5,sc);
@@ -475,7 +475,7 @@ function updateSun(){
   else{th=Math.PI*Math.min(1,Math.max(0,((h-19.5+24)%24)/10));a0=.16;}
   const e=Math.sin(th),co=-Math.cos(th);
   const M=.33+.97*(1-e);   // tamanho da sombra: longa no horizonte (1.3 da altura) e curta, mas nunca um ponto, ao meio-dia (0.33)
-  const wf=weather==='rain'?.5:weather==='snow'?.65:weather==='sand'?.6:1; // ceu fechado: sombra suave
+  const wf=wxMix(weather==='rain'?.5:weather==='snow'?.65:weather==='sand'?.6:1); // ceu fechado: sombra suave
   SUN.e=e;SUN.dx=co;SUN.len=M/.55;
   SUN.dy=(.12+.78*e)*1.6667;   // a parte da sombra que cai para a frente cresce com o sol alto
   const u=Math.min(1,e/.3),fade=u*u*(3-2*u);   // a sombra some suave no horizonte: a troca de lado (sol para lua) acontece invisivel
@@ -609,7 +609,7 @@ function drawGrade(){
   }
   // brilho quente do sol baixo (nascer e pôr do sol), mais forte e na cor do mapa
   const h=SUN.h,wg=Math.max(0,1-Math.abs(h-18.3)/2.1)+Math.max(0,1-Math.abs(h-6.2)/1.6);
-  const wa=.17*wg*(weather==='none'?1:.4);
+  const wa=.17*wg*wxMix(.4);
   if(wa>.008){ctx.globalCompositeOperation='screen';ctx.fillStyle='rgba('+(MAPWARM[selectedMap]||'255,150,70')+','+wa.toFixed(3)+')';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over';}
 }
 /* sprites */
@@ -657,15 +657,15 @@ function ensureVig(){
 }
 function drawVignette(indoor){
   if(!W||!H)return;ensureVig();
-  const a=indoor?.85:Math.min(1,.38+dark*.42+(weather==='rain'?.1:0));
+  const a=indoor?.85:Math.min(1,.38+dark*.42+(weather==='rain'?.1*wxAmt():0));
   ctx.globalAlpha=a;ctx.drawImage(vigC,0,0);ctx.globalAlpha=1;
 }
 /* raios de sol atravessando a copa (manhã e fim de tarde) */
 const SHAFTG=(()=>{const g=document.createElement('canvas').getContext('2d');const gr=g.createLinearGradient(0,0,70,0);gr.addColorStop(0,'rgba(255,225,150,0)');gr.addColorStop(.5,'rgba(255,225,150,1)');gr.addColorStop(1,'rgba(255,225,150,0)');return gr;})();
 function drawShafts(){
-  if(selectedMap!=='forest'||weather!=='none'||dark>.35||perfTotal()>0)return;
+  if(selectedMap!=='forest'||wxAmt()>=1||dark>.35||perfTotal()>0)return;
   const lowSun=Math.max(0,1-SUN.e*1.15);
-  const a=.2*lowSun;if(a<.012)return;
+  const a=.2*lowSun*(1-wxAmt());if(a<.012)return;
   ctx.globalCompositeOperation='lighter';
   ctx.fillStyle=SHAFTG;
   for(let i=0;i<4;i++){
@@ -716,7 +716,7 @@ function updateLighting(dt){
     }
   }else for(const f of FF){if(f.on)f.out=true;f.k=Math.max(0,f.k-dt*1.2);if(f.k<=.01){f.on=false;f.out=false;}}
   // relâmpagos (só com chuva e fora de prédios)
-  if(weather==='rain'&&(!MP.active||MP.isHost)){ // só o anfitrião sorteia o raio; o convidado recebe pelo evento 'bolt'
+  if(weather==='rain'&&wxAmt()>.7&&(!MP.active||MP.isHost)){ // só o anfitrião sorteia o raio; o convidado recebe pelo evento 'bolt'
     LT.next-=dt;
     if(LT.next<=0){
       LT.next=12+Math.random()*22;
@@ -812,17 +812,17 @@ function ambLife(dt){
 let blizzK=0,_blzOn=false;
 function blizzTarget(){
   if(selectedMap!=='snow'||weather!=='snow')return 0;
-  return fracHash((worldSeed%9973)*.37+Math.floor(T/110)*7.13)<.45?1:0;
+  return wxAmt()>.75&&fracHash((worldSeed%9973)*.37+Math.floor(T/110)*7.13)<.45?1:0;
 }
 function ambFx(dt){
   if(!P)return;
-  blizzK+=(blizzTarget()-blizzK)*Math.min(1,dt*.35);
+  blizzK+=(blizzTarget()-blizzK)*Math.min(1,dt*.12);   // a nevasca tambem fecha e abre aos poucos
   if(!_blzOn&&blizzK>.6){_blzOn=true;toast('Nevasca! Visão curta e frio intenso');}
   else if(_blzOn&&blizzK<.2)_blzOn=false;
 }
 /* ---- neblina (floresta) ---- */
 const fogSp=mkSprite(128,[[0,'rgba(240,246,244,.85)'],[.5,'rgba(240,246,244,.4)'],[1,'rgba(240,246,244,0)']]);
-function fogAmount(){if(selectedMap!=='forest')return 0;return clamp(1-Math.abs(SUN.h-5.8)/2.7,0,1)*(weather==='none'?1:.5);}
+function fogAmount(){if(selectedMap!=='forest')return 0;return clamp(1-Math.abs(SUN.h-5.8)/2.7,0,1)*wxMix(.5);}
 function drawFog(vx0,vx1,vy0,vy1){
   if(selectedMap!=='forest'||perfTotal()>=2||(P&&P.inside))return;
   const fa=fogAmount(),CS=240,gx0=Math.floor(vx0/CS)-1,gx1=Math.ceil(vx1/CS),gy0=Math.floor(vy0/CS)-1,gy1=Math.ceil(vy1/CS);
@@ -844,7 +844,7 @@ function drawFog(vx0,vx1,vy0,vy1){
   ctx.globalAlpha=1;
 }
 /* ---- miragem (deserto, meio-dia) ---- */
-function heatK(){return selectedMap==='desert'&&weather==='none'&&!(P&&P.inside)?clamp(1-Math.abs(SUN.h-14)/3.6,0,1):0;}
+function heatK(){return selectedMap==='desert'&&!(P&&P.inside)?clamp(1-Math.abs(SUN.h-14)/3.6,0,1)*(1-wxAmt()):0;}
 function drawMirage(vx0,vx1,vy0,vy1){
   const hk=heatK();if(hk<.08||perfTotal()>=2)return;
   const CS=720,gx0=Math.floor(vx0/CS)-1,gx1=Math.ceil(vx1/CS),gy0=Math.floor(vy0/CS)-1,gy1=Math.ceil(vy1/CS);
@@ -1618,7 +1618,7 @@ function render(){
     ctx.fillStyle='rgba(180,255,120,.6)';ctx.beginPath();ctx.arc(s.x,s.y,2,0,6.283);ctx.fill();
   }
   if(weather!=='none'){
-    if(weather==='sand'){ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='rgba(196,150,80,.2)';ctx.fillRect(0,0,W,H);ctx.restore();} // névoa de areia
+    if(weather==='sand'){ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='rgba(196,150,80,'+(.2*wxAmt()).toFixed(3)+')';ctx.fillRect(0,0,W,H);ctx.restore();} // névoa de areia
     ctx.fillStyle=weather==='rain'?'rgba(140,180,220,0.65)':(weather==='sand'?'rgba(214,178,110,0.8)':'rgba(240,248,255,0.85)');
     for(const wp of weatherParticles)if(wp.x>=camX-10&&wp.x<=camX+W/Z+10&&wp.y>=camY-10&&wp.y<=camY+H/Z+10)R(wp.x,wp.y,wp.sz,weather==='rain'?wp.sz*5:wp.sz,ctx.fillStyle);
   }

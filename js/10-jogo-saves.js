@@ -74,7 +74,7 @@ function saveGame(){
     const ps=JSON.parse(JSON.stringify(P,(k,v)=>(k==='inside'||k==='inVehicle'||k==='fish'||k==='sleeping'||k[0]==='_')?undefined:v));
     const data={
       v:SAVE_VER, ws:WW, at:Date.now(), map:selectedMap, seed:worldSeed, sk:SKIN_SEL,
-      T:_q(T,2), ds:DAY_SECONDS, day, kills, weather, weatherTimer:_q(weatherTimer,1), wk:_q(weatherK,2), spawnTimer:_q(spawnTimer,1),
+      T:_q(T,2), ds:DAY_SECONDS, day, kills, weather, weatherTimer:_q(weatherTimer,1), wk:_q(weatherK,2), wf:_q(wxF,2), spawnTimer:_q(spawnTimer,1),
       P:ps, inVeh:P.inVehicle?vehicles.indexOf(P.inVehicle):-1,
       trees:trees.map(t=>[t.x,t.y,_q(t.hp,2)]),
       rocks:rocks.map(r=>[r.x,r.y,_q(r.hp,2)]),
@@ -165,6 +165,7 @@ function restoreWorldState(d){
   if(typeof d.weather==='string') weather=d.weather;
   if(Number.isFinite(d.weatherTimer)) weatherTimer=d.weatherTimer;
   weatherK=Number.isFinite(d.wk)?clamp(d.wk,.4,1.6):1;
+  wxF=Number.isFinite(d.wf)?clamp(d.wf,0,1):1;   // save antigo: o clima ja vale cheio
   spawnTimer=Number.isFinite(d.spawnTimer)?d.spawnTimer:3;
   // Árvores e pedras: o mundo base volta da semente; o save diz quais restaram e com quanta vida
   const keep=(base,saved)=>{

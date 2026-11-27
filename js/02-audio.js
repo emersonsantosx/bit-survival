@@ -609,15 +609,16 @@ function setRainMode(on,muff){   // muff: 0 ao ar livre (inclui veiculos abertos
   if(on&&!rainNoise)startRain();
   if(!rainNoise){rainSt.on=false;return;}
   const vol=volFor('rain');
-  const g=on?.2*vol*(muff===2?.5:(muff===1?.55:1)):0;
+  const lvl=rainLevel(),g=on?.2*vol*(.08+.92*lvl)*(muff===2?.5:(muff===1?.55:1)):0;
   const f=muff===2?650:(muff===1?1500:7000);
   const t=AC.currentTime;
   try{
     rainNoise.master.gain.cancelScheduledValues(t);rainNoise.master.gain.setTargetAtTime(g,t,.45);
     rainNoise.lp.frequency.cancelScheduledValues(t);rainNoise.lp.frequency.setTargetAtTime(f,t,.3);
   }catch(e){}
-  rainSt.on=on;rainSt.muff=muff;rainSt.vol=vol;
+  rainSt.on=on;rainSt.muff=muff;rainSt.vol=vol;rainSt.lvl=lvl;
 }
+function rainLevel(){return Math.round(wxAmt()*20)/20;}   // o som cresce e some junto com a chuva (em degraus de 5%)
 function setRain(on){ setRainMode(on,rainSt.muff); }
 function rainDrop(){
   const vol=volFor('rain');if(vol<=0||!nbuf)return;
@@ -657,12 +658,12 @@ function syncRainAudio(dt){
   const want=weather==='rain'&&state!=='menu';
   const muff=P.inside?2:(P.inVehicle&&vehKind(P.inVehicle)==='car'?1:0);   // so o carro fechado (cidade) abafa; moto de neve, quadriciclo e buggy sao abertos
   const vol=volFor('rain');
-  if(want!==rainSt.on||muff!==rainSt.muff||vol!==rainSt.vol) setRainMode(want,muff);
+  if(want!==rainSt.on||muff!==rainSt.muff||vol!==rainSt.vol||rainLevel()!==rainSt.lvl) setRainMode(want,muff);
   if(!rainSt.on||!rainNoise)return;
   const d=Math.min(dt,.1);
-  rainSt.dropAcc+=d*(rainSt.muff===2?5:11);          // gotas por segundo
+  rainSt.dropAcc+=d*(rainSt.muff===2?5:11)*wxAmt();          // gotas por segundo
   while(rainSt.dropAcc>=1){rainSt.dropAcc-=1;rainDrop();}
-  rainSt.thunderT-=d;
+  if(wxAmt()>.7)rainSt.thunderT-=d;
   if(rainSt.thunderT<=0){rainSt.thunderT=rnd(28,75);rainThunder();}
 }
 function buildSound(){

@@ -330,15 +330,27 @@ function pickWeather(rf){
   return r<.65?'none':'rain';
 }
 /* Proxima rodada do clima (so em jogo; o sorteio da semente continua usando pickWeather, com um sorteio so).
-   Cada rodada tem a sua propria chance de tempo ruim (a base do mapa vezes um fator sorteado), a sua duracao (curta ou longa, de 40 a 300 s)
+   Cada rodada tem a sua propria chance de tempo ruim (a base do mapa vezes um fator sorteado), a sua duracao (curta ou longa, de 60 a 300 s; tempo ruim de 110 s para cima, para dar tempo de chegar e passar)
    e a sua intensidade, entao nao ha padrao: garoa curta, chuva forte longa, dias limpos seguidos... */
 const WX_BASE={desert:.3,snow:.55,forest:.35,city:.35};
 function weatherRoll(rf){
   const base=WX_BASE[selectedMap]||.35,f=.35+rf()*1.5,p=Math.min(.85,Math.max(.06,base*f));
   const bad=rf()<p,type=selectedMap==='desert'?'sand':selectedMap==='snow'?'snow':'rain';
-  const dur=bad?40+180*Math.pow(rf(),1.4):60+240*Math.pow(rf(),1.4);
+  const dur=bad?110+190*Math.pow(rf(),1.4):60+240*Math.pow(rf(),1.4);
   const k=bad?.5+rf():1;
   return {w:bad?type:'none',dur,k};
+}
+/* O clima chega aos poucos, fica e vai passando: leva WX_IN segundos para chegar por inteiro e vai enfraquecendo nos ultimos WX_OUT segundos da
+   rodada, entao ja esta no zero quando troca. wxF (arquivo 04) guarda o ponto atual e vai no save e no multiplayer. Visual, som e efeitos no jogo
+   usam wxAmt() (0 a 1) ou wxMix(v) (multiplicador que vai de 1 ate v). Quem comeca um clima zera ou reduz wxF; com tempo limpo ele fica em 1. */
+const WX_IN=60,WX_OUT=50;
+function wxAmt(){return weather==='none'?0:wxF;}
+function wxMix(v){return 1+(v-1)*wxAmt();}
+function wxStep(dt){wxF=weather==='none'?1:clamp(Math.min(wxF+dt/WX_IN,weatherTimer/WX_OUT),0,1);}
+function wxStartMsg(){
+  if(weather==='rain')return (weatherK<.8?'Começou a garoar':weatherK>1.2?'Vem chuva forte':'Começou a chover')+': fogueiras apagam e stamina cai mais';
+  if(weather==='snow')return 'Começou a nevar: movimento e recuperação mais lentos';
+  return 'O vento está levantando areia: visão e velocidade reduzidas';
 }
 function lakeLoot(t){return mapHasLake()?Object.assign({fishingrod:1.5},t):t;}
 /* fora dos prédios só existem pedra e taco; todo o resto (comida, água, armas, curativos) fica dentro das casas */
