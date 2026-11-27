@@ -889,6 +889,7 @@ function handleNetData(data,isHostSide,conn){
       rp.sl={s:SLI[data.sl[0]|0]||'t',hx:clamp(data.sl[1],-20,20),hy:clamp(data.sl[2],-20,20),tent:!!data.sl[3]};
     }else rp.sl=null;
     rp.st=data.st===1;
+    rp.wp=(Array.isArray(data.wp)&&data.wp.length===2&&data.wp.every(isFiniteNum)&&data.wp[0]>=0&&data.wp[1]>=0&&data.wp[0]<=WW&&data.wp[1]<=WH)?data.wp:null;
     if(isFiniteNum(data.fx)&&isFiniteNum(data.fy)){rp.fx=data.fx;rp.fy=data.fy;rp.fl=isFiniteNum(data.fl)?data.fl:3;}else{rp.fx=null;rp.fy=null;}
     rp.ob=(Array.isArray(data.ob)&&data.ob.length>=3&&data.ob.every(isFiniteNum))?data.ob:null;   // o Observador que o outro jogador está vendo
     rp.gh=(Array.isArray(data.gh)&&data.gh.length>=5&&data.gh.every(isFiniteNum))?data.gh:null;   // a aparição que o outro está vendo
@@ -1317,6 +1318,7 @@ function packMyPlayer(){
   if(OBS.on&&!P.inside&&!P.inVehicle)p.ob=[Math.round(OBS.x),Math.round(OBS.y),OBS.glitch>0?1:0];
   if(GH.on&&GH.b)p.gh=[GH.b.x|0,GH.b.y|0,Math.round(GH.x),Math.round(GH.y),GH.kill>0?1:0];
   if(P.sitting)p.st=1;
+  if(WP&&!WP.follow)p.wp=[Math.round(WP.x),Math.round(WP.y)];   // ponto marcado no mapa: os outros veem o simbolo
   if(P.bleed&&!P.dead)p.bl=1;   // sangrando: os aliados veem as gotas e o aviso ao lado da barra de vida (arquivo 31)
   if(P.sleeping){const sl=P.sleeping;p.sl=[SLC[sl.s]|0,sl.hx|0,sl.hy|0,sl.tent?1:0];}
   if(P.fish){p.fx=Math.round(P.fish.x);p.fy=Math.round(P.fish.y);p.fl=P.fish.ph?0:+Math.max(0,P.fish.wait-P.fish.t).toFixed(1);}
@@ -1346,6 +1348,7 @@ function enterMultiplayerGame(isHost){
   // O primeiro toque em jogo chama tryFullscreenFromGesture().
   if(CFG.fullscreen&&!KBM) userWantsFS=true;
   else userWantsFS=false;
+  WP=null;   // nenhum ponto marcado de uma partida anterior vai para esta
   MP.isHost=isHost;MP.gameStarted=true;MP.reconnecting=false;MP.guestAway=false;MP.lobbyOn=false;
   try{
     if(!plane) throw new Error('mundo não carregado');
