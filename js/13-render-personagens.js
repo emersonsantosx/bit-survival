@@ -2054,8 +2054,8 @@ function drawLake(l){
   ctx.ellipse(cx-R0*0.2, cy-R0*0.25, R0*0.35, R0*0.12, -0.4, 0, 6.283);
   ctx.fill();
   lakeGlints(l);
-  // 6) Ilhas
-  if(l.islands)for(const isl of l.islands){
+  // 6) Ilhas (menos na floresta, onde a ilhota parecia uma vitoria-regia)
+  if(l.islands&&selectedMap!=='forest')for(const isl of l.islands){
     ctx.fillStyle=frozen?'#d8e4ee':'#4a6a38';
     ctx.beginPath();ctx.ellipse(isl.x,isl.y,isl.r*1.1,isl.r*0.85,0.2,0,6.283);ctx.fill();
     if(!frozen){

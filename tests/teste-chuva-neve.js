@@ -14,7 +14,7 @@ const { chromium } = require('playwright');
     const tick = (s, dt = .5) => { for (let i = 0; i < s / dt; i++) update(dt); };
     weatherTimer = 99999; weather = 'none'; WX.wet = 0; WX.snow = 0;
     // --- chuva: forma, aparece nas posicoes certas e seca
-    o.wet0 = WX.wet; weather = 'rain'; tick(10); o.wet10 = WX.wet; tick(60); o.wet70 = WX.wet;
+    o.wet0 = WX.wet; weather = 'rain'; wxF = 1; tick(10); o.wet10 = WX.wet; tick(60); o.wet70 = WX.wet;
     for (let i = 0; i < 3; i++) render(); o.vis = wxPuddles().length;
     const snap = wxPuddles().map(p => [Math.round(p.x), Math.round(p.y)].join()).join('|');
     for (let i = 0; i < 3; i++) render(); o.mesmaPosicao = snap === wxPuddles().map(p => [Math.round(p.x), Math.round(p.y)].join()).join('|');

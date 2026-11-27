@@ -1183,15 +1183,14 @@ function applySnapshot(snap){
   }
   if(snap.weather==='none'||snap.weather==='rain'||snap.weather==='snow'||snap.weather==='sand'){
     if(weather!==snap.weather){
-      const prevW=weather;weather=snap.weather;setRain(weather==='rain');
-      if(weather==='rain') toast('Chuva: fogueiras apagam e stamina cai mais');
-      else if(weather==='snow') toast('Neve: movimento e recuperação mais lentos');
-      else if(weather==='sand') toast('Tempestade de areia: visão e velocidade reduzidas');
-      else if(prevW!=='none') toast('Clima limpo');
+      weather=snap.weather;weatherK=Number.isFinite(snap.wk)?clamp(snap.wk,.4,1.6):1;wxF=Number.isFinite(snap.wf)?clamp(snap.wf,0,1):1;
+      setRain(weather==='rain');
+      toast(weather==='none'?'Clima limpo':wxStartMsg());
     }
   }
   if(Number.isFinite(snap.weatherTimer)) weatherTimer=clamp(snap.weatherTimer,0,300);
   weatherK=Number.isFinite(snap.wk)?clamp(snap.wk,.4,1.6):1;
+  if(Number.isFinite(snap.wf)) wxF=clamp(snap.wf,0,1);
   if(Number.isFinite(snap.kills)) kills = snap.kills;
 }
 let BASE_TREES=[],BASE_ROCKS=[],BASE_TOBJ=new Map(),BASE_ROBJ=new Map();
@@ -1289,7 +1288,7 @@ function packSnapshot(){
     if(!inc) continue;
     vPack.push({id:v.id,x:Math.round(v.x),y:Math.round(v.y),w:v.w,h:v.h,col:v.col,looted:!!v.looted,spd:+(v.spd||0).toFixed(1),face:+(v.face||0).toFixed(2),hp:v.hp,maxHp:v.maxHp,dying:!!v.dying,destroyed:!!v.destroyed,explodeT:v.explodeT});
   }
-  return {type:'snapshot',day,dark:+dark.toFixed(3),T:+T.toFixed(1),weather,weatherTimer:Math.round(weatherTimer),wk:+weatherK.toFixed(2),kills,
+  return {type:'snapshot',day,dark:+dark.toFixed(3),T:+T.toFixed(1),weather,weatherTimer:Math.round(weatherTimer),wk:+weatherK.toFixed(2),wf:+wxF.toFixed(2),kills,
     zs:zPack,
     it:iPack,
     an:aPack,

@@ -11,9 +11,9 @@
 const WX={wet:0,snow:0,k:-1};window.WX=WX;
 window.wxUpdate=function(dt){
   const seed=window.WX_SEED|0;
-  if(WX.k!==seed){WX.k=seed;WX.wet=weather==='rain'?1:0;WX.snow=weather==='snow'?1:0;PCELL.clear();}   // mundo novo ou carregado: o clima de agora ja vale cheio
-  WX.wet=weather==='rain'?Math.min(1,WX.wet+dt/50):Math.max(0,WX.wet-dt/110);
-  WX.snow=weather==='snow'?Math.min(1,WX.snow+dt/70):Math.max(0,WX.snow-dt/150);
+  if(WX.k!==seed){WX.k=seed;WX.wet=weather==='rain'?wxAmt():0;WX.snow=weather==='snow'?wxAmt():0;PCELL.clear();}   // mundo novo ou carregado: parte do ponto em que o clima esta
+  WX.wet=weather==='rain'?Math.min(1,WX.wet+dt*wxAmt()/50):Math.max(0,WX.wet-dt/110);
+  WX.snow=weather==='snow'?Math.min(1,WX.snow+dt*wxAmt()/70):Math.max(0,WX.snow-dt/150);
 };
 window.snowAcc=()=>selectedMap==='snow'?1:WX.snow;
 window.snowOn=()=>selectedMap==='snow'||WX.snow>=.5;
@@ -105,7 +105,7 @@ function cityRain(vx0,vy0,vx1,vy1){
     for(let ix=Math.floor(vx0/G);ix<=vx1/G;ix++)for(let iy=Math.floor(vy0/G);iy<=vy1/G;iy++){
       const t=T*2.2+hash(ix,iy,13)*7,n=Math.floor(t),f=t-n;if(f>.4)continue;
       const x=Math.round(ix*G+hash(ix+n*31,iy,14)*G),y=Math.round(iy*G+hash(ix,iy+n*37,15)*G);
-      const col='rgba(222,236,250,'+((.2+.4*sky)*w*(1-f*1.6)).toFixed(3)+')';
+      const col='rgba(222,236,250,'+((.2+.4*sky)*w*(1-f*1.6)*wxAmt()).toFixed(3)+')';
       if(f<.14)R(x,y,1,1,col);else{const d=f<.27?2:3;R(x-d,y,2,1,col);R(x+d-1,y,2,1,col);R(x,y-1,1,1,col);}
     }
   }
@@ -128,7 +128,7 @@ window.drawPuddles=function(vx0,vy0,vx1,vy1){
     if(sky>.35){ctx.fillStyle='rgba(235,245,255,'+(.22*sky*w).toFixed(3)+')';ctx.beginPath();ctx.ellipse(p.x-rx*.3,p.y-ry*.3,rx*.35,ry*.25,0,0,6.283);ctx.fill();}   // brilho
     if(rain){   // ondinhas das gotas
       ctx.strokeStyle='rgba(225,238,250,.5)';ctx.lineWidth=1;
-      for(let k=0;k<2;k++){const t=(T*1.4+p.ph*3+k*.5)%1;ctx.globalAlpha=(1-t)*.55*w;ctx.beginPath();ctx.ellipse(p.x+(k?rx*.25:-rx*.2),p.y+(k?-ry*.1:ry*.1),Math.max(1,rx*.55*t),Math.max(.5,ry*.55*t),0,0,6.283);ctx.stroke();}
+      for(let k=0;k<2;k++){const t=(T*1.4+p.ph*3+k*.5)%1;ctx.globalAlpha=(1-t)*.55*w*wxAmt();ctx.beginPath();ctx.ellipse(p.x+(k?rx*.25:-rx*.2),p.y+(k?-ry*.1:ry*.1),Math.max(1,rx*.55*t),Math.max(.5,ry*.55*t),0,0,6.283);ctx.stroke();}
       ctx.globalAlpha=1;
     }
   }

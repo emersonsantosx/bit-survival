@@ -329,7 +329,7 @@ function vehTerr(v,tr){   // terreno visto por ESTE veiculo
   else if(vehKind(v)==='buggy'&&key==='sand'){o.acc=tr.acc*1.12;o.coast=.05;}
   return o;
 }
-function carTopAt(x,y){const wf=(weather==='rain'||weather==='sand')?.92:1;const t=P&&P.inVehicle?vehSpec(P.inVehicle).top:CAR_TOP;return t*terrainFor(x,y).spd*wf;}
+function carTopAt(x,y){const wf=(weather==='rain'||weather==='sand')?wxMix(.92):1;const t=P&&P.inVehicle?vehSpec(P.inVehicle).top:CAR_TOP;return t*terrainFor(x,y).spd*wf;}
 function terrainFor(x,y){
   if(pointInLake(x,y)) return TERR.water;
   if(selectedMap==='city'||!RM.a?onCityRoad(x,y,0):roadMaskAt(x,y)) return selectedMap==='snow'?TERR.icy:TERR.road;   // mapas naturais: o caminho desenhado (arquivo 34)

@@ -58,7 +58,7 @@ function mark(p){const x=p.cx*CELL+8,y=p.cy*CELL+8;p.nw=nearWater(x,y);p.gh=!!gh
 function plantTick(dt){
   if(!plots.length)return;
   if(plots.some(p=>!p.c&&(p.e||0)>FALLOW))plots=plots.filter(p=>p.c||(p.e||0)<=FALLOW);
-  const rain=weather==='rain',dry=selectedMap==='desert'?2:1;
+  const rain=weather==='rain'&&wxAmt()>.25,dry=selectedMap==='desert'?2:1;
   for(const p of plots){
     if(p.nw)p.w=Math.max(p.w,DAY_SECONDS*.5);                                  // perto do lago/oasis a terra fica sempre umida
     else if(rain&&!p.gh)p.w=Math.max(p.w,DAY_SECONDS*.6);

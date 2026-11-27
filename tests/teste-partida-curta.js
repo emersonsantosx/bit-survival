@@ -52,7 +52,7 @@ const MAPS = ['forest', 'snow', 'desert', 'city'];
       const s = JSON.parse(localStorage.getItem('minisurv_save_1')); o.saveT = s.T; o.saveDay = s.day;
       state = 'menu'; continueGame(1);
       o.voltou = state === 'play'; o.diaVoltou = day;
-      P.hp = 100; zombies = zombies.filter(z => Math.hypot(z.x - P.x, z.y - P.y) > 250);   // o fim da partida cai de madrugada: tira os zumbis colados no jogador, so conferimos que o jogo volta e roda, nao que ele sobrevive
+      P.hp = 100; zombies = zombies.filter(z => Math.hypot(z.x - P.x, z.y - P.y) > 250); animals = animals.filter(a => Math.hypot(a.x - P.x, a.y - P.y) > 250);   // o fim da partida cai de madrugada: tira os zumbis e bichos colados no jogador, so conferimos que o jogo volta e roda, nao que ele sobrevive
       for (let i = 0; i < 100; i++) { update(DT); render(); }   // e o jogo continua rodando depois de carregar
       o.seguiu = state === 'play' && fin(P.x) && fin(P.hp);
       return o;
