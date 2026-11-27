@@ -11,7 +11,20 @@ const { chromium } = require('playwright');
 (async () => {
   let bad = 0; const ok = (c, m) => { console.log(c ? 'OK  ' : 'FAIL', m); if (!c) bad++; };
   const www = fs.mkdtempSync(path.join(os.tmpdir(), 'bit-apk-'));
-  execFileSync(process.execPath, [path.join(__dirname, '..', 'tools', 'preparar-apk.js'), www]);
+  /* pacotes falsos no formato dos de verdade (@fontsource/press-start-2p e peerjs), para nao precisar de internet */
+  const nm = fs.mkdtempSync(path.join(os.tmpdir(), 'bit-pacotes-'));
+  const criar = (f, t) => { fs.mkdirSync(path.dirname(path.join(nm, f)), { recursive: true }); fs.writeFileSync(path.join(nm, f), t); };
+  criar('@fontsource/press-start-2p/400.css', "@font-face{font-family:'Press Start 2P';src:url(./files/press-start-2p-latin-400-normal.woff2) format('woff2'),url(./files/press-start-2p-latin-400-normal.woff) format('woff')}");
+  criar('@fontsource/press-start-2p/files/press-start-2p-latin-400-normal.woff2', 'x'); criar('@fontsource/press-start-2p/files/press-start-2p-latin-400-normal.woff', 'x');
+  criar('peerjs/dist/peerjs.min.js', 'window.Peer=function(){};');
+  execFileSync(process.execPath, [path.join(__dirname, '..', 'tools', 'preparar-apk.js'), www, nm]);
+  const app = f => fs.readFileSync(path.join(www, f), 'utf8');
+  ok(!/<(link|script)\b[^>]*(href|src)="https?:/.test(app('index.html')), 'o app nao carrega nada da internet ao abrir');
+  ok(/url\('vendor\/press-start-2p-latin-400-normal\.woff2'\)/.test(app('css/fonte-telas.css')) && fs.existsSync(path.join(www, 'css/vendor/press-start-2p-latin-400-normal.woff2')), 'a fonte das telas vai dentro do app');
+  const cfg = fs.readFileSync(path.join(__dirname, '..', 'config.xml'), 'utf8');
+  ok(/<name>Bit Survival<\/name>/.test(cfg) && cfg.includes('version="' + require('../package.json').version + '"'), 'nome "Bit Survival" e mesma versao no config.xml e no package.json');
+  const url = fs.readFileSync(path.join(__dirname, '..', 'js', '12-crafting-multiplayer.js'), 'utf8').match(/peerjs@([\d.]+)\//)[1];
+  ok(fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'build.yml'), 'utf8').includes('peerjs@' + url), 'o app usa a mesma versao do PeerJS que o link (' + url + ')');
   fs.writeFileSync(path.join(www, 'cordova.js'), `window.__saiu=0;window.__plug=[];window.cordova={exec:(ok,er,s,a)=>{window.__plug.push(s+'.'+a);window.__tela=ok;}};
     navigator.app={exitApp:()=>window.__saiu++};window.addEventListener('load',()=>setTimeout(()=>document.dispatchEvent(new Event('deviceready')),0));`);
   ok(!/cordova\.js|apk\.js/.test(fs.readFileSync(file, 'utf8')), 'o link do jogo nao carrega nada do app');
@@ -23,6 +36,13 @@ const { chromium } = require('playwright');
   const vis = id => pg.evaluate(id => !document.getElementById(id).classList.contains('hide'), id);
   const css = (q, p) => pg.evaluate(([q, p]) => getComputedStyle(document.querySelector(q))[p], [q, p]);
   ok((await pg.evaluate(() => window.__plug.join())) === 'BitApp.observar', 'o jogo pede ao Android os dados da camera e do teclado');
+  ok(await pg.evaluate(() => typeof Peer === 'function' && !document.querySelector('script[src^="http"]')), 'o PeerJS ja esta carregado, sem internet');
+  await pg.context().setOffline(true);
+  for (const [tela, id, fn] of [['mphostscreen', 'hostStatus', 'mpHostStart()'], ['mpjoinscreen', 'joinStatus', "mpJoinStart('ABCDEF')"]]) {
+    await pg.evaluate(([t, f]) => { showScreen(t); eval(f); }, [tela, fn]);
+    ok(await pg.evaluate(id => /Sem internet/.test(document.getElementById(id).textContent) && !MP.active, id), 'sem internet, ' + tela + ' avisa na hora');
+  }
+  await pg.context().setOffline(false); await pg.evaluate(() => showScreen('menu'));
   await pg.setViewportSize({ width: 360, height: 800 });
   ok((await css('#rotate', 'display')) === 'none' && (await css('#pauseFS', 'display')) === 'none', 'sem a tela "gire o celular" e sem o botao de tela cheia');
   await pg.setViewportSize({ width: 800, height: 360 });
@@ -74,5 +94,5 @@ const { chromium } = require('playwright');
   await pg.evaluate(() => { document.getElementById('pausescr').classList.add('hide'); state = 'play'; MP.active = true; MP.isHost = false; document.dispatchEvent(new Event('pause')); });
   ok(await st() === 'play', 'no multiplayer a partida continua');
   ok(!errs.length, 'sem erros de script ' + errs.join('|'));
-  await b.close(); fs.rmSync(www, { recursive: true, force: true }); process.exit(bad ? 1 : 0);
+  await b.close(); fs.rmSync(www, { recursive: true, force: true }); fs.rmSync(nm, { recursive: true, force: true }); process.exit(bad ? 1 : 0);
 })();

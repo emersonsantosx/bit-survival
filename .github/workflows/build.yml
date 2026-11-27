@@ -26,13 +26,17 @@ jobs:
         # versoes fixas: uma atualizacao do Cordova nao muda o app sem aviso
         run: npm install -g cordova@12.0.0
 
+      - name: Baixar a fonte e o PeerJS que vao dentro do app
+        # versoes fixas; o PeerJS e a mesma versao que o link carrega (js/12-crafting-multiplayer.js)
+        run: npm install --prefix vendor --no-save --no-package-lock --ignore-scripts @fontsource/press-start-2p@5.2.7 peerjs@1.5.4
+
       - name: Criar e preparar o projeto
         run: |
-          cordova create projeto com.bitsurvival.game "Project: Bit Survival"
+          cordova create projeto com.bitsurvival.game "Bit Survival"
           cd projeto
           rm -rf www/*
           # o mesmo jogo do link (index.html + css/ + js/) mais o que so existe no app (cordova.js e android/app.js)
-          node ../tools/preparar-apk.js www
+          node ../tools/preparar-apk.js www ../vendor/node_modules
           cp ../config.xml .
           # Copia o ícone para a raiz do projeto Cordova
           cp ../icon.png .
@@ -40,34 +44,67 @@ jobs:
           # tela acesa, tela cheia com a area da camera e aviso de teclado (android/plugin-bit)
           cordova plugin add ../android/plugin-bit
 
+      - name: Usar o espelho do Maven Central
+        # o Maven Central responde 429 (muitos pedidos) para os servidores do GitHub: o espelho do Google vem antes e o endereco original fica de reserva
+        run: |
+          ESPELHO="https://maven-central.storage-download.googleapis.com/maven2/"
+          ARQUIVOS=$(grep -rlF --include='*.gradle' 'mavenCentral()' projeto/platforms/android)
+          sed -i "s|mavenCentral()|maven { url '$ESPELHO' }; mavenCentral()|g" $ARQUIVOS
+          grep -rnF --include='*.gradle' "$ESPELHO" projeto/platforms/android
+
+      - name: Guardar os downloads do Gradle
+        # depois da primeira compilacao que der certo, as seguintes quase nao baixam nada
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-android-13.0.0-v1
+
       - name: Compilar APK de Debug
-        # o Maven Central as vezes responde 429 (muitos pedidos) para os servidores do GitHub; tenta de novo ate 4 vezes, esperando mais a cada tentativa
+        # se um download falhar, tenta de novo ate 4 vezes, esperando mais a cada tentativa
         run: |
           cd projeto
           for i in 1 2 3 4; do
             cordova build android --debug && exit 0
-            echo "Tentativa $i falhou, esperando para tentar de novo..."
-            sleep $((i * 45))
+            echo "Tentativa $i falhou"
+            if [ $i -lt 4 ]; then echo "Esperando para tentar de novo..."; sleep $((i * 45)); fi
           done
           exit 1
 
+      - name: Assinar o APK
+        # a chave fica nos segredos do repositorio (Settings > Secrets and variables > Actions), nunca no codigo
+        id: assinatura
+        env:
+          CHAVE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          CHAVE_SENHA: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: bash tools/assinar-apk.sh projeto/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+
       - name: Conferir o APK
-        # falha aqui se o app sair sem a paisagem, sem o codigo de tela ou sem o arquivo do app
+        # falha aqui se o app sair sem a paisagem, sem o codigo de tela, sem os arquivos do app ou com nome/versao errados
         run: |
           APK=projeto/platforms/android/app/build/outputs/apk/debug/app-debug.apk
           AAPT=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2
+          VERSAO=$(grep -oP '<widget[^>]* version="\K[^"]+' config.xml)
+          echo "VERSAO=$VERSAO" >> "$GITHUB_ENV"
+          "$AAPT" dump badging "$APK" > selo.txt
+          grep -E "^package:|^application-label:" selo.txt
+          grep -q "versionName='$VERSAO'" selo.txt
+          grep -qx "application-label:'Bit Survival'" selo.txt
           "$AAPT" dump xmltree --file AndroidManifest.xml "$APK" > manifesto.txt
           grep -i "screenOrientation" manifesto.txt
           grep -iE "screenOrientation.*=(6|0x0*6)$" manifesto.txt || { echo "Paisagem (sensorLandscape) nao entrou no manifesto"; exit 1; }
           unzip -l "$APK" > conteudo.txt
-          grep -E "assets/www/(js/apk\.js|cordova\.js)$" conteudo.txt
-          test "$(grep -cE "assets/www/(js/apk\.js|cordova\.js)$" conteudo.txt)" = "2"
+          for f in cordova.js js/apk.js js/vendor/peerjs.min.js css/fonte-telas.css css/vendor/press-start-2p-latin-400-normal.woff2; do
+            grep -F " assets/www/$f" conteudo.txt || { echo "Faltou $f no APK"; exit 1; }
+          done
           grep -q 'name="BitApp"' projeto/platforms/android/app/src/main/res/xml/config.xml
           for d in $(grep -oE "classes[0-9]*\.dex" conteudo.txt); do unzip -p "$APK" "$d"; done | grep -a -c "com/bitsurvival/app/BitApp"
+          cp "$APK" "bit-survival-v$VERSAO.apk"
 
       - name: Salvar APK gerado
         uses: actions/upload-artifact@v4
         with:
-          name: project-bit-survival-v1.0
-          path: projeto/platforms/android/app/build/outputs/apk/debug/app-debug.apk
-          
+          # "-chave-temporaria" no nome = os segredos da chave nao estao cadastrados e este APK nao atualiza os proximos
+          name: bit-survival-v${{ env.VERSAO }}${{ steps.assinatura.outputs.sufixo }}
+          path: bit-survival-v${{ env.VERSAO }}.apk
