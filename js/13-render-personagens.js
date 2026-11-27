@@ -1027,9 +1027,6 @@ function drawDecoration0(d){
       R(x-5,y-5,10,7,'#5a3a1a');R(x-5,y-5,10,2,'#7a5a3a');
       R(x-3,y-4,2,3,'#3a2a1a');R(x+1,y-4,2,3,'#3a2a1a');
       break;
-    case'lily':
-      R(x-2,y-1,4,2,'#3a8a4a');R(x-3,y-2,6,3,'#4aa050');
-      break;
     case'cactus_sm':
       R(x-1,y-7,3,9,'#3a7a3a');R(x-1,y-7,3,2,'#4a9a4a');
       R(x-4,y-4,3,2,'#3a7a3a');R(x+2,y-5,3,2,'#3a7a3a');
@@ -2088,12 +2085,6 @@ function drawLake(l){
       } else if(i%3===1){
         ctx.fillStyle='#6a6a68';ctx.beginPath();ctx.arc(px,py,2.2,0,6.283);ctx.fill();
       }
-    }
-    // Vitórias-régias esparsas
-    if(l.pads)for(const pad of l.pads){
-      if(Math.hypot(pad.x-cx,pad.y-cy)>R0*0.85) continue;
-      ctx.fillStyle='#2a6a3a';ctx.beginPath();ctx.ellipse(pad.x,pad.y,pad.r*1.4,pad.r*1.0,0,0,6.283);ctx.fill();
-      ctx.fillStyle='#e8a0b8';ctx.beginPath();ctx.arc(pad.x+1,pad.y,1.2,0,6.283);ctx.fill();
     }
   }
   // 8) Gelo rachado (neve)

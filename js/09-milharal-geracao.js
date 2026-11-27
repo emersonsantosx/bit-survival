@@ -278,6 +278,7 @@ function genWorld(seed) {
         const ang=rnd(0,6.283), dist=rnd(0,mainR*0.5);
         islands.push({x:cx+Math.cos(ang)*dist, y:cy+Math.sin(ang)*dist, r:rnd(10,20)});
       }
+      /* pads (as antigas vitorias-regias) nao sao mais desenhadas; o sorteio fica para o mundo de cada semente continuar identico */
       const pads=[], padCount=selectedMap==='forest'?rint(12,20):(selectedMap==='desert'?0:rint(4,8));
       for(let j=0;j<padCount;j++){
         const ang=rnd(0,6.283), dist=rnd(mainR*0.35,mainR*0.92);
