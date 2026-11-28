@@ -89,6 +89,7 @@ function refreshCraft(){
     if(r.lake&&!mapHasLake())continue;
     if(r.once&&r.out==='backpack'&&P.pack)continue;
     if(r.out==='greenhouse'&&!GREENHOUSE_OK())continue;
+    if(BUILD_TOOLS.includes(r.out)&&toolList().includes(r.out))continue;   // ja esta na caixa de ferramentas: nao da para criar de novo
     const isTool=BUILD_TOOLS.includes(r.out),isWeapon=['pickaxe','axe','katana','spear','bow','bat'].includes(r.out),category=isWeapon||r.out==='arrows'?'weapon':'utility';
     if(craftFilter!=='all'&&craftFilter!==category)continue;
     const ok=canCraft(r);

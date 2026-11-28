@@ -251,7 +251,8 @@ function attack(){
       if(d<td){td=d;hitTree=t;}
     }
     const stT=structTarget(w);
-    if(stT&&(!hitTree||stT.d<=td)){structHit(stT,w);return;}   // cerca, portao ou objeto do mapa mais perto que a arvore
+    const rockNear=stT&&stT.plant&&w.mines&&rocks.some(r=>Math.hypot(r.x-P.x,r.y-P.y)<34);   // arbusto nao rouba o golpe da pedra nem da arvore
+    if(stT&&!rockNear&&(!hitTree||(!stT.plant&&stT.d<=td))){structHit(stT,w);return;}   // cerca, portao ou objeto do mapa mais perto que a arvore
     if(hitTree){
       P.cd=w.cd;P.swing=.18;
       hitTree.hp=(hitTree.hp||4)-(w.chopRate||0.5);hitTree._hit=T;

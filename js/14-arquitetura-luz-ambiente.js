@@ -1063,7 +1063,9 @@ function drawLighting(sx,sy){
       const tl=flashReach(P.x,P.y,P.face);P._fLen=P._fLen?P._fLen+(tl-P._fLen)*.3:tl;
       beams.push({x:P.x,y:P.y,a:P.face,len:P._fLen});
     }
-    for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.lt&&!rp.sl&&rp.alive!==false&&!rp.inVehicle&&Number.isFinite(rp.x)&&Number.isFinite(rp.face)&&(!bldAt(rp.x,rp.y)||bldAt(rp.x,rp.y)===(P&&P.inside)))beams.push({x:rp.x,y:rp.y,a:rp.face,len:130});}
+    for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.lt&&!rp.sl&&rp.alive!==false&&!rp.inVehicle&&Number.isFinite(rp.x)&&Number.isFinite(rp.face)&&(!bldAt(rp.x,rp.y)||bldAt(rp.x,rp.y)===(P&&P.inside))){   // o feixe do aliado tambem para na parede
+      const tl=Math.min(130,flashReach(rp.x,rp.y,rp.face));rp._fLen=rp._fLen?rp._fLen+(tl-rp._fLen)*.3:tl;
+      beams.push({x:rp.x,y:rp.y,a:rp.face,len:rp._fLen});}}
     for(const bm of beams){
       const [bx,by]=sp(bm.x+Math.cos(bm.a)*5,bm.y-7);
       if(bx<-200*Z||by<-200*Z||bx>W+200*Z||by>H+200*Z)continue;
@@ -1434,8 +1436,10 @@ function render(){
     for(const d of cityDecor){
       if(d.x>vx1+10||d.x<vx0-10||d.y>vy1+10||d.y<vy0-12)continue;
       if(d.t==='bush'){
+        const wb=hitWobble(d),d0=d;if(wb)d={x:d0.x+wb,y:d0.y,c:d0.c};
         const c=[['#2d6428','#3f8a38','#58a84a'],['#2a5c30','#3a7a42','#52964f'],['#35682a','#4a8f3a','#76b24c']][d.c%3];
         R(d.x-5,d.y-1,10,5,'rgba(0,0,0,.22)');R(d.x-5,d.y-4,10,6,c[0]);R(d.x-4,d.y-6,8,5,c[1]);R(d.x-3,d.y-6,3,2,c[2]);R(d.x+1,d.y-3,2,2,c[2]);
+        cityBushDmgFx(d0);
       }else if(d.t==='flower'){
         const c=['#e8607a','#f0d048','#f4f0f4','#b078d8'][d.c%4];
         R(d.x,d.y,1,3,'#3a7a30');R(d.x-1,d.y-2,3,2,c);R(d.x,d.y-3,1,1,'#f4d870');
