@@ -51,6 +51,7 @@ function fenceIntent(){
 }
 function send(f,g){if(MP.active)sendEvt('fenceSet',{x:f.x,y:f.y,d:f.d,g:g,o:f.o?1:0});}
 function fenceBuild(quiet){
+  if(P&&P.tw){if(!quiet){toast('Desça do posto de vigia para construir');beep(130,.08,'square',.04);}return;}
   if(P&&P.tool==='log'){if(window.logPlace)logPlace(quiet);return;}   // tronco (modulo 24)
   if(P&&P.tool==='stash'){if(window.stashPlace)stashPlace(quiet);return;}   // bau (modulo 22)
   if(P&&CELL_TOOLS[P.tool]){if(window.cellBuild)cellBuild(quiet);return;}   // piso e telhado (modulo 20)
@@ -395,6 +396,7 @@ function cellWallDirs(cx,cy){
    paredes ou portas fechadas em volta; no maximo 150 quadrados). Fechado isola como um predio; so telhado protege um pouco do clima. */
 let shK='',shT=0,shV=0;
 function shelterAt(x,y){
+  if(window.towerSheltered&&towerSheltered(x,y))return 2;   // dentro da cabine do posto de vigia
   if(!window.roofAt)return 0;
   const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL),k=cx+','+cy,now=performance.now();
   if(k===shK&&now-shT<400)return shV;

@@ -546,7 +546,7 @@ function boxShadowPath(x,y,w,h,H){
   ctx.moveTo(hp[0][0],hp[0][1]);for(let i=1;i<hp.length;i++)ctx.lineTo(hp[i][0],hp[i][1]);ctx.closePath();
 }
 function boxShadow(x,y,w,h,H){ctx.fillStyle=SUN.fs;ctx.beginPath();boxShadowPath(x,y,w,h,H);ctx.fill();}
-window.boxShadow=boxShadow;window.boxShadowPath=boxShadowPath;
+window.boxShadow=boxShadow;window.boxShadowPath=boxShadowPath;window.hullPts=hullPts;
 /* sombra de planta e de poste: L = lista de [x, y, altura, largura do talo, largura da copa, proporcao da copa (opcional, 0.5)], com os pes em (x,y).
    Tudo num caminho so e um preenchimento so (muitos pes de milho juntos nao escurecem em dobro). De noite (sem sol) fica so uma mancha redonda no pe.
    Os pedacos tem o mesmo sentido de giro (talo virado para o sol), senao a uniao deixaria buracos. k encurta a sombra de quem e fino e folhudo. */
@@ -1300,6 +1300,22 @@ function camOrigin(){
   return{ox:clamp(ox0,Math.min(0,Math.ceil(W-WW*Z)),0),oy:clamp(oy0,Math.min(0,Math.ceil(H-WH*Z)),0)};
 }
 window.camOrigin=camOrigin;
+/* aliado e o proprio jogador na ordem de profundidade (tambem usados por quem esta no alto do posto de vigia, arquivo 36) */
+function drawListRemote(rp){
+  if(rp.alive!==false){
+    if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),vface:lookFace(rp),moving:rp.moving,sit:!!rp.st,anim:rp.anim||0,wpn:rp.hold?null:(rp.weapon||'fists'),hold:rp.hold||null,swing:rp.swing||0,ph:punchHand(rp,rp.swing||0),flash:rp.flash||0});
+    const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
+    ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
+    ctx.fillStyle=ALLY_COL(rp);ctx.fillText(label,rp.x,rp.y-21);
+    if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
+    if(rp.bl&&window.drawBleedMark)drawBleedMark(rp);
+  }
+}
+function drawListMe(){
+  if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),vface:lookFace(P),sprint:P.sprint,moving:P.moving,sit:!!P.sitting,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
+}
+function drawTowerPerson(e){if(e.me)drawListMe();else drawListRemote(e.rp);}
+window.drawTowerPerson=drawTowerPerson;
 function render(){
   if(!P)return;
   SH_BUD=12;
@@ -1527,6 +1543,7 @@ function render(){
   }
   drawGreenhouses(vx0,vx1,vy0,vy1);drawPlots(vx0,vx1,vy0,vy1);drawFloors(vx0,vx1,vy0,vy1);if(window.drawBloodDrops)drawBloodDrops(vx0,vx1,vy0,vy1,true);drawBeds(vx0,vx1,vy0,vy1);
   const fv=fencesInView(vx0,vx1,vy0,vy1);drawFenceShadows(fv);drawRoofShadows(vx0,vx1,vy0,vy1);   // sombras de cerca, parede e telhado: no chao, antes de tudo que fica de pe
+  if(window.drawTowerShadow)drawTowerShadow(vx0,vx1,vy0,vy1);
   drawPlantShadows(vx0,vx1,vy0,vy1);drawCornShadows(vx0,vx1,vy0,vy1);   // sombras das culturas e do milharal (pes, cerca e fardos)
   for(const it of items){
     if(it.x<vx0||it.x>vx1||it.y<vy0||it.y>vy1||itemIndoor(it))continue;
@@ -1545,7 +1562,7 @@ function render(){
   for(const c of campfires)if(c.x>vx0&&c.x<vx1&&c.y>vy0&&c.y<vy1)list.push({y:c.y,k:4,o:c});
   for(const p of plotsInView(vx0,vx1,vy0,vy1))if(p.c)list.push({y:p.cy*16+15,k:13,o:p});
   for(const f of fv)list.push({y:fenceDepth(f),k:15,o:f});
-  if(P&&FENCE_ICON[P.tool])list.push({y:1e9,k:16,o:null});   // fantasma da cerca por cima de tudo
+  if(P&&!P.tw&&FENCE_ICON[P.tool])list.push({y:1e9,k:16,o:null});   // fantasma da cerca por cima de tudo
   for(const t of tents)if(t.x>vx0-30&&t.x<vx1+30&&t.y>vy0&&t.y<vy1+30)list.push({y:t.y,k:9,o:t});
   if(window.stashList)for(const s of stashList())if(s.x>vx0-20&&s.x<vx1+20&&s.y>vy0&&s.y<vy1+20)list.push({y:stashDepth(s),k:17,o:s});
   if(window.wellList)for(const w of wellList())if(w.x>vx0-20&&w.x<vx1+20&&w.y>vy0&&w.y<vy1+36)list.push({y:wellDepth(w),k:18,o:w});
@@ -1557,7 +1574,7 @@ function render(){
   for(const id in remotePlayers){
     const rp=remotePlayers[id];
     // Hide character sprite while remote is driving — only the car is shown
-    if(rp.inVehicle) continue;
+    if(rp.inVehicle||rp.tw) continue;
     if(rp.sl&&rp.sl.tent) continue;
     if(rp.x>vx0&&rp.x<vx1&&rp.y>vy0&&rp.y<vy1)list.push({y:rp.y,k:5,o:rp});
   }
@@ -1567,7 +1584,8 @@ function render(){
   }
   if(OBS.on&&!P.inside)list.push({y:OBS.y,k:8,o:OBS});
   if(!P.inside)for(const id in remotePlayers){const rp=remotePlayers[id];if(rp&&rp.ob&&rp.alive!==false&&!rp.inVehicle)list.push({y:rp.ob[1],k:8,o:{x:rp.ob[0],y:rp.ob[1],alpha:1,glitch:rp.ob[2]?.3:0}});}
-  if(!P.inVehicle&&!(P.sleeping&&P.sleeping.tent))list.push({y:P.y,k:2,o:P});
+  if(!P.inVehicle&&!P.tw&&!(P.sleeping&&P.sleeping.tent))list.push({y:P.y,k:2,o:P});
+  if(window.towerInfo&&towerInfo())list.push({y:towerDepth(),k:21,o:null});   // pernas do posto de vigia
   /* o telhado entra na ordem de profundidade pela base da casa: o que está na frente dela (copa de árvore) passa por cima, o resto fica coberto */
   for(const b of blds)if(vis(b)&&b.roofA>.02)list.push({y:b.y+b.h,k:20,o:b});
   list.sort((a,b)=>a.y-b.y);
@@ -1580,6 +1598,7 @@ function render(){
     else if(e.k===17)drawStash(e.o);
     else if(e.k===18)drawWell(e.o);
     else if(e.k===19)drawLog(e.o);
+    else if(e.k===21)drawTowerLegs();
     else if(e.k===6){drawDecoration(e.o);fruitOver(e.o);}
     else if(e.k===7){ drawAnimal(e.o); }
     else if(e.k===8){ drawObserver(e.o); }
@@ -1596,18 +1615,12 @@ function render(){
       if(z.hp<z.max){R(z.x-6,z.y-20,12,2,'#300000');R(z.x-6,z.y-20,Math.max(1,12*z.hp/z.max),2,'#dd3333');}
     }else if(e.k===5){
       const rp=e.o;
-      if(rp.alive!==false){
-        if(rp.sl)drawSleeper(rp.x,rp.y,rp.sl,remoteLook(rp));else human(rp.x,rp.y,rp.face||0,{...remoteLook(rp),vface:lookFace(rp),moving:rp.moving,sit:!!rp.st,anim:rp.anim||0,wpn:rp.hold?null:(rp.weapon||'fists'),hold:rp.hold||null,swing:rp.swing||0,ph:punchHand(rp,rp.swing||0),flash:rp.flash||0});
-        const label=(rp.name||(rp.isHost?'HOST':'AMIGO')).toUpperCase().slice(0,12);
-        ctx.font='bold 7px "Courier New",monospace';ctx.textAlign='center';
-        ctx.fillStyle=ALLY_COL(rp);ctx.fillText(label,rp.x,rp.y-21);
-        if(rp.hp!==undefined){const hp=clamp(rp.hp,0,100);R(rp.x-6,rp.y-18,12,2,'#300000');R(rp.x-6,rp.y-18,Math.max(1,12*hp/100),2,'#dd3333');}
-      if(rp.bl&&window.drawBleedMark)drawBleedMark(rp);
-      }
+      drawListRemote(e.o);
     }else{
-      if(P.sleeping)drawSleeper(P.x,P.y,P.sleeping,myLook());else human(P.x,P.y,P.face,{...myLook(),vface:lookFace(P),sprint:P.sprint,moving:P.moving,sit:!!P.sitting,anim:P.walk,wpn:P.hold?null:(P.tool||P.weapon),hold:P.hold||null,swing:P.swing,ph:punchHand(P,P.swing),flash:P.flash});drawEatBar();
+      drawListMe();
     }
   }
+  if(window.drawTowerTop)drawTowerTop(vx0,vx1,vy0,vy1);
   drawRoofs(vx0,vx1,vy0,vy1);
   drawIceFx();drawMirage(vx0,vx1,vy0,vy1);drawFog(vx0,vx1,vy0,vy1);
   drawPingsWorld();
@@ -1620,7 +1633,7 @@ function render(){
   if(weather!=='none'){
     if(weather==='sand'){ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='rgba(196,150,80,'+(.2*wxAmt()).toFixed(3)+')';ctx.fillRect(0,0,W,H);ctx.restore();} // névoa de areia
     ctx.fillStyle=weather==='rain'?'rgba(140,180,220,0.65)':(weather==='sand'?'rgba(214,178,110,0.8)':'rgba(240,248,255,0.85)');
-    for(const wp of weatherParticles)if(wp.x>=camX-10&&wp.x<=camX+W/Z+10&&wp.y>=camY-10&&wp.y<=camY+H/Z+10)R(wp.x,wp.y,wp.sz,weather==='rain'?wp.sz*5:wp.sz,ctx.fillStyle);
+    for(const wp of weatherParticles)if(!(window.towerDry&&towerDry(wp.x,wp.y))&&wp.x>=camX-10&&wp.x<=camX+W/Z+10&&wp.y>=camY-10&&wp.y<=camY+H/Z+10)R(wp.x,wp.y,wp.sz,weather==='rain'?wp.sz*5:wp.sz,ctx.fillStyle);
   }
   for(const v of vapor){const a=.85*(1-v.t/.9);ctx.globalAlpha=a;const sz=3+Math.round(v.t*4);R(v.x-1,v.y-1,sz+2,sz+2,'#9fb2c6');R(v.x,v.y,sz,sz,'#f4f8fc');ctx.globalAlpha=1;}
   drawFishing();

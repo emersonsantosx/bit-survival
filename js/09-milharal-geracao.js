@@ -233,6 +233,7 @@ function genWorld(seed) {
   solidGrid=null;SPG=null;FIELD=null;LM=null;chestList=[];   // grades de colisão do mundo anterior não podem vazar para a geração (senão o mesmo seed gera mundos diferentes)
   try {
   roadReset();cityGardens=[];cityYards=[];cityPaths=[];cityDecor=[];fenceCityClear();ghLoad([]);
+  if(window.towerReset)towerReset();   // o posto do mundo anterior nao pode interferir na geracao deste
   trees=[];rocks=[];blds=[];walls=[];items=[];zombies=[];roads=[];decals=[];parts=[];tracers=[];towns=[];lakes=[];vehicles=[];campfires=[];tents=[];spits=[];decorations=[];animals=[];if(window.stashReset)stashReset();if(window.bloodReset)bloodReset();if(window.wellReset)wellReset();if(window.logReset)logReset();
   cityInter=[];cityCrash=null;lampList=[];ORLA=null;
   plane=null;
@@ -428,6 +429,7 @@ function genWorld(seed) {
   genLandmark(seed);
   if(selectedMap==='city')genOrla();
   genAmbientProps(seed);
+  try{towerGen(seed);}catch(e){console.warn('[posto de vigia]',e);}   // posto de vigia da floresta (arquivo 36)
   if(selectedMap==='city'&&cityYards.length){   // quintal cercado e livre: sem arvore, pedra, banco ou lixeira no meio (so filtra, nao sorteia nada)
     const inY=(o,pd)=>cityYards.some(q=>o.x>q.x-pd&&o.x<q.x+q.w+pd&&o.y>q.y-pd&&o.y<q.y+q.h+pd);
     trees=trees.filter(t=>!inY(t,12));rocks=rocks.filter(t=>!inY(t,6));decorations=decorations.filter(d=>!inY(d,6));
@@ -492,6 +494,7 @@ function paintMapBase(g,s){
   }else for(const r of roads)g.fillRect(r.x*s,r.y*s,Math.max(1,r.w*s),Math.max(1,r.h*s));
   if(FIELD){g.fillStyle='#d9b84a';g.fillRect(FIELD.x*s,FIELD.y*s,Math.max(2,FIELD.w*s),Math.max(2,FIELD.h*s));}
   if(LM){g.fillStyle=LM.kind==='temple'?'#f0c830':'#9fe4ff';g.fillRect(LM.cx*s-2,LM.cy*s-2,5,5);g.fillStyle='#000';g.fillRect(LM.cx*s-1,LM.cy*s-1,3,3);g.fillStyle=LM.kind==='temple'?'#f0c830':'#9fe4ff';g.fillRect(LM.cx*s-.5,LM.cy*s-.5,1.5,1.5);}
+  if(window.towerMapMark)towerMapMark(g,s);
   g.fillStyle=C.lake;g.strokeStyle=C.edge;g.lineWidth=1.2;g.lineJoin='round';
   for(const l of lakes){
     lakeShorePath(l,1,g,s,0,0); g.fill(); g.stroke();
@@ -837,11 +840,11 @@ function updateAnimals(dt0){
     const prey=!!ANIMAL_PREY[a.k] || !aggressive;
     // Alvo: player local + remote (host vê os dois)
     let target=null, tDist=1e9;
-    if(P&&!P.dead){ const d=Math.hypot(P.x-a.x,P.y-a.y); if(d<tDist){tDist=d;target=P;} }
+    if(P&&!P.dead&&!P.tw){ const d=Math.hypot(P.x-a.x,P.y-a.y); if(d<tDist){tDist=d;target=P;} }   // no alto do posto de vigia o bicho nao alcanca
     if(MP.active){
       for(const id in remotePlayers){
         const rp=remotePlayers[id];
-        if(!rp||rp.alive===false||!Number.isFinite(rp.x)) continue;
+        if(!rp||rp.alive===false||rp.tw||!Number.isFinite(rp.x)) continue;
         const d=Math.hypot(rp.x-a.x,rp.y-a.y);
         if(d<tDist){ tDist=d; target={x:rp.x,y:rp.y,_remote:true,id}; }
       }

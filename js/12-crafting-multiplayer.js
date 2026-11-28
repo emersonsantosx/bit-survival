@@ -21,6 +21,7 @@ function craft(r){
     if(why){toast(why);beep(120,.1,'square',.05);return;}
     P._wp=wellSpot();
   }
+  if(P.tw&&(out==='campfire'||out==='tent'||out==='stash'||out==='well'||out==='greenhouse')){toast('Desça do posto de vigia para montar');beep(120,.1,'square',.05);return;}
   if(out==='tent'){
     const tp=tentSpot();
     if(!tp){toast(P.inside?'Monte a barraca ao ar livre':'Sem espaço para a barraca aqui');beep(120,.1,'square',.05);return;}
@@ -889,6 +890,7 @@ function handleNetData(data,isHostSide,conn){
       rp.sl={s:SLI[data.sl[0]|0]||'t',hx:clamp(data.sl[1],-20,20),hy:clamp(data.sl[2],-20,20),tent:!!data.sl[3]};
     }else rp.sl=null;
     rp.st=data.st===1;
+    rp.tw=data.tw===1||data.tw===2?data.tw:0;
     rp.wp=(Array.isArray(data.wp)&&data.wp.length===2&&data.wp.every(isFiniteNum)&&data.wp[0]>=0&&data.wp[1]>=0&&data.wp[0]<=WW&&data.wp[1]<=WH)?data.wp:null;
     if(isFiniteNum(data.fx)&&isFiniteNum(data.fy)){rp.fx=data.fx;rp.fy=data.fy;rp.fl=isFiniteNum(data.fl)?data.fl:3;}else{rp.fx=null;rp.fy=null;}
     rp.ob=(Array.isArray(data.ob)&&data.ob.length>=3&&data.ob.every(isFiniteNum))?data.ob:null;   // o Observador que o outro jogador está vendo
@@ -1317,6 +1319,7 @@ function packMyPlayer(){
   if(OBS.on&&!P.inside&&!P.inVehicle)p.ob=[Math.round(OBS.x),Math.round(OBS.y),OBS.glitch>0?1:0];
   if(GH.on&&GH.b)p.gh=[GH.b.x|0,GH.b.y|0,Math.round(GH.x),Math.round(GH.y),GH.kill>0?1:0];
   if(P.sitting)p.st=1;
+  if(P.tw)p.tw=P.tw;   // no alto do posto de vigia (arquivo 36)
   if(WP&&!WP.follow)p.wp=[Math.round(WP.x),Math.round(WP.y)];   // ponto marcado no mapa: os outros veem o simbolo
   if(P.bleed&&!P.dead)p.bl=1;   // sangrando: os aliados veem as gotas e o aviso ao lado da barra de vida (arquivo 31)
   if(P.sleeping){const sl=P.sleeping;p.sl=[SLC[sl.s]|0,sl.hx|0,sl.hy|0,sl.tent?1:0];}

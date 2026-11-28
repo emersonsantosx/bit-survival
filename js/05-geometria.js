@@ -359,6 +359,7 @@ function spgSync(){
   return g.m;
 }
 function solidPoint(x,y,m){
+  if(window.towerArea&&towerArea(x,y,m))return true;   // nada nasce nem se coloca no posto de vigia
   for(const b of blds){if(x>b.x-m&&x<b.x+b.w+m&&y>b.y-m&&y<b.y+b.h+m)return true;}
   {
     const gm=spgSync(),cx0=Math.floor((x-m)/SPG_C),cx1=Math.floor((x+m)/SPG_C),cy0=Math.floor((y-m)/SPG_C),cy1=Math.floor((y+m)/SPG_C);
@@ -437,6 +438,7 @@ function querySolidNear(x,y,pad){
   return out;
 }
 function pushOut(e,r){
+  if(window.towerPush&&towerPush(e,r))return;   // jogador no alto do posto de vigia: so a colisao de la (arquivo 36)
   // Árvores / rochas / decorações sólidas via grade (bem mais barato)
   if(solidGrid){   // mesma varredura de querySolidNear(e.x,e.y,24), sem montar a lista a cada chamada
     const ex=e.x,ey=e.y,gx0=Math.floor((ex-24)/SOLID_GRID),gx1=Math.floor((ex+24)/SOLID_GRID),gy0=Math.floor((ey-24)/SOLID_GRID),gy1=Math.floor((ey+24)/SOLID_GRID);
@@ -605,6 +607,7 @@ function vehicleOverlap(v){
     if(obbHitsRect(cx,cy,c,s,L,W,o.x-o._hx+2,o.y-o._hy+2,o.x+o._hx-2,o.y+o._hy-2))cnt++;
   }
   if(plane&&obbHitsRect(cx,cy,c,s,L,W,plane.x-35,plane.y-16,plane.x+35,plane.y+16))cnt++;
+  if(window.towerHitVehicle)cnt+=towerHitVehicle(cx,cy,c,s,L,W);
   if(window.wallsHitVehicle)cnt+=wallsHitVehicle(cx,cy,c,s,L,W,R);   // parede e porta fechada do jogador: carro nao atravessa
   return cnt;
 }

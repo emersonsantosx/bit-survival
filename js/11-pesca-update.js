@@ -206,6 +206,7 @@ function attack(){
   const w=WEAPONS[P.weapon];
   if(!w)return;
   if(w.rod&&tryFish())return;
+  if(P.tw&&!w.firearm){P.cd=w.cd;P.swing=.18;return;}   // do alto do posto de vigia o golpe nao alcanca o chao
 
   // PRIORITY: always hit zombies first if any are in melee range (before trees/rocks)
   if(w.melee || w.mines || (!w.firearm && !w.melee)){
@@ -678,6 +679,7 @@ function updateP(dt){
   if(weather==='snow') sp*=wxMix(0.82)*(1-.1*blizzK);
   else if(weather==='rain') sp*=wxMix(0.94);
   else if(weather==='sand') sp*=wxMix(0.9);
+  if(P.tw===1)sp*=.7;                                            // subindo ou descendo a escada do posto de vigia
   sp*=(P._tspd||1);                 // frio/calor extremos desaceleram
   if(P.moving){
     stepMove(P,mx*sp*dt,my*sp*dt,P.r);
@@ -701,6 +703,7 @@ function updateP(dt){
   }
   P.x=clamp(P.x,8,WW-8);P.y=clamp(P.y,8,WH-8);
   pushOut(P,P.r);
+  if(window.towerTick)towerTick(dt);
   iceTick(dt);
   plantTick(dt);fruitTick(dt);
   // Never switch to interior camera while driving — keeps world visible & exit orientation clear
@@ -721,15 +724,17 @@ function updateZ(z,dt){
   }
   if(z.stun>0){z.stun-=dt;z.moving=false;z.cd=Math.max(z.cd,.2);return;} // atordoado pelo taco: não anda nem ataca
   // Choose nearest living player (local or remote) so both players aggro zombies
-  let targetX=P.x, targetY=P.y, targetSprint=P.sprint&&P.moving, targetMoving=P.moving, targetDead=!!P.dead, targetIsLocal=true, targetInCar=!!P.inVehicle;
-  let bestD=P.dead?1e9:Math.hypot(P.x-z.x,P.y-z.y);
+  const _me=window.towerAim?towerAim(P):P;   // alvo no alto do posto de vigia: o zumbi vai ao pe da escada
+  let targetX=_me.x, targetY=_me.y, targetSprint=P.sprint&&P.moving, targetMoving=P.moving, targetDead=!!P.dead, targetIsLocal=true, targetInCar=!!P.inVehicle;
+  let bestD=P.dead?1e9:Math.hypot(_me.x-z.x,_me.y-z.y);
   if(MP.active && MP.isHost){
     for(const id in remotePlayers){
       const rp=remotePlayers[id];
       if(!rp || rp.alive===false) continue;
-      const dd=Math.hypot((rp.x||0)-z.x,(rp.y||0)-z.y);
+      const ra=window.towerAim?towerAim(rp):rp;
+      const dd=Math.hypot((ra.x||0)-z.x,(ra.y||0)-z.y);
       if(dd<bestD){
-        bestD=dd; targetX=rp.x; targetY=rp.y;
+        bestD=dd; targetX=ra.x; targetY=ra.y;
         targetSprint=!!(rp.sprint&&rp.moving); targetMoving=!!rp.moving;
         targetDead=false; targetIsLocal=false; targetInCar=!!rp.inVehicle;
       }
@@ -869,7 +874,7 @@ function updateZ(z,dt){
       riderHit(v,z.dmg*0.2);
       z.cd=z.berserk||z.kind===8?0.75:1.1;z.lunge=.15;
     }
-  } else if(!z.ranged&&targetIsLocal&&(d<z.r*(z.kind===9?1.45:1)+P.r+(z.kind===9?12:6)||chainsawHit(z,P.x,P.y,P.r))&&z.cd<=0&&!P.dead&&!wallBlocks(z.x,z.y,P.x,P.y)){
+  } else if(!z.ranged&&targetIsLocal&&!P.tw&&(d<z.r*(z.kind===9?1.45:1)+P.r+(z.kind===9?12:6)||chainsawHit(z,P.x,P.y,P.r))&&z.cd<=0&&!P.dead&&!wallBlocks(z.x,z.y,P.x,P.y)){
     const knock=z.kind===2||z.kind===3||z.kind===7;
     hurt(z.dmg, z.kind===3?.65:z.kind===2||z.kind===7?.5:z.kind===8?.35:.25);
     zombieVoice(z,'attack');
@@ -1024,7 +1029,7 @@ function update(dt){
       for(let i=0;i<6;i++)parts.push({x:s.x,y:s.y,vx:rnd(-40,40),vy:rnd(-40,20),t:.4,c:'#80e060'});
       s.t=0;continue;
     }
-    if(P && !P.dead && Math.hypot(s.x-P.x,s.y-(P.y-6))<10){
+    if(P && !P.dead && !P.tw && Math.hypot(s.x-P.x,s.y-(P.y-6))<10){
       zombieHurt(8,.15);
       for(let i=0;i<10;i++)parts.push({x:s.x,y:s.y,vx:rnd(-60,60),vy:rnd(-60,20),t:.5,c:'#80e060'});
       s.t=0;
@@ -1154,7 +1159,7 @@ function update(dt){
     if(z._predT) z._predT = Math.max(0, z._predT - dt);
   }
   // Guest: take melee damage from nearby zombies (Host runs AI, Guest applies local hits)
-  if(MP.active && !MP.isHost && P && !P.dead){
+  if(MP.active && !MP.isHost && P && !P.dead && !P.tw){
     for(const z of zombies){
       if(z.dead) continue;
       z._hitCD = (z._hitCD||0) - dt;
@@ -1439,13 +1444,14 @@ function updateHud(force){
   else if(TG&&TG.k==='veh'){if(TG.v.looted)btnText='ENTRAR';}
   if(!TG&&nearestCactus()){canInteract=true;btnText='ÁGUA';}
   if(cf && P.hold && cookOf(P.hold)){canInteract=true;btnText='ASSAR';}
+  if(P.tw)canInteract=false;   // no alto do posto de vigia nada do chao esta ao alcance
   if(P.sleeping||P.sitting){canInteract=true;btnText='LEVANTAR';}
   if(P.fish){canInteract=true;btnText='RECOLHER';}   // pickup() recolhe a linha primeiro
   else if(TG&&TG.k==='bed'){btnText='DORMIR';}
   {const fb=$('bflash');if(fb){const sh=!!P.torch&&!P.dead;if(fb._sh!==sh||fb._on!==!!P.flashOn){fb._sh=sh;fb._on=!!P.flashOn;updateFlashBtn();}}}
-  {const hb=$('hoe');if(hb)hb.classList.toggle('hide',!(!!P.tool&&!P.inVehicle&&!P.dead&&!P.sleeping));}
+  {const hb=$('hoe');if(hb)hb.classList.toggle('hide',!(!!P.tool&&!P.tw&&!P.inVehicle&&!P.dead&&!P.sleeping));}
   {const hb=$('hoe'),want=FENCE_ICON[P.tool]||'hoe';if(hb&&hb.dataset.ic!==want){hb.dataset.ic=want;hb.setAttribute('aria-label',{fence:'Construir cerca',gate:'Construir portão',wall:'Construir parede',door:'Construir porta',floor:'Construir piso',roof:'Construir telhado',mattress:'Montar cama',log:'Colocar tronco'}[want]||'Arar a terra');hb.innerHTML=pxIcon(want,4);}}   // botao de construir: ARAR com a enxada, a peca da ferramenta nas outras
-  {const tb=$('tools');if(tb){const l=toolList(),show=l.length>0&&!P.inVehicle&&!P.dead&&!P.sleeping,want=P.tool||'toolbox';tb.classList.toggle('hide',!show);tb.classList.toggle('act',!!P.tool);
+  {const tb=$('tools');if(tb){const l=toolList(),show=l.length>0&&!P.tw&&!P.inVehicle&&!P.dead&&!P.sleeping,want=P.tool||'toolbox';tb.classList.toggle('hide',!show);tb.classList.toggle('act',!!P.tool);
     if(tb.dataset.ic!==want){tb.dataset.ic=want;tb.setAttribute('aria-label',P.tool?'Guardar ferramenta de construção':'Ferramentas de construção');tb.innerHTML=pxIcon(want,P.tool?3:3);}}}
   {const ve=$('v-exit');if(ve&&P.inVehicle){const ic='a_'+vehKind()+'_out';if(ve.dataset.ic!==ic){ve.dataset.ic=ic;ve.innerHTML=pxIcon(ic,2);}}}   // sair: o veiculo do mapa com a seta para cima
   const pick_=$('pick');
