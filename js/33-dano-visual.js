@@ -13,7 +13,9 @@ const PAL={
   metal:{cr:'#262a2e',lt:'#c4ccd4',dk:'#14171a',rust:'#8a4a2a'},
   stone:{cr:'rgba(12,12,20,.8)',lt:'#eceef4',dk:'rgba(10,10,16,.9)'},
   cloth:{cr:'#2a2420',lt:'#f0e6c8',dk:'#18120e'},
-  snow:{cr:'#7f95a8',lt:'#ffffff',dk:'#6a8094'}
+  snow:{cr:'#7f95a8',lt:'#ffffff',dk:'#6a8094'},
+  leaf:{cr:'#4a321c',lt:'#a8cc6a',dk:'#142410'},
+  cactus:{cr:'#23401e',lt:'#d8e8a8',dk:'#1c3018'}
 };
 function hh(a,b,c){let h=(Math.imul(a|0,374761393)+Math.imul(b|0,668265263)+Math.imul(c|0,1274126177))|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296;}
 
@@ -28,6 +30,11 @@ window.dmgStage=function(hp,max){
 window.dmgFx=function(mat,x,y,w,h,stage,sx,sy){
   if(stage<=0||w<3||h<3)return;
   const p=PAL[mat]||PAL.wood;x=Math.round(x);y=Math.round(y);w=Math.round(w);h=Math.round(h);sx=Math.round(sx);sy=Math.round(sy);
+  if(mat==='leaf'){   // planta: falhas escuras na folhagem, galhinhos expostos e folhas caidas no pe
+    for(let i=0;i<stage*2;i++){const lx=x+Math.floor(hh(sx,sy,i)*(w-2)),ly=y+Math.floor(hh(sy,sx,i+9)*(h-2));R(lx,ly,2,2,p.dk);if(i&1)R(lx,ly+1,3,1,p.cr);}
+    for(let i=0;i<stage+1;i++)R(x-2+Math.floor(hh(sx,sy,30+i)*(w+3)),y+h-1+Math.floor(hh(sy,sx,40+i)*3),2,1,p.lt);
+    return;
+  }
   const n=stage+1;
   for(let i=0;i<n;i++){   // rachaduras: caminhada torta de cima para baixo, mais compridas a cada estagio
     let px=x+1+Math.floor(hh(sx,sy,i)*(w-2)),py=y+Math.floor(hh(sy,sx,i+9)*h*.35);
@@ -74,8 +81,11 @@ window.hitWobble=function(o,amp){
 /* retangulo e material de cada objeto do mapa que da para quebrar */
 const DEC={
   log:['wood',-8,-6,16,7],frozen_log:['wood',-8,-6,16,7],stump:['wood',-5,-6,10,7],bench:['wood',-9,-7,18,8],crate:['wood',-6,-9,12,10],sign:['wood',-4,-14,8,14],
-  barrier:['metal',-8,-9,16,9],mailbox:['metal',-4,-11,8,11],trash:['metal',-4,-10,8,10],cone:['metal',-3,-8,6,8],snowman:['snow',-6,-18,12,18]
+  barrier:['metal',-8,-9,16,9],mailbox:['metal',-4,-11,8,11],trash:['metal',-4,-10,8,10],cone:['metal',-3,-8,6,8],snowman:['snow',-6,-18,12,18],
+  bush:['leaf',-7,-11,14,11],bush2:['leaf',-8,-12,16,12],berry:['leaf',-6,-9,12,9],drybush:['leaf',-6,-9,12,9],frozen_bush:['leaf',-7,-10,14,10],yucca:['leaf',-6,-12,12,12],
+  cactus_sm:['cactus',-3,-9,6,9],cactus_bg:['cactus',-3,-18,6,17],cactus_tall:['cactus',-3,-23,6,22]
 };
+window.cityBushDmgFx=function(d){const b=window.CITY_BUSH;if(!b)return;const st=dmgStage(d.hp,b.hp);if(st)dmgFx('leaf',d.x-5,d.y-6,10,7,st,d.x,d.y);};
 window.decorDmgFx=function(d){
   const e=DEC[d.type],b=window.BREAK&&BREAK[d.type];if(!e||!b)return;
   const st=dmgStage(d.hp,b.hp);if(st)dmgFx(e[0],d.x+e[1],d.y+e[2],e[3],e[4],st,d.x,d.y);
@@ -112,6 +122,7 @@ window.structFind=function(key){
     return logList().find(l=>Math.round(l.x)===+m[1]&&Math.round(l.y)===+m[2]&&l.a===m[3])||null;
   }
   if(key.charAt(0)==='f'){m=/^f:([hv])(-?\d+),(-?\d+)$/.exec(key);return m?fenceAt(+m[2],+m[3],m[1])||null:null;}
+  if(key.charAt(0)==='c'){m=/^c:(-?\d+),(-?\d+)$/.exec(key);return m?cityDecor.find(d=>d.t==='bush'&&d.x===+m[1]&&d.y===+m[2])||null:null;}
   m=/^d:(-?\d+),(-?\d+),(.+)$/.exec(key);if(!m)return null;
   return decorations.find(d=>d.x===+m[1]&&d.y===+m[2]&&d.type===m[3])||null;
 };

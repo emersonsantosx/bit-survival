@@ -64,7 +64,7 @@ function fruitFell(o){
     if(MP.active)sendEvt('itemAdded',{t:f,x:x,y:y2});
   }
   const k=waiting.indexOf(o);if(k>=0)waiting.splice(k,1);
-  for(let i=0;i<8;i++)parts.push({x:o.x+rnd(-10,10),y:o.y-rnd(10,34),vx:rnd(-25,25),vy:rnd(-10,25),t:.5,c:f==='apple'?'#e03a2a':f==='date'?'#e8902a':'#8a3aa8',g:1});
+  for(let i=0;i<8;i++)parts.push({x:o.x+rnd(-10,10),y:o.y-rnd(10,34),vx:rnd(-25,25),vy:rnd(-10,25),t:.5,c:f==='apple'?'#e03a2a':f==='date'?'#e8902a':f==='pricklypear'?'#e0407a':'#8a3aa8',g:1});
   return ' · caíram '+n+(n>1?' frutos':' fruto')+' no chão';
 }
 function setWait(o,r){o._pk=r;if(!waiting.includes(o))waiting.push(o);}

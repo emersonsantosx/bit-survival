@@ -559,6 +559,7 @@ function birdOK(x,y){
 }
 function birdSound(b){
   const sp=BIRD_SP[b.sp];if(!sp||!sp.snd||!P)return;
+  if(weather==='rain')return;   // com chuva os passaros nao cantam (nem ao ar livre, nem ouvidos de dentro de um lugar)
   if(Math.hypot(b.x-P.x,b.y-P.y)>230)return;
   const f=rnd(0.9,1.15);
   if(sp.snd==='chirp'){beep(2300*f,.05,'sine',.016,700);setTimeout(()=>beep(2900*f,.05,'sine',.014,-600),90);}

@@ -100,8 +100,13 @@ const BREAK={   // hp, madeira devolvida [min,max], som (w=madeira, s=metal/pedr
   log:{hp:4,wood:[2,2],n:'Tora'},stump:{hp:3,wood:[1,1],n:'Toco'},frozen_log:{hp:4,wood:[2,2],n:'Tora'},
   bench:{hp:4,wood:[2,2],n:'Banco'},crate:{hp:3,wood:[1,2],n:'Caixote'},sign:{hp:2,wood:[1,1],n:'Placa'},
   barrier:{hp:5,wood:[0,0],n:'Barreira',s:1},mailbox:{hp:3,wood:[0,0],n:'Caixa de correio',s:1},trash:{hp:2,wood:[0,0],n:'Lixeira',s:1},
-  cone:{hp:1,wood:[0,0],n:'Cone',s:1},snowman:{hp:2,wood:[0,0],n:'Boneco de neve'}
+  cone:{hp:1,wood:[0,0],n:'Cone',s:1},snowman:{hp:2,wood:[0,0],n:'Boneco de neve'},
+  // plantas (p=1): arbustos e cactos. Arvore, pedra e construcao ao alcance tem prioridade sobre elas (ver structTarget)
+  bush:{hp:2,wood:[0,1],n:'Arbusto',p:1},bush2:{hp:2,wood:[0,1],n:'Arbusto',p:1},berry:{hp:2,wood:[0,1],n:'Arbusto de frutinhas',p:1},
+  drybush:{hp:2,wood:[1,1],n:'Arbusto seco',p:1},frozen_bush:{hp:2,wood:[0,1],n:'Arbusto nevado',p:1},yucca:{hp:3,wood:[0,1],n:'Iúca',p:1},
+  cactus_sm:{hp:2,wood:[0,0],n:'Cacto',p:1,c:1},cactus_bg:{hp:3,wood:[0,0],n:'Cacto',p:1,c:1},cactus_tall:{hp:3,wood:[0,0],n:'Cacto',p:1,c:1}
 };
+const CITY_BUSH={hp:2,wood:[0,1],n:'Arbusto',p:1};   // arbustos dos quintais da cidade (lista cityDecor)
 /* moveis das casas: machado para os de madeira, picareta para os de metal e louca. tool = arma exigida; hp = resistencia
    (machado tira 2 por golpe, picareta .85); mat = material devolvido [item,min,max]; n = nome */
 const FBREAK={
@@ -124,16 +129,19 @@ const FBREAK_DEF={tool:'axe',hp:4,mat:[['wood',1,2]],n:'Móvel'};
 const fbOf=f=>FBREAK[f.k]||FBREAK_DEF;
 const mk=(bi,f)=>'m:'+bi+','+Math.round(f.x)+','+Math.round(f.y)+','+f.k;
 const broken=new Set();   // chaves das cercas da cidade e dos objetos do mapa ja destruidos (vai no save)
-const fk=f=>'f:'+f.d+f.x+','+f.y,dk=d=>'d:'+d.x+','+d.y+','+d.type;
+const fk=f=>'f:'+f.d+f.x+','+f.y,dk=d=>'d:'+d.x+','+d.y+','+d.type,ck=d=>'c:'+d.x+','+d.y;
 function giveWood(n,x,y){for(let i=0;i<n;i++){if(!addItem('wood')){const it={t:'wood',x:x+rnd(-5,5),y:y+rnd(-3,3)};items.push(it);if(MP.active)sendEvt('itemAdded',{t:it.t,x:it.x,y:it.y});}}}
 function structTarget(w){
   if(!P||P.dead||P.inVehicle)return null;
-  const reach=(w.range||18)+8;let best=null;
+  const reach=(w.range||18)+8;let best=null,plant=null;
   const consider=(r,o,kind)=>{
     const px=clamp(P.x,r.x,r.x+r.w),py=clamp(P.y,r.y,r.y+r.h),d=Math.max(0,Math.hypot(P.x-px,P.y-py)-P.r);
     if(d>reach)return;
     if(d>3&&Math.abs(wrap(Math.atan2(py-P.y,px-P.x)-P.face))>1.35)return;   // so o que esta a frente
-    if(!best||d<best.d)best={d,o,kind,x:px,y:py};
+    const isPlant=kind==='c'||(kind==='d'&&BREAK[o.type].p),cur=isPlant?plant:best;
+    if(cur&&d>=cur.d)return;
+    const front=Math.abs(wrap(Math.atan2((kind==='f'||kind==='l'||kind==='m'?py:o.y-3)-P.y,(kind==='f'||kind==='l'||kind==='m'?px:o.x)-P.x)-P.face))<=1.35;
+    const hit={d,o,kind,x:px,y:py,plant:!!isPlant,front};if(isPlant)plant=hit;else best=hit;
   };
   if(P.inside){   // dentro de casa: so os moveis
     if(P.inside.furn)for(const f of P.inside.furn)consider(f,f,'m');
@@ -149,7 +157,13 @@ function structTarget(w){
     if(!BREAK[d.type]||Math.abs(d.x-P.x)>reach+14||Math.abs(d.y-P.y)>reach+14)continue;
     consider({x:d.x-6,y:d.y-8,w:12,h:10},d,'d');
   }
-  return best;
+  for(const d of cityDecor){
+    if(d.t!=='bush'||Math.abs(d.x-P.x)>reach+14||Math.abs(d.y-P.y)>reach+14)continue;
+    consider({x:d.x-5,y:d.y-6,w:10,h:8},d,'c');
+  }
+  if(!plant||!best)return plant||best;
+  if(plant.front!==best.front)return plant.front?plant:best;   // encostado numa cerca mas olhando para o arbusto: vai o arbusto (e vice-versa)
+  return plant.d<best.d?plant:best;
 }
 function furnHit(st,w){
   const f=st.o,fb=fbOf(f),b=P.inside;
@@ -176,23 +190,23 @@ function furnRemove(b,f){const i=b.furn.indexOf(f);if(i>=0)b.furn.splice(i,1);b.
 function structHit(st,w){
   if(st.kind==='m'){furnHit(st,w);return;}
   if(st.kind==='l'){logHit(st,w);return;}
-  const o=st.o,hp0=st.kind==='f'?HP_F[o.g|0]:BREAK[o.type].hp;
+  const o=st.o,def=st.kind==='f'?null:st.kind==='c'?CITY_BUSH:BREAK[o.type],hp0=def?def.hp:HP_F[o.g|0];
   if(o.hp===undefined)o.hp=hp0;
   o.hp-=Math.max(.5,w.chopRate||.5);
   P.cd=w.cd;P.swing=.18;shake=2;
-  const metal=st.kind==='d'&&BREAK[o.type].s;
+  const metal=!!(def&&def.s),green=st.plant?(def.c?'#5a8a42':o.type==='drybush'?'#9a7a4a':o.type==='frozen_bush'?'#9cc0b8':'#4a8f3a'):null;
   if(metal)chopStone();else chopWood();
-  o._hit=T;for(let i=0,n=3+Math.round((w.chopRate||.5)*3);i<n;i++)parts.push({x:st.x,y:st.y-4,vx:rnd(-30,30),vy:rnd(-40,-5),t:.35,c:metal?'#9a9a9a':st.kind==='f'&&o.s?'#e8e4d8':'#9a6a3a'});
+  o._hit=T;for(let i=0,n=3+Math.round((w.chopRate||.5)*3);i<n;i++)parts.push({x:st.x,y:st.y-4,vx:rnd(-30,30),vy:rnd(-40,-5),t:.35,c:green||(metal?'#9a9a9a':st.kind==='f'&&o.s?'#e8e4d8':'#9a6a3a')});
   makeNoise(P.x,P.y,50);
-  const key=st.kind==='f'?fk(o):dk(o);
+  const key=st.kind==='f'?fk(o):st.kind==='c'?ck(o):dk(o);
   if(o.hp>0){structDmgSend(key,o.hp);return;}
-  let wood=0,nm='';
+  let wood=0,nm='',fruit='';
   if(st.kind==='f'){wood=o.g?1:((P._fbk=(P._fbk||0)+1)%2===0?1:0);nm=NAMES[o.g|0];}   // cerca: 1 madeira a cada 2 desmontadas (custou meia madeira)
-  else{const b=BREAK[o.type];wood=rint(b.wood[0],b.wood[1]);nm=b.n;}
-  removeKey(key);if(st.kind==='d'||o.s)broken.add(key);
+  else{wood=rint(def.wood[0],def.wood[1]);nm=def.n;if(st.kind==='d'&&def.p)fruit=fruitFell(o);}   // planta com fruto maduro: os frutos caem no chao
+  removeKey(key);if(st.kind!=='f'||o.s)broken.add(key);
   if(MP.active)sendEvt('structBreak',{k:key});
   giveWood(wood,st.x,st.y);
-  toast(nm+' destruído(a)'+(wood?'! +'+wood+' Madeira':''));beep(240,.14,'triangle',.08,-60);
+  toast(nm+(def&&def.p?' destruído':' destruído(a)')+(wood?'! +'+wood+' Madeira':'')+fruit);beep(240,.14,'triangle',.08,-60);
 }
 /* tronco do jogador: 4 pancadas de machado-ish (hp 4), devolve as 4 madeiras do custo */
 function logHit(st,w){
@@ -221,6 +235,11 @@ function removeKey(key){
     const L=logList().find(l=>l.g&&Math.round(l.x)===+m[1]&&Math.round(l.y)===+m[2]&&l.a===m[3]);if(L)logRemove(L);
     return;
   }
+  if(key.charAt(0)==='c'){   // arbusto de quintal da cidade
+    const m=/^c:(-?\d+),(-?\d+)$/.exec(key);if(!m)return;
+    const i=cityDecor.findIndex(d=>d.t==='bush'&&d.x===+m[1]&&d.y===+m[2]);if(i>=0)cityDecor.splice(i,1);
+    return;
+  }
   if(key.charAt(0)==='f'){
     const m=/^f:([hv])(-?\d+),(-?\d+)$/.exec(key);if(!m)return;
     const f=fenceAt(+m[2],+m[3],m[1]);if(f)dropPiece(f);
@@ -234,7 +253,7 @@ function structRemote(k){if(typeof k!=='string'||k.length>60)return;broken.add(k
 function structPack(){return [...broken].slice(0,3000);}
 function structLoad(a){   // depois de gerar o mundo e antes de carregar as cercas do jogador
   broken.clear();
-  if(Array.isArray(a))for(const k of a)if(typeof k==='string'&&k.length<=60){broken.add(k);if(k.charAt(0)==='d'||k.charAt(0)==='m'||k.charAt(0)==='o'||(k.charAt(0)==='f'&&fmap.get(k.slice(2))&&fmap.get(k.slice(2)).s))removeKey(k);}
+  if(Array.isArray(a))for(const k of a)if(typeof k==='string'&&k.length<=60){broken.add(k);if(k.charAt(0)==='c'||k.charAt(0)==='d'||k.charAt(0)==='m'||k.charAt(0)==='o'||(k.charAt(0)==='f'&&fmap.get(k.slice(2))&&fmap.get(k.slice(2)).s))removeKey(k);}
 }
 
 /* ---- desenho ---- */
@@ -515,5 +534,5 @@ function fenceApplySnapshot(a,mode){   // mode 2: tambem tira as pecas que o anf
 
 window.drawFenceShadows=drawFenceShadows;window.drawFence0=drawFence0;window.fenceSnow=fenceSnow;window.cellWalled=cellWalled;window.cellWallDirs=cellWallDirs;window.playerWallBlocks=playerWallBlocks;window.wallsHitVehicle=wallsHitVehicle;window.structTarget=structTarget;window.structHit=structHit;window.structRemote=structRemote;window.structPack=structPack;window.structLoad=structLoad;window.fenceCityClear=fenceCityClear;window.fenceCityAdd=fenceCityAdd;window.fenceGateCands=fenceGateCands;window.fenceToggle=fenceToggle;window.fenceHit=fenceHit;window.fenceBuild=fenceBuild;window.fenceIntent=fenceIntent;window.fencesInView=fencesInView;window.fenceDepth=fenceDepth;window.drawFence=drawFence;window.drawFenceGhost=drawFenceGhost;
 window.fencePack=fencePack;window.fenceLoad=fenceLoad;window.fenceRemote=fenceRemote;window.fenceApplySnapshot=fenceApplySnapshot;window.fenceList=()=>fences;
-window.HP_F=HP_F;window.BREAK=BREAK;window.fbOf=fbOf;window.WH_=WH_;window.fenceAt=fenceAt;   // usados pelo dano visual (arquivo 33)
+window.HP_F=HP_F;window.BREAK=BREAK;window.CITY_BUSH=CITY_BUSH;window.fbOf=fbOf;window.WH_=WH_;window.fenceAt=fenceAt;   // usados pelo dano visual (arquivo 33)
 })();
