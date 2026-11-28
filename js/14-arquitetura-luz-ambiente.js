@@ -872,14 +872,19 @@ function drawIceFx(){
 const SIGN_COL=[['#ff4fa0','255,79,160'],['#3ad8ff','58,216,255'],['#ffb43a','255,180,58'],['#5aff8a','90,255,138'],['#ff5a4a','255,90,74']];
 const SIGN_SP=SIGN_COL.map(c=>mkSprite(64,[[0,'rgba('+c[1]+',.75)'],[.45,'rgba('+c[1]+',.28)'],[1,'rgba('+c[1]+',0)']]));
 let _sgB=null,citySigns=[];
+const SIGN_WORDS={shop:['BAR','LOJA','24H','CAFE','PIZZA','FARMA'],gas:['POSTO'],garage:['AUTO'],apartment:['HOTEL'],office:['BANCO'],clinic:['SAUDE']};
+function signWord(b){   // palavra do letreiro (ou null); o interior das lojas (arquivo 37) usa a mesma
+  const w=SIGN_WORDS[b.type];if(!w||b.w<34)return null;
+  if((b.type==='shop'||b.type==='office'||b.type==='apartment')&&bHash(b,90)<.25)return null;
+  return w[Math.floor(bHash(b,91)*w.length)];
+}
+window.shopSignWord=signWord;
 function buildSigns(){
   _sgB=blds;citySigns=[];
   if(selectedMap!=='city')return;
-  const WORDS={shop:['BAR','LOJA','24H','CAFE','PIZZA','FARMA'],gas:['POSTO'],garage:['AUTO'],apartment:['HOTEL'],office:['BANCO'],clinic:['SAUDE']};
   for(const b of blds){
-    const w=WORDS[b.type];if(!w||b.w<34)continue;
-    if(b.type==='shop'||b.type==='office'||b.type==='apartment'){if(bHash(b,90)<.25)continue;}
-    const txt=w[Math.floor(bHash(b,91)*w.length)],ci=Math.floor(bHash(b,92)*SIGN_COL.length),bw=txt.length*4+3;
+    const txt=signWord(b);if(!txt)continue;
+    const ci=Math.floor(bHash(b,92)*SIGN_COL.length),bw=txt.length*4+3;
     const bx=Math.round(Math.max(b.x+2,Math.min(b.x+b.w-bw-2,b.doorX+b.door/2-bw/2))),by=b.y+b.h-21;
     citySigns.push({b,txt,ci,bx,by,bw,cx:bx+bw/2,cy:by+4,ph:bHash(b,93)*9});
   }

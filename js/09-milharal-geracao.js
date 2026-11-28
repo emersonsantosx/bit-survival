@@ -434,6 +434,7 @@ function genWorld(seed) {
     const inY=(o,pd)=>cityYards.some(q=>o.x>q.x-pd&&o.x<q.x+q.w+pd&&o.y>q.y-pd&&o.y<q.y+q.h+pd);
     trees=trees.filter(t=>!inY(t,12));rocks=rocks.filter(t=>!inY(t,6));decorations=decorations.filter(d=>!inY(d,6));
   }
+  if(window.shopsTheme)shopsTheme();   // lojas da cidade com interior do ramo (arquivo 37); gerador proprio, nao mexe no _rng
   rebuildSolidGrid();
   try{gardensGen();}catch(e){console.warn('[hortas]',e);}
   try{wellsGen();}catch(e){console.warn('[pocos]',e);}
