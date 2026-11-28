@@ -579,13 +579,14 @@ function itemTakeable(it){
 }
 function nearestItem(){
   let b=null,bd=24;
+  if(P.tw)return b;
   for(const it of items){const d=Math.hypot(it.x-P.x,it.y-P.y);if(d<bd&&itemReach(it)){bd=d;b=it;}}
   return b;
 }
 /* todos os itens ao alcance (os mesmos criterios do nearestItem), do mais perto para o mais longe */
 function itemsNear(){
   const l=[];
-  for(const it of items){const d=Math.hypot(it.x-P.x,it.y-P.y);if(d<24&&itemReach(it))l.push([d,it]);}
+  if(!P.tw)for(const it of items){const d=Math.hypot(it.x-P.x,it.y-P.y);if(d<24&&itemReach(it))l.push([d,it]);}
   l.sort((a,b)=>a[0]-b[0]);return l.map(q=>q[1]);
 }
 /* toque num icone extra: pega aquele item, nao o mais perto */
@@ -622,7 +623,7 @@ function nearestStove(){
    com um pequeno desempate pela direcao em que ele olha (o que esta de frente vence o que esta nas costas).
    A porta ganha um bonus (e fina e a pessoa encosta nela de proposito) e o alvo anterior ganha folga para o botao nao ficar trocando. */
 function pickTarget(){
-  if(!P||P.dead||P.inVehicle)return null;
+  if(!P||P.dead||P.inVehicle||P.tw)return null;
   const c=[];
   const add=(o,px,py,key)=>{o.key=key;o.px=px;o.py=py;c.push(o);};
   const rectD=(x,y,w,h)=>{const cx=clamp(P.x,x,x+w),cy=clamp(P.y,y,y+h);return {d:Math.max(0,Math.hypot(P.x-cx,P.y-cy)-P.r),px:cx,py:cy};};
@@ -791,6 +792,7 @@ function pickup(){
   if(P.fish){cancelFishing(P.fish.ph===2?'Você soltou a linha':'Você recolheu a linha');return;}
   if(P.sleeping){wakeUp(false);return;}
   if(P.sitting){logStand();return;}   // sentado: o botao de interacao levanta (o analogico tambem)
+  if(P.tw)return;   // no alto do posto de vigia nada do chao esta ao alcance
 
   const cf=nearestCampfire()||nearestStove();
   const ck=cf&&P.hold?cookOf(P.hold):null;
