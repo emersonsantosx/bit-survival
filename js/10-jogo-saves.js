@@ -185,6 +185,7 @@ function restoreWorldState(d){
   iceLoad(d.ice);
   plotsLoad(d.plots);fruitLoad(d.fr);ghLoad(d.gh);structLoad(d.br);fenceLoad(d.fn);cellLoad(d.pf);
   doorsLoad(d.doors);
+  if(window.shopsFixItems)shopsFixItems();
   stashLoad(d.bx);wellLoad(d.wl);logLoad(d.lg);
   if(P){P.hold=null;}EAT=null;eatLock=false;
   decals=(d.decals||[]).map(a=>({x:a[0],y:a[1],l:Number.isFinite(a[2])?a[2]:20})).filter(a=>a.l>0);
@@ -611,7 +612,7 @@ function nearestFurn(kinds,reach){
   return best;
 }
 function nearestStove(){
-  let f=nearestFurn(['stove'],16);
+  let f=nearestFurn(['stove','oven'],16);
   const h=nearestFurn(['fireplace'],16);
   if(h&&hearthOn(P.inside)&&(!f||Math.hypot(h.x+h.w/2-P.x,h.y+h.h/2-P.y)<Math.hypot(f.x+f.w/2-P.x,f.y+f.h/2-P.y)))f=h;   // lareira acesa tambem assa
   return f?{x:f.x+f.w/2,y:f.y+f.h/2,stove:true}:null;

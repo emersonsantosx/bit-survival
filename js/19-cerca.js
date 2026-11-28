@@ -123,7 +123,18 @@ const FBREAK={
   crate:{tool:'axe',hp:3,mat:[['wood',1,2]],n:'Caixote'},barrel:{tool:'axe',hp:3,mat:[['wood',1,2]],n:'Barril'},bench:{tool:'axe',hp:4,mat:[['wood',2,2]],n:'Banco'},
   workbench:{tool:'axe',hp:7,mat:[['wood',3,4]],n:'Bancada'},hay:{tool:'axe',hp:2,mat:[['cloth',1,1]],n:'Feno'},plant:{tool:'axe',hp:2,mat:[['wood',0,1]],n:'Planta'},
   bookcase:{tool:'axe',hp:5,mat:[['wood',2,3]],n:'Estante'},dresser:{tool:'axe',hp:5,mat:[['wood',2,3]],n:'Cômoda'},lamp:{tool:'axe',hp:1,mat:[['wood',0,1]],n:'Abajur'},
-  pallet:{tool:'axe',hp:3,mat:[['wood',2,2]],n:'Palete'},aisle:{tool:'axe',hp:5,mat:[['wood',2,3]],n:'Gôndola'},meet:{tool:'axe',hp:8,mat:[['wood',4,4]],n:'Mesa de reunião'}
+  pallet:{tool:'axe',hp:3,mat:[['wood',2,2]],n:'Palete'},aisle:{tool:'axe',hp:5,mat:[['wood',2,3]],n:'Gôndola'},meet:{tool:'axe',hp:8,mat:[['wood',4,4]],n:'Mesa de reunião'},
+  // lojas da cidade (arquivo 37)
+  pcounter:{tool:'axe',hp:6,mat:[['wood',2,3]],n:'Balcão'},oven:{tool:'pickaxe',hp:9,mat:[['stone',3,4]],n:'Forno de pizza'},prep:{tool:'pickaxe',hp:5,mat:[['stone',2,2]],n:'Mesa de preparo'},
+  pboxes:{tool:'axe',hp:1,mat:[['cloth',0,1]],n:'Caixas de pizza'},diner:{tool:'axe',hp:5,mat:[['wood',2,3]],n:'Mesa'},
+  barcounter:{tool:'axe',hp:8,mat:[['wood',3,4]],n:'Balcão do bar'},bottles:{tool:'axe',hp:4,mat:[['wood',1,2]],n:'Prateleira de garrafas'},stool:{tool:'axe',hp:2,mat:[['wood',0,1]],n:'Banqueta'},
+  pool:{tool:'axe',hp:8,mat:[['wood',3,4],['cloth',1,1]],n:'Mesa de sinuca'},bartable:{tool:'axe',hp:5,mat:[['wood',2,2]],n:'Mesa'},jukebox:{tool:'pickaxe',hp:4,mat:[['stone',1,2]],n:'Jukebox'},
+  cafecounter:{tool:'axe',hp:7,mat:[['wood',2,3]],n:'Balcão do café'},pastry:{tool:'pickaxe',hp:4,mat:[['stone',1,2]],n:'Vitrine de doces'},cafetable:{tool:'axe',hp:4,mat:[['wood',1,2]],n:'Mesinha'},
+  pharmcounter:{tool:'axe',hp:6,mat:[['wood',2,3]],n:'Balcão da farmácia'},medshelf:{tool:'axe',hp:4,mat:[['wood',2,3]],n:'Prateleira de remédios'},medisle:{tool:'axe',hp:5,mat:[['wood',2,3]],n:'Gôndola'},
+  checkout:{tool:'pickaxe',hp:5,mat:[['stone',2,2]],n:'Caixa'},freezer:{tool:'pickaxe',hp:5,mat:[['stone',2,3]],n:'Freezer'},produce:{tool:'axe',hp:4,mat:[['wood',2,3]],n:'Banca de frutas'},
+  drinks:{tool:'pickaxe',hp:5,mat:[['stone',2,3]],n:'Geladeira de bebidas'},
+  clothrack:{tool:'axe',hp:3,mat:[['cloth',2,3]],n:'Arara de roupas'},mannequin:{tool:'axe',hp:2,mat:[['wood',0,1],['cloth',1,1]],n:'Manequim'},
+  fitting:{tool:'axe',hp:5,mat:[['wood',2,2],['cloth',1,1]],n:'Provador'},display:{tool:'axe',hp:5,mat:[['wood',2,3],['cloth',1,2]],n:'Expositor'}
 };
 const FBREAK_DEF={tool:'axe',hp:4,mat:[['wood',1,2]],n:'Móvel'};
 const fbOf=f=>FBREAK[f.k]||FBREAK_DEF;

@@ -101,7 +101,7 @@ window.logDmgFx=function(L){
   const x=Math.round(L.x),y=Math.round(L.y);
   if(L.a==='h')dmgFx('wood',x-20,y-7,40,9,st,x,y);else dmgFx('wood',x-5,y-20,10,38,st,x,y);
 };
-const STONEY={toilet:1,tub:1,sink:1,ksink:1,fireplace:1,tv:1};
+const STONEY={toilet:1,tub:1,sink:1,ksink:1,fireplace:1,tv:1,oven:1,pastry:1};
 window.furnDmgFx=function(f){
   const fb=fbOf(f),st=dmgStage(f.hp,fb.hp);if(!st)return;
   const mat=STONEY[f.k]?'stone':fb.tool==='pickaxe'?'metal':fb.mat[0][0]==='cloth'?'cloth':'wood';
